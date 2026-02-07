@@ -1,0 +1,708 @@
+1 :
+
+-- Create memorials table
+CREATE TABLE memorials (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  
+  -- Memorial data (all the wizard steps stored as JSON)
+  step1 JSONB NOT NULL DEFAULT '{}',
+  step2 JSONB NOT NULL DEFAULT '{}',
+  step3 JSONB NOT NULL DEFAULT '{}',
+  step4 JSONB NOT NULL DEFAULT '{}',
+  step5 JSONB NOT NULL DEFAULT '{}',
+  step6 JSONB NOT NULL DEFAULT '{}',
+  step7 JSONB NOT NULL DEFAULT '{}',
+  step8 JSONB NOT NULL DEFAULT '{}',
+  
+  -- Status and metadata
+  status TEXT NOT NULL DEFAULT 'draft', -- 'draft' or 'published'
+  slug TEXT UNIQUE, -- URL-friendly identifier (e.g., 'eleanor-thompson-1942')
+  
+  -- Quick access fields (denormalized for faster queries)
+  full_name TEXT,
+  birth_date DATE,
+  death_date DATE,
+  profile_photo_url TEXT,
+  cover_photo_url TEXT
+);
+
+-- Create index for faster queries
+CREATE INDEX idx_memorials_status ON memorials(status);
+CREATE INDEX idx_memorials_created_at ON memorials(created_at DESC);
+CREATE INDEX idx_memorials_slug ON memorials(slug);
+
+-- Create trigger to auto-update updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = timezone('utc'::text, now());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_memorials_updated_at 
+    BEFORE UPDATE ON memorials
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable Row Level Security (RLS) but allow all access for now
+ALTER TABLE memorials ENABLE ROW LEVEL SECURITY;
+
+-- Create policy to allow all operations (since no auth for now)
+CREATE POLICY "Allow all access to memorials" 
+    ON memorials 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+--------------------------------------------------------
+
+2 : 
+
+-- Run this SQL in your Supabase SQL Editor to add the completed_steps column
+
+-- Add the completed_steps column to store an array of completed step numbers
+ALTER TABLE memorials 
+ADD COLUMN completed_steps INTEGER[] DEFAULT '{}';
+
+-- Update existing records to have an empty array
+UPDATE memorials 
+SET completed_steps = '{}' 
+WHERE completed_steps IS NULL;
+
+
+--------------------------------------------------------
+
+3 :
+
+-- SQL Migration to add step9 column to memorials table
+-- Run this in your Supabase SQL Editor
+
+-- Add step9 column for video content
+ALTER TABLE memorials 
+ADD COLUMN IF NOT EXISTS step9 JSONB NOT NULL DEFAULT '{"videos": []}';
+
+-- Update existing records to have default step9 structure
+UPDATE memorials 
+SET step9 = '{"videos": []}'::jsonb 
+WHERE step9 IS NULL OR step9 = '{}'::jsonb;
+
+-- Verify the change
+SELECT id, step9 FROM memorials LIMIT 5;
+
+
+--------------------------------------------------------
+
+4 :
+
+-- Create the videos bucket (do this in Supabase Dashboard → Storage)
+-- Bucket name: "videos"
+-- Public: YES
+
+-- Then set these RLS policies in SQL Editor:
+-- Allow anyone to upload
+CREATE POLICY "Anyone can upload videos"
+ON storage.objects FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'videos');
+
+-- Allow anyone to read videos
+CREATE POLICY "Anyone can read videos"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'videos');
+
+-- Allow anyone to delete their own videos (optional, based on memorialId path)
+CREATE POLICY "Anyone can delete videos"
+ON storage.objects FOR DELETE
+TO public
+USING (bucket_id = 'videos');
+
+--------------------------------------------------------
+
+5 :
+
+-- Policy 1: Allow uploads
+   CREATE POLICY "Public Upload"
+   ON storage.objects
+   FOR INSERT
+   TO public
+   WITH CHECK (bucket_id = 'videos');
+
+   -- Policy 2: Allow reads
+   CREATE POLICY "Public Access"
+   ON storage.objects
+   FOR SELECT
+   TO public
+   USING (bucket_id = 'videos');
+
+
+--------------------------------------------------------
+
+6 : 
+
+-- Add mode column to memorials table
+ALTER TABLE memorials 
+ADD COLUMN IF NOT EXISTS mode VARCHAR(10) DEFAULT 'family';
+
+-- Add index for better query performance
+CREATE INDEX IF NOT EXISTS idx_memorials_mode ON memorials(mode);
+
+-- Optional: Add check constraint to ensure only valid modes
+ALTER TABLE memorials 
+ADD CONSTRAINT check_mode_values 
+CHECK (mode IN ('personal', 'family'));
+
+--------------------------------------------------------
+
+7 :
+
+-- Check if column was added
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'memorials' AND column_name = 'mode';
+
+-- View all memorials with their mode
+SELECT id, full_name, mode, created_at
+FROM memorials
+ORDER BY created_at DESC;
+
+--------------------------------------------------------
+
+8 : 
+
+-- 1. Create users table (if not exists)
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Add user_id to memorials table
+ALTER TABLE memorials 
+ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id);
+
+-- 3. Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_memorials_user_id ON memorials(user_id);
+CREATE INDEX IF NOT EXISTS idx_memorials_user_mode ON memorials(user_id, mode);
+
+--------------------------------------------------------
+
+9 :
+
+-- 1. Enable UUID extension (if not already enabled)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 2. Create users table with correct UUID function
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3. Add user_id to memorials table
+ALTER TABLE memorials 
+ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id);
+
+-- 4. Create indexes
+CREATE INDEX IF NOT EXISTS idx_memorials_user_id ON memorials(user_id);
+CREATE INDEX IF NOT EXISTS idx_memorials_user_mode ON memorials(user_id, mode);
+
+-- 5. Enable RLS on users table
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- 6. Create policy to allow all operations on users
+CREATE POLICY "Allow all access to users" 
+    ON users 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+--------------------------------------------------------
+
+10 : 
+
+-- Test creating a user
+INSERT INTO users (email) VALUES ('test@example.com') RETURNING *;
+
+-- Check if users table exists and has data
+SELECT * FROM users;
+
+--------------------------------------------------------
+
+11 : 
+
+-- ============================================
+-- CONCIERGE SERVICE - DATABASE SCHEMA
+-- ============================================
+
+-- 1. CREATE CONCIERGE_PROJECTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS concierge_projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  
+  -- User info (from initial request)
+  user_id UUID REFERENCES users(id),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  initial_message TEXT,
+  
+  -- Project status
+  status TEXT NOT NULL DEFAULT 'requested', -- 'requested' | 'in_progress' | 'in_review' | 'finalized'
+  
+  -- Payment info (simple flag for now)
+  paid BOOLEAN DEFAULT FALSE,
+  paid_at TIMESTAMP WITH TIME ZONE,
+  
+  -- Zoom meeting link (can be updated by admin)
+  zoom_link TEXT,
+  
+  -- Progressive content (what we're building for them)
+  -- This will be filled by us as we work
+  content_preview JSONB DEFAULT '{}', -- { "name": "", "dates": "", "biography": "", "structure": [] }
+  
+  -- Memorial data (same structure as memorials table, but built by us)
+  memorial_data JSONB DEFAULT '{}'
+);
+
+-- 2. CREATE CONCIERGE_FILES TABLE
+-- ============================================
+-- Track all files uploaded by the user
+CREATE TABLE IF NOT EXISTS concierge_files (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  
+  project_id UUID REFERENCES concierge_projects(id) ON DELETE CASCADE NOT NULL,
+  
+  -- File metadata
+  file_name TEXT NOT NULL,
+  file_type TEXT NOT NULL, -- MIME type
+  file_size BIGINT, -- in bytes
+  storage_path TEXT NOT NULL, -- path in Supabase Storage
+  public_url TEXT, -- public URL from Supabase
+  
+  -- Optional user note about this file
+  user_note TEXT
+);
+
+-- 3. CREATE CONCIERGE_NOTES TABLE
+-- ============================================
+-- Free-form messages/notes from user to us
+CREATE TABLE IF NOT EXISTS concierge_notes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  
+  project_id UUID REFERENCES concierge_projects(id) ON DELETE CASCADE NOT NULL,
+  
+  -- Note content
+  note_type TEXT NOT NULL DEFAULT 'text', -- 'text' | 'voice'
+  content TEXT, -- for text notes
+  audio_url TEXT, -- for voice messages
+  
+  -- Who sent it
+  from_user BOOLEAN DEFAULT TRUE -- true = from user, false = from us (internal notes)
+);
+
+-- 4. CREATE INDEXES
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_concierge_projects_user_id ON concierge_projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_concierge_projects_status ON concierge_projects(status);
+CREATE INDEX IF NOT EXISTS idx_concierge_projects_email ON concierge_projects(email);
+CREATE INDEX IF NOT EXISTS idx_concierge_projects_created_at ON concierge_projects(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_concierge_files_project_id ON concierge_files(project_id);
+CREATE INDEX IF NOT EXISTS idx_concierge_files_created_at ON concierge_files(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_concierge_notes_project_id ON concierge_notes(project_id);
+CREATE INDEX IF NOT EXISTS idx_concierge_notes_created_at ON concierge_notes(created_at DESC);
+
+-- 5. AUTO-UPDATE TRIGGERS
+-- ============================================
+CREATE TRIGGER update_concierge_projects_updated_at 
+    BEFORE UPDATE ON concierge_projects
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- 6. ENABLE ROW LEVEL SECURITY
+-- ============================================
+ALTER TABLE concierge_projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE concierge_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE concierge_notes ENABLE ROW LEVEL SECURITY;
+
+-- 7. CREATE RLS POLICIES (Open access for now)
+-- ============================================
+-- Concierge Projects
+CREATE POLICY "Allow all access to concierge_projects" 
+    ON concierge_projects 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+-- Concierge Files
+CREATE POLICY "Allow all access to concierge_files" 
+    ON concierge_files 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+-- Concierge Notes
+CREATE POLICY "Allow all access to concierge_notes" 
+    ON concierge_notes 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+-- ============================================
+-- VERIFICATION QUERIES (run these to confirm)
+-- ============================================
+
+-- Check tables were created
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name LIKE 'concierge%';
+
+-- Check columns in concierge_projects
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'concierge_projects'
+ORDER BY ordinal_position;
+
+
+--------------------------------------------------------
+
+
+12 : 
+
+-- ============================================
+-- STORAGE BUCKET POLICIES FOR CONCIERGE FILES
+-- ============================================
+
+-- Policy 1: Allow anyone to upload to concierge-files
+CREATE POLICY "Public Upload to Concierge Files"
+ON storage.objects
+FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'concierge-files');
+
+-- Policy 2: Allow anyone to read from concierge-files
+CREATE POLICY "Public Access to Concierge Files"
+ON storage.objects
+FOR SELECT
+TO public
+USING (bucket_id = 'concierge-files');
+
+-- Policy 3: Allow anyone to delete from concierge-files
+CREATE POLICY "Public Delete from Concierge Files"
+ON storage.objects
+FOR DELETE
+TO public
+USING (bucket_id = 'concierge-files');
+
+
+--------------------------------------------------------
+
+13 :
+
+-- ✅ Check all concierge tables exist
+SELECT table_name FROM information_schema.tables 
+WHERE table_name LIKE 'concierge%';
+
+-- ✅ Test insert into concierge_projects
+INSERT INTO concierge_projects (name, email, initial_message, status)
+VALUES ('Test User', 'test@example.com', 'This is a test', 'requested')
+RETURNING *;
+
+-- ✅ View the test project
+SELECT * FROM concierge_projects;
+
+-- ✅ Clean up test data
+DELETE FROM concierge_projects WHERE email = 'test@example.com';
+
+
+--------------------------------------------------------
+
+14 : 
+
+-- Add new columns to concierge_projects for rich form data
+ALTER TABLE concierge_projects
+ADD COLUMN IF NOT EXISTS person_full_name TEXT,
+ADD COLUMN IF NOT EXISTS person_birth_date TEXT,
+ADD COLUMN IF NOT EXISTS person_death_date TEXT,
+ADD COLUMN IF NOT EXISTS relationship TEXT,
+ADD COLUMN IF NOT EXISTS materials_inventory JSONB DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS preservation_priorities TEXT,
+ADD COLUMN IF NOT EXISTS sensitive_aspects TEXT,
+ADD COLUMN IF NOT EXISTS contact_preference TEXT DEFAULT 'email';
+
+-- Add comment for clarity
+COMMENT ON COLUMN concierge_projects.materials_inventory IS 'Checkboxes: photos, documents, videos, audio, letters, digital';
+COMMENT ON COLUMN concierge_projects.contact_preference IS 'email or call';
+
+--------------------------------------------------------
+
+15 : 
+
+UPDATE concierge_projects
+SET 
+  status = 'in_progress',
+  paid = true,
+  paid_at = NOW(),
+  zoom_link = 'https://zoom.us/j/123456789'
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+16 :
+
+UPDATE concierge_projects
+SET content_preview = '{
+  "full_name": "Eleanor Marie Thompson",
+  "birth_date": "May 15, 1942",
+  "death_date": "December 20, 2018",
+  "biography_intro": "Eleanor was a beloved English teacher who spent 40 years shaping young minds at Boston Public Schools. Her classroom was a sanctuary where students discovered not just literature, but their own potential. She believed that every child had a story worth telling, and she dedicated her life to helping them find their voice.",
+  "structure": [
+    {
+      "section": "Early Life & Education",
+      "status": "complete"
+    },
+    {
+      "section": "Teaching Career (1966-2006)",
+      "status": "in_progress"
+    },
+    {
+      "section": "Family & Relationships",
+      "status": "planned"
+    },
+    {
+      "section": "Photo Gallery",
+      "status": "planned"
+    },
+    {
+      "section": "Legacy & Impact",
+      "status": "planned"
+    }
+  ]
+}'
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+17 : 
+
+UPDATE concierge_projects
+SET content_preview = jsonb_set(
+  content_preview,
+  '{structure}',
+  '[
+    {"section": "Early Life & Education", "status": "complete"},
+    {"section": "Teaching Career (1966-2006)", "status": "complete"},
+    {"section": "Family & Relationships", "status": "in_progress"},
+    {"section": "Photo Gallery", "status": "planned"},
+    {"section": "Legacy & Impact", "status": "planned"}
+  ]'
+)
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+18 : 
+
+UPDATE concierge_projects
+SET content_preview = content_preview || '{
+  "biography_sections": [
+    {
+      "title": "The Early Years",
+      "content": "Born in Charleston, South Carolina, Eleanor grew up in a family that valued education above all else...",
+      "order": 1
+    },
+    {
+      "title": "Becoming a Teacher",
+      "content": "In 1966, fresh out of college, Eleanor walked into her first classroom...",
+      "order": 2
+    }
+  ]
+}'::jsonb
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+19 : 
+
+UPDATE concierge_projects
+SET status = 'in_review'
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+20 :
+
+UPDATE concierge_projects
+SET status = 'finalized'
+WHERE id = 'e3aa74ff-1921-4f4e-87fd-ea461221d403';
+
+--------------------------------------------------------
+
+21 : 
+
+-- Run this in Supabase SQL Editor
+
+CREATE TABLE IF NOT EXISTS memorial_authorizations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  
+  -- Link to user and memorial
+  user_id UUID REFERENCES users(id),
+  memorial_id UUID REFERENCES memorials(id),
+  
+  -- Section 1: Creator Information
+  creator_full_name TEXT NOT NULL,
+  creator_dob DATE,
+  creator_address TEXT,
+  creator_city_state_zip TEXT,
+  creator_email TEXT NOT NULL,
+  creator_phone TEXT,
+  relationship_to_deceased TEXT NOT NULL, -- 'spouse', 'child', 'parent', 'executor', etc.
+  relationship_other TEXT, -- if "other" is selected
+  
+  -- Section 2: Deceased Information
+  deceased_full_name TEXT NOT NULL,
+  deceased_dob DATE NOT NULL,
+  deceased_dod DATE,
+  deceased_death_place TEXT,
+  deceased_last_residence TEXT,
+  
+  -- Estate Information
+  probate_opened BOOLEAN,
+  probate_case_number TEXT,
+  probate_jurisdiction TEXT,
+  executor_name TEXT,
+  executor_contact TEXT,
+  
+  -- Section 3: Authority Checkboxes (stored as JSONB for flexibility)
+  authority_claims JSONB, -- {"estate_representative": true, "next_of_kin": true, etc.}
+  consent_obtained_from JSONB, -- {"spouse": true, "children": true, etc.}
+  no_conflicting_claims BOOLEAN DEFAULT false,
+  
+  -- Section 4: Content Representations (all checkboxes)
+  accuracy_confirmed BOOLEAN DEFAULT false,
+  copyright_confirmed BOOLEAN DEFAULT false,
+  privacy_confirmed BOOLEAN DEFAULT false,
+  
+  -- Section 5: Indemnification Agreement
+  indemnification_accepted BOOLEAN DEFAULT false,
+  
+  -- Section 8: Electronic Signature
+  electronic_signature TEXT NOT NULL, -- typed full name
+  signature_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  signature_ip_address TEXT,
+  signature_user_agent TEXT,
+  
+  -- Status
+  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+  reviewed_by TEXT, -- admin who reviewed
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  
+  -- PDF Storage
+  pdf_storage_path TEXT, -- path to generated PDF in Supabase Storage
+  
+  -- Full form data backup (in case we need everything)
+  form_data_json JSONB
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_auth_user_id ON memorial_authorizations(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_memorial_id ON memorial_authorizations(memorial_id);
+CREATE INDEX IF NOT EXISTS idx_auth_status ON memorial_authorizations(status);
+CREATE INDEX IF NOT EXISTS idx_auth_created_at ON memorial_authorizations(created_at DESC);
+
+-- Auto-update trigger
+CREATE TRIGGER update_memorial_authorizations_updated_at 
+    BEFORE UPDATE ON memorial_authorizations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable RLS
+ALTER TABLE memorial_authorizations ENABLE ROW LEVEL SECURITY;
+
+-- Create policy
+CREATE POLICY "Allow all access to memorial_authorizations" 
+    ON memorial_authorizations 
+    FOR ALL 
+    USING (true) 
+    WITH CHECK (true);
+
+--------------------------------------------------------
+
+22 : 
+
+-- Allow authenticated users to upload PDFs
+CREATE POLICY "Users can upload authorization PDFs"
+ON storage.objects FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'authorization-pdfs');
+
+-- Allow users to read their own PDFs
+CREATE POLICY "Users can read authorization PDFs"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'authorization-pdfs');
+
+
+--------------------------------------------------------
+
+23 : 
+
+-- Add paid status to memorials
+ALTER TABLE memorials 
+ADD COLUMN IF NOT EXISTS paid BOOLEAN DEFAULT FALSE;
+
+-- Add paid_at for records
+ALTER TABLE memorials   
+ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
+
+--------------------------------------------------------
+
+24 : 
+
+-- 1. First, create a function that prevents users from updating the 'paid' column
+CREATE OR REPLACE FUNCTION check_paid_status_integrity()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- If the user tries to change 'paid' from false to true manually
+  IF (OLD.paid = false AND NEW.paid = true) THEN
+    -- Check if the request is coming from a 'service_role' (your server)
+    -- If it's a normal user, REJECT the change
+    IF current_setting('role') != 'service_role' THEN
+      RAISE EXCEPTION 'You cannot manually set your archive as paid.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 2. Attach this trigger to your memorials table
+CREATE TRIGGER secure_paid_column
+BEFORE UPDATE ON memorials
+FOR EACH ROW
+EXECUTE FUNCTION check_paid_status_integrity();
+
+--------------------------------------------------------
+
+25 : 
+
+-- Secure the 'videos' bucket
+-- Only allow upload if 'paid' is true in the memorials table
+CREATE POLICY "Only paid users can upload multiple videos"
+ON storage.objects FOR INSERT
+TO public
+WITH CHECK (
+  bucket_id = 'videos' AND (
+    SELECT paid FROM memorials WHERE id::text = (storage.foldername(name))[1]
+  ) = true
+);

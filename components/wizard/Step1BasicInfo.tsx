@@ -1,0 +1,299 @@
+// components/wizard/Step1BasicInfo.tsx
+'use client';
+import { useState, useRef } from 'react';
+import { Upload, X, Calendar, MapPin, Quote, User } from 'lucide-react';
+import { BasicInfo } from '@/types/memorial';
+
+interface Step1Props {
+    data: BasicInfo;
+    onUpdate: (data: BasicInfo) => void;
+    onNext: () => void;
+}
+
+export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleChange = (field: keyof BasicInfo, value: any) => {
+        onUpdate({ ...data, [field]: value });
+    };
+
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                onUpdate({
+                    ...data,
+                    profilePhoto: file,
+                    profilePhotoPreview: reader.result as string,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removePhoto = () => {
+        onUpdate({
+            ...data,
+            profilePhoto: null,
+            profilePhotoPreview: null,
+        });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const calculateAge = () => {
+        if (!data.birthDate) return null;
+        const birth = new Date(data.birthDate);
+        const end = data.isStillLiving ? new Date() : data.deathDate ? new Date(data.deathDate) : new Date();
+        const years = end.getFullYear() - birth.getFullYear();
+        return years;
+    };
+
+    const isValid = () => {
+        return data.fullName.trim() !== '' && data.birthDate !== '';
+    };
+
+    return (
+        <form autoComplete="off" onSubmit={(e) => { e.preventDefault(); onNext(); }}>
+            {/* Hidden dummy input to trick browser autofill heuristics */}
+            <input type="text" className="hidden" aria-hidden="true" autoComplete="off" name="hidden_dummy_input" tabIndex={-1} />
+
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-20 pb-12">
+                <div className="mb-12">
+                    <h2 className="font-serif text-4xl text-charcoal mb-3">
+                        Let's Start with the Basics
+                    </h2>
+                    <p className="text-charcoal/60 text-lg">
+                        We'll begin with the essential information. Don't worry, you can always come back and edit this later.
+                    </p>
+                </div>
+
+                <div className="space-y-8">
+                    <div>
+                        <label className="block text-sm font-medium text-charcoal mb-2">
+                            Full Name <span className="text-terracotta">*</span>
+                        </label>
+                        <div className="relative">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                            <input
+
+                                type="text"
+                                name="memorial_subject_full_name"
+                                autoComplete="off"
+                                data-lpignore="true"
+                                data-form-type="other"
+                                value={data.fullName}
+                                onChange={(e) => handleChange('fullName', e.target.value)}
+                                placeholder="e.g., Eleanor Marie Thompson"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                            />
+                        </div>
+                        <p className="text-xs text-charcoal/40 mt-1">Their full legal name or the name they were known by</p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-charcoal mb-2">
+                            Birth Date <span className="text-terracotta">*</span>
+                        </label>
+                        <div className="relative">
+                            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                            <input
+                                type="date"
+                                name="memorial_subject_birth_date"
+                                autoComplete="off"
+                                value={data.birthDate}
+                                onChange={(e) => handleChange('birthDate', e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                            />
+                        </div>
+                        {calculateAge() && (
+                            <p className="text-xs text-sage mt-1">
+                                {data.isStillLiving ? `Currently ${calculateAge()} years old` : `Lived ${calculateAge()} years`}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3 p-4 bg-sand/10 rounded-xl">
+                        <input
+                            type="checkbox"
+                            id="stillLiving"
+                            name="memorial_subject_is_living"
+                            checked={data.isStillLiving}
+                            onChange={(e) => {
+                                const isChecked = e.target.checked;
+                                onUpdate({
+                                    ...data,
+                                    isStillLiving: isChecked,
+                                    deathDate: isChecked ? null : data.deathDate,
+                                    deathPlace: isChecked ? '' : data.deathPlace,
+                                });
+                            }}
+                            className="w-5 h-5 text-sage border-sand/40 rounded focus:ring-sage/30 cursor-pointer"
+                        />
+                        <label htmlFor="stillLiving" className="text-sm text-charcoal cursor-pointer">
+                            This person is still living
+                        </label>
+                    </div>
+
+                    {!data.isStillLiving && (
+                        <div>
+                            <label className="block text-sm font-medium text-charcoal mb-2">
+                                Death Date
+                            </label>
+                            <div className="relative">
+                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                                <input
+                                    type="date"
+                                    name="memorial_subject_death_date"
+                                    autoComplete="off"
+                                    value={data.deathDate || ''}
+                                    onChange={(e) => handleChange('deathDate', e.target.value)}
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-charcoal mb-2">
+                            Birth Place
+                        </label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                            <input
+                                type="text"
+                                name="memorial_subject_birth_place"
+                                autoComplete="off"
+                                value={data.birthPlace}
+                                onChange={(e) => handleChange('birthPlace', e.target.value)}
+                                placeholder="e.g., Charleston, South Carolina"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                            />
+                        </div>
+                        <p className="text-xs text-charcoal/40 mt-1">City and state/country where they were born</p>
+                    </div>
+
+                    {!data.isStillLiving && (
+                        <div>
+                            <label className="block text-sm font-medium text-charcoal mb-2">
+                                Death Place
+                            </label>
+                            <div className="relative">
+                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                                <input
+                                    type="text"
+                                    name="memorial_subject_death_place"
+                                    autoComplete="off"
+                                    value={data.deathPlace}
+                                    onChange={(e) => handleChange('deathPlace', e.target.value)}
+                                    placeholder="e.g., Boston, Massachusetts"
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-charcoal mb-2">
+                            Profile Photo
+                        </label>
+                        {!data.profilePhotoPreview ? (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                            >
+                                <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
+                                <p className="text-sm text-charcoal/60 mb-1">
+                                    Click to upload or drag and drop
+                                </p>
+                                <p className="text-xs text-charcoal/40">
+                                    PNG, JPG up to 10MB
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <div className="w-48 h-48 mx-auto rounded-2xl overflow-hidden border-4 border-sand/30">
+                                    <img
+                                        src={data.profilePhotoPreview}
+                                        alt="Profile preview"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <button
+                                    onClick={removePhoto}
+                                    className="absolute top-2 right-2 p-2 bg-charcoal/80 hover:bg-charcoal rounded-full transition-colors"
+                                >
+                                    <X size={16} className="text-ivory" />
+                                </button>
+                            </div>
+                        )}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            name="memorial_subject_profile_photo"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                        />
+                        <p className="text-xs text-charcoal/40 mt-2 text-center">
+                            You can add more photos later in the gallery
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-charcoal mb-2">
+                            One-Line Epitaph
+                        </label>
+                        <div className="relative">
+                            <Quote className="absolute left-4 top-4 text-charcoal/40" size={20} />
+                            <textarea
+                                value={data.epitaph}
+                                name="memorial_subject_epitaph"
+                                autoComplete="off"
+                                onChange={(e) => handleChange('epitaph', e.target.value)}
+                                placeholder="A sentence that captures their essence..."
+                                maxLength={200}
+                                rows={3}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                            />
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                            <p className="text-xs text-charcoal/40">Optional but recommended</p>
+                            <p className="text-xs text-charcoal/40">{data.epitaph.length}/200</p>
+                        </div>
+                        <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
+                            <p className="text-xs font-medium text-sage mb-2">Examples:</p>
+                            <ul className="space-y-1 text-xs text-charcoal/60">
+                                <li>• "She taught us how to see beauty in ordinary moments"</li>
+                                <li>• "A gentle soul who lived with fierce purpose"</li>
+                                <li>• "He turned strangers into family wherever he went"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-12 flex gap-4">
+                    <button
+                        data-tutorial="save-continue"
+                        type="submit"
+                        disabled={!isValid()}
+                        className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all ${isValid()
+                            ? 'bg-terracotta hover:bg-terracotta/90 text-ivory'
+                            : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
+                            }`}
+                    >
+                        Save & Continue →
+                    </button>
+                </div>
+
+                <div className="mt-4 text-center">
+                    <button className="text-sm text-charcoal/60 hover:text-charcoal transition-colors">
+                        Save Draft & Exit
+                    </button>
+                </div>
+            </div>
+        </form>
+    );
+}

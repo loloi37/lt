@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes ping {
+
+  75%,
+  100% {
+    transform: scale(1.05);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes tutorialGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(138, 154, 91, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(138, 154, 91, 0.6);
+  }
+}
+
+[data-tutorial] {
+  position: relative;
+  z-index: 101;
+}
+
+[data-tutorial]:focus-within {
+  animation: tutorialGlow 2s ease-in-out infinite;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@layer base {
+  :root {
+    --color-ivory: #f9f7f3;
+    --color-charcoal: #2c3e50;
+    --color-sand: #d7ccc8;
+    --color-terracotta: #a0522d;
+    --color-sage: #8a9a5b;
+  }
+
+  body {
+    @apply bg-ivory text-charcoal overflow-x-hidden;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .font-sans {
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+
+  .font-serif {
+    font-family: var(--font-cormorant), Georgia, serif;
+  }
+}

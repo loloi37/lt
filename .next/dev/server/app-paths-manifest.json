@@ -1,0 +1,10 @@
+{
+  "/api/create-checkout/route": "app/api/create-checkout/route.js",
+  "/api/finalize-payment/route": "app/api/finalize-payment/route.js",
+  "/choice-pricing/page": "app/choice-pricing/page.js",
+  "/create/page": "app/create/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/payment-success/page": "app/payment-success/page.js",
+  "/person/[id]/page": "app/person/[id]/page.js",
+  "/personal-confirmation/page": "app/personal-confirmation/page.js"
+}
