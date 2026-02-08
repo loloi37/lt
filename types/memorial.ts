@@ -99,22 +99,37 @@ export interface LifeStory {
   }>;
 }
 
+// NEW: Invitation tracking type
+export interface SentInvitation {
+  email: string;
+  sentAt: string;        // ISO date string
+  status: 'sent' | 'accepted' | 'declined' | 'pending';
+  acceptedAt?: string;   // When witness accepted the invitation
+}
+
+export interface SharedMemory {
+  id: string;
+  title: string;
+  date: string;
+  content: string;
+  author: string;
+  relationship: string;
+}
+
+export interface ImpactStory {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+}
+
 export interface MemoriesStories {
-  sharedMemories: Array<{
-    id: string;
-    title: string;
-    date: string;
-    content: string;
-    author: string;
-    relationship: string;
-  }>;
-  impactStories: Array<{
-    id: string;
-    title: string;
-    content: string;
-    author: string;
-  }>;
+  sharedMemories: SharedMemory[];
+  impactStories: ImpactStory[];
   invitedEmails: string[];
+  witnessPersonalMessage: string;     // ← NEW
+  sentInvitations: SentInvitation[];  // ← NEW
+  memorialId?: string;               // ← NEW (passed from parent for API calls)
 }
 
 // UPDATED: Step 8 now only has Photos & Legacy (no videos)
@@ -186,3 +201,4 @@ export const STEP_NAMES = [
   'Videos', // NEW - Step 9
   'Review & Publish' // UPDATED - now step 10
 ];
+

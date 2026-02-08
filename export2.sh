@@ -1,17 +1,9 @@
 #!/usr/bin/env bash
 
-# Préfixe des fichiers de sortie
-OUTPUT_PREFIX="export_code_part_"
-MAX_LINES=5000
-CURRENT_PART=1
-CURRENT_LINES=0
+# Nom du fichier de sortie
+OUTPUT="export_code.txt"
 
-# Fonction pour créer un nouveau fichier
-new_output_file() {
-  echo "${OUTPUT_PREFIX}${CURRENT_PART}.txt"
-}
-
-OUTPUT=$(new_output_file)
+# On le vide au cas où il existe déjà
 > "$OUTPUT"
 
 # Dossiers à exclure
@@ -49,34 +41,16 @@ echo "==== EXPORT CODE ====" >> "$OUTPUT"
 
 for ext in $EXTENSIONS; do
   echo -e "\n### EXTENSION .$ext ###\n" >> "$OUTPUT"
-  CURRENT_LINES=$((CURRENT_LINES + 2))
 
   find . \
     "${EXCLUDE_PARAMS[@]}" \
     -type f -name "*.$ext" \
     "${EXCLUDE_FILE_PARAMS[@]}" \
     -print | while read -r FILE; do
-      
-      # Compte les lignes du fichier
-      FILE_LINES=$(wc -l < "$FILE")
-      HEADER_LINES=2
-      TOTAL_LINES=$((FILE_LINES + HEADER_LINES))
-      
-      # Si on dépasse la limite, on crée un nouveau fichier
-      if [ $((CURRENT_LINES + TOTAL_LINES)) -gt $MAX_LINES ]; then
-        echo -e "\n=== SUITE DANS PARTIE SUIVANTE ===\n" >> "$OUTPUT"
-        CURRENT_PART=$((CURRENT_PART + 1))
-        OUTPUT=$(new_output_file)
-        > "$OUTPUT"
-        echo "==== EXPORT CODE (PARTIE $CURRENT_PART) ====" >> "$OUTPUT"
-        CURRENT_LINES=1
-      fi
-      
       echo -e "\n===== FICHIER: $FILE =====\n" >> "$OUTPUT"
       cat "$FILE" >> "$OUTPUT"
-      CURRENT_LINES=$((CURRENT_LINES + TOTAL_LINES))
-  done
+    done
 done
 
 echo -e "\n=== FIN ===\n" >> "$OUTPUT"
-echo "Export terminé en $CURRENT_PART partie(s)"
+echo "Export terminé dans $OUTPUT"

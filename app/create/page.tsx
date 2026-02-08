@@ -115,6 +115,8 @@ const getInitialData = (): MemorialData => ({
     sharedMemories: [],
     impactStories: [],
     invitedEmails: [],
+    witnessPersonalMessage: '',
+    sentInvitations: [],
   },
   step8: {
     coverPhoto: null,
@@ -820,6 +822,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep7}
                           onNext={() => setViewMode('hub')}
                           onBack={() => setViewMode('hub')}
+                          isPaid={memorialData.paid}
                         />
                       )}
                       {memorialData.currentStep === 8 && (
