@@ -4,6 +4,7 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { createFullSnapshot } from '@/lib/versionService';
 
 function PaymentSuccessContent() {
     const router = useRouter();
@@ -26,6 +27,25 @@ function PaymentSuccessContent() {
 
                 if (result.error) {
                     throw new Error(result.error);
+                }
+
+                // Create a full snapshot as a payment milestone
+                const userId = localStorage.getItem('user-id');
+                const { data: memorialData } = await supabase
+                    .from('memorials')
+                    .select('*')
+                    .eq('id', memorialId)
+                    .single();
+
+                if (memorialData) {
+                    await createFullSnapshot({
+                        memorialId,
+                        data: memorialData,
+                        userId: userId || undefined,
+                        userName: 'Owner',
+                        changeSummary: 'Archive activated — payment confirmed',
+                        changeType: 'manual',
+                    });
                 }
 
                 console.log("Archive successfully updated to PAID state via server.");
