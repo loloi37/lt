@@ -1,13 +1,13 @@
 // app/create/page.tsx - COMPLETE FILE WITH MOBILE FIX
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort } from 'lucide-react';
+import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort, History } from 'lucide-react';
 import PreviewModal from '@/components/wizard/PreviewModal';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import PathCard from '@/components/wizard/PathCard';
-import LiveMirror from '@/components/wizard/LiveMirror';
+import MemorialRenderer from '@/components/MemorialRenderer';
 import { getPathStatus } from '@/lib/paths-logic';
 import Step1BasicInfo from '@/components/wizard/Step1BasicInfo';
 import Step2Childhood from '@/components/wizard/Step2Childhood';
@@ -19,6 +19,7 @@ import Step7Memories from '@/components/wizard/Step7Memories';
 import Step8Media from '@/components/wizard/Step8Media';
 import Step9Videos from '@/components/wizard/Step9Videos';
 import TutorialPopup from '@/components/TutorialPopup';
+import VersionHistory from '@/components/VersionHistory';
 import {
   MemorialData,
   BasicInfo,
@@ -34,6 +35,7 @@ import {
 } from '@/types/memorial';
 import { PathId } from '@/types/paths';
 import { supabase } from '@/lib/supabase';
+import { createVersion } from '@/lib/versionService';
 import { GoTrueAdminApi } from '@supabase/supabase-js';
 import { table } from 'node:console';
 
@@ -146,6 +148,10 @@ function CreateMemorialPageContent() {
   const [isLoading, setIsLoading] = useState(!!memorialId);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Ref to track data when entering a step (for version diffing)
+  const stepEntryDataRef = useRef<MemorialData>(getInitialData());
 
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
@@ -278,14 +284,17 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
-        setMemorialData({
+        const loadedData = {
           ...data,
           paid: data.paid || false,
           currentStep: 1,
           lastSaved: data.updated_at,
           completedSteps: data.completed_steps || [],
-        });
+        };
+        setMemorialData(loadedData);
         setCurrentMemorialId(id);
+        // Initialize step entry ref with loaded data
+        stepEntryDataRef.current = structuredClone(loadedData);
       }
     } catch (error) {
       console.error('Error loading memorial:', error);
@@ -375,7 +384,23 @@ function CreateMemorialPageContent() {
     }
   };
 
-  const goToNextStepAndComplete = () => {
+  const goToNextStepAndComplete = async () => {
+    // Create version comparing entry state vs current state
+    if (currentMemorialId) {
+      const userId = localStorage.getItem('user-id');
+      await createVersion({
+        memorialId: currentMemorialId,
+        oldData: stepEntryDataRef.current,
+        newData: memorialData,
+        userId: userId || undefined,
+        userName: 'Owner',
+        changeType: 'manual',
+      });
+    }
+
+    // Update the entry snapshot for the next step
+    stepEntryDataRef.current = structuredClone(memorialData);
+
     if (memorialData.currentStep < TOTAL_STEPS) {
       setMemorialData(prev => ({
         ...prev,
@@ -737,6 +762,17 @@ function CreateMemorialPageContent() {
               <span className="text-xs text-sage font-medium bg-sage/5 px-3 py-1 rounded-full border border-sage/20">
                 Path: {activePath?.toUpperCase() || 'WIZARD'}
               </span>
+
+              {/* Version History Button */}
+              {currentMemorialId && (
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-sand/40 rounded-xl hover:bg-sand/10 transition-all text-xs text-charcoal/60"
+                >
+                  <History size={14} />
+                  <span className="hidden sm:inline">History</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -861,7 +897,12 @@ function CreateMemorialPageContent() {
                   {/* RIGHT PANEL: The Mirror */}
                   <Panel defaultSize={50} minSize={25} className="h-full">
                     <div className="h-full w-full overflow-hidden p-4 bg-ivory">
-                      <LiveMirror data={memorialData} />
+                      <MemorialRenderer
+                        data={memorialData}
+                        isPreview={!memorialData.paid}
+                        compact={true}
+                        className="h-full"
+                      />
                     </div>
                   </Panel>
                 </>
@@ -907,6 +948,22 @@ function CreateMemorialPageContent() {
           />
         )
       }
+
+      {/* VERSION HISTORY MODAL */}
+      {showHistory && currentMemorialId && (
+        <VersionHistory
+          memorialId={currentMemorialId}
+          currentData={memorialData}
+          userId={localStorage.getItem('user-id') || undefined}
+          userName="Owner"
+          onRestore={(restoredData) => {
+            setMemorialData(restoredData);
+            stepEntryDataRef.current = structuredClone(restoredData);
+            setShowHistory(false);
+          }}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div >
   );
 }
