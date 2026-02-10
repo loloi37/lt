@@ -284,8 +284,22 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
-        const loadedData = {
+        // IMPROVED MERGING: Deep merge to ensure missing properties in DB are filled with defaults
+        const initial = getInitialData();
+        const loadedData: MemorialData = {
+          ...initial,
           ...data,
+          // Deep merge each step
+          step1: { ...initial.step1, ...(data.step1 || {}) },
+          step2: { ...initial.step2, ...(data.step2 || {}) },
+          step3: { ...initial.step3, ...(data.step3 || {}) },
+          step4: { ...initial.step4, ...(data.step4 || {}) },
+          step5: { ...initial.step5, ...(data.step5 || {}) },
+          step6: { ...initial.step6, ...(data.step6 || {}) },
+          step7: { ...initial.step7, ...(data.step7 || {}) },
+          step8: { ...initial.step8, ...(data.step8 || {}) },
+          step9: { ...initial.step9, ...(data.step9 || {}) },
+
           paid: data.paid || false,
           currentStep: 1,
           lastSaved: data.updated_at,
@@ -333,6 +347,7 @@ function CreateMemorialPageContent() {
       const currentMode = searchParams.get('mode') || localStorage.getItem('legacy-vault-mode') || 'personal';
 
       const memorialRecord = {
+        id: currentMemorialId || undefined, // ⬅ CRITICAL: Include ID if exists
         step1: memorialData.step1,
         step2: memorialData.step2,
         step3: memorialData.step3,
@@ -343,7 +358,7 @@ function CreateMemorialPageContent() {
         step8: memorialData.step8,
         step9: memorialData.step9,
         status: 'draft',
-        slug: slug,
+        slug: slug || currentMemorialId, // Fallback to ID if no name
         full_name: memorialData.step1.fullName,
         birth_date: memorialData.step1.birthDate || null,
         death_date: memorialData.step1.deathDate || null,
@@ -353,30 +368,28 @@ function CreateMemorialPageContent() {
         mode: currentMode,
         user_id: userId,
         paid: memorialData.paid,
+        updated_at: new Date().toISOString(),
       };
 
-      if (currentMemorialId) {
-        const { error } = await supabase
-          .from('memorials')
-          .update(memorialRecord)
-          .eq('id', currentMemorialId);
+      // ✅ USE UPSERT instead of INSERT/UPDATE separately
+      const { data, error } = await supabase
+        .from('memorials')
+        .upsert(memorialRecord, {
+          onConflict: 'id', // ⬅ Use ID as conflict key
+          ignoreDuplicates: false // ⬅ Always UPDATE if exists
+        })
+        .select()
+        .single();
 
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('memorials')
-          .insert([memorialRecord])
-          .select()
-          .single();
+      if (error) throw error;
 
-        if (error) throw error;
-
-        if (data) {
-          setCurrentMemorialId(data.id);
-          localStorage.setItem('current-memorial-id', data.id);
-          window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
-        }
+      // If this was a new memorial, update the ID
+      if (data && !currentMemorialId) {
+        setCurrentMemorialId(data.id);
+        localStorage.setItem('current-memorial-id', data.id);
+        window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
       }
+
       setSaveStatus('saved');
     } catch (error: any) {
       console.error('Full Error Object:', error);

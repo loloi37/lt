@@ -56,15 +56,31 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
 
   // Gallery
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // We REMOVED the check (!canUploadMore). We WANT them to upload now.
-    // The restriction will happen visually in the Mirror (Blur), not here.
-
     const files = Array.from(e.target.files || []);
+
+    // ⚠️ VÉRIFICATION DE LIMITE
+    const currentCount = data.gallery.length;
+    const maxAllowed = isPaid ? Infinity : 10; // 10 si draft, illimité si paid
+    const remaining = maxAllowed - currentCount;
+
+    if (remaining <= 0) {
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 photos. ${!isPaid ? 'Activate your archive to upload unlimited photos.' : ''}`);
+      return; // Bloque l'upload
+    }
+
+    // Limite le nombre de fichiers à uploader
+    const filesToUpload = isPaid ? files : files.slice(0, remaining);
+
+    // Message informatif si on a dû limiter
+    if (!isPaid && files.length > remaining) {
+      alert(`You tried to upload ${files.length} photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
+    }
+
+    // Upload les fichiers autorisés
     const newPhotos: typeof data.gallery = [];
     let processed = 0;
 
-    // Upload ALL files (remove the slice/limit logic)
-    files.forEach(file => {
+    filesToUpload.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
         newPhotos.push({
@@ -76,7 +92,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           type: 'photo' as const
         });
         processed++;
-        if (processed === files.length) {
+        if (processed === filesToUpload.length) {
           handleChange('gallery', [...data.gallery, ...newPhotos]);
         }
       };
@@ -99,10 +115,27 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   // Interactive Gallery
   const handleInteractiveGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+
+    // ⚠️ VÉRIFICATION DE LIMITE
+    const currentCount = (data.interactiveGallery || []).length;
+    const maxAllowed = isPaid ? Infinity : 10;
+    const remaining = maxAllowed - currentCount;
+
+    if (remaining <= 0) {
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 interactive photos. ${!isPaid ? 'Activate your archive to upload unlimited interactive photos.' : ''}`);
+      return;
+    }
+
+    const filesToUpload = isPaid ? files : files.slice(0, remaining);
+
+    if (!isPaid && files.length > remaining) {
+      alert(`You tried to upload ${files.length} interactive photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
+    }
+
     const newPhotos: typeof data.interactiveGallery = [];
     let processed = 0;
 
-    files.forEach(file => {
+    filesToUpload.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
         newPhotos.push({
@@ -112,7 +145,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           description: ''
         });
         processed++;
-        if (processed === files.length) {
+        if (processed === filesToUpload.length) {
           handleChange('interactiveGallery', [...(data.interactiveGallery || []), ...newPhotos]);
         }
       };
@@ -147,7 +180,24 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   // Voice Recordings
   const handleVoiceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach(file => {
+
+    // ⚠️ VÉRIFICATION DE LIMITE
+    const currentCount = data.voiceRecordings.length;
+    const maxAllowed = isPaid ? Infinity : 10;
+    const remaining = maxAllowed - currentCount;
+
+    if (remaining <= 0) {
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 voice recordings. ${!isPaid ? 'Activate your archive to upload unlimited recordings.' : ''}`);
+      return;
+    }
+
+    const filesToUpload = isPaid ? files : files.slice(0, remaining);
+
+    if (!isPaid && files.length > remaining) {
+      alert(`You tried to upload ${files.length} recordings, but only ${remaining} slot(s) remaining. Uploading ${remaining} recording(s).`);
+    }
+
+    filesToUpload.forEach(file => {
       const newRecording = {
         id: `voice-${Date.now()}-${Math.random()}`,
         file,
@@ -243,8 +293,11 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
             {data.gallery.length > 0 ? (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                  {data.gallery.map((item) => (
-                    <div key={item.id} className="relative group">
+                  {data.gallery.map((item, index) => (
+                    <div
+                      key={item.id}
+                      className={`relative group ${!isPaid && index > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
                       <div className="aspect-square rounded-xl overflow-hidden bg-sand/20 border border-sand/30">
                         <img
                           src={item.preview}
@@ -281,10 +334,16 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
 
                 <button
                   onClick={() => galleryRef.current?.click()}
-                  className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                  disabled={data.gallery.length >= (isPaid ? Infinity : 10)}
+                  className={`w-full py-4 border-2 border-dashed rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${data.gallery.length >= (isPaid ? Infinity : 10)
+                    ? 'border-sand/20 text-charcoal/30 cursor-not-allowed'
+                    : 'border-sand/40 text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage'
+                    }`}
                 >
                   <Plus size={18} />
-                  Add More Photos
+                  {data.gallery.length >= (isPaid ? Infinity : 10)
+                    ? `Maximum ${isPaid ? '' : 'draft '}photos reached`
+                    : 'Add More Photos'}
                 </button>
               </>
             ) : (

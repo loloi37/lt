@@ -261,7 +261,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                         </div>
                         <div className="flex justify-between items-center mt-1">
                             <p className="text-xs text-charcoal/40">Optional but recommended</p>
-                            <p className="text-xs text-charcoal/40">{data.epitaph.length}/200</p>
+                            <p className="text-xs text-charcoal/40">{(data?.epitaph || '').length}/200</p>
                         </div>
                         <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
                             <p className="text-xs font-medium text-sage mb-2">Examples:</p>

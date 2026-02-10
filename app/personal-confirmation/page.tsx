@@ -2,6 +2,7 @@
 'use client';
 import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function PersonalConfirmationPage() {
@@ -16,16 +17,43 @@ export default function PersonalConfirmationPage() {
 
         setIsProcessing(true);
 
-        // GET THE ID BEFORE SENDING
-        const memorialId = localStorage.getItem('current-memorial-id');
-
         try {
-            // Create Stripe Checkout Session
+            // 1. Check if an archive already exists
+            let memorialId = localStorage.getItem('current-memorial-id');
+
+            // 2. If no archive exists, create an EMPTY one
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                console.log('Creating initial memorial record...');
+                const userId = localStorage.getItem('user-id');
+
+                const { data, error: insertError } = await supabase
+                    .from('memorials')
+                    .insert({
+                        user_id: userId,
+                        slug: `memorial-${Date.now()}`, // Temporary slug
+                        paid: false, // Not yet paid
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('Failed to create memorial:', insertError);
+                    alert('Failed to initialize archive. Please try again.');
+                    return;
+                }
+
+                memorialId = data.id;
+                localStorage.setItem('current-memorial-id', memorialId!);
+            }
+
+            console.log('Proceeding to checkout for memorial:', memorialId);
+
+            // 3. Create Stripe Checkout Session
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    memorialId: memorialId, // <--- CRITICAL: Pass the ID
+                    memorialId: memorialId,
                     plan: 'Personal',
                     amount: 1500, // $1,500
                 }),

@@ -3,8 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { createFullSnapshot } from '@/lib/versionService';
+
 
 function PaymentSuccessContent() {
     const router = useRouter();
@@ -13,9 +12,14 @@ function PaymentSuccessContent() {
 
     useEffect(() => {
         const finalizePayment = async () => {
-            if (!memorialId) return;
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                console.error('No valid memorial ID');
+                alert('Payment successful, but no archive was created. Please contact support with your payment confirmation.');
+                return;
+            }
 
             try {
+                console.log('Calling finalize-payment API for:', memorialId);
                 // Call our new SECURE server route
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
@@ -29,35 +33,17 @@ function PaymentSuccessContent() {
                     throw new Error(result.error);
                 }
 
-                // Create a full snapshot as a payment milestone
-                const userId = localStorage.getItem('user-id');
-                const { data: memorialData } = await supabase
-                    .from('memorials')
-                    .select('*')
-                    .eq('id', memorialId)
-                    .single();
+                // ✅ TOUT est fait côté serveur (update + snapshot)
+                console.log("Archive successfully activated:", result.message);
 
-                if (memorialData) {
-                    await createFullSnapshot({
-                        memorialId,
-                        data: memorialData,
-                        userId: userId || undefined,
-                        userName: 'Owner',
-                        changeSummary: 'Archive activated — payment confirmed',
-                        changeType: 'manual',
-                    });
-                }
-
-                console.log("Archive successfully updated to PAID state via server.");
-
-                // Success! Redirect to Hub
+                // Redirection
                 setTimeout(() => {
                     router.push(`/create?id=${memorialId}`);
                 }, 3000);
 
-            } catch (err) {
-                console.error("Database update failed:", err);
-                alert("Payment successful, but the lock is stuck. Please refresh or contact support.");
+            } catch (err: any) {
+                console.error("Finalization failed:", err);
+                alert(`Payment successful, but finalization failed: ${err.message}. Please contact support.`);
             }
         };
 

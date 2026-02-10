@@ -2,6 +2,7 @@
 'use client';
 import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function FamilyConfirmationPage() {
@@ -17,26 +18,47 @@ export default function FamilyConfirmationPage() {
         setIsProcessing(true);
 
         try {
-            // Create Stripe Checkout Session
+            // 1. Check if an archive already exists
+            let memorialId = localStorage.getItem('current-memorial-id');
+
+            // 2. If no archive exists, create an EMPTY one
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                console.log('Creating initial memorial record...');
+                const userId = localStorage.getItem('user-id');
+
+                const { data, error: insertError } = await supabase
+                    .from('memorials')
+                    .insert({
+                        user_id: userId,
+                        slug: `family-memorial-${Date.now()}`, // Temporary slug
+                        paid: false, // Not yet paid
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('Failed to create memorial:', insertError);
+                    alert('Failed to initialize archive. Please try again.');
+                    return;
+                }
+
+                memorialId = data.id;
+                localStorage.setItem('current-memorial-id', memorialId!);
+            }
+
+            console.log('Proceeding to checkout for memorial:', memorialId);
+
+            // 3. Create Stripe Checkout Session
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    memorialId: memorialId,
                     plan: 'Family',
                     amount: 3000, // $3,000
                 }),
             });
             const { url, error } = await response.json();
-
-            if (error) {
-                throw new Error(error);
-            }
-
-            // Redirect to Stripe Checkout
-            const stripe = await import('@stripe/stripe-js').then(mod =>
-                mod.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-            );
-
 
             if (error) {
                 throw new Error(error);

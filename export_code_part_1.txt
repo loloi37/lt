@@ -87,6 +87,65 @@ done
 
 echo -e "\n=== FIN ===\n" >> "$OUTPUT"
 echo "Export terminé en $CURRENT_PART partie(s)"
+===== FICHIER: ./export2.sh =====
+
+#!/usr/bin/env bash
+
+# Nom du fichier de sortie
+OUTPUT="export_code.txt"
+
+# On le vide au cas où il existe déjà
+> "$OUTPUT"
+
+# Dossiers à exclure
+EXCLUDES=(
+  "node_modules"
+  ".git"
+  "dist"
+  "build"
+  ".next"
+  "venv"
+  "__pycache__"
+)
+
+# Fichiers à exclure explicitement
+EXCLUDE_FILES=(
+  "package-lock.json"
+)
+
+# Construction des patterns d'exclusion pour les dossiers
+EXCLUDE_PARAMS=()
+for e in "${EXCLUDES[@]}"; do
+  EXCLUDE_PARAMS+=(-path "*$e*" -prune -o)
+done
+
+# Construction des patterns d'exclusion pour les fichiers
+EXCLUDE_FILE_PARAMS=()
+for f in "${EXCLUDE_FILES[@]}"; do
+  EXCLUDE_FILE_PARAMS+=(! -name "$f")
+done
+
+# Extensions de fichiers à exporter
+EXTENSIONS="sh js ts jsx tsx py go java cpp hpp c h html css scss json yaml yml md"
+
+echo "==== EXPORT CODE ====" >> "$OUTPUT"
+
+for ext in $EXTENSIONS; do
+  echo -e "\n### EXTENSION .$ext ###\n" >> "$OUTPUT"
+
+  find . \
+    "${EXCLUDE_PARAMS[@]}" \
+    -type f -name "*.$ext" \
+    "${EXCLUDE_FILE_PARAMS[@]}" \
+    -print | while read -r FILE; do
+      echo -e "\n===== FICHIER: $FILE =====\n" >> "$OUTPUT"
+      cat "$FILE" >> "$OUTPUT"
+    done
+done
+
+echo -e "\n=== FIN ===\n" >> "$OUTPUT"
+echo "Export terminé dans $OUTPUT"
+
 ### EXTENSION .js ###
 
 
@@ -109,6 +168,66 @@ module.exports = {
 ### EXTENSION .ts ###
 
 
+===== FICHIER: ./app/api/autosave/route.ts =====
+
+// app/api/autosave/route.ts
+// Handles sendBeacon calls when user closes the page
+// This is a best-effort save — data might arrive as text/plain from sendBeacon
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role for server-side
+);
+
+export async function POST(request: NextRequest) {
+    try {
+        // sendBeacon sends as text/plain, regular fetch sends as application/json
+        const contentType = request.headers.get('content-type') || '';
+        let body: any;
+
+        if (contentType.includes('text/plain')) {
+            const text = await request.text();
+            body = JSON.parse(text);
+        } else {
+            body = await request.json();
+        }
+
+        const { memorialId, step1, step2, step3, step4, step5, step6, step7, step8, step9 } = body;
+
+        if (!memorialId) {
+            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+        }
+
+        const { error } = await supabaseAdmin
+            .from('memorials')
+            .update({
+                step1,
+                step2,
+                step3,
+                step4,
+                step5,
+                step6,
+                step7,
+                step8,
+                step9,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', memorialId);
+
+        if (error) {
+            console.error('Autosave API error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (err: any) {
+        console.error('Autosave API exception:', err);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
 ===== FICHIER: ./app/api/create-checkout/route.ts =====
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -186,6 +305,436 @@ export async function POST(req: NextRequest) {
         console.error('Finalize Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
+}
+===== FICHIER: ./hooks/useAutoSave.ts =====
+
+// hooks/useAutoSave.ts
+// Auto-saves memorial data to Supabase every 30 seconds
+// Also saves on any change after a 3-second debounce (so rapid typing doesn't spam)
+
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { MemorialData } from '@/types/memorial';
+
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+interface UseAutoSaveOptions {
+    memorialId: string | null;
+    data: MemorialData;
+    enabled?: boolean;         // Disable auto-save if needed
+    intervalMs?: number;       // Default: 30000 (30s)
+    debounceMs?: number;       // Default: 3000 (3s) after last change
+}
+
+interface UseAutoSaveReturn {
+    saveStatus: SaveStatus;
+    lastSavedAt: Date | null;
+    saveNow: () => Promise<void>;   // Force immediate save
+    error: string | null;
+}
+
+export function useAutoSave({
+    memorialId,
+    data,
+    enabled = true,
+    intervalMs = 30000,
+    debounceMs = 3000,
+}: UseAutoSaveOptions): UseAutoSaveReturn {
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+    const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    // Refs to track latest data without re-triggering effects
+    const dataRef = useRef(data);
+    const lastSavedDataRef = useRef<string>('');
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const isSavingRef = useRef(false);
+
+    // Keep data ref current
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
+
+    // Core save function
+    const performSave = useCallback(async () => {
+        if (!memorialId || !enabled || isSavingRef.current) return;
+
+        const currentData = dataRef.current;
+
+        // Serialize to compare — skip save if nothing changed
+        const serialized = JSON.stringify({
+            step1: currentData.step1,
+            step2: currentData.step2,
+            step3: currentData.step3,
+            step4: currentData.step4,
+            step5: currentData.step5,
+            step6: currentData.step6,
+            step7: currentData.step7,
+            step8: {
+                // Exclude File objects (can't serialize), keep previews
+                coverPhotoPreview: currentData.step8.coverPhotoPreview,
+                gallery: currentData.step8.gallery.map(g => ({
+                    id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
+                })),
+                interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
+                    id: ig.id, preview: ig.preview, description: ig.description
+                })),
+                voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
+                    id: v.id, title: v.title
+                })),
+                legacyStatement: currentData.step8.legacyStatement,
+            },
+            step9: currentData.step9,
+        });
+
+        if (serialized === lastSavedDataRef.current) {
+            // Nothing changed, skip
+            return;
+        }
+
+        isSavingRef.current = true;
+        setSaveStatus('saving');
+        setError(null);
+
+        try {
+            const { error: saveError } = await supabase
+                .from('memorials')
+                .update({
+                    step1: currentData.step1,
+                    step2: currentData.step2,
+                    step3: currentData.step3,
+                    step4: currentData.step4,
+                    step5: currentData.step5,
+                    step6: currentData.step6,
+                    step7: currentData.step7,
+                    step8: {
+                        coverPhotoPreview: currentData.step8.coverPhotoPreview,
+                        gallery: currentData.step8.gallery.map(g => ({
+                            id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
+                        })),
+                        interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
+                            id: ig.id, preview: ig.preview, description: ig.description
+                        })),
+                        voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
+                            id: v.id, title: v.title
+                        })),
+                        legacyStatement: currentData.step8.legacyStatement,
+                    },
+                    step9: currentData.step9,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', memorialId);
+
+            if (saveError) throw saveError;
+
+            lastSavedDataRef.current = serialized;
+            setLastSavedAt(new Date());
+            setSaveStatus('saved');
+
+            // Reset to idle after 3 seconds
+            setTimeout(() => {
+                setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
+            }, 3000);
+
+        } catch (err: any) {
+            console.error('Auto-save failed:', err);
+            setError(err.message || 'Failed to save');
+            setSaveStatus('error');
+        } finally {
+            isSavingRef.current = false;
+        }
+    }, [memorialId, enabled]);
+
+    // Public "save now" function
+    const saveNow = useCallback(async () => {
+        await performSave();
+    }, [performSave]);
+
+    // Debounced save on data change (3s after last change)
+    useEffect(() => {
+        if (!memorialId || !enabled) return;
+
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            performSave();
+        }, debounceMs);
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, [data, memorialId, enabled, debounceMs, performSave]);
+
+    // Interval save every 30 seconds
+    useEffect(() => {
+        if (!memorialId || !enabled) return;
+
+        intervalTimerRef.current = setInterval(() => {
+            performSave();
+        }, intervalMs);
+
+        return () => {
+            if (intervalTimerRef.current) {
+                clearInterval(intervalTimerRef.current);
+            }
+        };
+    }, [memorialId, enabled, intervalMs, performSave]);
+
+    // Save on page unload (best effort)
+    useEffect(() => {
+        if (!memorialId || !enabled) return;
+
+        const handleBeforeUnload = () => {
+            // Use sendBeacon for reliability on page close
+            const currentData = dataRef.current;
+            const payload = JSON.stringify({
+                memorialId,
+                step1: currentData.step1,
+                step2: currentData.step2,
+                step3: currentData.step3,
+                step4: currentData.step4,
+                step5: currentData.step5,
+                step6: currentData.step6,
+                step7: currentData.step7,
+                step8: {
+                    coverPhotoPreview: currentData.step8.coverPhotoPreview,
+                    gallery: currentData.step8.gallery.map(g => ({
+                        id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
+                    })),
+                    interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
+                        id: ig.id, preview: ig.preview, description: ig.description
+                    })),
+                    voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
+                        id: v.id, title: v.title
+                    })),
+                    legacyStatement: currentData.step8.legacyStatement,
+                },
+                step9: currentData.step9,
+            });
+
+            navigator.sendBeacon('/api/autosave', payload);
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [memorialId, enabled]);
+
+    return { saveStatus, lastSavedAt, saveNow, error };
+}
+===== FICHIER: ./lib/completionLogic.ts =====
+
+// lib/completionLogic.ts
+// Centralized logic for determining archive completion status
+// Used by Step10Review, LiveMirror, Dashboard, etc.
+
+import { MemorialData } from '@/types/memorial';
+
+export type CompletionStatus = 'complete' | 'complete_solo' | 'in_progress' | 'minimal';
+
+export interface StepCompletionInfo {
+    step: number;
+    title: string;
+    completed: boolean;
+    required: boolean;        // Is this step required for "complete" status?
+    optional: boolean;        // Is this an enrichment step (witnesses, videos)?
+    summary: string;
+    category: 'core' | 'enrichment'; // core = needed for completion, enrichment = bonus
+}
+
+export interface CompletionResult {
+    status: CompletionStatus;
+    percentage: number;              // 0-100, based on CORE steps only
+    totalPercentage: number;         // 0-100, including enrichment
+    coreStepsCompleted: number;
+    coreStepsTotal: number;
+    enrichmentStepsCompleted: number;
+    enrichmentStepsTotal: number;
+    steps: StepCompletionInfo[];
+    message: string;                 // User-facing message
+    canPublish: boolean;
+}
+
+/**
+ * Calculate the completion status of a memorial archive.
+ * 
+ * KEY PRINCIPLE: Witnesses (Step 7 invitations) and Videos (Step 9) are 
+ * ENRICHMENT steps, not required for completion. A solo creator who fills 
+ * all core steps has a "complete" archive.
+ */
+export function calculateCompletion(data: MemorialData): CompletionResult {
+    const steps: StepCompletionInfo[] = [
+        {
+            step: 1,
+            title: 'Basic Information',
+            completed: !!(data.step1.fullName && data.step1.birthDate),
+            required: true,
+            optional: false,
+            category: 'core',
+            summary: data.step1.fullName
+                ? `${data.step1.fullName} • ${data.step1.birthDate}${data.step1.deathDate ? ` - ${data.step1.deathDate}` : ' (Living)'}`
+                : 'Not completed',
+        },
+        {
+            step: 2,
+            title: 'Early Life & Childhood',
+            completed: !!(data.step2.familyBackground || data.step2.childhoodHome),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: data.step2.childhoodHome
+                ? `${data.step2.schools.highSchool || 'Schools added'} • ${data.step2.childhoodPersonality.length} traits`
+                : 'Not completed',
+        },
+        {
+            step: 3,
+            title: 'Career & Education',
+            completed: !!(data.step3.occupations.length > 0),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: data.step3.occupations.length > 0
+                ? `${data.step3.occupations.length} job${data.step3.occupations.length !== 1 ? 's' : ''} • ${data.step3.careerHighlights.length} highlights`
+                : 'Not completed',
+        },
+        {
+            step: 4,
+            title: 'Relationships & Family',
+            completed: !!(data.step4.partners.length > 0 || data.step4.children.length > 0),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: (data.step4.partners.length + data.step4.children.length) > 0
+                ? `${data.step4.partners.length} partner${data.step4.partners.length !== 1 ? 's' : ''} • ${data.step4.children.length} child${data.step4.children.length !== 1 ? 'ren' : ''}`
+                : 'Not completed',
+        },
+        {
+            step: 5,
+            title: 'Personality, Values & Passions',
+            completed: !!(data.step5.personalityTraits.length > 0 || data.step5.coreValues.length > 0),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: (data.step5.personalityTraits.length + data.step5.coreValues.length) > 0
+                ? `${data.step5.personalityTraits.length} traits • ${data.step5.coreValues.length} values`
+                : 'Not completed',
+        },
+        {
+            step: 6,
+            title: 'Full Life Story',
+            completed: !!(data.step6.biography.trim().length > 100),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: data.step6.biography.trim().length > 0
+                ? `${data.step6.biography.trim().split(/\s+/).length} words • ${data.step6.lifeChapters.length} chapters`
+                : 'Not completed',
+        },
+        {
+            step: 7,
+            title: 'Memories & Witnesses',
+            completed: !!(
+                data.step7.sharedMemories.length > 0 ||
+                data.step7.impactStories.length > 0 ||
+                (data.step7.invitedEmails && data.step7.invitedEmails.length > 0)
+            ),
+            required: false,
+            optional: true,       // ← ENRICHMENT: not required for "complete"
+            category: 'enrichment',
+            summary: (() => {
+                const memories = data.step7.sharedMemories.length;
+                const stories = data.step7.impactStories.length;
+                const invited = data.step7.invitedEmails?.length || 0;
+                if (memories + stories + invited === 0) return 'No witnesses yet — optional';
+                return `${memories} memories • ${stories} stories • ${invited} invited`;
+            })(),
+        },
+        {
+            step: 8,
+            title: 'Photos & Legacy',
+            completed: !!(data.step8.coverPhotoPreview || data.step8.gallery.length > 0),
+            required: false,
+            optional: false,
+            category: 'core',
+            summary: data.step8.gallery.length > 0
+                ? `${data.step8.gallery.length} photos • ${data.step8.voiceRecordings.length} recordings`
+                : 'Not completed',
+        },
+        {
+            step: 9,
+            title: 'Videos',
+            completed: !!(data.step9.videos.length > 0),
+            required: false,
+            optional: true,       // ← ENRICHMENT: not required for "complete"
+            category: 'enrichment',
+            summary: data.step9.videos.length > 0
+                ? `${data.step9.videos.length} video${data.step9.videos.length !== 1 ? 's' : ''}`
+                : 'No videos yet — optional',
+        },
+    ];
+
+    // Calculate core completion (steps that matter for "complete" status)
+    const coreSteps = steps.filter(s => s.category === 'core');
+    const coreCompleted = coreSteps.filter(s => s.completed).length;
+    const coreTotal = coreSteps.length;
+    const corePercentage = Math.round((coreCompleted / coreTotal) * 100);
+
+    // Calculate enrichment
+    const enrichmentSteps = steps.filter(s => s.category === 'enrichment');
+    const enrichmentCompleted = enrichmentSteps.filter(s => s.completed).length;
+    const enrichmentTotal = enrichmentSteps.length;
+
+    // Total percentage (all steps)
+    const allCompleted = steps.filter(s => s.completed).length;
+    const totalPercentage = Math.round((allCompleted / steps.length) * 100);
+
+    // Determine status
+    let status: CompletionStatus;
+    let message: string;
+    const hasBasicInfo = steps[0].completed; // Step 1 is always required
+
+    if (coreCompleted === coreTotal && enrichmentCompleted === enrichmentTotal) {
+        // Everything done including witnesses + videos
+        status = 'complete';
+        message = 'Your archive is fully complete with all enrichments.';
+    } else if (coreCompleted === coreTotal) {
+        // All core steps done, some enrichment missing — THIS IS STILL COMPLETE
+        status = 'complete_solo';
+        message = 'Your archive is complete. You can invite witnesses or add videos at any time to enrich it further.';
+    } else if (hasBasicInfo && coreCompleted >= 3) {
+        status = 'in_progress';
+        message = `Great progress! ${coreTotal - coreCompleted} core section${coreTotal - coreCompleted !== 1 ? 's' : ''} left to complete your archive.`;
+    } else if (hasBasicInfo) {
+        status = 'minimal';
+        message = 'Your archive is started. Keep filling in sections to build a rich memorial.';
+    } else {
+        status = 'minimal';
+        message = 'Start by completing the Basic Information section.';
+    }
+
+    return {
+        status,
+        percentage: corePercentage,
+        totalPercentage,
+        coreStepsCompleted: coreCompleted,
+        coreStepsTotal: coreTotal,
+        enrichmentStepsCompleted: enrichmentCompleted,
+        enrichmentStepsTotal: enrichmentTotal,
+        steps,
+        message,
+        canPublish: hasBasicInfo,
+    };
+}
+
+/**
+ * Check if a specific step is an enrichment (optional) step.
+ */
+export function isEnrichmentStep(stepNumber: number): boolean {
+    return stepNumber === 7 || stepNumber === 9;
 }
 ===== FICHIER: ./lib/paths-logic.ts =====
 
@@ -382,6 +931,403 @@ export interface MemorialAuthorization {
 
     // Full backup
     form_data_json: any; // or define specific interface
+}
+===== FICHIER: ./lib/versionService.ts =====
+
+// lib/versionService.ts
+// Handles creating, querying, and restoring memorial versions
+// Works with Supabase memorial_versions table
+
+import { supabase } from '@/lib/supabase';
+import { MemorialData } from '@/types/memorial';
+
+// =============================================
+// TYPES
+// =============================================
+
+export interface MemorialVersion {
+    id: string;
+    memorial_id: string;
+    version_number: number;
+    created_at: string;
+    created_by: string | null;
+    created_by_name: string | null;
+    change_summary: string;
+    change_reason: string | null;
+    change_type: 'manual' | 'auto_save' | 'witness_contribution' | 'restore';
+    steps_modified: number[];
+    snapshot_data: Partial<MemorialData>;
+    is_full_snapshot: boolean;
+    is_restored_from: string | null;
+}
+
+interface CreateVersionParams {
+    memorialId: string;
+    oldData: MemorialData;
+    newData: MemorialData;
+    userId?: string;
+    userName?: string;
+    changeReason?: string;
+    changeType?: MemorialVersion['change_type'];
+}
+
+// =============================================
+// STEP NAMES for human-readable summaries
+// =============================================
+
+const STEP_NAMES: Record<number, string> = {
+    1: 'Basic Information',
+    2: 'Early Life & Childhood',
+    3: 'Career & Education',
+    4: 'Relationships & Family',
+    5: 'Personality & Values',
+    6: 'Life Story',
+    7: 'Memories & Witnesses',
+    8: 'Photos & Legacy',
+    9: 'Videos',
+};
+
+// =============================================
+// DETECT WHICH STEPS CHANGED
+// =============================================
+
+function detectChangedSteps(oldData: MemorialData, newData: MemorialData): number[] {
+    const changed: number[] = [];
+
+    const stepKeys: Array<{ step: number; key: keyof MemorialData }> = [
+        { step: 1, key: 'step1' },
+        { step: 2, key: 'step2' },
+        { step: 3, key: 'step3' },
+        { step: 4, key: 'step4' },
+        { step: 5, key: 'step5' },
+        { step: 6, key: 'step6' },
+        { step: 7, key: 'step7' },
+        { step: 8, key: 'step8' },
+        { step: 9, key: 'step9' },
+    ];
+
+    for (const { step, key } of stepKeys) {
+        const oldJson = JSON.stringify(oldData[key] || {});
+        const newJson = JSON.stringify(newData[key] || {});
+        if (oldJson !== newJson) {
+            changed.push(step);
+        }
+    }
+
+    return changed;
+}
+
+// =============================================
+// GENERATE HUMAN-READABLE CHANGE SUMMARY
+// =============================================
+
+function generateChangeSummary(
+    oldData: MemorialData,
+    newData: MemorialData,
+    stepsModified: number[]
+): string {
+    if (stepsModified.length === 0) return 'No changes detected';
+
+    const parts: string[] = [];
+
+    for (const step of stepsModified) {
+        const name = STEP_NAMES[step] || `Step ${step}`;
+
+        // Generate specific summaries per step
+        switch (step) {
+            case 1:
+                if (oldData.step1.fullName !== newData.step1.fullName) {
+                    parts.push(`Updated name to "${newData.step1.fullName}"`);
+                } else {
+                    parts.push(`Updated ${name}`);
+                }
+                break;
+
+            case 6: {
+                const oldWords = oldData.step6.biography.trim().split(/\s+/).length;
+                const newWords = newData.step6.biography.trim().split(/\s+/).length;
+                const diff = newWords - oldWords;
+                if (diff > 0) {
+                    parts.push(`Added ${diff} words to biography`);
+                } else if (diff < 0) {
+                    parts.push(`Edited biography (${Math.abs(diff)} words removed)`);
+                } else {
+                    parts.push('Edited biography');
+                }
+                break;
+            }
+
+            case 8: {
+                const oldPhotos = oldData.step8.gallery?.length || 0;
+                const newPhotos = newData.step8.gallery?.length || 0;
+                const photoDiff = newPhotos - oldPhotos;
+                if (photoDiff > 0) {
+                    parts.push(`Added ${photoDiff} photo${photoDiff !== 1 ? 's' : ''}`);
+                } else if (photoDiff < 0) {
+                    parts.push(`Removed ${Math.abs(photoDiff)} photo${Math.abs(photoDiff) !== 1 ? 's' : ''}`);
+                } else {
+                    parts.push(`Updated ${name}`);
+                }
+                break;
+            }
+
+            case 9: {
+                const oldVids = oldData.step9?.videos?.length || 0;
+                const newVids = newData.step9?.videos?.length || 0;
+                const vidDiff = newVids - oldVids;
+                if (vidDiff > 0) {
+                    parts.push(`Added ${vidDiff} video${vidDiff !== 1 ? 's' : ''}`);
+                } else if (vidDiff < 0) {
+                    parts.push(`Removed ${Math.abs(vidDiff)} video${Math.abs(vidDiff) !== 1 ? 's' : ''}`);
+                } else {
+                    parts.push(`Updated ${name}`);
+                }
+                break;
+            }
+
+            default:
+                parts.push(`Updated ${name}`);
+        }
+    }
+
+    return parts.join(', ');
+}
+
+// =============================================
+// CREATE A VERSION
+// =============================================
+
+export async function createVersion({
+    memorialId,
+    oldData,
+    newData,
+    userId,
+    userName,
+    changeReason,
+    changeType = 'manual',
+}: CreateVersionParams): Promise<{ success: boolean; version?: MemorialVersion; error?: string }> {
+    try {
+        // Detect what changed
+        const stepsModified = detectChangedSteps(oldData, newData);
+
+        // Don't create a version if nothing changed
+        if (stepsModified.length === 0) {
+            return { success: true }; // Silent skip
+        }
+
+        // Generate summary
+        const changeSummary = generateChangeSummary(oldData, newData, stepsModified);
+
+        // Build snapshot — only save the changed steps (diff approach)
+        const snapshotData: Record<string, any> = {};
+        for (const step of stepsModified) {
+            const key = `step${step}` as keyof MemorialData;
+            snapshotData[key] = newData[key];
+        }
+
+        // Get next version number
+        const { data: versionNum, error: numError } = await supabase
+            .rpc('get_next_version_number', { p_memorial_id: memorialId });
+
+        if (numError) throw numError;
+
+        // Insert the version
+        const { data: version, error: insertError } = await supabase
+            .from('memorial_versions')
+            .insert({
+                memorial_id: memorialId,
+                version_number: versionNum,
+                created_by: userId || null,
+                created_by_name: userName || null,
+                change_summary: changeSummary,
+                change_reason: changeReason || null,
+                change_type: changeType,
+                steps_modified: stepsModified,
+                snapshot_data: snapshotData,
+                is_full_snapshot: false,
+            })
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        return { success: true, version };
+    } catch (err: any) {
+        console.error('Failed to create version:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+// =============================================
+// CREATE A FULL SNAPSHOT (for milestones: publish, payment, restore)
+// =============================================
+
+export async function createFullSnapshot({
+    memorialId,
+    data,
+    userId,
+    userName,
+    changeSummary,
+    changeReason,
+    changeType = 'manual',
+}: {
+    memorialId: string;
+    data: MemorialData;
+    userId?: string;
+    userName?: string;
+    changeSummary: string;
+    changeReason?: string;
+    changeType?: MemorialVersion['change_type'];
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { data: versionNum } = await supabase
+            .rpc('get_next_version_number', { p_memorial_id: memorialId });
+
+        const { error } = await supabase
+            .from('memorial_versions')
+            .insert({
+                memorial_id: memorialId,
+                version_number: versionNum || 1,
+                created_by: userId || null,
+                created_by_name: userName || null,
+                change_summary: changeSummary,
+                change_reason: changeReason || null,
+                change_type: changeType,
+                steps_modified: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                snapshot_data: {
+                    step1: data.step1,
+                    step2: data.step2,
+                    step3: data.step3,
+                    step4: data.step4,
+                    step5: data.step5,
+                    step6: data.step6,
+                    step7: data.step7,
+                    step8: data.step8,
+                    step9: data.step9,
+                },
+                is_full_snapshot: true,
+            });
+
+        if (error) throw error;
+        return { success: true };
+    } catch (err: any) {
+        console.error('Failed to create full snapshot:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+// =============================================
+// GET VERSION HISTORY
+// =============================================
+
+export async function getVersionHistory(
+    memorialId: string,
+    limit = 50
+): Promise<{ versions: MemorialVersion[]; error?: string }> {
+    try {
+        const { data, error } = await supabase
+            .from('memorial_versions')
+            .select('*')
+            .eq('memorial_id', memorialId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return { versions: data || [] };
+    } catch (err: any) {
+        console.error('Failed to get version history:', err);
+        return { versions: [], error: err.message };
+    }
+}
+
+// =============================================
+// GET SINGLE VERSION
+// =============================================
+
+export async function getVersion(
+    versionId: string
+): Promise<{ version: MemorialVersion | null; error?: string }> {
+    try {
+        const { data, error } = await supabase
+            .from('memorial_versions')
+            .select('*')
+            .eq('id', versionId)
+            .single();
+
+        if (error) throw error;
+        return { version: data };
+    } catch (err: any) {
+        return { version: null, error: err.message };
+    }
+}
+
+// =============================================
+// RESTORE A VERSION
+// =============================================
+
+export async function restoreVersion(
+    memorialId: string,
+    versionId: string,
+    currentData: MemorialData,
+    userId?: string,
+    userName?: string,
+): Promise<{ success: boolean; restoredData?: MemorialData; error?: string }> {
+    try {
+        // 1. Get the version to restore
+        const { version, error: fetchError } = await getVersion(versionId);
+        if (fetchError || !version) throw new Error(fetchError || 'Version not found');
+
+        // 2. Build restored data
+        let restoredData: MemorialData;
+
+        if (version.is_full_snapshot) {
+            // Full snapshot — use it directly
+            restoredData = {
+                ...currentData, // Keep non-step fields (paid, etc.)
+                ...version.snapshot_data,
+            } as MemorialData;
+        } else {
+            // Partial snapshot — merge changed steps onto current data
+            restoredData = { ...currentData };
+            for (const [key, value] of Object.entries(version.snapshot_data)) {
+                (restoredData as any)[key] = value;
+            }
+        }
+
+        // 3. Update the memorial in DB
+        const { error: updateError } = await supabase
+            .from('memorials')
+            .update({
+                step1: restoredData.step1,
+                step2: restoredData.step2,
+                step3: restoredData.step3,
+                step4: restoredData.step4,
+                step5: restoredData.step5,
+                step6: restoredData.step6,
+                step7: restoredData.step7,
+                step8: restoredData.step8,
+                step9: restoredData.step9,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', memorialId);
+
+        if (updateError) throw updateError;
+
+        // 4. Create a NEW version recording this restore
+        await createFullSnapshot({
+            memorialId,
+            data: restoredData,
+            userId,
+            userName,
+            changeSummary: `Restored to version #${version.version_number} from ${new Date(version.created_at).toLocaleDateString()}`,
+            changeType: 'restore',
+        });
+
+        return { success: true, restoredData };
+    } catch (err: any) {
+        console.error('Failed to restore version:', err);
+        return { success: false, error: err.message };
+    }
 }
 ===== FICHIER: ./next-env.d.ts =====
 
@@ -773,22 +1719,37 @@ export interface LifeStory {
   }>;
 }
 
+// NEW: Invitation tracking type
+export interface SentInvitation {
+  email: string;
+  sentAt: string;        // ISO date string
+  status: 'sent' | 'accepted' | 'declined' | 'pending';
+  acceptedAt?: string;   // When witness accepted the invitation
+}
+
+export interface SharedMemory {
+  id: string;
+  title: string;
+  date: string;
+  content: string;
+  author: string;
+  relationship: string;
+}
+
+export interface ImpactStory {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+}
+
 export interface MemoriesStories {
-  sharedMemories: Array<{
-    id: string;
-    title: string;
-    date: string;
-    content: string;
-    author: string;
-    relationship: string;
-  }>;
-  impactStories: Array<{
-    id: string;
-    title: string;
-    content: string;
-    author: string;
-  }>;
+  sharedMemories: SharedMemory[];
+  impactStories: ImpactStory[];
   invitedEmails: string[];
+  witnessPersonalMessage: string;     // ← NEW
+  sentInvitations: SentInvitation[];  // ← NEW
+  memorialId?: string;               // ← NEW (passed from parent for API calls)
 }
 
 // UPDATED: Step 8 now only has Photos & Legacy (no videos)
@@ -860,6 +1821,8 @@ export const STEP_NAMES = [
   'Videos', // NEW - Step 9
   'Review & Publish' // UPDATED - now step 10
 ];
+
+
 ===== FICHIER: ./types/paths.ts =====
 
 // types/paths.ts
@@ -3162,14 +4125,14 @@ export default function ConciergeConfirmationPage() {
 
 // app/create/page.tsx - COMPLETE FILE WITH MOBILE FIX
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort } from 'lucide-react';
+import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort, History } from 'lucide-react';
 import PreviewModal from '@/components/wizard/PreviewModal';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import PathCard from '@/components/wizard/PathCard';
-import LiveMirror from '@/components/wizard/LiveMirror';
+import MemorialRenderer from '@/components/MemorialRenderer';
 import { getPathStatus } from '@/lib/paths-logic';
 import Step1BasicInfo from '@/components/wizard/Step1BasicInfo';
 import Step2Childhood from '@/components/wizard/Step2Childhood';
@@ -3181,6 +4144,7 @@ import Step7Memories from '@/components/wizard/Step7Memories';
 import Step8Media from '@/components/wizard/Step8Media';
 import Step9Videos from '@/components/wizard/Step9Videos';
 import TutorialPopup from '@/components/TutorialPopup';
+import VersionHistory from '@/components/VersionHistory';
 import {
   MemorialData,
   BasicInfo,
@@ -3196,6 +4160,7 @@ import {
 } from '@/types/memorial';
 import { PathId } from '@/types/paths';
 import { supabase } from '@/lib/supabase';
+import { createVersion } from '@/lib/versionService';
 import { GoTrueAdminApi } from '@supabase/supabase-js';
 import { table } from 'node:console';
 
@@ -3277,6 +4242,8 @@ const getInitialData = (): MemorialData => ({
     sharedMemories: [],
     impactStories: [],
     invitedEmails: [],
+    witnessPersonalMessage: '',
+    sentInvitations: [],
   },
   step8: {
     coverPhoto: null,
@@ -3306,6 +4273,10 @@ function CreateMemorialPageContent() {
   const [isLoading, setIsLoading] = useState(!!memorialId);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Ref to track data when entering a step (for version diffing)
+  const stepEntryDataRef = useRef<MemorialData>(getInitialData());
 
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
@@ -3438,14 +4409,17 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
-        setMemorialData({
+        const loadedData = {
           ...data,
           paid: data.paid || false,
           currentStep: 1,
           lastSaved: data.updated_at,
           completedSteps: data.completed_steps || [],
-        });
+        };
+        setMemorialData(loadedData);
         setCurrentMemorialId(id);
+        // Initialize step entry ref with loaded data
+        stepEntryDataRef.current = structuredClone(loadedData);
       }
     } catch (error) {
       console.error('Error loading memorial:', error);
@@ -3535,7 +4509,23 @@ function CreateMemorialPageContent() {
     }
   };
 
-  const goToNextStepAndComplete = () => {
+  const goToNextStepAndComplete = async () => {
+    // Create version comparing entry state vs current state
+    if (currentMemorialId) {
+      const userId = localStorage.getItem('user-id');
+      await createVersion({
+        memorialId: currentMemorialId,
+        oldData: stepEntryDataRef.current,
+        newData: memorialData,
+        userId: userId || undefined,
+        userName: 'Owner',
+        changeType: 'manual',
+      });
+    }
+
+    // Update the entry snapshot for the next step
+    stepEntryDataRef.current = structuredClone(memorialData);
+
     if (memorialData.currentStep < TOTAL_STEPS) {
       setMemorialData(prev => ({
         ...prev,
@@ -3897,6 +4887,17 @@ function CreateMemorialPageContent() {
               <span className="text-xs text-sage font-medium bg-sage/5 px-3 py-1 rounded-full border border-sage/20">
                 Path: {activePath?.toUpperCase() || 'WIZARD'}
               </span>
+
+              {/* Version History Button */}
+              {currentMemorialId && (
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-sand/40 rounded-xl hover:bg-sand/10 transition-all text-xs text-charcoal/60"
+                >
+                  <History size={14} />
+                  <span className="hidden sm:inline">History</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -3982,6 +4983,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep7}
                           onNext={() => setViewMode('hub')}
                           onBack={() => setViewMode('hub')}
+                          isPaid={memorialData.paid}
                         />
                       )}
                       {memorialData.currentStep === 8 && (
@@ -4020,7 +5022,12 @@ function CreateMemorialPageContent() {
                   {/* RIGHT PANEL: The Mirror */}
                   <Panel defaultSize={50} minSize={25} className="h-full">
                     <div className="h-full w-full overflow-hidden p-4 bg-ivory">
-                      <LiveMirror data={memorialData} />
+                      <MemorialRenderer
+                        data={memorialData}
+                        isPreview={!memorialData.paid}
+                        compact={true}
+                        className="h-full"
+                      />
                     </div>
                   </Panel>
                 </>
@@ -4066,6 +5073,22 @@ function CreateMemorialPageContent() {
           />
         )
       }
+
+      {/* VERSION HISTORY MODAL */}
+      {showHistory && currentMemorialId && (
+        <VersionHistory
+          memorialId={currentMemorialId}
+          currentData={memorialData}
+          userId={localStorage.getItem('user-id') || undefined}
+          userName="Owner"
+          onRestore={(restoredData) => {
+            setMemorialData(restoredData);
+            stepEntryDataRef.current = structuredClone(restoredData);
+            setShowHistory(false);
+          }}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div >
   );
 }

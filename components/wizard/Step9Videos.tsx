@@ -56,6 +56,25 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
       return;
     }
 
+    // ⚠️ NOUVELLE VÉRIFICATION DE LIMITE
+    const currentCount = data.videos.length;
+    const maxAllowed = 10; // Toujours 10 max (même si paid, pour éviter les abus)
+    const remaining = maxAllowed - currentCount;
+
+    if (remaining <= 0) {
+      setUploadError(`Maximum 10 videos per archive. You have already uploaded ${currentCount} video(s).`);
+      return;
+    }
+
+    const filesToUpload = files.slice(0, remaining);
+
+    if (files.length > remaining) {
+      setUploadError(`You tried to upload ${files.length} videos, but only ${remaining} slot(s) remaining. Will upload ${remaining} video(s).`);
+      // Continue l'upload des fichiers autorisés après 3 secondes
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      setUploadError(null);
+    }
+
     setUploading(true);
     setUploadError(null);
     const newVideos: VideoContent['videos'] = [];
@@ -354,9 +373,13 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
 
         {/* Upload Area */}
         <div
-          onClick={() => !uploading && videoRef.current?.click()}
+          onClick={() => !uploading && data.videos.length < 10 && videoRef.current?.click()}
           data-tutorial="videos"
-          className={`border-2 border-dashed border-sand/40 rounded-xl p-16 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all ${uploading ? 'opacity-70 cursor-wait' : ''
+          className={`border-2 border-dashed rounded-xl p-16 text-center transition-all ${uploading
+              ? 'opacity-70 cursor-wait'
+              : data.videos.length >= 10
+                ? 'border-sand/20 cursor-not-allowed opacity-50'
+                : 'border-sand/40 cursor-pointer hover:border-sage/40 hover:bg-sage/5'
             }`}
         >
           {uploading ? (
@@ -365,6 +388,20 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
               <p className="text-sage font-medium text-lg">{uploadProgress}</p>
               <p className="text-charcoal/60 text-sm mt-2">⚠️ Please stay on this page until upload completes</p>
             </div>
+          ) : data.videos.length >= 10 ? (
+            <>
+              <div className="mb-6 relative inline-block">
+                <div className="w-24 h-24 bg-sand/20 rounded-full flex items-center justify-center">
+                  <Film size={48} className="text-charcoal/30" />
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-charcoal/40 mb-2">
+                Maximum Videos Reached
+              </h3>
+              <p className="text-charcoal/40 mb-6 max-w-md mx-auto">
+                You have uploaded the maximum of 10 videos for this archive.
+              </p>
+            </>
           ) : (
             <>
               <div className="mb-6 relative inline-block">
