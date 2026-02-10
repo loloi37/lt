@@ -228,8 +228,7 @@ export default function PrivacyPage() {
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { createFullSnapshot } from '@/lib/versionService';
+
 
 function PaymentSuccessContent() {
     const router = useRouter();
@@ -238,9 +237,14 @@ function PaymentSuccessContent() {
 
     useEffect(() => {
         const finalizePayment = async () => {
-            if (!memorialId) return;
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                console.error('No valid memorial ID');
+                alert('Payment successful, but no archive was created. Please contact support with your payment confirmation.');
+                return;
+            }
 
             try {
+                console.log('Calling finalize-payment API for:', memorialId);
                 // Call our new SECURE server route
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
@@ -254,35 +258,17 @@ function PaymentSuccessContent() {
                     throw new Error(result.error);
                 }
 
-                // Create a full snapshot as a payment milestone
-                const userId = localStorage.getItem('user-id');
-                const { data: memorialData } = await supabase
-                    .from('memorials')
-                    .select('*')
-                    .eq('id', memorialId)
-                    .single();
+                // ✅ TOUT est fait côté serveur (update + snapshot)
+                console.log("Archive successfully activated:", result.message);
 
-                if (memorialData) {
-                    await createFullSnapshot({
-                        memorialId,
-                        data: memorialData,
-                        userId: userId || undefined,
-                        userName: 'Owner',
-                        changeSummary: 'Archive activated — payment confirmed',
-                        changeType: 'manual',
-                    });
-                }
-
-                console.log("Archive successfully updated to PAID state via server.");
-
-                // Success! Redirect to Hub
+                // Redirection
                 setTimeout(() => {
                     router.push(`/create?id=${memorialId}`);
                 }, 3000);
 
-            } catch (err) {
-                console.error("Database update failed:", err);
-                alert("Payment successful, but the lock is stuck. Please refresh or contact support.");
+            } catch (err: any) {
+                console.error("Finalization failed:", err);
+                alert(`Payment successful, but finalization failed: ${err.message}. Please contact support.`);
             }
         };
 
@@ -443,6 +429,7 @@ export default function PersonMemorialPage({ params }: {
 'use client';
 import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function PersonalConfirmationPage() {
@@ -457,16 +444,43 @@ export default function PersonalConfirmationPage() {
 
         setIsProcessing(true);
 
-        // GET THE ID BEFORE SENDING
-        const memorialId = localStorage.getItem('current-memorial-id');
-
         try {
-            // Create Stripe Checkout Session
+            // 1. Check if an archive already exists
+            let memorialId = localStorage.getItem('current-memorial-id');
+
+            // 2. If no archive exists, create an EMPTY one
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                console.log('Creating initial memorial record...');
+                const userId = localStorage.getItem('user-id');
+
+                const { data, error: insertError } = await supabase
+                    .from('memorials')
+                    .insert({
+                        user_id: userId,
+                        slug: `memorial-${Date.now()}`, // Temporary slug
+                        paid: false, // Not yet paid
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('Failed to create memorial:', insertError);
+                    alert('Failed to initialize archive. Please try again.');
+                    return;
+                }
+
+                memorialId = data.id;
+                localStorage.setItem('current-memorial-id', memorialId!);
+            }
+
+            console.log('Proceeding to checkout for memorial:', memorialId);
+
+            // 3. Create Stripe Checkout Session
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    memorialId: memorialId, // <--- CRITICAL: Pass the ID
+                    memorialId: memorialId,
                     plan: 'Personal',
                     amount: 1500, // $1,500
                 }),
@@ -2948,7 +2962,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                         </div>
                         <div className="flex justify-between items-center mt-1">
                             <p className="text-xs text-charcoal/40">Optional but recommended</p>
-                            <p className="text-xs text-charcoal/40">{data.epitaph.length}/200</p>
+                            <p className="text-xs text-charcoal/40">{(data?.epitaph || '').length}/200</p>
                         </div>
                         <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
                             <p className="text-xs font-medium text-sage mb-2">Examples:</p>
