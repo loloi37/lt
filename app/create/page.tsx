@@ -573,6 +573,36 @@ function CreateMemorialPageContent() {
             </div>
             <h1 className="font-serif text-5xl text-charcoal mb-4">The Crossroads</h1>
 
+
+                        {/* // In app/create/page.tsx
+
+                        // ... inside the Top Bar div ... */}
+
+            {/* Version History Button */}
+            {currentMemorialId && (
+              <>
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-2 px-3 py-1.5 border border-sand/40 rounded-xl hover:bg-sand/10 transition-all text-xs text-charcoal/60"
+                >
+                  <History size={14} />
+                  <span className="hidden sm:inline">History</span>
+                </button>
+
+                {/* NEW ARCHE PREVIEW BUTTON */}
+                <button
+                  onClick={() => window.open(`/api/arche/preview-html?id=${currentMemorialId}`, '_blank')}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-charcoal text-ivory border border-charcoal rounded-xl hover:opacity-90 transition-all text-xs"
+                  title="Preview the offline export HTML"
+                >
+                  <EthernetPort size={14} /> 
+                  <span className="hidden sm:inline">Arche HTML</span>
+                </button>
+              </>
+            )}
+
+                          {/*   // ... rest of the top bar ... */}
+
             {(() => {
               const isPresenceUnlocked = completedPathsCount >= 2;
 
