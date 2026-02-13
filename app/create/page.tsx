@@ -1001,6 +1001,7 @@ function CreateMemorialPageContent() {
                           readOnly={!canEditStep(7)}
                           userRole={userRole}
                           onSubmitContribution={submitContribution}
+                          memorialId={currentMemorialId}
                         />
                       )}
                       {memorialData.currentStep === 8 && (

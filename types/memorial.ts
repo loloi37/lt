@@ -255,3 +255,13 @@ export interface WitnessContribution {
   updatedAt: string;
   disputed?: boolean; // For Step 2.1.6 (Conflict detection)
 }
+
+
+export interface MemorialRelation {
+  id: string;
+  from_memorial_id: string;
+  to_memorial_id: string;
+  target_name?: string; // Fetched from the joined table
+  target_photo?: string; // Fetched from the joined table
+  relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+}

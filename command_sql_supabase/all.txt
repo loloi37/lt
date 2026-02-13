@@ -1115,4 +1115,160 @@ create policy "Allow contribution insertion"
   on memorial_contributions for insert
   with check ( true );
 
+--------------------------------------------------------
 
+42 : 
+
+-- Add new columns for the Enhanced Authorization (Step 4.1)
+alter table public.memorial_authorizations
+  add column if not exists signature_type text default 'typed', -- 'typed' or 'drawn'
+  add column if not exists device_fingerprint text,
+  add column if not exists geolocation text,
+ 
+  -- Specific declaration checkboxes from the new requirement
+  add column if not exists agree_legal_authority boolean default false,
+  add column if not exists agree_good_faith boolean default false,
+  add column if not exists agree_permanence boolean default false,
+  -- We already have indemnification_accepted, usually
+  add column if not exists indemnification_accepted boolean default false;
+
+-- Ensure RLS is still enabled (just in case)
+alter table public.memorial_authorizations enable row level security;
+
+--------------------------------------------------------
+
+43 : 
+
+-- Add authorization_type to distinguish between account-level and individual-level
+alter table public.memorial_authorizations
+  add column if not exists authorization_type text default 'individual';
+
+-- Options will be 'account' (Master) or 'individual' (Per Person)
+
+--------------------------------------------------------
+
+44 : 
+
+create table memorial_relations (
+  id uuid default gen_random_uuid() primary key,
+  from_memorial_id uuid references memorials(id) on delete cascade,
+  to_memorial_id uuid references memorials(id) on delete cascade,
+  relationship_type text not null, -- 'parent', 'child', 'spouse', 'sibling', 'other'
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  -- Prevent duplicate links between the same two people
+  unique(from_memorial_id, to_memorial_id)
+);
+
+-- Enable Security
+alter table memorial_relations enable row level security;
+
+-- Policy: Users can only link memorials they own
+create policy "Owners can manage relations"
+  on memorial_relations
+  for all
+  using (
+    auth.uid() in (
+      select user_id from memorials where id = memorial_relations.from_memorial_id
+    )
+  );
+
+-- Policy: Public read access (so links work in the viewer)
+create policy "Public read relations"
+  on memorial_relations
+  for select
+  using ( true );
+
+  --------------------------------------------------------
+
+45 : 
+
+create table user_successors (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references users(id) on delete cascade, -- The current owner
+  successor_name text not null,
+  successor_email text not null,
+  relationship text not null,
+  status text default 'pending', -- pending, accepted, rejected
+  verification_token uuid default gen_random_uuid(), -- For the email link
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  -- Each user can only have one active successor request at a time per email
+  unique(user_id, successor_email)
+);
+
+-- Enable Security
+alter table user_successors enable row level security;
+
+-- Policy: Users can manage their own successor
+create policy "Users manage their own successor"
+  on user_successors
+  for all
+  using ( auth.uid() = user_id );
+
+-- Policy: Allow public read by token (for the acceptance page)
+create policy "Public read by token"
+  on user_successors
+  for select
+  using ( true );
+
+
+  --------------------------------------------------------
+
+46 : 
+
+-- Add columns to store video evidence metadata
+alter table public.memorial_authorizations
+  add column if not exists video_storage_path text,
+  add column if not exists video_hash text;
+
+-- These fields will stay NULL if the user didn't record a video.
+
+--------------------------------------------------------
+
+47 : 
+
+create table succession_activations (
+  id uuid default gen_random_uuid() primary key,
+  successor_id uuid references user_successors(id),
+  death_certificate_url text not null, -- Path to file in storage
+  id_proof_url text not null, -- Path to file in storage
+  request_note text,
+  status text default 'under_review', -- under_review, approved, rejected
+  verification_period_ends timestamp with time zone default (now() + interval '30 days'),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Enable RLS
+alter table succession_activations enable row level security;
+
+-- Only the steward can see their own activation request
+create policy "Stewards view own requests"
+  on succession_activations for select
+  using (
+    successor_id in (
+      select id from user_successors where successor_email = auth.jwt() ->> 'email'
+    )
+  );
+
+--------------------------------------------------------
+
+48 : 
+
+-- Add switch and last check-in tracking to users
+alter table users 
+add column if not exists dead_mans_switch_enabled boolean default false,
+add column if not exists last_activity_at timestamp with time zone default now();
+
+-- Update last_activity whenever a user updates a memorial
+-- (This ensures the "switch" doesn't trigger if they are active on the site)
+create or replace function update_user_last_activity()
+returns trigger as $$
+begin
+  update users set last_activity_at = now() where id = new.user_id;
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trigger_update_activity
+after update on memorials
+for each row execute function update_user_last_activity();

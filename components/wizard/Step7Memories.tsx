@@ -2,9 +2,10 @@
 // Changes: Witness invitation UI visible before payment, sending blocked until paid
 'use client';
 
-import { useState } from 'react';
-import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield, Loader2 } from 'lucide-react';
 import { MemoriesStories, WitnessRole } from '@/types/memorial';
+import { supabase } from '@/lib/supabase';
 
 interface Step7Props {
     data: MemoriesStories;
@@ -15,9 +16,10 @@ interface Step7Props {
     readOnly?: boolean;
     userRole: WitnessRole;
     onSubmitContribution: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>;
+    memorialId: string | null;
 }
 
-export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution }: Step7Props) {
+export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution, memorialId }: Step7Props) {
     const [newEmail, setNewEmail] = useState('');
     const [showPreviewEmail, setShowPreviewEmail] = useState(false);
     const [previewRecipient, setPreviewRecipient] = useState('');
@@ -44,6 +46,75 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
         // Reset form
         setNewMemoryDraft({ title: '', content: '', author: '', relationship: '' });
         setIsAddingNew(false);
+    };
+
+    const [pendingContributions, setPendingContributions] = useState<any[]>([]);
+    const [isFetching, setIsFetching] = useState(false);
+    const [disputingId, setDisputingId] = useState<string | null>(null);
+
+    // Fetch pending items only if the user is the Owner
+    useEffect(() => {
+        if (userRole === 'owner' && memorialId) {
+            fetchPendingContributions();
+        }
+    }, [memorialId, userRole]);
+
+    const fetchPendingContributions = async () => {
+        setIsFetching(true);
+        const { data, error } = await supabase
+            .from('memorial_contributions')
+            .select('*')
+            .eq('memorial_id', memorialId)
+            .eq('status', 'pending_approval');
+
+        if (!error && data) {
+            setPendingContributions(data);
+        }
+        setIsFetching(false);
+    };
+
+    const handleDecision = async (
+        contribution: any,
+        decision: 'approved' | 'rejected',
+        overrideContent?: string // <--- NEW OPTIONAL ARGUMENT
+    ) => {
+        try {
+            // 1. Update the contribution record in Supabase
+            const { error: updateError } = await supabase
+                .from('memorial_contributions')
+                .update({ status: decision })
+                .eq('id', contribution.id);
+
+            if (updateError) throw updateError;
+
+            // 2. If approved, add it to the main archive data
+            if (decision === 'approved') {
+                const newMemory = {
+                    id: `witness-${contribution.id}`, // Maintain link to contribution
+                    title: contribution.content.title,
+                    // USE OVERRIDE CONTENT IF PROVIDED, OTHERWISE ORIGINAL
+                    content: overrideContent || contribution.content.content,
+                    author: contribution.witness_name,
+                    relationship: contribution.content.relationship || 'Friend',
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                // Update local state and trigger parent onUpdate
+                const updatedMemories = [...data.sharedMemories, newMemory];
+                onUpdate({ ...data, sharedMemories: updatedMemories });
+            }
+
+            // 3. Refresh the pending list
+            setPendingContributions(prev => prev.filter(item => item.id !== contribution.id));
+            // Clear dispute state if it exists
+            setDisputingId(null);
+
+            alert(decision === 'approved' ? "Processed successfully." : "Contribution rejected.");
+
+        } catch (err: any) {
+            console.error("Decision error:", err);
+            alert("Failed to process decision: " + err.message);
+        }
     };
 
     const handleChange = (field: keyof MemoriesStories, value: any) => {
@@ -149,9 +220,11 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    memorialId: memorialId, // Use the prop we added
                     emails: data.invitedEmails,
                     personalMessage,
-                    memorialId: data.memorialId, // passed from parent
+                    inviterName: "The Family", // We can improve this later with a real name
+                    deceasedName: "Your Loved One", // We can pass this from Step 1 later
                 }),
             });
 
@@ -189,6 +262,99 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
             </div>
 
             <div className="space-y-10">
+                {/* OWNER REVIEW QUEUE */}
+                {userRole === 'owner' && (
+                    <div className="mb-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-serif text-xl text-charcoal flex items-center gap-2">
+                                <Shield size={20} className="text-terracotta" />
+                                Witness Contributions
+                            </h3>
+                            <span className="text-xs bg-terracotta/10 text-terracotta px-2 py-1 rounded-full font-medium">
+                                {pendingContributions.length} Pending
+                            </span>
+                        </div>
+
+                        {isFetching ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="animate-spin text-terracotta/40" size={24} />
+                            </div>
+                        ) : pendingContributions.length === 0 ? (
+                            <div className="p-8 border-2 border-dashed border-sand/30 rounded-2xl text-center">
+                                <p className="text-sm text-charcoal/40 italic">No new contributions to review.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {pendingContributions.map((item) => (
+                                    <div key={item.id} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${disputingId === item.id ? 'border-terracotta ring-1 ring-terracotta' : 'border-terracotta/10'}`}>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="font-medium text-charcoal">{item.content.title}</p>
+                                                <p className="text-xs text-charcoal/40">Submitted by {item.witness_name}</p>
+                                            </div>
+
+                                            {/* STANDARD ACTIONS */}
+                                            {disputingId !== item.id ? (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleDecision(item, 'approved')}
+                                                        className="px-3 py-1.5 bg-sage text-ivory text-xs rounded-lg font-medium hover:bg-sage/90"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDisputingId(item.id)}
+                                                        className="px-3 py-1.5 border border-terracotta/30 text-terracotta text-xs rounded-lg font-medium hover:bg-terracotta/5"
+                                                    >
+                                                        Flag Conflict
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDecision(item, 'rejected')}
+                                                        className="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg font-medium hover:bg-red-100"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                /* CONFLICT RESOLUTION ACTIONS */
+                                                <div className="flex flex-col gap-2 items-end">
+                                                    <span className="text-[10px] font-bold text-terracotta uppercase tracking-wider">Mediation Mode</span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const note = `[Legacy Vault Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
+                                                                handleDecision(item, 'approved', note);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-terracotta text-ivory text-xs rounded-lg font-medium hover:bg-terracotta/90"
+                                                        >
+                                                            Accept with Context Note
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDisputingId(null)}
+                                                            className="px-3 py-1.5 text-charcoal/60 text-xs hover:text-charcoal"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <p className="text-sm text-charcoal/70 italic line-clamp-3">"{item.content.content}"</p>
+
+                                        {/* Visual indicator of conflict */}
+                                        {disputingId === item.id && (
+                                            <div className="mt-3 p-3 bg-terracotta/5 rounded-lg text-xs text-terracotta border border-terracotta/20">
+                                                <p><strong>Conflict Detected:</strong> Choose "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* ========================================= */}
                 {/* SHARED MEMORIES — Same as before           */}
                 {/* ========================================= */}
