@@ -307,6 +307,8 @@ function CreateMemorialPageContent() {
         };
         setMemorialData(loadedData);
         setCurrentMemorialId(id);
+        console.log('MeMoRiAl ID:', id);
+        console.log('MeMoRiAl ID Stringified:', JSON.stringify(id));
         // Initialize step entry ref with loaded data
         stepEntryDataRef.current = structuredClone(loadedData);
       }
@@ -600,6 +602,46 @@ function CreateMemorialPageContent() {
                 </button>
               </>
             )}
+
+
+            {/* ... Arche HTML Button ... */}
+    
+    {/* NEW: ZIP EXPORT BUTTON */}
+    <button
+      onClick={async () => {
+        if (!confirm('Generate full archive? This may take a minute.')) return;
+        try {
+          // Show some loading state if you wish, or just simple alert for now
+          const btn = document.getElementById('btn-export-zip');
+          if(btn) btn.innerText = '⏳ Generating...';
+          
+          const res = await fetch('/api/arche/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ memorialId: currentMemorialId })
+            });
+
+            console.log(JSON.stringify({ memorialId: currentMemorialId }))
+          
+          const result = await res.json();
+          if(btn) btn.innerText = '📦 Export ZIP';
+
+          if (result.success && result.downloadUrl) {
+            window.location.href = result.downloadUrl;
+          } else {
+            alert('Export failed: ' + (result.error || 'Unknown error'));
+          }
+        } catch (e) {
+          alert('Error generating export');
+          console.error('Error generating export:', e);
+        }
+      }}
+      id="btn-export-zip"
+      className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
+      title="Download the full offline archive (ZIP)"
+    >
+      <span className="hidden sm:inline">📦 Export ZIP</span>
+    </button>
 
                           {/*   // ... rest of the top bar ... */}
 
