@@ -13,9 +13,11 @@ interface Step7Props {
     onBack: () => void;
     isPaid?: boolean; // NEW: passed from parent
     readOnly?: boolean; // NEW: passed from parent
+    userRole?: 'owner' | 'co_guardian' | 'witness'; // NEW
+    onSubmitContribution?: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>; // NEW
 }
 
-export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly }: Step7Props) {
+export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution }: Step7Props) {
     const [newEmail, setNewEmail] = useState('');
     const [showPreviewEmail, setShowPreviewEmail] = useState(false);
     const [previewRecipient, setPreviewRecipient] = useState('');

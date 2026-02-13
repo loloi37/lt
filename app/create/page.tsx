@@ -582,6 +582,33 @@ function CreateMemorialPageContent() {
     id => getPathStatus(memorialData, id as PathId) === 'completed'
   ).length;
 
+  const submitContribution = async (type: 'memory' | 'photo' | 'video', content: any) => {
+    // Security check
+    if (userRole !== 'witness' || !currentMemorialId) return;
+
+    const userId = localStorage.getItem('user-id');
+
+    try {
+      const { error } = await supabase
+        .from('memorial_contributions')
+        .insert([{
+          memorial_id: currentMemorialId,
+          user_id: userId,
+          witness_name: "A Witness", // We will improve the name retrieval later
+          type: type,
+          content: content,
+          status: 'pending_approval'
+        }]);
+
+      if (error) throw error;
+      alert("Contribution submitted! The archive owner will review it shortly.");
+
+    } catch (err: any) {
+      console.error("Error submitting contribution:", err);
+      alert("Failed to submit: " + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-ivory relative">
       {viewMode === 'hub' ? (
@@ -900,6 +927,8 @@ function CreateMemorialPageContent() {
                           onBack={() => setViewMode('hub')}
                           isPaid={memorialData.paid}
                           readOnly={!canEditStep(7)}
+                          userRole={userRole}
+                          onSubmitContribution={submitContribution}
                         />
                       )}
                       {memorialData.currentStep === 8 && (
