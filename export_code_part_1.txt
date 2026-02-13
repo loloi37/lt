@@ -274,103 +274,36 @@ export async function POST(request: NextRequest) {
 }
 ===== FICHIER: ./app/api/finalize-payment/route.ts =====
 
+// app/api/finalize-payment/route.ts
+import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { createFullSnapshot } from '@/lib/versionService';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
-        const { memorialId } = await request.json();
+        const { memorialId } = await req.json();
 
-        // NEW CHECK
-        if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-            console.error('[Finalize Payment] Invalid memorial ID:', memorialId);
-            return NextResponse.json({
-                error: 'Invalid memorial ID. Please create an archive first.'
-            }, { status: 400 });
-        }
-
-        console.log('[Finalize Payment] Starting for memorial:', memorialId);
-
-        // Initialize Supabase admin client with service role key
-        const { createClient } = await import('@supabase/supabase-js');
+        // 1. Initialize Supabase with the SERVICE ROLE KEY (Superpower)
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!, // Service key, pas anon key
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            }
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // 1. Mettre à jour le statut de paiement
-        // ✅ APRÈS (met les 2 colonnes)
-        const { error: updateError } = await supabaseAdmin
+        // 2. Perform the update (The trigger will allow this because it's the service_role)
+        const { data, error } = await supabaseAdmin
             .from('memorials')
             .update({
-                paid: true,        // ⬅️ AJOUTE CETTE LIGNE
-                payment_confirmed_at: new Date().toISOString()
+                paid: true,
+                status: 'published'
             })
-            .eq('id', memorialId);
-
-        if (updateError) {
-            console.error('Update error:', updateError);
-            return NextResponse.json({ error: updateError.message }, { status: 500 });
-        }
-
-        // 2. Récupérer les données du memorial pour le snapshot
-        const { data: memorialData, error: fetchError } = await supabase
-            .from('memorials')
-            .select('*')
             .eq('id', memorialId)
-            .single();
+            .select();
 
-        if (fetchError || !memorialData) {
-            console.error('Fetch error:', fetchError);
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
+        if (error) throw error;
 
-        // 3. Créer le snapshot CÔTÉ SERVEUR (avec service account Supabase)
-        // ⚠️ IMPORTANT : Utilise un client Supabase avec service_role key ici
-        // (supabaseAdmin déjà initialisé en haut de la fonction)
-
-        // Construire l'objet de snapshot
-        const snapshotData = {
-            memorial_id: memorialId,
-            version_number: 1, // Ou calculer le prochain numéro
-            snapshot_data: memorialData,
-            is_full_snapshot: true,
-            steps_modified: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // Toutes les étapes
-            change_type: 'manual',
-            change_summary: 'Archive activated — payment confirmed',
-            change_reason: null,
-            created_by: memorialData.user_id || null,
-            created_by_name: 'Owner',
-            created_at: new Date().toISOString()
-        };
-
-        const { error: snapshotError } = await supabaseAdmin
-            .from('memorial_versions')
-            .insert(snapshotData);
-
-        if (snapshotError) {
-            console.error('Snapshot creation failed:', snapshotError);
-            // Ne pas bloquer le paiement si le snapshot échoue
-            // Juste logger l'erreur
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: 'Payment finalized and snapshot created'
-        });
-
+        return NextResponse.json({ success: true, data });
     } catch (error: any) {
-        console.error('Finalize payment error:', error);
-        return NextResponse.json({
-            error: error.message || 'Internal server error'
-        }, { status: 500 });
+        console.error('Finalize Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 ===== FICHIER: ./hooks/useAutoSave.ts =====
@@ -810,26 +743,18 @@ import { MemorialData } from '@/types/memorial';
 import { PathId, PathStatus } from '@/types/paths';
 
 export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus => {
-    if (!data) return 'empty';
-
     switch (pathId) {
         case 'facts':
             // Path 1: The Facts (Step 1)
-            const s1 = data.step1;
-            if (!s1) return 'empty';
-            if (s1.fullName && s1.birthDate) return 'completed';
-            if (s1.fullName || s1.birthDate) return 'in_progress';
+            if (data.step1.fullName && data.step1.birthDate) return 'completed';
+            if (data.step1.fullName || data.step1.birthDate) return 'in_progress';
             return 'empty';
 
         case 'body':
             // Path 2: The Body (Steps 2, 3, 4)
-            const s2 = data.step2;
-            const s3 = data.step3;
-            const s4 = data.step4;
-
-            const hasChildhood = !!s2?.childhoodHome;
-            const hasCareer = (s3?.occupations || []).length > 0;
-            const hasFamily = (s4?.partners || []).length > 0 || (s4?.children || []).length > 0;
+            const hasChildhood = !!data.step2.childhoodHome;
+            const hasCareer = data.step3.occupations.length > 0;
+            const hasFamily = data.step4.partners.length > 0 || data.step4.children.length > 0;
 
             if (hasChildhood && hasCareer && hasFamily) return 'completed';
             if (hasChildhood || hasCareer || hasFamily) return 'in_progress';
@@ -837,11 +762,8 @@ export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus =>
 
         case 'soul':
             // Path 3: The Soul (Steps 5, 6)
-            const s5 = data.step5;
-            const s6 = data.step6;
-
-            const hasTraits = (s5?.personalityTraits || []).length >= 3;
-            const hasBio = (s6?.biography || '').length > 200;
+            const hasTraits = data.step5.personalityTraits.length >= 3;
+            const hasBio = data.step6.biography.length > 200;
 
             if (hasTraits && hasBio) return 'completed';
             if (hasTraits || hasBio) return 'in_progress';
@@ -856,11 +778,8 @@ export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus =>
 
             if (completedPaths < 2) return 'locked';
 
-            const s8 = data.step8;
-            const s9 = data.step9;
-
-            const hasPhotos = (s8?.gallery || []).length > 0;
-            const hasVideos = (s9?.videos || []).length > 0;
+            const hasPhotos = data.step8.gallery.length > 0;
+            const hasVideos = data.step9.videos.length > 0;
 
             if (hasPhotos && hasVideos) return 'completed';
             if (hasPhotos || hasVideos) return 'in_progress';
@@ -868,8 +787,7 @@ export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus =>
 
         case 'witnesses':
             // Step 7: Memories & Stories
-            const s7 = data.step7;
-            const hasInvited = (s7?.invitedEmails || []).length > 0;
+            const hasInvited = data.step7.invitedEmails.length > 0;
             if (hasInvited) return 'completed';
             return 'empty';
 
@@ -4491,22 +4409,8 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
-        // IMPROVED MERGING: Deep merge to ensure missing properties in DB are filled with defaults
-        const initial = getInitialData();
-        const loadedData: MemorialData = {
-          ...initial,
+        const loadedData = {
           ...data,
-          // Deep merge each step
-          step1: { ...initial.step1, ...(data.step1 || {}) },
-          step2: { ...initial.step2, ...(data.step2 || {}) },
-          step3: { ...initial.step3, ...(data.step3 || {}) },
-          step4: { ...initial.step4, ...(data.step4 || {}) },
-          step5: { ...initial.step5, ...(data.step5 || {}) },
-          step6: { ...initial.step6, ...(data.step6 || {}) },
-          step7: { ...initial.step7, ...(data.step7 || {}) },
-          step8: { ...initial.step8, ...(data.step8 || {}) },
-          step9: { ...initial.step9, ...(data.step9 || {}) },
-
           paid: data.paid || false,
           currentStep: 1,
           lastSaved: data.updated_at,
@@ -4554,7 +4458,6 @@ function CreateMemorialPageContent() {
       const currentMode = searchParams.get('mode') || localStorage.getItem('legacy-vault-mode') || 'personal';
 
       const memorialRecord = {
-        id: currentMemorialId || undefined, // ⬅ CRITICAL: Include ID if exists
         step1: memorialData.step1,
         step2: memorialData.step2,
         step3: memorialData.step3,
@@ -4565,7 +4468,7 @@ function CreateMemorialPageContent() {
         step8: memorialData.step8,
         step9: memorialData.step9,
         status: 'draft',
-        slug: slug || currentMemorialId, // Fallback to ID if no name
+        slug: slug,
         full_name: memorialData.step1.fullName,
         birth_date: memorialData.step1.birthDate || null,
         death_date: memorialData.step1.deathDate || null,
@@ -4575,28 +4478,30 @@ function CreateMemorialPageContent() {
         mode: currentMode,
         user_id: userId,
         paid: memorialData.paid,
-        updated_at: new Date().toISOString(),
       };
 
-      // ✅ USE UPSERT instead of INSERT/UPDATE separately
-      const { data, error } = await supabase
-        .from('memorials')
-        .upsert(memorialRecord, {
-          onConflict: 'id', // ⬅ Use ID as conflict key
-          ignoreDuplicates: false // ⬅ Always UPDATE if exists
-        })
-        .select()
-        .single();
+      if (currentMemorialId) {
+        const { error } = await supabase
+          .from('memorials')
+          .update(memorialRecord)
+          .eq('id', currentMemorialId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('memorials')
+          .insert([memorialRecord])
+          .select()
+          .single();
 
-      // If this was a new memorial, update the ID
-      if (data && !currentMemorialId) {
-        setCurrentMemorialId(data.id);
-        localStorage.setItem('current-memorial-id', data.id);
-        window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
+        if (error) throw error;
+
+        if (data) {
+          setCurrentMemorialId(data.id);
+          localStorage.setItem('current-memorial-id', data.id);
+          window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
+        }
       }
-
       setSaveStatus('saved');
     } catch (error: any) {
       console.error('Full Error Object:', error);
@@ -5491,7 +5396,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 'use client';
 import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function FamilyConfirmationPage() {
@@ -5507,47 +5411,26 @@ export default function FamilyConfirmationPage() {
         setIsProcessing(true);
 
         try {
-            // 1. Check if an archive already exists
-            let memorialId = localStorage.getItem('current-memorial-id');
-
-            // 2. If no archive exists, create an EMPTY one
-            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.log('Creating initial memorial record...');
-                const userId = localStorage.getItem('user-id');
-
-                const { data, error: insertError } = await supabase
-                    .from('memorials')
-                    .insert({
-                        user_id: userId,
-                        slug: `family-memorial-${Date.now()}`, // Temporary slug
-                        paid: false, // Not yet paid
-                    })
-                    .select()
-                    .single();
-
-                if (insertError) {
-                    console.error('Failed to create memorial:', insertError);
-                    alert('Failed to initialize archive. Please try again.');
-                    return;
-                }
-
-                memorialId = data.id;
-                localStorage.setItem('current-memorial-id', memorialId!);
-            }
-
-            console.log('Proceeding to checkout for memorial:', memorialId);
-
-            // 3. Create Stripe Checkout Session
+            // Create Stripe Checkout Session
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    memorialId: memorialId,
                     plan: 'Family',
                     amount: 3000, // $3,000
                 }),
             });
             const { url, error } = await response.json();
+
+            if (error) {
+                throw new Error(error);
+            }
+
+            // Redirect to Stripe Checkout
+            const stripe = await import('@stripe/stripe-js').then(mod =>
+                mod.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+            );
+
 
             if (error) {
                 throw new Error(error);
