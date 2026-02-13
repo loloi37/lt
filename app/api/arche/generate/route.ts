@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
         // 3. Process Media
         await processMemorialMedia(archiver, fullData as any);
 
+        // --- NEW: Add Verification Report to ZIP ---
+        const integrityReport = archiver.getVerificationReport();
+        archiver.addTextFile('INTEGRITY_REPORT.txt', integrityReport);
+        // -------------------------------------------
+
         // 4. Generate Metadata
         const manifest = generateManifest(fullData as any, memorialId);
         const readme = generateReadme(fullData as any);

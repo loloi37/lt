@@ -12,7 +12,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
             archiver.addMedia(
                 data.step1.profilePhotoPreview,
                 'media/photos',
-                'profile_photo'
+                'profile_photo',
+                data.step1.profilePhotoHash // Pass the hash
             )
         );
     }
@@ -24,7 +25,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
             archiver.addMedia(
                 data.step8.coverPhotoPreview,
                 'media/photos',
-                'cover_photo'
+                'cover_photo',
+                data.step8.coverPhotoHash // Pass the hash
             )
         );
     }
@@ -33,7 +35,6 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
     if (data.step8.gallery && data.step8.gallery.length > 0) {
         console.log(`Archiving ${data.step8.gallery.length} gallery photos...`);
         data.step8.gallery.forEach((photo, index) => {
-            // Create a descriptive filename: "01_summer_vacation" or "01_photo"
             const safeCaption = (photo.caption || 'photo').substring(0, 20).replace(/[^a-z0-9]/gi, '_');
             const filename = `gallery_${String(index + 1).padStart(2, '0')}_${safeCaption}`;
             
@@ -41,7 +42,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     photo.preview,
                     'media/photos/original',
-                    filename
+                    filename,
+                    photo.sha256_hash // Pass the hash
                 )
             );
         });
@@ -56,7 +58,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     item.preview,
                     'media/photos/original',
-                    filename
+                    filename,
+                    item.sha256_hash // Pass the hash
                 )
             );
         });
@@ -74,16 +77,17 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     video.url,
                     'media/videos',
-                    filename
+                    filename,
+                    video.sha256_hash // Pass the hash
                 )
             );
 
-            // Thumbnail
+            // Thumbnail (Thumbnails usually don't have stored hashes, usually fine to skip strict verification for thumbs)
             if (video.thumbnail) {
                 promises.push(
                     archiver.addMedia(
                         video.thumbnail,
-                        'media/photos', // Keep thumbnails in photos folder or a specific subfolder
+                        'media/photos', 
                         `${filename}_thumb`
                     )
                 );
@@ -93,5 +97,5 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
 
     // Wait for all downloads to finish
     await Promise.all(promises);
-    console.log('All media archived successfully.');
+    console.log('All media archived and verified.');
 }
