@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Ensure useRouter is imported
 
 export default function PersonalConfirmationPage() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const router = useRouter();
 
     const handlePayment = async () => {
         if (!acceptedTerms) {
@@ -18,61 +20,56 @@ export default function PersonalConfirmationPage() {
         setIsProcessing(true);
 
         try {
-            // 1. Check if an archive already exists
             let memorialId = localStorage.getItem('current-memorial-id');
 
-            // 2. If no archive exists, create an EMPTY one
+            // Initialize if missing (existing logic)
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.log('Creating initial memorial record...');
                 const userId = localStorage.getItem('user-id');
-
                 const { data, error: insertError } = await supabase
                     .from('memorials')
                     .insert({
                         user_id: userId,
-                        slug: `memorial-${Date.now()}`, // Temporary slug
-                        paid: false, // Not yet paid
+                        slug: `memorial-${Date.now()}`,
+                        paid: false,
                     })
                     .select()
                     .single();
 
-                if (insertError) {
-                    console.error('Failed to create memorial:', insertError);
-                    alert('Failed to initialize archive. Please try again.');
-                    return;
-                }
-
+                if (insertError) throw insertError;
                 memorialId = data.id;
                 localStorage.setItem('current-memorial-id', memorialId!);
             }
 
-            console.log('Proceeding to checkout for memorial:', memorialId);
-
-            // 3. Create Stripe Checkout Session
+            // 1. Call Checkout API
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     memorialId: memorialId,
                     plan: 'Personal',
-                    amount: 1500, // $1,500
+                    amount: 1500,
                 }),
             });
 
-            const { url, error } = await response.json();
+            const data = await response.json();
 
-            if (error) {
-                throw new Error(error);
+            // 2. STRICT BARRIER CHECK
+            if (!response.ok) {
+                if (data.code === 'LEGAL_AUTH_REQUIRED') {
+                    // Redirect to the new authorization page we built
+                    router.push(`/authorization/${memorialId}?redirect=personal`);
+                    return;
+                }
+                throw new Error(data.error || 'Payment initialization failed');
             }
 
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error('No checkout URL returned');
+            // 3. Proceed to Stripe
+            if (data.url) {
+                window.location.href = data.url;
             }
         } catch (error: any) {
             console.error('Payment error:', error);
-            alert('Payment failed. Please try again or contact support.');
+            alert(error.message || 'Payment failed. Please try again.');
         } finally {
             setIsProcessing(false);
         }

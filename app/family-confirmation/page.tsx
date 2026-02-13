@@ -4,78 +4,79 @@ import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function FamilyConfirmationPage() {
+    const router = useRouter(); // <--- ADD THIS LINE
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePayment = async () => {
-        if (!acceptedTerms) {
-            alert('Please accept the general conditions to continue');
-            return;
+    if (!acceptedTerms) {
+        alert('Please accept the general conditions to continue');
+        return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+        let memorialId = localStorage.getItem('current-memorial-id');
+
+        // Initialize empty memorial if none exists (existing logic)
+        if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+            const userId = localStorage.getItem('user-id');
+            const { data, error: insertError } = await supabase
+                .from('memorials')
+                .insert({
+                    user_id: userId,
+                    slug: `family-memorial-${Date.now()}`,
+                    paid: false,
+                    mode: 'family' // Ensure mode is set
+                })
+                .select()
+                .single();
+
+            if (insertError) throw insertError;
+            memorialId = data.id;
+            localStorage.setItem('current-memorial-id', memorialId!);
         }
 
-        setIsProcessing(true);
+        // 1. Call Checkout API
+        const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                memorialId: memorialId,
+                plan: 'Family',
+                amount: 3000, // $3,000
+            }),
+        });
 
-        try {
-            // 1. Check if an archive already exists
-            let memorialId = localStorage.getItem('current-memorial-id');
+        const data = await response.json();
 
-            // 2. If no archive exists, create an EMPTY one
-            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.log('Creating initial memorial record...');
-                const userId = localStorage.getItem('user-id');
-
-                const { data, error: insertError } = await supabase
-                    .from('memorials')
-                    .insert({
-                        user_id: userId,
-                        slug: `family-memorial-${Date.now()}`, // Temporary slug
-                        paid: false, // Not yet paid
-                    })
-                    .select()
-                    .single();
-
-                if (insertError) {
-                    console.error('Failed to create memorial:', insertError);
-                    alert('Failed to initialize archive. Please try again.');
-                    return;
-                }
-
-                memorialId = data.id;
-                localStorage.setItem('current-memorial-id', memorialId!);
+        // 2. STRICT BARRIER CHECK (Catching the security block)
+        if (!response.ok) {
+            if (data.code === 'LEGAL_AUTH_REQUIRED') {
+                // Redirect to the authorization page for this specific ID
+                router.push(`/authorization/${memorialId}?type=account&redirect=family`);
+                return;
             }
-
-            console.log('Proceeding to checkout for memorial:', memorialId);
-
-            // 3. Create Stripe Checkout Session
-            const response = await fetch('/api/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    memorialId: memorialId,
-                    plan: 'Family',
-                    amount: 3000, // $3,000
-                }),
-            });
-            const { url, error } = await response.json();
-
-            if (error) {
-                throw new Error(error);
-            }
-
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error('No checkout URL returned');
-            }
-        } catch (error: any) {
-            console.error('Payment error:', error);
-            alert('Payment failed. Please try again or contact support.');
-        } finally {
-            setIsProcessing(false);
+            throw new Error(data.error || 'Payment initialization failed');
         }
-    };
+
+        // 3. Proceed to Stripe
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error('No checkout URL returned');
+        }
+    } catch (error: any) {
+        console.error('Payment error:', error);
+        alert(error.message || 'Payment failed. Please try again.');
+    } finally {
+        setIsProcessing(false);
+    }
+};
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-terracotta/10 via-ivory to-sage/10">
