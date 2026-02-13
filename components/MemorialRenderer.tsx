@@ -15,6 +15,8 @@ import {
     MousePointer, Play
 } from 'lucide-react';
 import ImageViewer from '@/components/ImageViewer';
+import IntegrityBadge from '@/components/IntegrityBadge';
+
 
 interface MemorialRendererProps {
     data: any;               // Memorial data (step1-step9)
@@ -105,6 +107,7 @@ export default function MemorialRenderer({
                         <>
                             <img src={data.step8.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#7a7979] via-[#7a7979]/20 to-[#7a7979]/10" />
+                            <IntegrityBadge hash={data.step8.coverPhotoHash} className="top-4 left-4" />
                         </>
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-[#706b6b] via-[#706b6b] to-[#706b6b]" />
@@ -429,6 +432,9 @@ export default function MemorialRenderer({
                                         className="group relative aspect-square rounded-xl overflow-hidden bg-sand/20 shadow-sm cursor-pointer hover:shadow-lg transition-all"
                                     >
                                         <img src={photo.preview} alt={photo.caption} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+
+                                        <IntegrityBadge hash={photo.sha256_hash} />
+
                                         {(photo.caption || photo.year) && (
                                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-charcoal/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 {photo.caption && <p className="text-ivory text-xs">{photo.caption}</p>}
@@ -450,7 +456,10 @@ export default function MemorialRenderer({
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'}`}>Video Memories</h2>
                             <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'}`}>
                                 {data.step9.videos.map((video: any) => (
-                                    <div key={video.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4'} border border-sand/30 shadow-sm`}>
+                                    <div key={video.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4'} border border-sand/30 shadow-sm relative`}>
+
+                                        <IntegrityBadge hash={video.sha256_hash} className="top-2 left-2" />
+
                                         <div className="aspect-video bg-charcoal/10 rounded-lg overflow-hidden mb-2">
                                             <video controls preload="metadata" className="w-full h-full" poster={video.thumbnail}>
                                                 <source src={video.url} type="video/mp4" />

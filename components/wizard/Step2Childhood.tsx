@@ -10,6 +10,7 @@ interface Step2Props {
     onUpdate: (data: ChildhoodInfo) => void;
     onNext: () => void;
     onBack: () => void;
+    readOnly?: boolean;
 }
 
 const PERSONALITY_OPTIONS = [
@@ -19,7 +20,7 @@ const PERSONALITY_OPTIONS = [
     'Serious', 'Social', 'Independent', 'Helpful', 'Imaginative'
 ];
 
-export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2Props) {
+export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnly }: Step2Props) {
     const [newInterest, setNewInterest] = useState('');
     const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,7 +112,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                         onChange={(e) => handleChange('childhoodHome', e.target.value)}
                         placeholder="Describe their childhood home and neighborhood..."
                         rows={4}
-                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                        disabled={readOnly}
+                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts to help you:</p>
@@ -132,7 +134,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                         onChange={(e) => handleChange('familyBackground', e.target.value)}
                         placeholder="Describe their family life and upbringing..."
                         rows={5}
-                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                        disabled={readOnly}
+                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts:</p>
@@ -155,7 +158,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                 value={data.schools.elementary}
                                 onChange={(e) => handleSchoolChange('elementary', e.target.value)}
                                 placeholder="Elementary/Primary school"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -164,7 +168,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                 value={data.schools.highSchool}
                                 onChange={(e) => handleSchoolChange('highSchool', e.target.value)}
                                 placeholder="High school"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -173,7 +178,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                 value={data.schools.college}
                                 onChange={(e) => handleSchoolChange('college', e.target.value)}
                                 placeholder="College/University (with degree if applicable)"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -182,7 +188,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                 value={data.schools.additionalEducation}
                                 onChange={(e) => handleSchoolChange('additionalEducation', e.target.value)}
                                 placeholder="Additional education (optional)"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -203,10 +210,11 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                 <button
                                     key={trait}
                                     onClick={() => togglePersonality(trait)}
+                                    disabled={readOnly}
                                     className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
                                         ? 'bg-sage text-ivory border-sage'
                                         : 'bg-white text-charcoal border-sand/40 hover:border-sage/40 hover:bg-sage/5'
-                                        }`}
+                                        } ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {trait}
                                 </button>
@@ -235,15 +243,18 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                             onChange={(e) => setNewInterest(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
                             placeholder="e.g., reading, sports, music..."
-                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                            disabled={readOnly}
+                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         />
-                        <button
-                            onClick={addInterest}
-                            className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
-                        >
-                            <Plus size={18} />
-                            Add
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={addInterest}
+                                className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                            >
+                                <Plus size={18} />
+                                Add
+                            </button>
+                        )}
                     </div>
 
                     {data.earlyInterests.length > 0 && (
@@ -254,12 +265,14 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                     className="flex items-center gap-2 px-4 py-2 bg-terracotta/10 text-terracotta border border-terracotta/30 rounded-full"
                                 >
                                     <span className="text-sm">{interest}</span>
-                                    <button
-                                        onClick={() => removeInterest(interest)}
-                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-terracotta/20 rounded-full p-1 transition-all"
-                                    >
-                                        <X size={14} />
-                                    </button>
+                                    {!readOnly && (
+                                        <button
+                                            onClick={() => removeInterest(interest)}
+                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-terracotta/20 rounded-full p-1 transition-all"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -280,18 +293,24 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                     </label>
 
                     {data.childhoodPhotos.length === 0 ? (
-                        <div
-                            onClick={() => photoInputRef.current?.click()}
-                            className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
-                        >
-                            <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
-                            <p className="text-sm text-charcoal/60 mb-1">
-                                Click to upload childhood photos
-                            </p>
-                            <p className="text-xs text-charcoal/40">
-                                You can select multiple photos
-                            </p>
-                        </div>
+                        !readOnly ? (
+                            <div
+                                onClick={() => photoInputRef.current?.click()}
+                                className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                            >
+                                <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
+                                <p className="text-sm text-charcoal/60 mb-1">
+                                    Click to upload childhood photos
+                                </p>
+                                <p className="text-xs text-charcoal/40">
+                                    You can select multiple photos
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center bg-sand/5">
+                                <p className="text-sm text-charcoal/40">Photo upload disabled</p>
+                            </div>
+                        )
                     ) : (
                         <>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
@@ -304,12 +323,14 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
-                                        <button
-                                            onClick={() => removePhoto(idx)}
-                                            className="absolute top-2 right-2 p-2 bg-charcoal/80 hover:bg-charcoal rounded-full transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                        >
-                                            <X size={14} className="text-ivory" />
-                                        </button>
+                                        {!readOnly && (
+                                            <button
+                                                onClick={() => removePhoto(idx)}
+                                                className="absolute top-2 right-2 p-2 bg-charcoal/80 hover:bg-charcoal rounded-full transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                            >
+                                                <X size={14} className="text-ivory" />
+                                            </button>
+                                        )}
 
                                         {/* Caption and Year */}
                                         <div className="mt-2 space-y-1">
@@ -318,26 +339,30 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack }: Step2
                                                 value={photo.caption}
                                                 onChange={(e) => updatePhotoCaption(idx, e.target.value)}
                                                 placeholder="Caption (optional)"
-                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30"
+                                                disabled={readOnly}
+                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30 disabled:opacity-50"
                                             />
                                             <input
                                                 type="text"
                                                 value={photo.year}
                                                 onChange={(e) => updatePhotoYear(idx, e.target.value)}
                                                 placeholder="Year (optional)"
-                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30"
+                                                disabled={readOnly}
+                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30 disabled:opacity-50"
                                             />
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <button
-                                onClick={() => photoInputRef.current?.click()}
-                                className="w-full py-3 border-2 border-dashed border-sand/40 rounded-xl text-sm text-charcoal/60 hover:border-sage/40 hover:bg-sage/5 transition-all"
-                            >
-                                + Add More Photos
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={() => photoInputRef.current?.click()}
+                                    className="w-full py-3 border-2 border-dashed border-sand/40 rounded-xl text-sm text-charcoal/60 hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                >
+                                    + Add More Photos
+                                </button>
+                            )}
                         </>
                     )}
 

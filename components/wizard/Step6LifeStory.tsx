@@ -10,6 +10,7 @@ interface Step6Props {
     onUpdate: (data: LifeStory) => void;
     onNext: () => void;
     onBack: () => void;
+    readOnly?: boolean;
 }
 
 const WRITING_PROMPTS = [
@@ -44,7 +45,7 @@ const BIOGRAPHY_TEMPLATE = `[Opening - Who they were in essence]
 
 `;
 
-export default function Step6LifeStory({ data, onUpdate, onNext, onBack }: Step6Props) {
+export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnly }: Step6Props) {
     const [showPrompts, setShowPrompts] = useState(true);
     const [showTemplate, setShowTemplate] = useState(false);
     const [previousBiography, setPreviousBiography] = useState<string | null>(null);
@@ -143,7 +144,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack }: Step6
                                 Biography
                             </label>
                             <div className="flex items-center gap-2">
-                                {previousBiography !== null && (
+                                {previousBiography !== null && !readOnly && (
                                     <button
                                         onClick={undoTemplate}
                                         className="text-xs px-3 py-2 bg-terracotta/10 text-terracotta border border-terracotta/30 rounded-lg hover:bg-terracotta/20 transition-all flex items-center gap-2"
@@ -152,13 +153,15 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack }: Step6
                                         Undo Template
                                     </button>
                                 )}
-                                <button
-                                    onClick={() => setShowTemplate(!showTemplate)}
-                                    className="text-xs px-3 py-2 border border-sand/40 rounded-lg hover:bg-sand/10 transition-all flex items-center gap-2"
-                                >
-                                    <FileText size={14} />
-                                    {showTemplate ? 'Hide' : 'Show'} Template
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        onClick={() => setShowTemplate(!showTemplate)}
+                                        className="text-xs px-3 py-2 border border-sand/40 rounded-lg hover:bg-sand/10 transition-all flex items-center gap-2"
+                                    >
+                                        <FileText size={14} />
+                                        {showTemplate ? 'Hide' : 'Show'} Template
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -191,7 +194,8 @@ Start with who they were in essence, then guide us through their journey from ea
 
 Don't worry about making it perfect - just write from the heart. You can always edit later."
                             rows={20}
-                            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none font-serif text-base leading-relaxed"
+                            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
+                            disabled={readOnly}
                         />
 
                         <div className="flex items-center justify-between text-xs text-charcoal/60">
@@ -237,13 +241,15 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                     </div>
 
                                     {/* Remove button */}
-                                    <button
-                                        onClick={() => removeChapter(chapter.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                        title="Remove chapter"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {!readOnly && (
+                                        <button
+                                            onClick={() => removeChapter(chapter.id)}
+                                            className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                            title="Remove chapter"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
 
                                     <div className="grid grid-cols-2 gap-4 pt-2">
                                         <div>
@@ -253,7 +259,8 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                                 value={chapter.period}
                                                 onChange={(e) => updateChapter(chapter.id, 'period', e.target.value)}
                                                 placeholder="e.g., 1960-1975"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                                disabled={readOnly}
                                             />
                                         </div>
                                         <div>
@@ -263,7 +270,8 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                                 value={chapter.ageRange}
                                                 onChange={(e) => updateChapter(chapter.id, 'ageRange', e.target.value)}
                                                 placeholder="e.g., Ages 18-33"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                                disabled={readOnly}
                                             />
                                         </div>
                                     </div>
@@ -275,7 +283,8 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                             value={chapter.title}
                                             onChange={(e) => updateChapter(chapter.id, 'title', e.target.value)}
                                             placeholder="e.g., Finding My Path"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
                                     </div>
 
@@ -286,7 +295,8 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                             onChange={(e) => updateChapter(chapter.id, 'description', e.target.value)}
                                             placeholder="Describe this period of their life (3-5 lines)..."
                                             rows={4}
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
                                     </div>
 
@@ -302,35 +312,42 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                                         value={event}
                                                         onChange={(e) => updateKeyEvent(chapter.id, eventIdx, e.target.value)}
                                                         placeholder="Describe a key event..."
-                                                        className="flex-1 px-4 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-sm"
+                                                        className="flex-1 px-4 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-sm disabled:opacity-60 disabled:bg-sand/10"
+                                                        disabled={readOnly}
                                                     />
-                                                    <button
-                                                        onClick={() => removeKeyEvent(chapter.id, eventIdx)}
-                                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-2 hover:bg-sand/20 rounded-lg transition-all"
-                                                    >
-                                                        <X size={16} className="text-charcoal/40" />
-                                                    </button>
+                                                    {!readOnly && (
+                                                        <button
+                                                            onClick={() => removeKeyEvent(chapter.id, eventIdx)}
+                                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-2 hover:bg-sand/20 rounded-lg transition-all"
+                                                        >
+                                                            <X size={16} className="text-charcoal/40" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
-                                            <button
-                                                onClick={() => addKeyEvent(chapter.id)}
-                                                className="text-xs text-sage hover:text-sage/80 transition-colors flex items-center gap-1 ml-4"
-                                            >
-                                                <Plus size={14} />
-                                                Add Key Event
-                                            </button>
+                                            {!readOnly && (
+                                                <button
+                                                    onClick={() => addKeyEvent(chapter.id)}
+                                                    className="text-xs text-sage hover:text-sage/80 transition-colors flex items-center gap-1 ml-4"
+                                                >
+                                                    <Plus size={14} />
+                                                    Add Key Event
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             ))}
 
-                            <button
-                                onClick={addChapter}
-                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
-                            >
-                                <Plus size={18} />
-                                Add Life Chapter
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={addChapter}
+                                    className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    Add Life Chapter
+                                </button>
+                            )}
 
                             {data.lifeChapters.length > 0 && (
                                 <div className="p-3 bg-sage/5 rounded-lg border border-sage/20">

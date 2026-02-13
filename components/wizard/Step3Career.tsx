@@ -10,9 +10,10 @@ interface Step3Props {
     onUpdate: (data: CareerEducation) => void;
     onNext: () => void;
     onBack: () => void;
+    readOnly?: boolean;
 }
 
-export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Props) {
+export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }: Step3Props) {
     const [newHighlight, setNewHighlight] = useState('');
 
     const handleChange = (field: keyof CareerEducation, value: any) => {
@@ -90,7 +91,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                 className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                             >
                                 {/* Remove button */}
-                                {data.occupations.length > 1 && (
+                                {data.occupations.length > 1 && !readOnly && (
                                     <button
                                         onClick={() => removeOccupation(occupation.id)}
                                         className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
@@ -106,7 +107,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                         value={occupation.title}
                                         onChange={(e) => updateOccupation(occupation.id, 'title', e.target.value)}
                                         placeholder="Job title (e.g., High School English Teacher)"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={readOnly}
                                     />
                                 </div>
 
@@ -115,7 +117,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                     value={occupation.company}
                                     onChange={(e) => updateOccupation(occupation.id, 'company', e.target.value)}
                                     placeholder="Company/Organization (e.g., Boston Public Schools)"
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={readOnly}
                                 />
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -126,7 +129,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                             value={occupation.yearsFrom}
                                             onChange={(e) => updateOccupation(occupation.id, 'yearsFrom', e.target.value)}
                                             placeholder="e.g., 1966"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={readOnly}
                                         />
                                     </div>
                                     <div>
@@ -136,7 +140,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                             value={occupation.yearsTo}
                                             onChange={(e) => updateOccupation(occupation.id, 'yearsTo', e.target.value)}
                                             placeholder="e.g., 2006 or 'Present'"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={readOnly}
                                         />
                                     </div>
                                 </div>
@@ -146,18 +151,21 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                     onChange={(e) => updateOccupation(occupation.id, 'description', e.target.value)}
                                     placeholder="Brief description of their role and responsibilities..."
                                     rows={3}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={readOnly}
                                 />
                             </div>
                         ))}
 
-                        <button
-                            onClick={addOccupation}
-                            className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={18} />
-                            Add Another Job
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={addOccupation}
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus size={18} />
+                                Add Another Job
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -176,12 +184,14 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                             >
                                 <div className="w-2 h-2 rounded-full bg-sage mt-2 flex-shrink-0" />
                                 <p className="flex-1 text-charcoal leading-relaxed">{highlight}</p>
-                                <button
-                                    onClick={() => removeHighlight(index)}
-                                    className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-sage/20 rounded transition-all"
-                                >
-                                    <X size={16} className="text-sage" />
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        onClick={() => removeHighlight(index)}
+                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-sage/20 rounded transition-all"
+                                    >
+                                        <X size={16} className="text-sage" />
+                                    </button>
+                                )}
                             </div>
                         ))}
 
@@ -192,15 +202,18 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                 onChange={(e) => setNewHighlight(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addHighlight())}
                                 placeholder="e.g., Received Teacher of the Year Award..."
-                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={readOnly}
                             />
-                            <button
-                                onClick={addHighlight}
-                                className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
-                            >
-                                <Plus size={18} />
-                                Add
-                            </button>
+                            {!readOnly && (
+                                <button
+                                    onClick={addHighlight}
+                                    className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    Add
+                                </button>
+                            )}
                         </div>
 
                         <div className="p-3 bg-terracotta/5 rounded-lg border border-terracotta/20">
@@ -226,7 +239,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                 value={data.education.major}
                                 onChange={(e) => handleEducationChange('major', e.target.value)}
                                 placeholder="e.g., English Literature, Computer Science"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={readOnly}
                             />
                         </div>
 
@@ -237,7 +251,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                 value={data.education.graduationYear}
                                 onChange={(e) => handleEducationChange('graduationYear', e.target.value)}
                                 placeholder="e.g., 1964"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={readOnly}
                             />
                         </div>
 
@@ -248,7 +263,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack }: Step3Pro
                                 onChange={(e) => handleEducationChange('honors', e.target.value)}
                                 placeholder="e.g., Summa cum laude, Dean's List, Phi Beta Kappa"
                                 rows={2}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={readOnly}
                             />
                         </div>
                     </div>

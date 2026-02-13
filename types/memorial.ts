@@ -9,6 +9,7 @@ export interface BasicInfo {
   deathPlace: string;
   profilePhoto: File | null;
   profilePhotoPreview: string | null;
+  profilePhotoHash?: string; // NEW: Store hash for profile photo
   epitaph: string;
 }
 
@@ -136,6 +137,7 @@ export interface MemoriesStories {
 export interface MediaLegacy {
   coverPhoto: File | null;
   coverPhotoPreview: string | null;
+  coverPhotoHash?: string; // NEW: Store hash for cover photo
   gallery: Array<{
     id: string;
     file: File;
@@ -143,22 +145,24 @@ export interface MediaLegacy {
     caption: string;
     year: string;
     type: 'photo' | 'video';
+    sha256_hash?: string; // NEW: Store hash for gallery items
   }>;
   interactiveGallery: Array<{
     id: string;
     file: File;
     preview: string;
     description: string;
+    sha256_hash?: string; // NEW: Store hash for interactive items
   }>;
   voiceRecordings: Array<{
     id: string;
     file: File;
     title: string;
+    sha256_hash?: string; // NEW: Store hash for voice recordings
   }>;
   legacyStatement: string;
 }
 
-// NEW: Step 9 for Videos only
 // NEW: Step 9 for Videos only
 export interface VideoContent {
   videos: Array<{
@@ -167,8 +171,11 @@ export interface VideoContent {
     thumbnail: string; // Public URL of thumbnail image
     title: string;
     duration?: string;
+    description?: string; // NEW: Description for video
+    sha256_hash?: string; // NEW: Store hash for videos
   }>;
 }
+
 
 // UPDATED: MemorialData with step9
 export interface MemorialData {
@@ -202,3 +209,49 @@ export const STEP_NAMES = [
   'Review & Publish' // UPDATED - now step 10
 ];
 
+// ==========================================
+// PHASE 2: WITNESS & COLLABORATION TYPES
+// ==========================================
+
+export type WitnessRole = 'owner' | 'co_guardian' | 'witness';
+
+export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
+export type ContributionStatus = 'pending_approval' | 'approved' | 'rejected' | 'needs_changes';
+
+export interface WitnessInvitation {
+  id: string; // Unique token/UUID for the link
+  memorialId: string;
+  inviterName: string;
+  inviteeEmail: string;
+  role: WitnessRole;
+  personalMessage?: string;
+  status: InvitationStatus;
+  createdAt: string;
+  expiresAt: string; // Invitations should expire for security (e.g., 30 days)
+}
+
+export interface MemorialWitness {
+  id: string;
+  memorialId: string;
+  userId: string; // Link to the registered user
+  displayName: string;
+  email: string;
+  role: WitnessRole;
+  joinedAt: string;
+  status: 'active' | 'suspended';
+}
+
+// Updated structure for a Memory/Contribution to support the Approval System
+export interface WitnessContribution {
+  id: string;
+  memorialId: string;
+  witnessId: string; // Who wrote it
+  type: 'memory' | 'photo' | 'video';
+  content: any; // The actual data (text, url, etc.)
+  status: ContributionStatus;
+  adminNotes?: string; // If rejected or needs changes, owner writes why here
+  createdAt: string;
+  updatedAt: string;
+  disputed?: boolean; // For Step 2.1.6 (Conflict detection)
+}

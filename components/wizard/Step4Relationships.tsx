@@ -10,6 +10,7 @@ interface Step4Props {
     onUpdate: (data: RelationshipsFamily) => void;
     onNext: () => void;
     onBack: () => void;
+    readOnly?: boolean;
 }
 
 const EVENT_CATEGORIES = [
@@ -21,7 +22,7 @@ const EVENT_CATEGORIES = [
     { value: 'milestone', label: 'Milestone', color: 'bg-amber-100 text-amber-700' },
 ] as const;
 
-export default function Step4Relationships({ data, onUpdate, onNext, onBack }: Step4Props) {
+export default function Step4Relationships({ data, onUpdate, onNext, onBack, readOnly }: Step4Props) {
     const partnerPhotoRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
     const handleChange = (field: keyof RelationshipsFamily, value: any) => {
@@ -145,21 +146,23 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                 className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                             >
                                 {/* Remove button */}
-                                <button
-                                    onClick={() => removePartner(partner.id)}
-                                    className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                    title="Remove"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        onClick={() => removePartner(partner.id)}
+                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                        title="Remove"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
 
                                 <div className="flex gap-4">
                                     {/* Photo upload */}
                                     <div className="flex-shrink-0">
                                         {!partner.photoPreview ? (
                                             <div
-                                                onClick={() => partnerPhotoRefs.current[partner.id]?.click()}
-                                                className="w-24 h-24 border-2 border-dashed border-sand/40 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                                onClick={() => !readOnly && partnerPhotoRefs.current[partner.id]?.click()}
+                                                className={`w-24 h-24 border-2 border-dashed border-sand/40 rounded-xl flex flex-col items-center justify-center transition-all ${readOnly ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-sage/40 hover:bg-sage/5'}`}
                                             >
                                                 <Upload size={20} className="text-charcoal/40 mb-1" />
                                                 <span className="text-xs text-charcoal/40">Photo</span>
@@ -171,12 +174,14 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                                     alt={partner.name}
                                                     className="w-full h-full object-cover rounded-xl border-2 border-sand/30"
                                                 />
-                                                <button
-                                                    onClick={() => removePartnerPhoto(partner.id)}
-                                                    className="absolute -top-2 -right-2 p-1 bg-charcoal rounded-full"
-                                                >
-                                                    <X size={12} className="text-ivory" />
-                                                </button>
+                                                {!readOnly && (
+                                                    <button
+                                                        onClick={() => removePartnerPhoto(partner.id)}
+                                                        className="absolute -top-2 -right-2 p-1 bg-charcoal rounded-full"
+                                                    >
+                                                        <X size={12} className="text-ivory" />
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                         <input
@@ -185,6 +190,7 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             accept="image/*"
                                             onChange={(e) => handlePartnerPhotoUpload(partner.id, e)}
                                             className="hidden"
+                                            disabled={readOnly}
                                         />
                                     </div>
 
@@ -195,7 +201,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             value={partner.name}
                                             onChange={(e) => updatePartner(partner.id, 'name', e.target.value)}
                                             placeholder="Name (e.g., James Thompson)"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
 
                                         <input
@@ -203,7 +210,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             value={partner.relationshipType}
                                             onChange={(e) => updatePartner(partner.id, 'relationshipType', e.target.value)}
                                             placeholder="Relationship (e.g., Spouse, Partner, Husband, Wife)"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
                                     </div>
                                 </div>
@@ -216,7 +224,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             value={partner.yearsFrom}
                                             onChange={(e) => updatePartner(partner.id, 'yearsFrom', e.target.value)}
                                             placeholder="e.g., 1966"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
                                     </div>
                                     <div>
@@ -226,7 +235,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             value={partner.yearsTo}
                                             onChange={(e) => updatePartner(partner.id, 'yearsTo', e.target.value)}
                                             placeholder="e.g., 2018 or 'Present'"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                            disabled={readOnly}
                                         />
                                     </div>
                                 </div>
@@ -236,18 +246,21 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                     onChange={(e) => updatePartner(partner.id, 'description', e.target.value)}
                                     placeholder="Brief description of their relationship..."
                                     rows={2}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                    disabled={readOnly}
                                 />
                             </div>
                         ))}
 
-                        <button
-                            onClick={addPartner}
-                            className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={18} />
-                            Add Partner/Spouse
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={addPartner}
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus size={18} />
+                                Add Partner/Spouse
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -265,13 +278,15 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                 className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                             >
                                 {/* Remove button */}
-                                <button
-                                    onClick={() => removeChild(child.id)}
-                                    className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                    title="Remove"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        onClick={() => removeChild(child.id)}
+                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                        title="Remove"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
 
                                 <div className="pr-8">
                                     <input
@@ -279,7 +294,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                         value={child.name}
                                         onChange={(e) => updateChild(child.id, 'name', e.target.value)}
                                         placeholder="Name (e.g., Michael James Thompson)"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                        disabled={readOnly}
                                     />
                                 </div>
 
@@ -290,7 +306,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                         value={child.birthYear}
                                         onChange={(e) => updateChild(child.id, 'birthYear', e.target.value)}
                                         placeholder="e.g., 1968"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                        disabled={readOnly}
                                     />
                                 </div>
 
@@ -299,18 +316,21 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                     onChange={(e) => updateChild(child.id, 'description', e.target.value)}
                                     placeholder="Brief description (e.g., Civil rights attorney in Atlanta)"
                                     rows={2}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                    disabled={readOnly}
                                 />
                             </div>
                         ))}
 
-                        <button
-                            onClick={addChild}
-                            className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={18} />
-                            Add Child
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={addChild}
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus size={18} />
+                                Add Child
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -333,13 +353,15 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                     className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                                 >
                                     {/* Remove button */}
-                                    <button
-                                        onClick={() => removeLifeEvent(event.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                                        title="Remove"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {!readOnly && (
+                                        <button
+                                            onClick={() => removeLifeEvent(event.id)}
+                                            className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                            title="Remove"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
 
                                     <div className="flex gap-4 pr-8">
                                         <div className="w-24">
@@ -349,7 +371,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                                 value={event.year}
                                                 onChange={(e) => updateLifeEvent(event.id, 'year', e.target.value)}
                                                 placeholder="1968"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-center font-medium"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-center font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                                disabled={readOnly}
                                             />
                                         </div>
 
@@ -360,7 +383,8 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                                 value={event.title}
                                                 onChange={(e) => updateLifeEvent(event.id, 'title', e.target.value)}
                                                 placeholder="e.g., Married James Thompson"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                                disabled={readOnly}
                                             />
                                         </div>
                                     </div>
@@ -371,11 +395,12 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                             {EVENT_CATEGORIES.map((cat) => (
                                                 <button
                                                     key={cat.value}
-                                                    onClick={() => updateLifeEvent(event.id, 'category', cat.value)}
+                                                    onClick={() => !readOnly && updateLifeEvent(event.id, 'category', cat.value)}
+                                                    disabled={readOnly}
                                                     className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${event.category === cat.value
                                                         ? cat.color
                                                         : 'bg-sand/20 text-charcoal/60 hover:bg-sand/30'
-                                                        }`}
+                                                        } ${readOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
                                                 >
                                                     {cat.label}
                                                 </button>
@@ -388,18 +413,21 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack }: S
                                         onChange={(e) => updateLifeEvent(event.id, 'description', e.target.value)}
                                         placeholder="Brief description of what happened..."
                                         rows={2}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                        disabled={readOnly}
                                     />
                                 </div>
                             ))}
 
-                        <button
-                            onClick={addLifeEvent}
-                            className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
-                        >
-                            <Plus size={18} />
-                            Add Life Event
-                        </button>
+                        {!readOnly && (
+                            <button
+                                onClick={addLifeEvent}
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                            >
+                                <Plus size={18} />
+                                Add Life Event
+                            </button>
+                        )}
                     </div>
 
                     <div className="mt-3 p-3 bg-terracotta/5 rounded-lg border border-terracotta/20">
