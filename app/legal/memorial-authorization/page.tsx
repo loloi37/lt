@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
-export default function MemorialAuthorizationPage() {
+import { Suspense } from 'react';
+
+function MemorialAuthorizationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const memorialId = searchParams.get('memorialId');
@@ -279,5 +281,13 @@ export default function MemorialAuthorizationPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function MemorialAuthorizationPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-ivory flex items-center justify-center">Loading...</div>}>
+            <MemorialAuthorizationContent />
+        </Suspense>
     );
 }

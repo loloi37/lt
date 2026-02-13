@@ -1051,3 +1051,27 @@ SELECT id, paid, is_paid FROM memorials;
 
 -- Supprimer is_paid pour éviter la confusion
 ALTER TABLE memorials DROP COLUMN is_paid;
+
+--------------------------------------------------------
+
+40 : 
+
+create table witness_invitations (
+  id uuid default gen_random_uuid() primary key,
+  memorial_id uuid references memorials(id) on delete cascade,
+  inviter_name text not null,
+  invitee_email text not null,
+  role text default 'witness',
+  personal_message text,
+  status text default 'pending', -- pending, accepted, declined, expired
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  expires_at timestamp with time zone default (now() + interval '30 days')
+);
+
+-- Enable Row Level Security
+alter table witness_invitations enable row level security;
+
+-- Allow public read by ID (to check if an invitation is valid on the acceptance page)
+create policy "Allow public read by invitation ID"
+  on witness_invitations for select
+  using ( true );

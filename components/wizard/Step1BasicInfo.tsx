@@ -8,9 +8,10 @@ interface Step1Props {
     data: BasicInfo;
     onUpdate: (data: BasicInfo) => void;
     onNext: () => void;
+    readOnly?: boolean;
 }
 
-export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
+export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly }: Step1Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleChange = (field: keyof BasicInfo, value: any) => {
@@ -87,7 +88,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                 value={data.fullName}
                                 onChange={(e) => handleChange('fullName', e.target.value)}
                                 placeholder="e.g., Eleanor Marie Thompson"
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <p className="text-xs text-charcoal/40 mt-1">Their full legal name or the name they were known by</p>
@@ -105,7 +107,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                 autoComplete="off"
                                 value={data.birthDate}
                                 onChange={(e) => handleChange('birthDate', e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         {calculateAge() && (
@@ -121,6 +124,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                             id="stillLiving"
                             name="memorial_subject_is_living"
                             checked={data.isStillLiving}
+                            disabled={readOnly}
                             onChange={(e) => {
                                 const isChecked = e.target.checked;
                                 onUpdate({
@@ -130,7 +134,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                     deathPlace: isChecked ? '' : data.deathPlace,
                                 });
                             }}
-                            className="w-5 h-5 text-sage border-sand/40 rounded focus:ring-sage/30 cursor-pointer"
+                            className="w-5 h-5 text-sage border-sand/40 rounded focus:ring-sage/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <label htmlFor="stillLiving" className="text-sm text-charcoal cursor-pointer">
                             This person is still living
@@ -150,7 +154,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                     autoComplete="off"
                                     value={data.deathDate || ''}
                                     onChange={(e) => handleChange('deathDate', e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                    disabled={readOnly}
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -169,7 +174,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                 value={data.birthPlace}
                                 onChange={(e) => handleChange('birthPlace', e.target.value)}
                                 placeholder="e.g., Charleston, South Carolina"
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                disabled={readOnly}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <p className="text-xs text-charcoal/40 mt-1">City and state/country where they were born</p>
@@ -189,7 +195,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                     value={data.deathPlace}
                                     onChange={(e) => handleChange('deathPlace', e.target.value)}
                                     placeholder="e.g., Boston, Massachusetts"
-                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                    disabled={readOnly}
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -200,18 +207,24 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                             Profile Photo
                         </label>
                         {!data.profilePhotoPreview ? (
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
-                            >
-                                <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
-                                <p className="text-sm text-charcoal/60 mb-1">
-                                    Click to upload or drag and drop
-                                </p>
-                                <p className="text-xs text-charcoal/40">
-                                    PNG, JPG up to 10MB
-                                </p>
-                            </div>
+                            !readOnly ? (
+                                <div
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                >
+                                    <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
+                                    <p className="text-sm text-charcoal/60 mb-1">
+                                        Click to upload or drag and drop
+                                    </p>
+                                    <p className="text-xs text-charcoal/40">
+                                        PNG, JPG up to 10MB
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center bg-sand/5">
+                                    <p className="text-sm text-charcoal/40">Photo upload disabled</p>
+                                </div>
+                            )
                         ) : (
                             <div className="relative">
                                 <div className="w-48 h-48 mx-auto rounded-2xl overflow-hidden border-4 border-sand/30">
@@ -223,7 +236,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                 </div>
                                 <button
                                     onClick={removePhoto}
-                                    className="absolute top-2 right-2 p-2 bg-charcoal/80 hover:bg-charcoal rounded-full transition-colors"
+                                    disabled={readOnly}
+                                    className={`absolute top-2 right-2 p-2 bg-charcoal/80 hover:bg-charcoal rounded-full transition-colors ${readOnly ? 'hidden' : ''}`}
                                 >
                                     <X size={16} className="text-ivory" />
                                 </button>
@@ -256,7 +270,8 @@ export default function Step1BasicInfo({ data, onUpdate, onNext }: Step1Props) {
                                 placeholder="A sentence that captures their essence..."
                                 maxLength={200}
                                 rows={3}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                                disabled={readOnly}
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div className="flex justify-between items-center mt-1">

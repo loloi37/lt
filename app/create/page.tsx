@@ -31,7 +31,8 @@ import {
   MemoriesStories,
   MediaLegacy,
   VideoContent,
-  TOTAL_STEPS
+  TOTAL_STEPS,
+  WitnessRole
 } from '@/types/memorial';
 import { PathId } from '@/types/paths';
 import { supabase } from '@/lib/supabase';
@@ -149,6 +150,7 @@ function CreateMemorialPageContent() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [userRole, setUserRole] = useState<WitnessRole>('owner'); // Default to owner
 
   // Ref to track data when entering a step (for version diffing)
   const stepEntryDataRef = useRef<MemorialData>(getInitialData());
@@ -184,10 +186,15 @@ function CreateMemorialPageContent() {
   const [activePath, setActivePath] = useState<PathId | null>(null);
 
   useEffect(() => {
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'witness') {
+      setUserRole('witness');
+    }
+
     if (memorialId) {
       loadMemorial(memorialId);
     }
-  }, [memorialId]);
+  }, [memorialId, searchParams]);
 
   useEffect(() => {
     const ensureUserExists = async () => {
@@ -324,6 +331,12 @@ function CreateMemorialPageContent() {
       .replace(/^-+|-+$/g, '');
   };
 
+  const canEditStep = (stepNumber: number) => {
+    if (userRole === 'owner' || userRole === 'co_guardian') return true;
+    const contributionSteps = [7, 8, 9];
+    return contributionSteps.includes(stepNumber);
+  };
+
   useEffect(() => {
     const saveTimer = setTimeout(() => {
       saveToSupabase();
@@ -333,6 +346,14 @@ function CreateMemorialPageContent() {
 
   const saveToSupabase = async () => {
     if (!memorialData.step1.fullName) return;
+
+    // --- NEW PERMISSION CHECK ---
+    if (userRole !== 'owner') {
+      // Witnesses do not auto-save the main record.
+      // Their changes are handled via the Approval System (Step 2.1.5)
+      return;
+    }
+    // ----------------------------
 
     const userId = localStorage.getItem('user-id');
 
@@ -398,8 +419,8 @@ function CreateMemorialPageContent() {
   };
 
   const goToNextStepAndComplete = async () => {
-    // Create version comparing entry state vs current state
-    if (currentMemorialId) {
+    // Only create versions if the user is the owner
+    if (currentMemorialId && userRole === 'owner') {
       const userId = localStorage.getItem('user-id');
       await createVersion({
         memorialId: currentMemorialId,
@@ -823,6 +844,7 @@ function CreateMemorialPageContent() {
                           data={memorialData.step1}
                           onUpdate={updateStep1}
                           onNext={() => setViewMode('hub')}
+                          readOnly={!canEditStep(1)}
                         />
                       )}
                       {memorialData.currentStep === 2 && (
@@ -831,6 +853,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep2}
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 3 }))}
                           onBack={() => setViewMode('hub')}
+                          readOnly={!canEditStep(2)}
                         />
                       )}
                       {memorialData.currentStep === 3 && (
@@ -839,6 +862,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep3}
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 4 }))}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 2 }))}
+                          readOnly={!canEditStep(3)}
                         />
                       )}
                       {memorialData.currentStep === 4 && (
@@ -847,6 +871,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep4}
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 3 }))}
+                          readOnly={!canEditStep(4)}
                         />
                       )}
                       {memorialData.currentStep === 5 && (
@@ -855,6 +880,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep5}
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 6 }))}
                           onBack={() => setViewMode('hub')}
+                          readOnly={!canEditStep(5)}
                         />
                       )}
                       {memorialData.currentStep === 6 && (
@@ -863,6 +889,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep6}
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 5 }))}
+                          readOnly={!canEditStep(6)}
                         />
                       )}
                       {memorialData.currentStep === 7 && (
@@ -872,6 +899,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setViewMode('hub')}
                           onBack={() => setViewMode('hub')}
                           isPaid={memorialData.paid}
+                          readOnly={!canEditStep(7)}
                         />
                       )}
                       {memorialData.currentStep === 8 && (
@@ -883,6 +911,8 @@ function CreateMemorialPageContent() {
                           isPaid={memorialData.paid}
                           completedPathsCount={completedPathsCount}
                           onBackToHub={() => setViewMode('hub')}
+                          memorialId={currentMemorialId}
+                          readOnly={!canEditStep(8)}
                         />
                       )}
                       {memorialData.currentStep === 9 && (
@@ -892,6 +922,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 8 }))}
                           memorialId={currentMemorialId}
+                          readOnly={!canEditStep(9)}
                         />
                       )}
                     </div>
