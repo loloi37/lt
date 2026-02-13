@@ -4,17 +4,17 @@
 
 import { useState } from 'react';
 import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield } from 'lucide-react';
-import { MemoriesStories } from '@/types/memorial';
+import { MemoriesStories, WitnessRole } from '@/types/memorial';
 
 interface Step7Props {
     data: MemoriesStories;
     onUpdate: (data: MemoriesStories) => void;
     onNext: () => void;
     onBack: () => void;
-    isPaid?: boolean; // NEW: passed from parent
-    readOnly?: boolean; // NEW: passed from parent
-    userRole?: 'owner' | 'co_guardian' | 'witness'; // NEW
-    onSubmitContribution?: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>; // NEW
+    isPaid?: boolean;
+    readOnly?: boolean;
+    userRole: WitnessRole;
+    onSubmitContribution: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>;
 }
 
 export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution }: Step7Props) {
@@ -23,6 +23,28 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
     const [previewRecipient, setPreviewRecipient] = useState('');
     const [personalMessage, setPersonalMessage] = useState(data.witnessPersonalMessage || '');
     const [sendingError, setSendingError] = useState<string | null>(null);
+
+    // WITNESS CONTRIBUTION STATE
+    const [isAddingNew, setIsAddingNew] = useState(false);
+    const [newMemoryDraft, setNewMemoryDraft] = useState({
+        title: '',
+        content: '',
+        author: '',
+        relationship: ''
+    });
+
+    const handleWitnessSubmit = async () => {
+        if (!newMemoryDraft.title || !newMemoryDraft.content) {
+            alert("Please provide at least a title and the memory text.");
+            return;
+        }
+
+        await onSubmitContribution('memory', newMemoryDraft);
+
+        // Reset form
+        setNewMemoryDraft({ title: '', content: '', author: '', relationship: '' });
+        setIsAddingNew(false);
+    };
 
     const handleChange = (field: keyof MemoriesStories, value: any) => {
         if (readOnly) return; // Prevent changes in readOnly mode
@@ -185,7 +207,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 key={memory.id}
                                 className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                             >
-                                {!readOnly && (
+                                {userRole === 'owner' && (
                                     <button
                                         onClick={() => removeMemory(memory.id)}
                                         className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all"
@@ -203,8 +225,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         onChange={(e) => updateMemory(memory.id, 'title', e.target.value)}
                                         placeholder="e.g., The Day She Changed My Life"
                                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
+                                        readOnly={userRole !== 'owner'}
+                                        disabled={userRole !== 'owner'}
                                     />
                                 </div>
 
@@ -217,8 +239,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             value={memory.date}
                                             onChange={(e) => updateMemory(memory.id, 'date', e.target.value)}
                                             className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                 </div>
@@ -231,8 +253,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         placeholder="Share the memory or story..."
                                         rows={6}
                                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
+                                        readOnly={userRole !== 'owner'}
+                                        disabled={userRole !== 'owner'}
                                     />
                                 </div>
 
@@ -245,8 +267,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             onChange={(e) => updateMemory(memory.id, 'author', e.target.value)}
                                             placeholder="e.g., Marcus Johnson"
                                             className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                     <div>
@@ -257,21 +279,70 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             onChange={(e) => updateMemory(memory.id, 'relationship', e.target.value)}
                                             placeholder="e.g., Former Student"
                                             className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                 </div>
                             </div>
                         ))}
 
-                        {!readOnly && (
+                        {/* WITNESS CONTRIBUTION FORM */}
+                        {isAddingNew ? (
+                            <div className="p-6 bg-sage/5 border-2 border-dashed border-sage/30 rounded-xl space-y-4 mb-6 animate-fadeIn">
+                                <h4 className="font-serif text-lg text-charcoal">Your Contribution</h4>
+                                <input
+                                    type="text"
+                                    placeholder="Memory Title"
+                                    value={newMemoryDraft.title}
+                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, title: e.target.value })}
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Your Name"
+                                        value={newMemoryDraft.author}
+                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, author: e.target.value })}
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Relationship"
+                                        value={newMemoryDraft.relationship}
+                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, relationship: e.target.value })}
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                    />
+                                </div>
+                                <textarea
+                                    placeholder="Share your story..."
+                                    rows={4}
+                                    value={newMemoryDraft.content}
+                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, content: e.target.value })}
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage resize-none outline-none"
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleWitnessSubmit}
+                                        className="flex-1 py-3 bg-sage text-ivory rounded-xl font-medium hover:bg-sage/90 transition-all"
+                                    >
+                                        Submit for Approval
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAddingNew(false)}
+                                        className="px-6 py-3 border border-sand/40 text-charcoal/60 rounded-xl hover:bg-sand/5 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
                             <button
-                                onClick={addMemory}
+                                onClick={() => setIsAddingNew(true)}
                                 className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
-                                Add Shared Memory
+                                {userRole === 'owner' ? 'Add Shared Memory' : 'Submit a Memory'}
                             </button>
                         )}
                     </div>

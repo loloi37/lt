@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Récupérer les données du memorial pour le snapshot
-        const { data: memorialData, error: fetchError } = await supabase
+        // Use supabaseAdmin to bypass RLS since this is a server-side system action
+        const { data: memorialData, error: fetchError } = await supabaseAdmin
             .from('memorials')
             .select('*')
             .eq('id', memorialId)

@@ -624,7 +624,7 @@ function CreateMemorialPageContent() {
             <h1 className="font-serif text-5xl text-charcoal mb-4">The Crossroads</h1>
 
 
-                        {/* // In app/create/page.tsx
+            {/* // In app/create/page.tsx
 
                         // ... inside the Top Bar div ... */}
 
@@ -645,7 +645,7 @@ function CreateMemorialPageContent() {
                   className="flex items-center gap-2 px-3 py-1.5 bg-charcoal text-ivory border border-charcoal rounded-xl hover:opacity-90 transition-all text-xs"
                   title="Preview the offline export HTML"
                 >
-                  <EthernetPort size={14} /> 
+                  <EthernetPort size={14} />
                   <span className="hidden sm:inline">Arche HTML</span>
                 </button>
               </>
@@ -653,45 +653,45 @@ function CreateMemorialPageContent() {
 
 
             {/* ... Arche HTML Button ... */}
-    
-    {/* NEW: ZIP EXPORT BUTTON */}
-    <button
-      onClick={async () => {
-        if (!confirm('Generate full archive? This may take a minute.')) return;
-        try {
-          // Show some loading state if you wish, or just simple alert for now
-          const btn = document.getElementById('btn-export-zip');
-          if(btn) btn.innerText = '⏳ Generating...';
-          
-          const res = await fetch('/api/arche/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memorialId: currentMemorialId })
-            });
 
-            console.log(JSON.stringify({ memorialId: currentMemorialId }))
-          
-          const result = await res.json();
-          if(btn) btn.innerText = '📦 Export ZIP';
+            {/* NEW: ZIP EXPORT BUTTON */}
+            <button
+              onClick={async () => {
+                if (!confirm('Generate full archive? This may take a minute.')) return;
+                try {
+                  // Show some loading state if you wish, or just simple alert for now
+                  const btn = document.getElementById('btn-export-zip');
+                  if (btn) btn.innerText = '⏳ Generating...';
 
-          if (result.success && result.downloadUrl) {
-            window.location.href = result.downloadUrl;
-          } else {
-            alert('Export failed: ' + (result.error || 'Unknown error'));
-          }
-        } catch (e) {
-          alert('Error generating export');
-          console.error('Error generating export:', e);
-        }
-      }}
-      id="btn-export-zip"
-      className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
-      title="Download the full offline archive (ZIP)"
-    >
-      <span className="hidden sm:inline">📦 Export ZIP</span>
-    </button>
+                  const res = await fetch('/api/arche/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memorialId: currentMemorialId })
+                  });
 
-                          {/*   // ... rest of the top bar ... */}
+                  console.log(JSON.stringify({ memorialId: currentMemorialId }))
+
+                  const result = await res.json();
+                  if (btn) btn.innerText = '📦 Export ZIP';
+
+                  if (result.success && result.downloadUrl) {
+                    window.location.href = result.downloadUrl;
+                  } else {
+                    alert('Export failed: ' + (result.error || 'Unknown error'));
+                  }
+                } catch (e) {
+                  alert('Error generating export');
+                  console.error('Error generating export:', e);
+                }
+              }}
+              id="btn-export-zip"
+              className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
+              title="Download the full offline archive (ZIP)"
+            >
+              <span className="hidden sm:inline">📦 Export ZIP</span>
+            </button>
+
+            {/*   // ... rest of the top bar ... */}
 
             {(() => {
               const isPresenceUnlocked = completedPathsCount >= 2;

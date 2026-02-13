@@ -5,7 +5,7 @@ import { ResourceMap } from './htmlGenerator';
 
 export class ArcheArchiver {
     private zip: JSZip;
-    private resourceMap: ResourceMap; 
+    private resourceMap: ResourceMap;
     private memorialData: MemorialData;
 
     constructor(data: MemorialData) {
@@ -36,35 +36,35 @@ export class ArcheArchiver {
                 // Extract the Base64 part safely
                 const commaIdx = url.indexOf(',');
                 if (commaIdx === -1) throw new Error('Invalid Data URI');
-                
+
                 const meta = url.substring(0, commaIdx); // e.g. "data:image/png;base64"
                 const b64 = url.substring(commaIdx + 1);
-                
+
                 // Decode Base64
                 buffer = Buffer.from(b64, 'base64');
-                
+
                 // Guess extension
                 if (meta.includes('png')) extension = 'png';
                 else if (meta.includes('jpeg') || meta.includes('jpg')) extension = 'jpg';
                 else if (meta.includes('mp4')) extension = 'mp4';
-            } 
+            }
             // 2. Handle Standard HTTP URLs
             else {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+                if (!response.ok) throw new Error(`Failed to fetch ${url} `);
                 const arrayBuffer = await response.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
-                
+
                 // Get extension from URL
                 const cleanUrl = url.split('?')[0];
                 const parts = cleanUrl.split('.');
                 const ext = parts.length > 1 ? parts.pop() : null;
                 if (ext && ext.length < 5) extension = ext;
             }
-            
+
             // Clean filename
             const safeName = filename.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-            const finalName = `${safeName}.${extension}`;
+            const finalName = `${safeName}.${extension} `;
             const path = `${folder}/${finalName}`;
 
             // Add to ZIP

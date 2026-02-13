@@ -1,6 +1,6 @@
 // components/wizard/Step8Media.tsx - UPDATED (No Videos - they're in Step 9 now)
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Mic, Star, Plus, X, Trash2, MousePointer } from 'lucide-react';
 import { MediaLegacy } from '@/types/memorial';
 import { secureUpload } from '@/lib/uploadService';
@@ -27,13 +27,18 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   const galleryRef = useRef<HTMLInputElement>(null);
   const interactiveGalleryRef = useRef<HTMLInputElement>(null);
   const voiceRef = useRef<HTMLInputElement>(null);
+  const dataRef = useRef(data);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleChange = (field: keyof MediaLegacy, value: any) => {
-    onUpdate({ ...data, [field]: value });
+    onUpdate({ ...dataRef.current, [field]: value });
   };
 
 
@@ -61,11 +66,12 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     try {
       const result = await secureUpload(file, 'memorial-media', path); // Using a 'memorial-media' bucket
       if (result.success) {
-        handleChange('coverPhoto', file);
-        // Save the remote URL as the preview to ensure persistence
-        handleChange('coverPhotoPreview', result.url);
-        // Save the Hash
-        handleChange('coverPhotoHash', result.hash);
+        onUpdate({
+          ...dataRef.current,
+          coverPhoto: file,
+          coverPhotoPreview: result.url || null,
+          coverPhotoHash: result.hash
+        });
       }
     } catch (error) {
       console.error('Cover photo upload failed', error);
@@ -119,7 +125,8 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         };
 
         // Add to state immediately
-        handleChange('gallery', [...data.gallery, tempItem]);
+        const currentData = dataRef.current;
+        onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), tempItem] });
 
         // 2. Perform Upload
         const fileExt = file.name.split('.').pop() || 'jpg';
@@ -131,112 +138,15 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           const result = await secureUpload(file, 'memorial-media', path);
 
           if (result.success) {
-            // Update the item with the real URL and HASH
+            const freshData = dataRef.current;
             onUpdate({
-              ...data,
-              gallery: [...data.gallery, { ...tempItem, preview: result.url!, sha256_hash: result.hash }]
+              ...freshData,
+              gallery: (freshData.gallery || []).map(item =>
+                item.id === tempId
+                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                  : item
+              )
             });
-
-            // Note: In a real react app, 'data' is stale inside the closure. 
-            // Ideally we should use the functional update form of onUpdate if available, 
-            // but here onUpdate takes MediaLegacy directly.
-            // We'll trust that the quick user action or subsequent updates will resolve this, 
-            // OR better: we should re-read the gallery from state if possible.
-            // However, based on the prompt's provided code, it uses onUpdate callback.
-            // The prompt's provided code uses:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // BUT `onUpdate` prop in Step8Props is defined as `(data: MediaLegacy) => void`. 
-            // It does NOT support functional updates based on the interface definition : `onUpdate: (data: MediaLegacy) => void;`
-            // I will use `data.gallery` which might be slightly stale if multiple finish at once, but for now I will follow the prompt's logic 
-            // but adapted to the prop signature.
-            // Actually, looking at the Prompt's requested code:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // This implies `onUpdate` SHOULD support functional updates. 
-            // Let's check `app/create/page.tsx`.
-            // `const updateStep8 = (data: MediaLegacy) => { setMemorialData(prev => ({ ...prev, step8: data ... })) }`
-            // It seems `updateStep8` just takes data. It does NOT take a function. 
-            // So `onUpdate((prev) => ...)` will FAIL if I paste it blindly.
-            // I must adapt it to: `onUpdate({ ...data, gallery: ... })`
-            // Wait, if I do that inside a loop callback, `data` is definitely stale.
-            // The prompt provided code might be assuming a different `onUpdate` signature or be slightly incorrect for this context.
-            // I will implement it such that it updates the *local* list and then calls `onUpdate`? 
-            // OR, since this is "agentic", I will try to fix it.
-            // `onUpdate` is passed from `app/create/page.tsx` as `updateStep8` which calls `setMemorialData`.
-            // Trying to pass a function to `updateStep8` will likely fail if `updateStep8` expects an object.
-            // Let's look at `updateStep8` in `app/create/page.tsx`:
-            // const updateStep8 = (data: MediaLegacy) => { setMemorialData(prev => ({ ...prev, step8: data ... })) };
-            // It expects `data`.
-
-            // So I cannot use the functional update `onUpdate(prev => ...)` as requested in the prompt.
-            // I have to do it differently.
-            // I will use the `onUpdate` with the current `data` and hope for the best, OR
-            // I will need to change `onUpdate` signature in `Step8Media` and `app/create/page.tsx` to support functional updates, 
-            // OR I will just follow the prompt's "intent" but make it work.
-            // The prompt code:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // This is strictly asking for functional update.
-            // Use `setMemorialData` logic from `page.tsx`? No I can't access it.
-
-            // I will implement a local fix:
-            // Since I can't change the parent easily without more context/files (though I have page.tsx open), 
-            // I will use `handleChange` (which calls `onUpdate`) but I'm still stuck with stale `data` in the closure.
-
-            // However, usually `filesToUpload` loop runs fast. Previews are added first.
-            // Then uploads finish asynchronously.
-            // Only the URL update needs to happen.
-
-            // I will stick to what works:
-            // I'll grab the LATEST data via a functional state or ref if I could, but I can't.
-            // I will modify the implementation to be safe-ish.
-
-            // actually, the prompt code says:
-            // `onUpdate((prevData: MediaLegacy) => ...)`
-            // If I use that, valid TypeScript will complain if the prop type doesn't match.
-            // The prop type is `(data: MediaLegacy) => void`.
-            // So passing a function is a TYPE ERROR.
-
-            // I'll stick to `handleChange` / `onUpdate` with the object.
-            // But to avoid overwriting, I should probably read from a Ref or just accept the race condition for now as it's a "prototype" / "MVP" feature request.
-            // OR, I can check if I can simply change the prop type?
-            // Changing the prop type requires changing the parent.
-            // `updateStep8` in parent ...
-
-            // Let's look at `updateStep8` again.
-            // 508:   const updateStep8 = (data: MediaLegacy) => {
-            // 509:     setMemorialData(prev => ({
-            // 510:       ...prev,
-            // 511:       step8: data,
-            // ...
-
-            // If I change this to accept `MediaLegacy | ((prev: MediaLegacy) => MediaLegacy)`, I can support it.
-            // But I'd rather not change the parent logic too much if I can avoid it.
-
-            // Let's look at what I CAN do.
-            // I can just call `onUpdate` with the modified gallery.
-            // If I use `handleChange('gallery', newGallery)`, it calls `onUpdate({...data, gallery: newGallery})`.
-
-            // I will try to implement it as close to the prompt as possible but correcting the syntax error.
-            // I will use `handleChange` but I will construct the new gallery from `data.gallery` (which might be stale).
-            // To mitigate staleness in a loop, it's tricky.
-            // But wait, the standard way in React without functional updates is difficult.
-            // I'll just use the `data.gallery` from the scope. It will be "correct enough" for sequential uploads or single uploads.
-            // For multiple files, this is buggy.
-
-            // User Request says: "I will provide the code... Replace with this version"
-            // The provided code uses `onUpdate((prevData) => ...)`
-            // The user EXPECTS functional updates. 
-            // The user might mistakenly think `onUpdate` supports it, OR they want me to MAKE it support it.
-            // Given "Update Data Structures" was the previous task, maybe I should assume I CAN change things.
-
-            // I will change `Step8Props` `onUpdate` to allow functional updates?
-            // No, `handleChange` depends on it being `(data) => void`.
-
-            // Let's look at `handleGalleryUpload` in the prompt.
-            // It uses `onUpdate((prevData...))`.
-
-            // I will just use `onUpdate({ ...data, gallery: ... })` and fix the prompt's code to match the actual signature.
-            // I will explain this deviation if needed (or just do it, as I'm the "expert").
-            // I'll use `handleChange` which uses `data` from props. Rest of logic remains.
           }
         } catch (err) {
           console.error("Gallery upload failed for file:", file.name, err);
@@ -293,10 +203,8 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         };
 
         // Add to state immediately
-        // Note: Using data.interactiveGallery here might be slightly stale in a fast loop, but adequate for this setup.
-        // Ideally we'd use a functional update but Step8Props.onUpdate is defined as (data) => void.
-        const updatedGallery = [...(data.interactiveGallery || []), tempItem];
-        handleChange('interactiveGallery', updatedGallery);
+        const currentData = dataRef.current;
+        onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), tempItem] });
 
         // Secure Upload
         const fileExt = file.name.split('.').pop() || 'jpg';
@@ -308,17 +216,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           const result = await secureUpload(file, 'memorial-media', path);
 
           if (result.success) {
-            // Update the item with the real URL and HASH
-            // We read from 'data' again to minimize staleness, though still imperfect without functional updates.
+            const freshData = dataRef.current;
             onUpdate({
-              ...data,
-              interactiveGallery: (data.interactiveGallery || []).map((item) =>
+              ...freshData,
+              interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
                 item.id === tempId
-                  ? { ...item, preview: result.url!, sha256_hash: result.hash }
+                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
                   : item
               ),
-              // Ensure we include the new item if it was just added but not yet in 'data' (race condition mitigation)
-              // Actually, trusting the previous handleChange might rely on parent re-render.
             });
           }
         } catch (err) {
@@ -389,17 +294,17 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       };
 
       // Update local state
-      handleChange('voiceRecordings', [...data.voiceRecordings, newRecording]);
+      const currentData = dataRef.current;
+      onUpdate({ ...currentData, voiceRecordings: [...currentData.voiceRecordings, newRecording] });
 
       try {
         const result = await secureUpload(file, 'memorial-media', path);
 
         if (result.success) {
-          // Update with Hash
-          // Note: We use the update pattern compatible with the prop signature
+          const freshData = dataRef.current;
           onUpdate({
-            ...data,
-            voiceRecordings: data.voiceRecordings.map((item) =>
+            ...freshData,
+            voiceRecordings: freshData.voiceRecordings.map((item) =>
               item.id === tempId
                 ? { ...item, sha256_hash: result.hash } // Add the hash
                 : item

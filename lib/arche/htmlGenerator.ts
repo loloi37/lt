@@ -216,7 +216,7 @@ function renderTributes(data: MemorialData): string {
             <h3>${t.title}</h3>
             <p>${t.content}</p>
             <div class="tribute-author">
-                — ${t.author} ${(t as any).relationship ? `(${ (t as any).relationship })` : ''}
+                — ${t.author} ${(t as any).relationship ? `(${(t as any).relationship})` : ''}
             </div>
         </div>
     `).join('');
@@ -241,7 +241,7 @@ function renderTributes(data: MemorialData): string {
 export function generateStandaloneHTML(data: MemorialData, resourceMap?: ResourceMap): string {
     // Process cover photo
     const coverPhotoUrl = processMedia(data.step8.coverPhotoPreview, resourceMap);
-    
+
     // Process profile photo
     const profilePhotoUrl = processMedia(data.step1.profilePhotoPreview, resourceMap);
 
@@ -269,8 +269,8 @@ export function generateStandaloneHTML(data: MemorialData, resourceMap?: Resourc
     <header class="hero">
         <div class="hero-content">
             ${profilePhotoUrl
-              ? `<img src="${profilePhotoUrl}" alt="${data.step1.fullName}" class="profile-photo">` 
-              : ''}
+            ? `<img src="${profilePhotoUrl}" alt="${data.step1.fullName}" class="profile-photo">`
+            : ''}
             
             <div class="hero-text">
                 <h1>${data.step1.fullName}</h1>
