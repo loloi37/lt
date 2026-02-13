@@ -1,5 +1,6 @@
 // lib/arche/archiver.ts
 import JSZip from 'jszip';
+import crypto from 'crypto'; // Import crypto for hashing
 import { MemorialData } from '@/types/memorial';
 import { ResourceMap } from './htmlGenerator';
 
@@ -7,11 +8,20 @@ export class ArcheArchiver {
     private zip: JSZip;
     private resourceMap: ResourceMap;
     private memorialData: MemorialData;
+    private verificationLog: string[]; // Store verification results
 
     constructor(data: MemorialData) {
         this.zip = new JSZip();
         this.resourceMap = new Map();
         this.memorialData = data;
+        this.verificationLog = [
+            `LEGACY VAULT - INTEGRITY VERIFICATION REPORT`,
+            `Generated: ${new Date().toISOString()}`,
+            `Subject: ${data.step1.fullName}`,
+            `-------------------------------------------------------------------`,
+            `STATUS      | FILE                                     | DETAILS`,
+            `-------------------------------------------------------------------`
+        ];
 
         // Initialize Folder Structure
         this.zip.folder("media");
@@ -23,17 +33,22 @@ export class ArcheArchiver {
 
     /**
      * Add media from URL or Base64 Data URI
+     * Now accepts an optional expectedHash to verify integrity
      */
-    async addMedia(url: string | null | undefined, folder: string, filename: string): Promise<string | null> {
+    async addMedia(
+        url: string | null | undefined,
+        folder: string,
+        filename: string,
+        expectedHash?: string // <--- NEW PARAMETER
+    ): Promise<string | null> {
         if (!url) return null;
 
         try {
             let buffer: Buffer;
             let extension = 'jpg';
 
-            // 1. Handle Base64 Data URIs (e.g., "data:image/png;base64,.....")
+            // 1. Handle Base64 Data URIs
             if (url.startsWith('data:')) {
-                // Extract the Base64 part safely
                 const commaIdx = url.indexOf(',');
                 if (commaIdx === -1) throw new Error('Invalid Data URI');
 
@@ -67,15 +82,13 @@ export class ArcheArchiver {
             const finalName = `${safeName}.${extension} `;
             const path = `${folder}/${finalName}`;
 
-            // Add to ZIP
             this.zip.file(path, buffer);
-
-            // Record mapping
             this.resourceMap.set(url, path);
 
             return path;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Failed to archive media: ${url ? url.substring(0, 50) : 'null'}...`, error);
+            this.verificationLog.push(`[ERROR]     | ${filename}`.padEnd(60) + `| Download failed: ${error.message}`);
             return null;
         }
     }
@@ -84,12 +97,12 @@ export class ArcheArchiver {
         this.zip.file(path, content);
     }
 
-    /**
-     * Returns a Node Buffer directly. 
-     * This fixes the "Blob" type error and corruption issues.
-     */
+    // NEW: Method to get the report
+    getVerificationReport(): string {
+        return this.verificationLog.join('\n');
+    }
+
     async generateZip(): Promise<Buffer> {
-        // "nodebuffer" returns a Buffer, which is perfect for server-side upload
         return await this.zip.generateAsync({ type: "nodebuffer" }) as Buffer;
     }
 

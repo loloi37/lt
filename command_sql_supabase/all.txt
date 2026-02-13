@@ -1076,7 +1076,6 @@ create policy "Allow public read by invitation ID"
   on witness_invitations for select
   using ( true );
 
-
 --------------------------------------------------------
 
 41 : 
@@ -1272,3 +1271,5 @@ $$ language plpgsql;
 create trigger trigger_update_activity
 after update on memorials
 for each row execute function update_user_last_activity();
+=======
+>>>>>>> 6e47b7d38ce64044195a772a63b906bad2a16675
