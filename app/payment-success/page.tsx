@@ -36,9 +36,17 @@ function PaymentSuccessContent() {
                 // ✅ TOUT est fait côté serveur (update + snapshot)
                 console.log("Archive successfully activated:", result.message);
 
-                // Redirection
+                // Redirection to the correct Dashboard
                 setTimeout(() => {
-                    router.push(`/create?id=${memorialId}`);
+                    const mode = localStorage.getItem('legacy-vault-mode') || 'personal';
+                    const userId = localStorage.getItem('user-id');
+
+                    if (userId) {
+                        router.push(`/dashboard/${mode}/${userId}`);
+                    } else {
+                        // Fallback to create if for some reason userId is missing
+                        router.push(`/create?id=${memorialId}`);
+                    }
                 }, 3000);
 
             } catch (err: any) {

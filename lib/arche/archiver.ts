@@ -52,13 +52,11 @@ export class ArcheArchiver {
                 const commaIdx = url.indexOf(',');
                 if (commaIdx === -1) throw new Error('Invalid Data URI');
 
-                const meta = url.substring(0, commaIdx); // e.g. "data:image/png;base64"
+                const meta = url.substring(0, commaIdx);
                 const b64 = url.substring(commaIdx + 1);
 
-                // Decode Base64
                 buffer = Buffer.from(b64, 'base64');
 
-                // Guess extension
                 if (meta.includes('png')) extension = 'png';
                 else if (meta.includes('jpeg') || meta.includes('jpg')) extension = 'jpg';
                 else if (meta.includes('mp4')) extension = 'mp4';
@@ -66,20 +64,38 @@ export class ArcheArchiver {
             // 2. Handle Standard HTTP URLs
             else {
                 const response = await fetch(url);
-                if (!response.ok) throw new Error(`Failed to fetch ${url} `);
+                if (!response.ok) throw new Error(`Failed to fetch ${url}`);
                 const arrayBuffer = await response.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
 
-                // Get extension from URL
                 const cleanUrl = url.split('?')[0];
                 const parts = cleanUrl.split('.');
                 const ext = parts.length > 1 ? parts.pop() : null;
                 if (ext && ext.length < 5) extension = ext;
             }
 
-            // Clean filename
+            // --- STEP 1.4.2: INTEGRITY CHECK ---
+            if (expectedHash) {
+                // Calculate SHA-256 of the downloaded/decoded buffer
+                const hashSum = crypto.createHash('sha256');
+                hashSum.update(buffer);
+                const calculatedHash = hashSum.digest('hex');
+
+                if (calculatedHash === expectedHash) {
+                    this.verificationLog.push(`[PASS]      | ${filename}.${extension}`.padEnd(60) + `| Verified`);
+                } else {
+                    console.error(`Hash mismatch for ${filename}: Expected ${expectedHash}, got ${calculatedHash}`);
+                    this.verificationLog.push(`[FAIL]      | ${filename}.${extension}`.padEnd(60) + `| CORRUPTED. Hash mismatch.`);
+                    this.verificationLog.push(`            | Expected: ${expectedHash}`);
+                    this.verificationLog.push(`            | Actual:   ${calculatedHash}`);
+                }
+            } else {
+                this.verificationLog.push(`[WARN]      | ${filename}.${extension}`.padEnd(60) + `| No signature found in database.`);
+            }
+            // -----------------------------------
+
             const safeName = filename.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
-            const finalName = `${safeName}.${extension} `;
+            const finalName = `${safeName}.${extension}`;
             const path = `${folder}/${finalName}`;
 
             this.zip.file(path, buffer);

@@ -230,6 +230,11 @@ export async function POST(request: NextRequest) {
         // 3. Process Media
         await processMemorialMedia(archiver, fullData as any);
 
+        // --- NEW: Add Verification Report to ZIP ---
+        const integrityReport = archiver.getVerificationReport();
+        archiver.addTextFile('INTEGRITY_REPORT.txt', integrityReport);
+        // -------------------------------------------
+
         // 4. Generate Metadata
         const manifest = generateManifest(fullData as any, memorialId);
         const readme = generateReadme(fullData as any);
@@ -363,6 +368,135 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+===== FICHIER: ./app/api/authorization/submit/route.ts =====
+
+// app/api/authorization/submit/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { headers } from 'next/headers';
+import crypto from 'crypto'; // For SHA-256 hashing
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { 
+            memorialId, 
+            userId, 
+            identity, 
+            agreements, 
+            signature, 
+            fingerprint,
+            authorizationType,
+            videoContent // Base64 string from frontend
+        } = body;
+
+        if (!memorialId || !signature.content || !identity.fullName) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        // 1. Fetch Deceased Info (Legacy Logic)
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('step1')
+            .eq('id', memorialId)
+            .single();
+        
+        const deceasedName = memorial?.step1?.fullName || 'Family Account';
+        const deceasedDob = memorial?.step1?.birthDate || '1900-01-01';
+
+        // 2. Capture Technical Metadata
+        const headerList = await headers();
+        const ip = headerList.get('x-forwarded-for') || 'unknown';
+        const userAgent = headerList.get('user-agent') || 'unknown';
+        const country = headerList.get('x-vercel-ip-country') || 'Unknown';
+        const city = headerList.get('x-vercel-ip-city') || '';
+        const geolocation = city ? `${city}, ${country}` : country;
+
+        // 3. Process Video Signature (if present)
+        let videoPath = null;
+        let videoHash = null;
+
+        if (videoContent) {
+            console.log('[Security] Processing video signature...');
+            
+            // Convert Base64 to Buffer
+            const base64Data = videoContent.split(';base64,').pop();
+            const videoBuffer = Buffer.from(base64Data, 'base64');
+
+            // --- Generate SHA-256 Hash ---
+            videoHash = crypto
+                .createHash('sha256')
+                .update(videoBuffer)
+                .digest('hex');
+
+            // Define secure path: authorizations/{memorial_id}/{timestamp}.mp4
+            const fileName = `${Date.now()}_video_signature.mp4`;
+            videoPath = `${memorialId}/${fileName}`;
+
+            // Upload to Private Bucket 'authorizations'
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from('authorizations')
+                .upload(videoPath, videoBuffer, {
+                    contentType: 'video/mp4',
+                    upsert: false
+                });
+
+            if (uploadError) {
+                console.error('[Storage Error]', uploadError);
+                throw new Error('Failed to secure video evidence.');
+            }
+            
+            console.log(`[Security] Video stored: ${videoHash.substring(0, 8)}...`);
+        }
+
+        // 4. Insert Comprehensive Record
+        const { data: authRecord, error: insertError } = await supabaseAdmin
+            .from('memorial_authorizations')
+            .insert([{
+                memorial_id: memorialId,
+                user_id: userId,
+                authorization_type: authorizationType || 'individual',
+                creator_full_name: identity.fullName,
+                creator_email: identity.email,
+                relationship_to_deceased: identity.relationship || 'Account Holder',
+                deceased_full_name: deceasedName,
+                deceased_dob: deceasedDob,
+                agree_legal_authority: agreements.legal_authority,
+                agree_good_faith: agreements.good_faith,
+                agree_permanence: agreements.permanence,
+                agree_indemnification: agreements.indemnification,
+                signature_type: signature.type,
+                electronic_signature: signature.content,
+                signature_date: new Date().toISOString(),
+                signature_ip_address: ip,
+                signature_user_agent: userAgent,
+                device_fingerprint: fingerprint,
+                geolocation: geolocation,
+                video_storage_path: videoPath,
+                video_hash: videoHash,
+                status: 'approved'
+            }])
+            .select()
+            .single();
+
+        if (insertError) throw insertError;
+
+        return NextResponse.json({ 
+            success: true, 
+            id: authRecord.id,
+            log: videoHash ? `Video signature recorded - Hash: ${videoHash.substring(0, 8)}` : null
+        });
+
+    } catch (error: any) {
+        console.error('Authorization Submission Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
 ===== FICHIER: ./app/api/autosave/route.ts =====
 
 // app/api/autosave/route.ts
@@ -425,17 +559,50 @@ export async function POST(request: NextRequest) {
 }
 ===== FICHIER: ./app/api/create-checkout/route.ts =====
 
+// app/api/create-checkout/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-12-18.acacia' as any, // Use the latest stable version
+    apiVersion: '2024-12-18.acacia' as any,
 });
+
+// Initialize Admin Client to check authorization status
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
     try {
         const { memorialId, plan, amount } = await request.json();
         const origin = request.headers.get('origin') || 'http://localhost:3000';
+
+        if (!memorialId) {
+            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+        }
+
+        // --- HARD BARRIER: Check Authorization Status ---
+        // --- HARD BARRIER: Check Authorization Status ---
+const { data: auth, error: authError } = await supabaseAdmin
+    .from('memorial_authorizations')
+    .select('id, authorization_type')
+    .eq('memorial_id', memorialId)
+    .eq('status', 'approved')
+    .maybeSingle();
+
+// For Family plan payment, we want to ensure an 'account' level auth exists
+const expectedType = plan === 'Family' ? 'account' : 'individual';
+
+if (authError || !auth || auth.authorization_type !== expectedType) {
+    return NextResponse.json({ 
+        error: 'Authorization required', 
+        code: 'LEGAL_AUTH_REQUIRED',
+        redirectUrl: `/authorization/${memorialId}` 
+    }, { status: 403 });
+}
+        // -----------------------------------------------
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -447,13 +614,12 @@ export async function POST(request: NextRequest) {
                             name: `Legacy Vault - ${plan} Plan`,
                             description: `Permanent archival for your memorial`,
                         },
-                        unit_amount: amount * 100, // $1,500 becomes 150000 cents
+                        unit_amount: amount * 100, 
                     },
                     quantity: 1,
                 },
             ],
             mode: 'payment',
-            // CRITICAL: We store the memorialId here so we can find it after payment
             metadata: {
                 memorialId: memorialId,
             },
@@ -464,6 +630,61 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url: session.url });
     } catch (error: any) {
         console.error('Stripe error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+===== FICHIER: ./app/api/family/link/route.ts =====
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+    try {
+        const { fromId, toId, type } = await request.json();
+
+        if (!fromId || !toId || !type) {
+            return NextResponse.json({ error: 'Missing IDs or type' }, { status: 400 });
+        }
+
+        // 1. Create the forward link (A -> B)
+        const { error: error1 } = await supabaseAdmin
+            .from('memorial_relations')
+            .insert([{
+                from_memorial_id: fromId,
+                to_memorial_id: toId,
+                relationship_type: type
+            }]);
+
+        if (error1) throw error1;
+
+        // 2. Automatically create the reverse link (B -> A)
+        // We infer the reverse type logic
+        let reverseType = 'other';
+        if (type === 'parent') reverseType = 'child';
+        if (type === 'child') reverseType = 'parent';
+        if (type === 'spouse') reverseType = 'spouse';
+        if (type === 'sibling') reverseType = 'sibling';
+
+        const { error: error2 } = await supabaseAdmin
+            .from('memorial_relations')
+            .insert([{
+                from_memorial_id: toId,
+                to_memorial_id: fromId,
+                relationship_type: reverseType
+            }]);
+
+        // Note: We don't throw on error2 just in case it already exists, 
+        // but ideally we handle duplicates gracefully.
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error('Link API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
@@ -569,65 +790,6 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
     }
 }
-===== FICHIER: ./app/api/invitations/send/route.ts =====
-
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-import { getWitnessInvitationEmail } from '@/lib/email/templates';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function POST(request: NextRequest) {
-    try {
-        const { memorialId, inviterName, inviteeEmail, personalMessage, role, deceasedName } = await request.json();
-
-        if (!memorialId || !inviteeEmail || !inviterName) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
-
-        // 1. Create invitation record in Supabase to get a unique ID (Token)
-        const { data: invitation, error: dbError } = await supabaseAdmin
-            .from('witness_invitations')
-            .insert([{
-                memorial_id: memorialId,
-                inviter_name: inviterName,
-                invitee_email: inviteeEmail,
-                personal_message: personalMessage,
-                role: role || 'witness'
-            }])
-            .select()
-            .single();
-
-        if (dbError) throw dbError;
-
-        // 2. Construct the absolute link for the witness
-        // In production, change this to your real domain
-        const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
-        const host = request.headers.get('host');
-        const inviteLink = `${protocol}://${host}/invitation/accept/${invitation.id}`;
-
-        // 3. Send the email via Resend
-        const { data, error: mailError } = await resend.emails.send({
-            from: 'Legacy Vault <onboarding@resend.dev>', // Note: Use your domain here once verified in Resend
-            to: [inviteeEmail],
-            subject: `An invitation to bear witness for ${deceasedName}`,
-            html: getWitnessInvitationEmail(inviterName, deceasedName, inviteLink, personalMessage),
-        });
-
-        if (mailError) throw mailError;
-
-        return NextResponse.json({ success: true, invitationId: invitation.id });
-
-    } catch (error: any) {
-        console.error('Invitation API Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-}
 ===== FICHIER: ./app/api/media/upload/route.ts =====
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -697,6 +859,129 @@ export async function POST(request: NextRequest) {
             { error: 'Internal server error during upload' },
             { status: 500 }
         );
+    }
+}
+===== FICHIER: ./app/api/send-witness-invitations/route.ts =====
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
+import { getWitnessInvitationEmail } from '@/lib/email/templates';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+    try {
+        // We now look for 'emails' (plural) and the necessary names
+        const { memorialId, inviterName, emails, personalMessage, deceasedName } = await request.json();
+
+        if (!memorialId || !emails || emails.length === 0 || !inviterName) {
+            return NextResponse.json({ error: 'Missing required fields: memorialId, inviterName, or emails' }, { status: 400 });
+        }
+
+        const results = [];
+
+        // Loop through each email to create a database record and send an email
+        for (const email of emails) {
+            // 1. Create invitation record in Supabase
+            const { data: invitation, error: dbError } = await supabaseAdmin
+                .from('witness_invitations')
+                .insert([{
+                    memorial_id: memorialId,
+                    inviter_name: inviterName,
+                    invitee_email: email,
+                    personal_message: personalMessage,
+                    role: 'witness'
+                }])
+                .select()
+                .single();
+
+            if (dbError) {
+                console.error(`DB Error for ${email}:`, dbError);
+                continue;
+            }
+
+            // 2. Construct link
+            const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+            const host = request.headers.get('host');
+            const inviteLink = `${protocol}://${host}/invitation/accept/${invitation.id}`;
+
+            // 3. Send email
+            await resend.emails.send({
+                from: 'Legacy Vault <onboarding@resend.dev>',
+                to: [email],
+                subject: `An invitation to bear witness for ${deceasedName || 'a loved one'}`,
+                html: getWitnessInvitationEmail(inviterName, deceasedName || 'a loved one', inviteLink, personalMessage),
+            });
+
+            results.push({ email, status: 'sent' });
+        }
+
+        return NextResponse.json({ success: true, dispatched: results.length });
+
+    } catch (error: any) {
+        console.error('Invitation API Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+===== FICHIER: ./app/api/succession/designate/route.ts =====
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
+import { getSuccessorInvitationEmail } from '@/lib/email/templates';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function POST(request: NextRequest) {
+    try {
+        const { userId, ownerName, successorName, successorEmail, relationship } = await request.json();
+
+        if (!userId || !successorEmail || !successorName) {
+            return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+        }
+
+        // 1. Create record in DB
+        const { data: successor, error: dbError } = await supabaseAdmin
+            .from('user_successors')
+            .insert([{
+                user_id: userId,
+                successor_name: successorName,
+                successor_email: successorEmail,
+                relationship: relationship,
+                status: 'pending'
+            }])
+            .select()
+            .single();
+
+        if (dbError) throw dbError;
+
+        // 2. Generate Link
+        const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+        const host = request.headers.get('host');
+        const acceptLink = `${protocol}://${host}/succession/accept/${successor.verification_token}`;
+
+        // 3. Send Email
+        await resend.emails.send({
+            from: 'Legacy Vault <onboarding@resend.dev>', // Update with verified domain in production
+            to: [successorEmail],
+            subject: `IMPORTANT: ${ownerName} has designated you as Archive Steward`,
+            html: getSuccessorInvitationEmail(ownerName, successorName, acceptLink),
+        });
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error('Succession API Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 ===== FICHIER: ./hooks/useAutoSave.ts =====
@@ -923,18 +1208,28 @@ export function useAutoSave({
 
 // lib/arche/archiver.ts
 import JSZip from 'jszip';
+import crypto from 'crypto'; // Import crypto for hashing
 import { MemorialData } from '@/types/memorial';
-export type ResourceMap = Map<string, string>;
+import { ResourceMap } from './htmlGenerator';
 
 export class ArcheArchiver {
     private zip: JSZip;
     private resourceMap: ResourceMap;
     private memorialData: MemorialData;
+    private verificationLog: string[]; // Store verification results
 
     constructor(data: MemorialData) {
         this.zip = new JSZip();
         this.resourceMap = new Map();
         this.memorialData = data;
+        this.verificationLog = [
+            `LEGACY VAULT - INTEGRITY VERIFICATION REPORT`,
+            `Generated: ${new Date().toISOString()}`,
+            `Subject: ${data.step1.fullName}`,
+            `-------------------------------------------------------------------`,
+            `STATUS      | FILE                                     | DETAILS`,
+            `-------------------------------------------------------------------`
+        ];
 
         // Initialize Folder Structure
         this.zip.folder("media");
@@ -946,27 +1241,30 @@ export class ArcheArchiver {
 
     /**
      * Add media from URL or Base64 Data URI
+     * Now accepts an optional expectedHash to verify integrity
      */
-    async addMedia(url: string | null | undefined, folder: string, filename: string): Promise<string | null> {
+    async addMedia(
+        url: string | null | undefined,
+        folder: string,
+        filename: string,
+        expectedHash?: string // <--- NEW PARAMETER
+    ): Promise<string | null> {
         if (!url) return null;
 
         try {
             let buffer: Buffer;
             let extension = 'jpg';
 
-            // 1. Handle Base64 Data URIs (e.g., "data:image/png;base64,.....")
+            // 1. Handle Base64 Data URIs
             if (url.startsWith('data:')) {
-                // Extract the Base64 part safely
                 const commaIdx = url.indexOf(',');
                 if (commaIdx === -1) throw new Error('Invalid Data URI');
 
-                const meta = url.substring(0, commaIdx); // e.g. "data:image/png;base64"
+                const meta = url.substring(0, commaIdx);
                 const b64 = url.substring(commaIdx + 1);
 
-                // Decode Base64
                 buffer = Buffer.from(b64, 'base64');
 
-                // Guess extension
                 if (meta.includes('png')) extension = 'png';
                 else if (meta.includes('jpeg') || meta.includes('jpg')) extension = 'jpg';
                 else if (meta.includes('mp4')) extension = 'mp4';
@@ -978,27 +1276,43 @@ export class ArcheArchiver {
                 const arrayBuffer = await response.arrayBuffer();
                 buffer = Buffer.from(arrayBuffer);
 
-                // Get extension from URL
                 const cleanUrl = url.split('?')[0];
                 const parts = cleanUrl.split('.');
                 const ext = parts.length > 1 ? parts.pop() : null;
                 if (ext && ext.length < 5) extension = ext;
             }
 
-            // Clean filename
+            // --- STEP 1.4.2: INTEGRITY CHECK ---
+            if (expectedHash) {
+                // Calculate SHA-256 of the downloaded/decoded buffer
+                const hashSum = crypto.createHash('sha256');
+                hashSum.update(buffer);
+                const calculatedHash = hashSum.digest('hex');
+
+                if (calculatedHash === expectedHash) {
+                    this.verificationLog.push(`[PASS]      | ${filename}.${extension}`.padEnd(60) + `| Verified`);
+                } else {
+                    console.error(`Hash mismatch for ${filename}: Expected ${expectedHash}, got ${calculatedHash}`);
+                    this.verificationLog.push(`[FAIL]      | ${filename}.${extension}`.padEnd(60) + `| CORRUPTED. Hash mismatch.`);
+                    this.verificationLog.push(`            | Expected: ${expectedHash}`);
+                    this.verificationLog.push(`            | Actual:   ${calculatedHash}`);
+                }
+            } else {
+                this.verificationLog.push(`[WARN]      | ${filename}.${extension}`.padEnd(60) + `| No signature found in database.`);
+            }
+            // -----------------------------------
+
             const safeName = filename.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
             const finalName = `${safeName}.${extension}`;
             const path = `${folder}/${finalName}`;
 
-            // Add to ZIP
             this.zip.file(path, buffer);
-
-            // Record mapping
             this.resourceMap.set(url, path);
 
             return path;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`Failed to archive media: ${url ? url.substring(0, 50) : 'null'}...`, error);
+            this.verificationLog.push(`[ERROR]     | ${filename}`.padEnd(60) + `| Download failed: ${error.message}`);
             return null;
         }
     }
@@ -1007,12 +1321,12 @@ export class ArcheArchiver {
         this.zip.file(path, content);
     }
 
-    /**
-     * Returns a Node Buffer directly. 
-     * This fixes the "Blob" type error and corruption issues.
-     */
+    // NEW: Method to get the report
+    getVerificationReport(): string {
+        return this.verificationLog.join('\n');
+    }
+
     async generateZip(): Promise<Buffer> {
-        // "nodebuffer" returns a Buffer, which is perfect for server-side upload
         return await this.zip.generateAsync({ type: "nodebuffer" }) as Buffer;
     }
 
@@ -1020,6 +1334,7 @@ export class ArcheArchiver {
         return this.resourceMap;
     }
 }
+
 ===== FICHIER: ./lib/arche/css.ts =====
 
 // lib/arche/css.ts
@@ -1468,7 +1783,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
             archiver.addMedia(
                 data.step1.profilePhotoPreview,
                 'media/photos',
-                'profile_photo'
+                'profile_photo',
+                data.step1.profilePhotoHash // Pass the hash
             )
         );
     }
@@ -1480,7 +1796,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
             archiver.addMedia(
                 data.step8.coverPhotoPreview,
                 'media/photos',
-                'cover_photo'
+                'cover_photo',
+                data.step8.coverPhotoHash // Pass the hash
             )
         );
     }
@@ -1489,7 +1806,6 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
     if (data.step8.gallery && data.step8.gallery.length > 0) {
         console.log(`Archiving ${data.step8.gallery.length} gallery photos...`);
         data.step8.gallery.forEach((photo, index) => {
-            // Create a descriptive filename: "01_summer_vacation" or "01_photo"
             const safeCaption = (photo.caption || 'photo').substring(0, 20).replace(/[^a-z0-9]/gi, '_');
             const filename = `gallery_${String(index + 1).padStart(2, '0')}_${safeCaption}`;
             
@@ -1497,7 +1813,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     photo.preview,
                     'media/photos/original',
-                    filename
+                    filename,
+                    photo.sha256_hash // Pass the hash
                 )
             );
         });
@@ -1512,7 +1829,8 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     item.preview,
                     'media/photos/original',
-                    filename
+                    filename,
+                    item.sha256_hash // Pass the hash
                 )
             );
         });
@@ -1530,16 +1848,17 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
                 archiver.addMedia(
                     video.url,
                     'media/videos',
-                    filename
+                    filename,
+                    video.sha256_hash // Pass the hash
                 )
             );
 
-            // Thumbnail
+            // Thumbnail (Thumbnails usually don't have stored hashes, usually fine to skip strict verification for thumbs)
             if (video.thumbnail) {
                 promises.push(
                     archiver.addMedia(
                         video.thumbnail,
-                        'media/photos', // Keep thumbnails in photos folder or a specific subfolder
+                        'media/photos', 
                         `${filename}_thumb`
                     )
                 );
@@ -1549,7 +1868,7 @@ export async function processMemorialMedia(archiver: ArcheArchiver, data: Memori
 
     // Wait for all downloads to finish
     await Promise.all(promises);
-    console.log('All media archived successfully.');
+    console.log('All media archived and verified.');
 }
 ===== FICHIER: ./lib/arche/metadataGenerator.ts =====
 
@@ -1829,12 +2148,12 @@ export function isEnrichmentStep(stepNumber: number): boolean {
 // lib/email/templates.ts
 
 export function getWitnessInvitationEmail(
-    inviterName: string,
-    deceasedName: string,
-    inviteLink: string,
-    personalMessage?: string
+  inviterName: string,
+  deceasedName: string,
+  inviteLink: string,
+  personalMessage?: string
 ): string {
-    return `
+  return `
     <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #2c3e50; line-height: 1.8;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #fdfbf7; padding: 60px; border: 1px solid #d7ccc8; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
         
@@ -1868,6 +2187,56 @@ export function getWitnessInvitationEmail(
           <p>This invitation was sent by Legacy Vault on behalf of the family.</p>
           <p>Preserving the essence of a life, forever.</p>
         </div>
+      </div>
+    </div>
+  `;
+}
+
+
+export function getSuccessorInvitationEmail(
+  ownerName: string,
+  successorName: string,
+  acceptLink: string
+): string {
+  return `
+    <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #2c3e50; line-height: 1.8;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 60px; border: 2px solid #2c3e50; border-radius: 4px;">
+        
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h2 style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 18px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+            Legacy Vault Stewardship
+          </h2>
+        </div>
+
+        <p style="font-size: 16px;">Dear ${successorName},</p>
+
+        <p style="font-size: 16px;">
+          <strong>${ownerName}</strong> has designated you as their <strong>Archive Steward</strong>.
+        </p>
+
+        <p style="font-size: 16px;">
+          This is a position of significant trust. It means that in the event of their passing, you will be granted full control and legal authority over their family archives stored within Legacy Vault.
+        </p>
+
+        <div style="background-color: #f8f9fa; padding: 20px; margin: 30px 0; font-size: 14px; border-left: 4px solid #2c3e50;">
+          <strong>Responsibilities include:</strong>
+          <ul style="margin-top: 10px; padding-left: 20px;">
+            <li>Preserving the family history</li>
+            <li>Managing access for future generations</li>
+            <li>Resolving any disputes regarding content</li>
+          </ul>
+        </div>
+
+        <p style="font-size: 16px;">
+          To accept this responsibility, please confirm your identity below.
+        </p>
+
+        <div style="text-align: center; margin-top: 40px;">
+          <a href="${acceptLink}" style="background-color: #2c3e50; color: #ffffff; padding: 16px 30px; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 14px;">
+            I Accept This Responsibility
+          </a>
+        </div>
+
       </div>
     </div>
   `;
@@ -2006,82 +2375,71 @@ export {
 } from '@/types/concierge';
 
 
-export interface MemorialAuthorization {
-    id: string;
-    user_id: string | null;
-    memorial_id: string | null;
-    creator_full_name: string;
-    creator_email: string;
-    deceased_full_name: string;
-    relationship_to_deceased: string;
-    electronic_signature: string;
-    signature_date: string;
-    status: 'pending' | 'approved' | 'rejected';
-    pdf_storage_path: string | null;
-    // ... other fields as needed
-}
+// lib/supabase.ts
+
+// ... keep your imports and other interfaces (Memorial, ConciergeProject, etc.) ...
 
 export interface MemorialAuthorization {
     // IDs and timestamps
     id: string;
     created_at: string;
-    updated_at: string;
+    updated_at?: string;
     user_id: string | null;
     memorial_id: string | null;
 
     // Section 1: Creator Information
     creator_full_name: string;
-    creator_dob: string | null;
-    creator_address: string | null;
-    creator_city_state_zip: string | null;
+    creator_dob?: string | null;
+    creator_address?: string | null;
+    creator_city_state_zip?: string | null;
     creator_email: string;
-    creator_phone: string | null;
+    creator_phone?: string | null;
     relationship_to_deceased: string;
-    relationship_other: string | null;
+    relationship_other?: string | null;
 
     // Section 2: Deceased Information
     deceased_full_name: string;
-    deceased_dob: string;
-    deceased_dod: string | null;
-    deceased_death_place: string | null;
-    deceased_last_residence: string | null;
+    deceased_dob?: string;
+    deceased_dod?: string | null;
+    deceased_death_place?: string | null;
+    deceased_last_residence?: string | null;
 
-    // Estate Information
-    probate_opened: boolean | null;
-    probate_case_number: string | null;
-    probate_jurisdiction: string | null;
-    executor_name: string | null;
-    executor_contact: string | null;
+    // Section 3: Authority / Agreements (Enhanced for Step 4.1)
+    agree_legal_authority: boolean;    // NEW
+    agree_good_faith: boolean;         // NEW
+    agree_permanence: boolean;         // NEW
+    agree_indemnification: boolean;    // (Replaces indemnification_accepted or maps to it)
+    indemnification_accepted?: boolean; // Keep for backward compatibility if needed
 
-    // Section 3: Authority (JSONB fields)
-    authority_claims: any; // or define specific interface
-    consent_obtained_from: any; // or define specific interface
-    no_conflicting_claims: boolean;
+    // Section 4: Content Representations (Old fields, keep for safety)
+    accuracy_confirmed?: boolean;
+    copyright_confirmed?: boolean;
+    privacy_confirmed?: boolean;
 
-    // Section 4: Content Representations
-    accuracy_confirmed: boolean;
-    copyright_confirmed: boolean;
-    privacy_confirmed: boolean;
-
-    // Section 5: Indemnification
-    indemnification_accepted: boolean;
-
-    // Section 8: Electronic Signature
-    electronic_signature: string;
+    // Section 8: Electronic Signature & Evidence
+    signature_type: 'typed' | 'drawn'; // NEW
+    electronic_signature: string;      // The text name OR base64 image
     signature_date: string;
+    
+    // Technical Evidence
     signature_ip_address: string | null;
     signature_user_agent: string | null;
+    device_fingerprint?: string | null; // NEW
+    geolocation?: string | null;        // NEW
 
     // Status and Review
     status: 'pending' | 'approved' | 'rejected';
-    reviewed_by: string | null;
-    reviewed_at: string | null;
+    reviewed_by?: string | null;
+    reviewed_at?: string | null;
 
-    // PDF Storage
-    pdf_storage_path: string | null;
+    // Optional PDF Storage path
+    pdf_storage_path?: string | null;
 
-    // Full backup
-    form_data_json: any; // or define specific interface
+
+    authorization_type: 'account' | 'individual'; // ADD THIS LINE
+
+    video_storage_path?: string | null;
+    video_hash?: string | null;
 }
 ===== FICHIER: ./lib/uploadService.ts =====
 
@@ -3077,6 +3435,16 @@ export interface WitnessContribution {
   disputed?: boolean; // For Step 2.1.6 (Conflict detection)
 }
 
+
+export interface MemorialRelation {
+  id: string;
+  from_memorial_id: string;
+  to_memorial_id: string;
+  target_name?: string; // Fetched from the joined table
+  target_photo?: string; // Fetched from the joined table
+  relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+}
+
 ===== FICHIER: ./types/paths.ts =====
 
 // types/paths.ts
@@ -3852,6 +4220,522 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+===== FICHIER: ./app/authorization/[id]/page.tsx =====
+
+// app/authorization/[id]/page.tsx
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
+import { supabase } from '@/lib/supabase';
+import { Shield, Check, AlertTriangle, ArrowLeft, PenTool, Type, Clock, Loader2, Users, User } from 'lucide-react';
+import SignaturePad from '@/components/SignaturePad';
+import fp from '@fingerprintjs/fingerprintjs';
+import VideoRecorder from '@/components/VideoRecorder';
+
+const PUBLIC_FIGURE_KEYWORDS = [
+  'President', 'Queen', 'King', 'Senator', 'Governor', 
+  'CEO', 'Founder', 'Director', 'Minister', 'Artist', 'Actor'
+];
+
+export default function AuthorizationPage({ params }: { params: Promise<{ id: string }> }) {
+    const unwrappedParams = use(params);
+    const memorialId = unwrappedParams.id;
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    
+    // Check if this is a Master Account authorization or a Specific Individual one
+    const isAccountLevel = searchParams.get('type') === 'account';
+
+    const [loading, setLoading] = useState(true);
+    const [memorialName, setMemorialName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [wantsVideo, setWantsVideo] = useState(false);
+    const [videoBlob, setVideoBlob] = useState<Blob | null>(null); // To store the recorded video
+
+    const [isSuccess, setIsSuccess] = useState(false);
+    
+    const [identity, setIdentity] = useState({
+        fullName: '',
+        email: '',
+        relationship: isAccountLevel ? 'Account Holder' : ''
+    });
+
+    const [agreements, setAgreements] = useState({
+        legal_authority: false,
+        good_faith: false,
+        permanence: false,
+        indemnification: false
+    });
+
+    const [signatureType, setSignatureType] = useState<'drawn' | 'typed'>('typed');
+    const [signatureValue, setSignatureValue] = useState<string | null>(null);
+    const [signatureTimestamp, setSignatureTimestamp] = useState<string | null>(null);
+    const [finalConfirmation, setFinalConfirmation] = useState(false);
+
+    const [isMandatory, setIsMandatory] = useState(false);
+    const [mandatoryReason, setMandatoryReason] = useState('');
+
+    useEffect(() => {
+        loadData();
+    }, [memorialId]);
+
+    const loadData = async () => {
+        try {
+            if (isAccountLevel) {
+                setMemorialName("Family Plan Account");
+                setLoading(false);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('memorials')
+                .select('step1, mode') // Added mode
+                .eq('id', memorialId)
+                .single();
+
+            if (error) throw error;
+            
+            const fullName = data?.step1?.fullName || 'the Deceased';
+            setMemorialName(fullName);
+
+            // --- HIGH RISK DETECTION LOGIC ---
+            let mandatory = false;
+            let reason = '';
+
+            // 1. Check if Concierge/Premium
+            if (data.mode === 'concierge') {
+                mandatory = true;
+                reason = 'Required for white-glove Concierge Service to ensure maximum legal protection.';
+            } 
+            // 2. Check for public figure keywords in name
+            else if (PUBLIC_FIGURE_KEYWORDS.some(k => fullName.toLowerCase().includes(k.toLowerCase()))) {
+                mandatory = true;
+                reason = 'Required for archives of public figures to prevent identity disputes.';
+            }
+            // 3. Strongly recommend for Family mode (optional but flagged)
+            else if (data.mode === 'family') {
+                setWantsVideo(true); // Default to on, but user can still uncheck unless mandatory
+            }
+
+            if (mandatory) {
+                setIsMandatory(true);
+                setMandatoryReason(reason);
+                setWantsVideo(true);
+            }
+            // ---------------------------------
+
+        } catch (err) {
+            console.error('Error loading data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleAgreement = (key: keyof typeof agreements) => {
+        setAgreements(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleSignatureInput = (val: string | null) => {
+        setSignatureValue(val);
+        setFinalConfirmation(false);
+        if (val) {
+            setSignatureTimestamp(new Date().toLocaleString('en-US', { 
+                timeZoneName: 'short', dateStyle: 'long', timeStyle: 'long' 
+            }));
+        } else {
+            setSignatureTimestamp(null);
+        }
+    };
+
+    // Add this helper function at the top of your component or inside handleAuthorize
+    const blobToBase64 = (blob: Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    };
+
+    const handleAuthorize = async () => {
+        if (!memorialId) return;
+        setIsSubmitting(true);
+
+        try {
+            // 1. Generate Device Fingerprint
+            const agent = await fp.load();
+            const fpResult = await agent.get();
+            const fingerprint = fpResult.visitorId;
+            const userId = localStorage.getItem('user-id');
+
+            // 2. Prepare Video Data (if recorded)
+            let videoData = null;
+            if (wantsVideo && videoBlob) {
+                videoData = await blobToBase64(videoBlob);
+            }
+
+            // 3. Submit to Server API
+            const response = await fetch('/api/authorization/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    memorialId,
+                    userId,
+                    identity,
+                    agreements,
+                    signature: { type: signatureType, content: signatureValue },
+                    fingerprint,
+                    authorizationType: isAccountLevel ? 'account' : 'individual',
+                    videoContent: videoData // <--- ADDED THE VIDEO DATA HERE
+                })
+            });
+
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            setIsSuccess(true);
+
+            // Wait 3 seconds so they can read the confirmation before redirecting
+            setTimeout(() => {
+                const redirectTo = searchParams.get('redirect');
+                if (redirectTo === 'personal') {
+                    router.push('/personal-confirmation?authorized=true');
+                } else if (redirectTo === 'family') {
+                    router.push('/family-confirmation?authorized=true');
+                } else if (isAccountLevel) {
+                    router.push('/family-confirmation?authorized=true');
+                } else {
+                    router.push(`/create?id=${memorialId}&authorized=true`);
+                }
+            }, 3500);
+
+        } catch (err: any) {
+            console.error("Authorization failed:", err);
+            alert("Authorization failed: " + err.message);
+            setIsSubmitting(false);
+        }
+    };
+
+    const allAgreed = Object.values(agreements).every(Boolean);
+    const isIdentityComplete = identity.fullName.trim().length > 2 && identity.email.includes('@');
+    const isSignatureValid = signatureType === 'drawn' 
+        ? !!signatureValue 
+        : signatureValue?.trim().toLowerCase() === identity.fullName.trim().toLowerCase();
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-ivory text-charcoal font-sans selection:bg-sage/20 pb-20">
+            <header className="border-b border-sand/30 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+                    <button onClick={() => router.back()} className="text-sm text-charcoal/60 hover:text-charcoal flex items-center gap-2 transition-colors">
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                    <div className="flex items-center gap-2 text-sage font-medium">
+                        <Shield size={18} />
+                        <span className="text-sm tracking-wide uppercase">
+                            {isAccountLevel ? 'Master Account Authorization' : 'Archive Authorization'}
+                        </span>
+                    </div>
+                </div>
+            </header>
+
+            <main className="max-w-2xl mx-auto px-6 py-12">
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-sage/10 rounded-2xl text-sage mb-6">
+                        {isAccountLevel ? <Users size={32} /> : <User size={32} />}
+                    </div>
+                    <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
+                        {isAccountLevel ? 'Master Guardian Declaration' : 'Declaration of Authority'}
+                    </h1>
+                    <p className="text-charcoal/60 leading-relaxed">
+                        {isAccountLevel 
+                          ? "As the Master Guardian, you are assuming legal responsibility for all archives created under this Family Account."
+                          : `Establishing the permanent archive for ${memorialName}.`
+                        }
+                    </p>
+                </div>
+
+                {/* 1. Identity Form */}
+                <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8">
+                    <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">1</span>
+                        Your Identity
+                    </h2>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">Full Legal Name</label>
+                            <input 
+                                type="text" 
+                                value={identity.fullName}
+                                onChange={e => setIdentity({...identity, fullName: e.target.value})}
+                                placeholder="e.g. Eleanor Marie Thompson"
+                                className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    value={identity.email}
+                                    onChange={e => setIdentity({...identity, email: e.target.value})}
+                                    placeholder="name@example.com"
+                                    className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">
+                                    {isAccountLevel ? 'Your Role' : 'Relationship to Deceased'}
+                                </label>
+                                <input 
+                                    type="text" 
+                                    value={identity.relationship}
+                                    onChange={e => setIdentity({...identity, relationship: e.target.value})}
+                                    placeholder={isAccountLevel ? "Account Holder" : "e.g. Daughter, Executor"}
+                                    disabled={isAccountLevel} // User doesn't need to type it for Account level
+                                    className={`w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30 ${isAccountLevel ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Declarations - Dynamic Wording */}
+                <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!isIdentityComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                    <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">2</span>
+                        Solemn Declarations
+                    </h2>
+                    
+                    <div className="space-y-4">
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.legal_authority ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.legal_authority ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                                {agreements.legal_authority && <Check size={12} strokeWidth={3} />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={agreements.legal_authority} onChange={() => toggleAgreement('legal_authority')} />
+                            <div>
+                                <p className="font-medium text-sm text-charcoal">I assert legal authority.</p>
+                                <p className="text-xs text-charcoal/60 mt-1">
+                                    {isAccountLevel 
+                                      ? "I am responsible for all content created within this Family Account."
+                                      : "I am the next of kin, executor, or have explicit consent from the legal representative."}
+                                </p>
+                            </div>
+                        </label>
+
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.good_faith ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.good_faith ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                                {agreements.good_faith && <Check size={12} strokeWidth={3} />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={agreements.good_faith} onChange={() => toggleAgreement('good_faith')} />
+                            <div>
+                                <p className="font-medium text-sm text-charcoal">I am acting in good faith.</p>
+                                <p className="text-xs text-charcoal/60 mt-1">I will ensure all content is accurate, respectful, and dignified.</p>
+                            </div>
+                        </label>
+
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.permanence ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.permanence ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                                {agreements.permanence && <Check size={12} strokeWidth={3} />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={agreements.permanence} onChange={() => toggleAgreement('permanence')} />
+                            <div>
+                                <p className="font-medium text-sm text-charcoal">I understand the permanence.</p>
+                                <p className="text-xs text-charcoal/60 mt-1">These archives are intended as a permanent historical and family record.</p>
+                            </div>
+                        </label>
+
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.indemnification ? 'border-terracotta/50 bg-terracotta/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.indemnification ? 'bg-terracotta border-terracotta text-ivory' : 'border-sand/60 bg-white'}`}>
+                                {agreements.indemnification && <Check size={12} strokeWidth={3} />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={agreements.indemnification} onChange={() => toggleAgreement('indemnification')} />
+                            <div>
+                                <p className="font-medium text-sm text-charcoal">I agree to indemnify Legacy Vault.</p>
+                                <p className="text-xs text-charcoal/60 mt-1">I hold Legacy Vault harmless from any claims or family disputes arising from this account.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+
+                {/* 2.5 Video Verification (Smarter Logic) */}
+                <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!allAgreed ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                    <div className="flex items-start justify-between mb-4">
+                        <h2 className="font-serif text-xl text-charcoal flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">2.5</span>
+                            Video Signature
+                        </h2>
+                        {isMandatory ? (
+                            <div className="px-3 py-1 bg-charcoal text-ivory text-[10px] font-bold uppercase tracking-widest rounded-full border border-charcoal/20 flex items-center gap-1">
+                                <Shield size={10} /> Required
+                            </div>
+                        ) : (
+                            <div className="px-3 py-1 bg-terracotta/10 text-terracotta text-[10px] font-bold uppercase tracking-widest rounded-full border border-terracotta/20">
+                                Recommended
+                            </div>
+                        )}
+                    </div>
+                    
+                    <p className="text-sm text-charcoal/60 mb-6 leading-relaxed">
+                        {isMandatory 
+                            ? "Due to the nature of this archive, a video signature is required to ensure maximum legal protection for the family."
+                            : "Adding a video signature provides irrefutable proof of your identity. It is securely stored and only accessed if a legal dispute arises."
+                        }
+                    </p>
+
+                    {/* The Mandatory Reason Banner */}
+                    {isMandatory && (
+                        <div className="mb-6 p-4 bg-sage/5 border border-sage/20 rounded-xl flex items-start gap-3">
+                            <AlertTriangle size={18} className="text-sage flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-charcoal/70 leading-relaxed">
+                                <strong>Why is this required?</strong> {mandatoryReason} 
+                                <br />
+                                This additional precaution protects everyone—including you—in case of future family conflict or claims regarding the archive's validity.
+                            </p>
+                        </div>
+                    )}
+
+                    <label className={`flex items-center gap-4 p-4 rounded-xl border-2 border-dashed transition-all ${
+                        isMandatory 
+                        ? 'bg-ivory border-sand/20 opacity-80 cursor-default' 
+                        : 'border-sand/60 hover:border-sage/40 hover:bg-sage/5 cursor-pointer group'
+                    }`}>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${wantsVideo ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white group-hover:border-sand'}`}>
+                            {wantsVideo && <Check size={14} strokeWidth={3} />}
+                        </div>
+                        <input 
+                            type="checkbox" 
+                            className="hidden" 
+                            checked={wantsVideo}
+                            onChange={() => !isMandatory && setWantsVideo(!wantsVideo)} // Disable toggling if mandatory
+                            disabled={isMandatory}
+                        />
+                        <span className="text-sm font-medium text-charcoal">
+                            {isMandatory ? "I will record my video signature below." : "Yes, I want to strengthen my authorization with a 10-second video."}
+                        </span>
+                    </label>
+
+                    {wantsVideo && (
+                        <div className="mt-8 p-6 bg-ivory rounded-xl border border-sand/40 animate-fadeIn">
+                            <VideoRecorder 
+                                fullName={identity.fullName}
+                                deceasedName={memorialName}
+                                onComplete={(blob) => setVideoBlob(blob)}
+                            />
+                            
+                            {videoBlob && (
+                                <div className="mt-4 flex items-center justify-center gap-2 text-sage font-medium text-sm animate-fadeIn">
+                                    Video recorded and signed.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. Signature */}
+                {allAgreed && isIdentityComplete && (
+                    <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 animate-fadeIn">
+                        <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">3</span>
+                            Digital Signature
+                        </h2>
+
+                        <div className="flex gap-2 p-1 bg-sand/10 rounded-xl mb-6">
+                            <button onClick={() => { setSignatureType('typed'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'typed' ? 'bg-white shadow-sm text-charcoal' : 'text-charcoal/50 hover:text-charcoal'}`}>
+                                <Type size={16} /> Type Name
+                            </button>
+                            <button onClick={() => { setSignatureType('drawn'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'drawn' ? 'bg-white shadow-sm text-charcoal' : 'text-charcoal/50 hover:text-charcoal'}`}>
+                                <PenTool size={16} /> Draw Signature
+                            </button>
+                        </div>
+
+                        <div className="mb-6">
+                            {signatureType === 'typed' ? (
+                                <div className="space-y-2">
+                                    <input type="text" placeholder={`Type "${identity.fullName}" to sign`} className="w-full px-4 py-4 rounded-xl border-2 border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30 font-serif text-xl text-center" onChange={(e) => handleSignatureInput(e.target.value)} value={signatureValue || ''} />
+                                    {signatureValue && !isSignatureValid && <p className="text-xs text-red-500 text-center">Must exactly match your full name.</p>}
+                                </div>
+                            ) : ( <SignaturePad onEnd={handleSignatureInput} /> )}
+                        </div>
+
+                        {isSignatureValid && (
+                            <div className="p-6 bg-sand/5 rounded-xl border border-sand/20 animate-fadeIn">
+                                <div className="flex flex-col items-center gap-2">
+                                    {signatureType === 'drawn' ? <img src={signatureValue!} alt="Signature" className="h-16 object-contain" /> : <p className="font-serif text-3xl text-charcoal italic">{signatureValue}</p>}
+                                    <div className="flex items-center gap-1.5 text-xs text-sage font-mono mt-2 bg-white px-3 py-1 rounded-full border border-sage/20">
+                                        <Clock size={12} /> {signatureTimestamp}
+                                    </div>
+                                </div>
+                                <div className="mt-6 pt-6 border-t border-sand/20">
+                                    <label className="flex items-center justify-center gap-3 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${finalConfirmation ? 'bg-charcoal border-charcoal text-ivory' : 'border-charcoal/30 bg-white group-hover:border-charcoal'}`}>
+                                            {finalConfirmation && <Check size={12} strokeWidth={3} />}
+                                        </div>
+                                        <input type="checkbox" className="hidden" checked={finalConfirmation} onChange={() => setFinalConfirmation(!finalConfirmation)} />
+                                        <span className="text-sm font-medium text-charcoal">I confirm this signature is legally binding.</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="text-center pb-8">
+                    {wantsVideo && !videoBlob && allAgreed && isSignatureValid && (
+                        <p className="text-xs text-terracotta mb-4 flex items-center justify-center gap-1 animate-pulse">Please complete your 10-second video recording to continue.</p>
+                    )}
+                    <button 
+                        onClick={handleAuthorize}
+                        disabled={
+                            !allAgreed || 
+                            !isIdentityComplete || 
+                            !isSignatureValid || 
+                            !finalConfirmation || 
+                            isSubmitting || 
+                            (wantsVideo && !videoBlob) // <--- ADD THIS CHECK
+                        }
+                        className="w-full py-4 rounded-xl bg-charcoal text-ivory font-medium shadow-lg hover:bg-charcoal/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                    >
+                        {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Shield size={20} />}
+                        {isAccountLevel ? 'Authorize Family Account' : 'Authorize Memorial'}
+                    </button>
+                </div>
+                {isSuccess && (
+                    <div className="fixed inset-0 z-[110] bg-ivory/95 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
+                        <div className="max-w-md w-full text-center">
+                            <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                {/* <CheckCircle className="text-sage" size={40} /> */}
+                            </div>
+                            <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Complete</h2>
+                            <p className="text-charcoal/70 mb-8 leading-relaxed">
+                                Your legal declaration and signature have been recorded.
+                                {wantsVideo && (
+                                    <span className="block mt-4 p-4 bg-white rounded-xl border border-sand/40 text-sm font-medium">
+                                        🛡️ Your video signature is securely stored and will only be accessible if legally required.
+                                    </span>
+                                )}
+                            </p>
+                            <div className="flex items-center justify-center gap-2 text-charcoal/40 text-sm italic">
+                                <Loader2 size={16} className="animate-spin" />
+                                Returning to your archive...
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
         </div>
     );
 }
@@ -6003,7 +6887,7 @@ function CreateMemorialPageContent() {
             <h1 className="font-serif text-5xl text-charcoal mb-4">The Crossroads</h1>
 
 
-                        {/* // In app/create/page.tsx
+            {/* // In app/create/page.tsx
 
                         // ... inside the Top Bar div ... */}
 
@@ -6024,7 +6908,7 @@ function CreateMemorialPageContent() {
                   className="flex items-center gap-2 px-3 py-1.5 bg-charcoal text-ivory border border-charcoal rounded-xl hover:opacity-90 transition-all text-xs"
                   title="Preview the offline export HTML"
                 >
-                  <EthernetPort size={14} /> 
+                  <EthernetPort size={14} />
                   <span className="hidden sm:inline">Arche HTML</span>
                 </button>
               </>
@@ -6032,45 +6916,45 @@ function CreateMemorialPageContent() {
 
 
             {/* ... Arche HTML Button ... */}
-    
-    {/* NEW: ZIP EXPORT BUTTON */}
-    <button
-      onClick={async () => {
-        if (!confirm('Generate full archive? This may take a minute.')) return;
-        try {
-          // Show some loading state if you wish, or just simple alert for now
-          const btn = document.getElementById('btn-export-zip');
-          if(btn) btn.innerText = '⏳ Generating...';
-          
-          const res = await fetch('/api/arche/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ memorialId: currentMemorialId })
-            });
 
-            console.log(JSON.stringify({ memorialId: currentMemorialId }))
-          
-          const result = await res.json();
-          if(btn) btn.innerText = '📦 Export ZIP';
+            {/* NEW: ZIP EXPORT BUTTON */}
+            <button
+              onClick={async () => {
+                if (!confirm('Generate full archive? This may take a minute.')) return;
+                try {
+                  // Show some loading state if you wish, or just simple alert for now
+                  const btn = document.getElementById('btn-export-zip');
+                  if (btn) btn.innerText = '⏳ Generating...';
 
-          if (result.success && result.downloadUrl) {
-            window.location.href = result.downloadUrl;
-          } else {
-            alert('Export failed: ' + (result.error || 'Unknown error'));
-          }
-        } catch (e) {
-          alert('Error generating export');
-          console.error('Error generating export:', e);
-        }
-      }}
-      id="btn-export-zip"
-      className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
-      title="Download the full offline archive (ZIP)"
-    >
-      <span className="hidden sm:inline">📦 Export ZIP</span>
-    </button>
+                  const res = await fetch('/api/arche/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memorialId: currentMemorialId })
+                  });
 
-                          {/*   // ... rest of the top bar ... */}
+                  console.log(JSON.stringify({ memorialId: currentMemorialId }))
+
+                  const result = await res.json();
+                  if (btn) btn.innerText = '📦 Export ZIP';
+
+                  if (result.success && result.downloadUrl) {
+                    window.location.href = result.downloadUrl;
+                  } else {
+                    alert('Export failed: ' + (result.error || 'Unknown error'));
+                  }
+                } catch (e) {
+                  alert('Error generating export');
+                  console.error('Error generating export:', e);
+                }
+              }}
+              id="btn-export-zip"
+              className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
+              title="Download the full offline archive (ZIP)"
+            >
+              <span className="hidden sm:inline">📦 Export ZIP</span>
+            </button>
+
+            {/*   // ... rest of the top bar ... */}
 
             {(() => {
               const isPresenceUnlocked = completedPathsCount >= 2;
@@ -6380,6 +7264,7 @@ function CreateMemorialPageContent() {
                           readOnly={!canEditStep(7)}
                           userRole={userRole}
                           onSubmitContribution={submitContribution}
+                          memorialId={currentMemorialId}
                         />
                       )}
                       {memorialData.currentStep === 8 && (
@@ -6512,14 +7397,17 @@ export default function CreateMemorialPage() {
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X } from 'lucide-react'; // Added Network, X
 import { supabase, Memorial } from '@/lib/supabase';
+import FamilyLinker from '@/components/FamilyLinker';
+import SuccessorSettings from '@/components/SuccessorSettings';
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
     const [memorials, setMemorials] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
+    const [managingId, setManagingId] = useState<string | null>(null); // New state
 
     useEffect(() => {
         loadMemorials();
@@ -6565,13 +7453,23 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                             <p className="text-charcoal/60">Your private dashboard</p>
                             <p className="text-xs text-charcoal/40 mt-1">ID: {userId.slice(0, 8)}...</p>
                         </div>
-                        <button
-                            onClick={handleCreate}
-                            className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory"
-                        >
-                            <Plus size={20} />
-                            Create Memorial
-                        </button>
+                        <div className="flex gap-3">
+                            <Link
+                                href={`/dashboard/family/${userId}/tree`}
+                                className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 border-2 border-sage/20 text-sage hover:bg-sage/5 transition-all"
+                            >
+                                <Network size={20} />
+                                View Constellation
+                            </Link>
+
+                            <button
+                                onClick={handleCreate}
+                                className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory"
+                            >
+                                <Plus size={20} />
+                                Create Memorial
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -6608,12 +7506,22 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                 <div className="p-6">
                                     <h3 className="font-serif text-2xl text-charcoal mb-4">{memorial.full_name || 'Untitled'}</h3>
                                     <div className="flex gap-2">
-                                        <Link href={`/person/${memorial.id}`} className="flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm">
-                                            <Eye size={16} className="inline mr-1" />View
+                                        <Link href={`/person/${memorial.id}`} className="flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
+                                            <Eye size={16} /> View
                                         </Link>
-                                        <Link href={`/create?id=${memorial.id}`} className="flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm">
-                                            <Edit size={16} className="inline mr-1" />Edit
+                                        <Link href={`/create?id=${memorial.id}`} className="flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
+                                            <Edit size={16} /> Edit
                                         </Link>
+
+                                        {/* NEW CONNECTIONS BUTTON */}
+                                        <button
+                                            onClick={() => setManagingId(memorial.id)}
+                                            className="py-2 px-3 bg-charcoal/5 hover:bg-charcoal/10 text-charcoal rounded-lg"
+                                            title="Manage Connections"
+                                        >
+                                            <Network size={16} />
+                                        </button>
+
                                         <button onClick={() => deleteMemorial(memorial.id)} className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg">
                                             <Trash2 size={16} />
                                         </button>
@@ -6623,11 +7531,186 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                         ))}
                     </div>
                 )}
+
+                {/* SUCCESSION MANAGEMENT SECTION */}
+                <div className="mt-16 pt-12 border-t border-sand/20">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        <div className="lg:col-span-1">
+                            <h2 className="font-serif text-3xl text-charcoal mb-4">Account Stewardship</h2>
+                            <p className="text-charcoal/60 leading-relaxed">
+                                Legacy is not just what you create, but how you ensure it survives. Use this section to designate the person who will care for these archives when you no longer can.
+                            </p>
+                        </div>
+                        <div className="lg:col-span-2">
+                            <SuccessorSettings userId={userId} />
+                        </div>
+                    </div>
+                </div>
             </div>
+            {/* CONNECTION MANAGER MODAL */}
+            {managingId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fadeIn">
+                        <div className="p-4 border-b border-sand/20 flex justify-between items-center bg-ivory">
+                            <h3 className="font-serif text-lg text-charcoal">Manage Family Connections</h3>
+                            <button
+                                onClick={() => setManagingId(null)}
+                                className="p-2 hover:bg-sand/20 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-charcoal/60" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <FamilyLinker
+                                currentMemorialId={managingId}
+                                userId={userId}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
+===== FICHIER: ./app/dashboard/family/[userId]/tree/page.tsx =====
+
+'use client';
+
+import { useState, useEffect, use, useCallback } from 'react';
+import { ReactFlow, Background, Controls, useNodesState, useEdgesState, Position, MarkerType, Node, Edge } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { supabase } from '@/lib/supabase';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+
+// Custom Node Style (The "Box")
+const nodeStyle = {
+    background: '#fff',
+    border: '1px solid #d7ccc8', // Sand color
+    borderRadius: '12px',
+    padding: '10px',
+    width: 180,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    fontFamily: 'var(--font-sans)',
+    textAlign: 'center' as const,
+};
+
+export default function FamilyTreePage({ params }: { params: Promise<{ userId: string }> }) {
+    const unwrappedParams = use(params);
+    const userId = unwrappedParams.userId;
+
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        loadFamilyData();
+    }, []);
+
+    const loadFamilyData = async () => {
+        setLoading(true);
+        try {
+            // 1. Fetch Memorials (The People)
+            const { data: people } = await supabase
+                .from('memorials')
+                .select('id, full_name, profile_photo_url, birth_date')
+                .eq('user_id', userId);
+
+            // 2. Fetch Relations (The Connections)
+            // We need relations where EITHER side belongs to one of our memorials
+            // Since RLS restricts to owner, a simple select * works fine for "my" relations
+            const { data: relations } = await supabase
+                .from('memorial_relations')
+                .select('*');
+
+            if (!people) return;
+
+            // 3. Transform into Graph Nodes
+            // Simple layout logic: Distribute in a grid for now
+            // (A real genealogy layout algorithm is complex, this is a starting point)
+            const graphNodes: Node[] = people.map((person, index) => ({
+                id: person.id,
+                position: { x: (index % 4) * 250, y: Math.floor(index / 4) * 150 }, // Simple grid layout
+                data: {
+                    label: (
+                        <div className="flex flex-col items-center">
+                            {person.profile_photo_url ? (
+                                <img src={person.profile_photo_url} alt="" className="w-12 h-12 rounded-full object-cover mb-2 border-2 border-sage/20" />
+                            ) : (
+                                <div className="w-12 h-12 rounded-full bg-sage/10 mb-2" />
+                            )}
+                            <div className="font-semibold text-charcoal text-sm">{person.full_name}</div>
+                            <div className="text-xs text-charcoal/50">{person.birth_date?.substring(0, 4) || '????'}</div>
+                        </div>
+                    )
+                },
+                style: nodeStyle,
+                sourcePosition: Position.Bottom,
+                targetPosition: Position.Top,
+            }));
+
+            // 4. Transform into Graph Edges
+            const graphEdges: Edge[] = (relations || []).map((rel) => ({
+                id: rel.id,
+                source: rel.from_memorial_id,
+                target: rel.to_memorial_id,
+                label: rel.relationship_type,
+                type: 'smoothstep',
+                animated: false,
+                style: { stroke: '#8a9a5b' }, // Sage color lines
+                labelStyle: { fill: '#2c3e50', fontSize: 10 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#8a9a5b' },
+            }));
+
+            setNodes(graphNodes);
+            setEdges(graphEdges);
+
+        } catch (error) {
+            console.error("Error loading tree:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="h-screen flex flex-col bg-ivory">
+            {/* Header */}
+            <div className="flex-none bg-white border-b border-sand/30 px-6 py-4 flex justify-between items-center z-10">
+                <div className="flex items-center gap-4">
+                    <Link href={`/dashboard/family/${userId}`} className="p-2 hover:bg-sand/10 rounded-lg transition-colors">
+                        <ArrowLeft size={20} className="text-charcoal/60" />
+                    </Link>
+                    <h1 className="font-serif text-2xl text-charcoal">Family Constellation</h1>
+                </div>
+                <div className="text-xs text-charcoal/40 bg-sand/10 px-3 py-1 rounded-full">
+                    Drag nodes to organize
+                </div>
+            </div>
+
+            {/* Graph Area */}
+            <div className="flex-1 w-full h-full relative">
+                {loading ? (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Loader2 className="animate-spin text-sage" size={32} />
+                    </div>
+                ) : (
+                    <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        fitView
+                        attributionPosition="bottom-right"
+                    >
+                        <Background color="#d7ccc8" gap={16} />
+                        <Controls showInteractive={false} />
+                    </ReactFlow>
+                )}
+            </div>
+        </div>
+    );
+}
 ===== FICHIER: ./app/dashboard/page.tsx =====
 
 // ============================================
@@ -6797,78 +7880,79 @@ import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function FamilyConfirmationPage() {
+    const router = useRouter(); // <--- ADD THIS LINE
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePayment = async () => {
-        if (!acceptedTerms) {
-            alert('Please accept the general conditions to continue');
-            return;
+    if (!acceptedTerms) {
+        alert('Please accept the general conditions to continue');
+        return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+        let memorialId = localStorage.getItem('current-memorial-id');
+
+        // Initialize empty memorial if none exists (existing logic)
+        if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+            const userId = localStorage.getItem('user-id');
+            const { data, error: insertError } = await supabase
+                .from('memorials')
+                .insert({
+                    user_id: userId,
+                    slug: `family-memorial-${Date.now()}`,
+                    paid: false,
+                    mode: 'family' // Ensure mode is set
+                })
+                .select()
+                .single();
+
+            if (insertError) throw insertError;
+            memorialId = data.id;
+            localStorage.setItem('current-memorial-id', memorialId!);
         }
 
-        setIsProcessing(true);
+        // 1. Call Checkout API
+        const response = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                memorialId: memorialId,
+                plan: 'Family',
+                amount: 3000, // $3,000
+            }),
+        });
 
-        try {
-            // 1. Check if an archive already exists
-            let memorialId = localStorage.getItem('current-memorial-id');
+        const data = await response.json();
 
-            // 2. If no archive exists, create an EMPTY one
-            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.log('Creating initial memorial record...');
-                const userId = localStorage.getItem('user-id');
-
-                const { data, error: insertError } = await supabase
-                    .from('memorials')
-                    .insert({
-                        user_id: userId,
-                        slug: `family-memorial-${Date.now()}`, // Temporary slug
-                        paid: false, // Not yet paid
-                    })
-                    .select()
-                    .single();
-
-                if (insertError) {
-                    console.error('Failed to create memorial:', insertError);
-                    alert('Failed to initialize archive. Please try again.');
-                    return;
-                }
-
-                memorialId = data.id;
-                localStorage.setItem('current-memorial-id', memorialId!);
+        // 2. STRICT BARRIER CHECK (Catching the security block)
+        if (!response.ok) {
+            if (data.code === 'LEGAL_AUTH_REQUIRED') {
+                // Redirect to the authorization page for this specific ID
+                router.push(`/authorization/${memorialId}?type=account&redirect=family`);
+                return;
             }
-
-            console.log('Proceeding to checkout for memorial:', memorialId);
-
-            // 3. Create Stripe Checkout Session
-            const response = await fetch('/api/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    memorialId: memorialId,
-                    plan: 'Family',
-                    amount: 3000, // $3,000
-                }),
-            });
-            const { url, error } = await response.json();
-
-            if (error) {
-                throw new Error(error);
-            }
-
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error('No checkout URL returned');
-            }
-        } catch (error: any) {
-            console.error('Payment error:', error);
-            alert('Payment failed. Please try again or contact support.');
-        } finally {
-            setIsProcessing(false);
+            throw new Error(data.error || 'Payment initialization failed');
         }
-    };
+
+        // 3. Proceed to Stripe
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error('No checkout URL returned');
+        }
+    } catch (error: any) {
+        console.error('Payment error:', error);
+        alert(error.message || 'Payment failed. Please try again.');
+    } finally {
+        setIsProcessing(false);
+    }
+};
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-terracotta/10 via-ivory to-sage/10">
@@ -8770,10 +9854,12 @@ import { useState } from 'react';
 import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Ensure useRouter is imported
 
 export default function PersonalConfirmationPage() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const router = useRouter();
 
     const handlePayment = async () => {
         if (!acceptedTerms) {
@@ -8784,61 +9870,56 @@ export default function PersonalConfirmationPage() {
         setIsProcessing(true);
 
         try {
-            // 1. Check if an archive already exists
             let memorialId = localStorage.getItem('current-memorial-id');
 
-            // 2. If no archive exists, create an EMPTY one
+            // Initialize if missing (existing logic)
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.log('Creating initial memorial record...');
                 const userId = localStorage.getItem('user-id');
-
                 const { data, error: insertError } = await supabase
                     .from('memorials')
                     .insert({
                         user_id: userId,
-                        slug: `memorial-${Date.now()}`, // Temporary slug
-                        paid: false, // Not yet paid
+                        slug: `memorial-${Date.now()}`,
+                        paid: false,
                     })
                     .select()
                     .single();
 
-                if (insertError) {
-                    console.error('Failed to create memorial:', insertError);
-                    alert('Failed to initialize archive. Please try again.');
-                    return;
-                }
-
+                if (insertError) throw insertError;
                 memorialId = data.id;
                 localStorage.setItem('current-memorial-id', memorialId!);
             }
 
-            console.log('Proceeding to checkout for memorial:', memorialId);
-
-            // 3. Create Stripe Checkout Session
+            // 1. Call Checkout API
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     memorialId: memorialId,
                     plan: 'Personal',
-                    amount: 1500, // $1,500
+                    amount: 1500,
                 }),
             });
 
-            const { url, error } = await response.json();
+            const data = await response.json();
 
-            if (error) {
-                throw new Error(error);
+            // 2. STRICT BARRIER CHECK
+            if (!response.ok) {
+                if (data.code === 'LEGAL_AUTH_REQUIRED') {
+                    // Redirect to the new authorization page we built
+                    router.push(`/authorization/${memorialId}?redirect=personal`);
+                    return;
+                }
+                throw new Error(data.error || 'Payment initialization failed');
             }
 
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error('No checkout URL returned');
+            // 3. Proceed to Stripe
+            if (data.url) {
+                window.location.href = data.url;
             }
         } catch (error: any) {
             console.error('Payment error:', error);
-            alert('Payment failed. Please try again or contact support.');
+            alert(error.message || 'Payment failed. Please try again.');
         } finally {
             setIsProcessing(false);
         }
@@ -9212,6 +10293,497 @@ export default function SuccessPage() {
           animation: fall linear forwards;
         }
       `}</style>
+        </div>
+    );
+}
+===== FICHIER: ./app/succession/accept/[token]/page.tsx =====
+
+'use client';
+
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { Shield, Check, Loader2, AlertCircle, Scale } from 'lucide-react';
+
+export default function SuccessorAcceptancePage({ params }: { params: Promise<{ token: string }> }) {
+    const unwrappedParams = use(params);
+    const token = unwrappedParams.token;
+    const router = useRouter();
+
+    const [loading, setLoading] = useState(true);
+    const [successorRecord, setSuccessorRecord] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    useEffect(() => {
+        fetchSuccessorDetails();
+    }, [token]);
+
+    const fetchSuccessorDetails = async () => {
+        try {
+            const { data, error: dbError } = await supabase
+                .from('user_successors')
+                .select('*')
+                .eq('verification_token', token)
+                .single();
+
+            if (dbError || !data) throw new Error('Stewardship invitation not found or expired.');
+            if (data.status === 'accepted') throw new Error('You have already accepted this responsibility.');
+
+            setSuccessorRecord(data);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAccept = async () => {
+        setProcessing(true);
+        try {
+            const { error: updateError } = await supabase
+                .from('user_successors')
+                .update({ status: 'accepted' })
+                .eq('id', successorRecord.id);
+
+            if (updateError) throw updateError;
+
+            alert("Responsibility Accepted. You are now the designated Archive Steward.");
+            router.push('/'); // Redirect to home or a success page
+
+        } catch (err: any) {
+            alert('Error: ' + err.message);
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    if (loading) return (
+        <div className="min-h-screen bg-ivory flex items-center justify-center">
+            <Loader2 className="animate-spin text-sage" size={32} />
+        </div>
+    );
+
+    if (error) return (
+        <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
+            <div className="max-w-md">
+                <AlertCircle className="mx-auto text-terracotta mb-4" size={48} />
+                <h1 className="font-serif text-2xl mb-2">Invitation Invalid</h1>
+                <p className="text-charcoal/60 mb-6">{error}</p>
+                <button onClick={() => router.push('/')} className="text-sage font-medium underline">Return to Home</button>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+            <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-sand/30">
+                <div className="p-8 md:p-12">
+                    <div className="w-16 h-16 bg-charcoal text-sage rounded-full flex items-center justify-center mx-auto mb-8">
+                        <Shield size={32} />
+                    </div>
+
+                    <h1 className="font-serif text-3xl text-center text-charcoal mb-4">
+                        Archive Stewardship
+                    </h1>
+
+                    <div className="prose prose-sm text-charcoal/80 space-y-4 mb-8 text-center leading-relaxed">
+                        <p className="text-base">
+                            You have been designated as the <strong>Archive Steward</strong> for a Legacy Vault account.
+                        </p>
+                        <p>
+                            This means that in the event of the account owner's passing, you will be entrusted with the management, preservation, and control of all family archives associated with this account.
+                        </p>
+                        <div className="bg-sand/10 p-6 rounded-xl border border-sand/20 text-left space-y-3">
+                            <h4 className="font-bold flex items-center gap-2 text-charcoal">
+                                <Scale size={16} /> Your Commitment:
+                            </h4>
+                            <ul className="list-disc pl-5 space-y-1 text-xs">
+                                <li>I accept the duty to preserve the family history with integrity.</li>
+                                <li>I agree to manage archive access for future descendants.</li>
+                                <li>I understand that I will become the final arbiter for family disputes.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleAccept}
+                        disabled={processing}
+                        className="w-full py-4 bg-charcoal text-ivory rounded-xl font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                    >
+                        {processing ? <Loader2 className="animate-spin" size={20} /> : "I Accept This Responsibility"}
+                    </button>
+
+                    <p className="text-center mt-6 text-xs text-charcoal/40">
+                        A confirmation has been sent to the account owner.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+===== FICHIER: ./app/succession/request/page.tsx =====
+
+'use client';
+
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { secureUpload } from '@/lib/uploadService';
+import { ShieldAlert, FileText, CheckCircle, Loader2, ArrowLeft, User } from 'lucide-react';
+import Link from 'next/link';
+
+export default function SuccessionRequestPage() {
+    const [email, setEmail] = useState('');
+    const [files, setFiles] = useState<{ deathCert: File | null, idProof: File | null }>({ deathCert: null, idProof: null });
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const router = useRouter();
+
+    const deathCertRef = useRef<HTMLInputElement>(null);
+    const idProofRef = useRef<HTMLInputElement>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!files.deathCert || !files.idProof) {
+            alert("Please upload both required documents.");
+            return;
+        }
+        setSubmitting(true);
+
+        try {
+            // 1. Verify this email is a designated steward
+            const { data: steward, error: stewardError } = await supabase
+                .from('user_successors')
+                .select('id')
+                .eq('successor_email', email)
+                .eq('status', 'accepted')
+                .single();
+
+            if (stewardError || !steward) {
+                throw new Error("We could not find an active stewardship associated with this email.");
+            }
+
+            // 2. Upload Documents
+            const deathCertRes = await secureUpload(files.deathCert, 'legal-documents', `activations/${steward.id}/death_cert_${Date.now()}`);
+            const idProofRes = await secureUpload(files.idProof, 'legal-documents', `activations/${steward.id}/id_proof_${Date.now()}`);
+
+            if (!deathCertRes.success || !idProofRes.success) throw new Error("File upload failed.");
+
+            // 3. Create Activation Request
+            const { error: insertError } = await supabase
+                .from('succession_activations')
+                .insert([{
+                    successor_id: steward.id,
+                    death_certificate_url: deathCertRes.url,
+                    id_proof_url: idProofRes.url,
+                    status: 'under_review'
+                }]);
+
+            if (insertError) throw insertError;
+
+            setSubmitted(true);
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (submitted) {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
+                <div className="max-w-md bg-white p-10 rounded-2xl shadow-xl border border-sand/30">
+                    <CheckCircle className="mx-auto text-sage mb-6" size={64} />
+                    <h1 className="font-serif text-3xl mb-4">Request Received</h1>
+                    <p className="text-charcoal/70 mb-8">
+                        The verification process has begun. Our legal team will review the documents within 48 hours.
+                        <br /><br />
+                        By law, a <strong>30-day notice period</strong> will now follow to allow for any family contestations. You will receive an email once the transfer is complete.
+                    </p>
+                    <Link href="/" className="bg-charcoal text-ivory px-8 py-3 rounded-xl font-medium block">Return to Home</Link>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-ivory py-20 px-6">
+            <div className="max-w-2xl mx-auto">
+                <Link href="/" className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal mb-8 transition-colors">
+                    <ArrowLeft size={18} /> Back to Home
+                </Link>
+
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-sand/30">
+                    <div className="p-8 bg-terracotta/10 border-b border-terracotta/20 flex items-center gap-4">
+                        <ShieldAlert className="text-terracotta" size={32} />
+                        <div>
+                            <h1 className="font-serif text-2xl text-charcoal">Account Succession Request</h1>
+                            <p className="text-terracotta/70 text-sm">Formal activation of Stewardship</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
+                        <section>
+                            <h2 className="text-sm font-bold text-charcoal uppercase tracking-widest mb-4">1. Identification</h2>
+                            <label className="block text-xs font-medium text-charcoal/60 mb-2">Your Steward Email Address</label>
+                            <input
+                                required
+                                type="email"
+                                className="w-full p-3 rounded-xl border border-sand/30 focus:ring-sage"
+                                placeholder="The email where you received the invitation"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </section>
+
+                        <section className="space-y-6">
+                            <h2 className="text-sm font-bold text-charcoal uppercase tracking-widest mb-4">2. Legal Documentation</h2>
+
+                            {/* Death Certificate */}
+                            <div className="p-4 border-2 border-dashed border-sand/40 rounded-xl">
+                                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                                    <FileText size={16} className="text-charcoal/40" />
+                                    Official Death Certificate
+                                </p>
+                                <input
+                                    type="file"
+                                    ref={deathCertRef}
+                                    className="hidden"
+                                    onChange={(e) => setFiles({ ...files, deathCert: e.target.files?.[0] || null })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => deathCertRef.current?.click()}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-sage/10 text-sage' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                >
+                                    {files.deathCert ? `Selected: ${files.deathCert.name}` : "Upload Certificate (PDF/JPG)"}
+                                </button>
+                            </div>
+
+                            {/* ID Proof */}
+                            <div className="p-4 border-2 border-dashed border-sand/40 rounded-xl">
+                                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                                    <User size={16} className="text-charcoal/40" />
+                                    Your Government Photo ID
+                                </p>
+                                <input
+                                    type="file"
+                                    ref={idProofRef}
+                                    className="hidden"
+                                    onChange={(e) => setFiles({ ...files, idProof: e.target.files?.[0] || null })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => idProofRef.current?.click()}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-sage/10 text-sage' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                >
+                                    {files.idProof ? `Selected: ${files.idProof.name}` : "Upload ID Proof (PDF/JPG)"}
+                                </button>
+                            </div>
+                        </section>
+
+                        <button
+                            disabled={submitting}
+                            type="submit"
+                            className="w-full py-4 bg-charcoal text-ivory rounded-xl font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                        >
+                            {submitting ? <Loader2 className="animate-spin" size={20} /> : "Submit Formal Request"}
+                        </button>
+
+                        <p className="text-[10px] text-center text-charcoal/40 uppercase tracking-tighter">
+                            Legal Verification Process • 30 Day Statutory Wait Period Apply
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
+===== FICHIER: ./components/FamilyLinker.tsx =====
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { MemorialRelation } from '@/types/memorial';
+import { Link2, Plus, X, Loader2, User, ArrowRight } from 'lucide-react';
+
+interface FamilyLinkerProps {
+    currentMemorialId: string;
+    userId: string;
+}
+
+export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinkerProps) {
+    const [relations, setRelations] = useState<MemorialRelation[]>([]);
+    const [candidates, setCandidates] = useState<any[]>([]);
+    const [selectedCandidate, setSelectedCandidate] = useState('');
+    const [selectedType, setSelectedType] = useState('parent');
+    const [loading, setLoading] = useState(true);
+    const [linking, setLinking] = useState(false);
+
+    useEffect(() => {
+        loadData();
+    }, [currentMemorialId]);
+
+    const loadData = async () => {
+        setLoading(true);
+
+        // 1. Fetch candidates (other memorials owned by user)
+        const { data: others } = await supabase
+            .from('memorials')
+            .select('id, full_name')
+            .eq('user_id', userId)
+            .neq('id', currentMemorialId); // Exclude self
+
+        setCandidates(others || []);
+
+        // 2. Fetch existing relations
+        // We fetch the relation rows first
+        const { data: rels } = await supabase
+            .from('memorial_relations')
+            .select('*')
+            .eq('from_memorial_id', currentMemorialId);
+
+        if (rels && rels.length > 0) {
+            // Then we fetch the names of the targets
+            // (This manual join is safer than complex Supabase syntax for now)
+            const targetIds = rels.map(r => r.to_memorial_id);
+            const { data: targets } = await supabase
+                .from('memorials')
+                .select('id, full_name, profile_photo_url')
+                .in('id', targetIds);
+
+            const targetsMap = new Map(targets?.map(t => [t.id, t]));
+
+            const formattedRels = rels.map(r => ({
+                id: r.id,
+                from_memorial_id: r.from_memorial_id,
+                to_memorial_id: r.to_memorial_id,
+                relationship_type: r.relationship_type,
+                target_name: targetsMap.get(r.to_memorial_id)?.full_name || 'Unknown',
+                target_photo: targetsMap.get(r.to_memorial_id)?.profile_photo_url
+            }));
+
+            setRelations(formattedRels as MemorialRelation[]);
+        } else {
+            setRelations([]);
+        }
+
+        setLoading(false);
+    };
+
+    const handleLink = async () => {
+        if (!selectedCandidate) return;
+        setLinking(true);
+        try {
+            const res = await fetch('/api/family/link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fromId: currentMemorialId,
+                    toId: selectedCandidate,
+                    type: selectedType
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to link');
+
+            await loadData(); // Refresh list
+            setSelectedCandidate(''); // Reset form
+        } catch (e) {
+            alert('Error linking memorials. Please try again.');
+        } finally {
+            setLinking(false);
+        }
+    };
+
+    const unlink = async (id: string) => {
+        if (!confirm("Remove this connection?")) return;
+        await supabase.from('memorial_relations').delete().eq('id', id);
+        loadData();
+    };
+
+    if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin inline text-sage" /></div>;
+
+    return (
+        <div className="bg-sand/10 rounded-xl p-6 border border-sand/30">
+            <h3 className="font-serif text-xl text-charcoal mb-4 flex items-center gap-2">
+                <Link2 size={20} className="text-terracotta" />
+                Family Connections
+            </h3>
+
+            {/* Existing Links */}
+            {relations.length > 0 ? (
+                <div className="space-y-3 mb-6">
+                    {relations.map(rel => (
+                        <div key={rel.id} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-sand/20">
+                            <div className="flex items-center gap-3">
+                                {rel.target_photo ? (
+                                    <img src={rel.target_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
+                                ) : (
+                                    <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center">
+                                        <User size={16} className="text-sage" />
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="text-sm font-medium text-charcoal">{rel.target_name}</p>
+                                    <p className="text-xs text-charcoal/60 capitalize">{rel.relationship_type}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => unlink(rel.id)} className="text-charcoal/40 hover:text-terracotta p-2">
+                                <X size={16} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-sm text-charcoal/50 italic mb-6">No connections yet. Link this memorial to others in your family plan.</p>
+            )}
+
+            {/* Add New Link Form */}
+            {candidates.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                    <p className="text-xs font-medium text-charcoal/70 uppercase tracking-wider">Add Connection</p>
+                    <div className="flex gap-2">
+                        <select
+                            className="flex-1 p-2 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                            value={selectedCandidate}
+                            onChange={(e) => setSelectedCandidate(e.target.value)}
+                        >
+                            <option value="">Select family member...</option>
+                            {candidates.map(c => (
+                                <option key={c.id} value={c.id}>{c.full_name || 'Untitled'}</option>
+                            ))}
+                        </select>
+
+                        <span className="self-center text-charcoal/40 font-serif italic">is</span>
+
+                        <select
+                            className="w-32 p-2 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                            value={selectedType}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                        >
+                            <option value="parent">Parent</option>
+                            <option value="child">Child</option>
+                            <option value="spouse">Spouse</option>
+                            <option value="sibling">Sibling</option>
+                        </select>
+                    </div>
+                    <button
+                        onClick={handleLink}
+                        disabled={!selectedCandidate || linking}
+                        className="w-full py-2 bg-charcoal text-ivory rounded-lg text-sm font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {linking ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                        Connect Memorials
+                    </button>
+                </div>
+            ) : (
+                <div className="p-3 bg-white/50 rounded-lg text-center border border-dashed border-sand/30">
+                    <p className="text-xs text-charcoal/60">Create more memorials to start linking them.</p>
+                </div>
+            )}
         </div>
     );
 }
@@ -9946,6 +11518,349 @@ export default function SaveIndicator({ status, lastSavedAt, error, onRetry }: S
         </div>
     );
 }
+===== FICHIER: ./components/SignaturePad.tsx =====
+
+// components/SignaturePad.tsx
+'use client';
+
+import { useRef, useState, useEffect } from 'react';
+import { Eraser, PenTool } from 'lucide-react';
+
+interface SignaturePadProps {
+    onEnd: (dataUrl: string | null) => void;
+}
+
+export default function SignaturePad({ onEnd }: SignaturePadProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [hasSignature, setHasSignature] = useState(false);
+
+    // Initialize Canvas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Set high resolution for sharpness
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        ctx.scale(ratio, ratio);
+
+        // Style
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#2c3e50'; // Charcoal color
+    }, []);
+
+    const getCoords = (e: React.MouseEvent | React.TouchEvent) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = (e as React.MouseEvent).clientX;
+            clientY = (e as React.MouseEvent).clientY;
+        }
+
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    };
+
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+        setIsDrawing(true);
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
+        
+        const coords = getCoords(e);
+        ctx.beginPath();
+        ctx.moveTo(coords.x, coords.y);
+    };
+
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing) return;
+        const ctx = canvasRef.current?.getContext('2d');
+        if (!ctx) return;
+
+        const coords = getCoords(e);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+        
+        if (!hasSignature) setHasSignature(true);
+    };
+
+    const endDrawing = () => {
+        setIsDrawing(false);
+        const canvas = canvasRef.current;
+        if (canvas && hasSignature) {
+            onEnd(canvas.toDataURL('image/png'));
+        }
+    };
+
+    const clear = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setHasSignature(false);
+        onEnd(null);
+    };
+
+    return (
+        <div className="w-full">
+            <div className="relative border-2 border-sand/40 rounded-xl bg-white overflow-hidden shadow-inner touch-none">
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-48 cursor-crosshair block"
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={endDrawing}
+                    onMouseLeave={endDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={endDrawing}
+                />
+                
+                {!hasSignature && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-charcoal/20">
+                        <div className="flex items-center gap-2 text-sm font-handwriting">
+                            <PenTool size={16} /> Sign here
+                        </div>
+                    </div>
+                )}
+            </div>
+            
+            <div className="flex justify-end mt-2">
+                <button 
+                    onClick={clear}
+                    className="text-xs flex items-center gap-1 text-charcoal/50 hover:text-terracotta transition-colors"
+                >
+                    <Eraser size={14} /> Clear Signature
+                </button>
+            </div>
+        </div>
+    );
+}
+===== FICHIER: ./components/SuccessorSettings.tsx =====
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Shield, Mail, User, Loader2, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+
+interface SuccessorSettingsProps {
+    userId: string;
+}
+
+export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
+    const [successor, setSuccessor] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [isSwitchEnabled, setIsSwitchEnabled] = useState(false);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        relationship: ''
+    });
+
+    useEffect(() => {
+        fetchSuccessor();
+    }, [userId]);
+
+    useEffect(() => {
+        const fetchUserStatus = async () => {
+            const { data } = await supabase.from('users').select('dead_mans_switch_enabled').eq('id', userId).single();
+            if (data) setIsSwitchEnabled(data.dead_mans_switch_enabled);
+        };
+        fetchUserStatus();
+    }, [userId]);
+
+    const fetchSuccessor = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('user_successors')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (data) setSuccessor(data);
+        setLoading(false);
+    };
+
+    const handleDesignate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+
+        try {
+            const res = await fetch('/api/succession/designate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    ownerName: "The Account Owner", // We can improve this with real user data
+                    successorName: formData.name,
+                    successorEmail: formData.email,
+                    relationship: formData.relationship
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to designate');
+
+            alert("Designation sent! They will receive an email to accept the responsibility.");
+            fetchSuccessor(); // Refresh UI
+        } catch (err) {
+            alert("Error: Could not send designation.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const toggleDeadMansSwitch = async () => {
+        const newValue = !isSwitchEnabled;
+        const { error } = await supabase
+            .from('users')
+            .update({ dead_mans_switch_enabled: newValue })
+            .eq('id', userId);
+
+        if (!error) {
+            setIsSwitchEnabled(newValue);
+            alert(newValue ? "Dead Man's Switch activated. We will ping you once a year." : "Safety switch deactivated.");
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline text-sage" /></div>;
+
+    return (
+        <div className="bg-white rounded-2xl border border-sand/30 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-sand/20 bg-charcoal text-ivory">
+                <h3 className="font-serif text-xl flex items-center gap-2">
+                    <Shield size={22} className="text-sage" />
+                    Archive Steward
+                </h3>
+                <p className="text-ivory/60 text-xs mt-1">Designate a successor to manage your family archives if you pass away.</p>
+            </div>
+
+            <div className="p-6">
+                {successor ? (
+                    <div className="space-y-6">
+                        <div className={`p-4 rounded-xl border-2 flex items-start gap-4 ${successor.status === 'accepted' ? 'bg-sage/5 border-sage/20' : 'bg-sand/5 border-sand/20'
+                            }`}>
+                            {successor.status === 'accepted' ? (
+                                <CheckCircle className="text-sage mt-1" size={20} />
+                            ) : (
+                                <Clock className="text-charcoal/40 mt-1" size={20} />
+                            )}
+                            <div className="flex-1">
+                                <p className="font-medium text-charcoal">{successor.successor_name}</p>
+                                <p className="text-sm text-charcoal/60">{successor.successor_email} • {successor.relationship}</p>
+                                <div className="mt-3">
+                                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${successor.status === 'accepted' ? 'bg-sage text-ivory' : 'bg-sand text-charcoal/60'
+                                        }`}>
+                                        {successor.status === 'accepted' ? 'Steward Active' : 'Waiting for Acceptance'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-charcoal/40 italic">
+                            * To change your steward, please contact support for security verification.
+                        </p>
+
+                        {/* Dead Man's Switch Toggle */}
+                        <div className="mt-8 pt-6 border-t border-sand/20">
+                            <div className="flex items-center justify-between">
+                                <div className="flex-1 pr-8">
+                                    <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
+                                        <Clock size={16} className="text-terracotta" />
+                                        Dead Man's Switch
+                                    </h4>
+                                    <p className="text-xs text-charcoal/60 mt-1 leading-relaxed">
+                                        If enabled, we will email you once a year to confirm you are still managing the account. If you don't respond within 90 days, we will automatically notify your steward to begin the succession process.
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={toggleDeadMansSwitch}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isSwitchEnabled ? 'bg-sage' : 'bg-sand'}`}
+                                >
+                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isSwitchEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <form onSubmit={handleDesignate} className="space-y-4">
+                        <div className="p-4 bg-terracotta/5 border border-terracotta/10 rounded-xl flex items-start gap-3 mb-4">
+                            <AlertTriangle className="text-terracotta shrink-0 mt-0.5" size={16} />
+                            <p className="text-xs text-charcoal/70 leading-relaxed">
+                                Choose someone you trust implicitly. They will have full access to view, edit, and export all family archives in your account.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Full Name</label>
+                            <input
+                                required
+                                type="text"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                placeholder="e.g., Sarah Thompson"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Email Address</label>
+                            <input
+                                required
+                                type="email"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                placeholder="sarah@example.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Relationship</label>
+                            <input
+                                required
+                                type="text"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                placeholder="e.g., Daughter / Attorney"
+                                value={formData.relationship}
+                                onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
+                            />
+                        </div>
+
+                        <button
+                            disabled={submitting}
+                            type="submit"
+                            className="w-full py-3 bg-charcoal text-ivory rounded-xl font-medium text-sm hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                        >
+                            {submitting ? <Loader2 className="animate-spin" size={16} /> : <Mail size={16} />}
+                            Send Stewardship Request
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+}
 ===== FICHIER: ./components/TutorialPopup.tsx =====
 
 'use client';
@@ -10535,6 +12450,170 @@ function RestoreConfirmModal({
                         )}
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+}
+===== FICHIER: ./components/VideoRecorder.tsx =====
+
+// components/VideoRecorder.tsx
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { Video, Square, RotateCcw, Play, Loader2, CheckCircle } from 'lucide-react';
+
+interface VideoRecorderProps {
+    fullName: string;
+    deceasedName: string;
+    onComplete: (blob: Blob | null) => void;
+}
+
+export default function VideoRecorder({ fullName, deceasedName, onComplete }: VideoRecorderProps) {
+    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+    const [countdown, setCountdown] = useState(10);
+    const [error, setError] = useState<string | null>(null);
+
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const chunksRef = useRef<Blob[]>([]);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Get current date for the script
+    const today = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', month: 'long', day: 'numeric' 
+    });
+
+    const startCamera = async () => {
+        try {
+            setError(null);
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user' }, 
+                audio: true 
+            });
+            setStream(mediaStream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+            }
+        } catch (err) {
+            console.error("Camera error:", err);
+            setError("Could not access camera. Please check permissions.");
+        }
+    };
+
+    // Auto-start camera when component mounts
+    useEffect(() => {
+        startCamera();
+        return () => {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+        };
+    }, []);
+
+    const startRecording = () => {
+        if (!stream) return;
+
+        chunksRef.current = [];
+        const recorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+
+        recorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunksRef.current.push(e.data);
+        };
+
+        recorder.onstop = () => {
+            const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
+            setRecordedBlob(blob);
+            onComplete(blob);
+        };
+
+        recorder.start();
+        setIsRecording(true);
+        setCountdown(10);
+
+        // Auto-stop after 10 seconds
+        timerRef.current = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    stopRecording();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerRef.current) clearInterval(timerRef.current);
+        }
+    };
+
+    const resetRecording = () => {
+        setRecordedBlob(null);
+        onComplete(null);
+        setCountdown(10);
+        startCamera();
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* The Script Prompt - CRITICAL for legal validity */}
+            <div className="bg-charcoal text-ivory p-4 rounded-xl text-center border-2 border-sage/40">
+                <p className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Read this aloud:</p>
+                <p className="font-serif italic text-lg leading-relaxed">
+                    "I am <span className="text-sage not-italic font-bold">{fullName || '[Name]'}</span>. I authorize the creation of this archive for <span className="text-sage not-italic font-bold">{deceasedName}</span> on <span className="text-sage not-italic font-bold">{today}</span>. This is my video signature."
+                </p>
+            </div>
+
+            {/* Video Preview */}
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border-2 border-sand/40 shadow-inner">
+                {!recordedBlob ? (
+                    <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror" />
+                ) : (
+                    <video src={URL.createObjectURL(recordedBlob)} controls className="w-full h-full object-cover" />
+                )}
+
+                {/* Status Overlays */}
+                {isRecording && (
+                    <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full animate-pulse text-xs font-bold">
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                        REC {countdown}s
+                    </div>
+                )}
+                
+                {error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-center">
+                        <p className="text-white text-sm">{error}</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex justify-center gap-4">
+                {!recordedBlob ? (
+                    <button
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                            isRecording 
+                            ? 'bg-red-600 text-white hover:bg-red-700' 
+                            : 'bg-sage text-ivory hover:shadow-lg scale-105'
+                        }`}
+                    >
+                        {isRecording ? <Square size={18} /> : <Video size={18} />}
+                        {isRecording ? 'Stop Recording' : 'Start 10s Recording'}
+                    </button>
+                ) : (
+                    <button
+                        onClick={resetRecording}
+                        className="px-6 py-3 bg-white border-2 border-sand/40 text-charcoal rounded-xl font-medium hover:bg-sand/10 transition-all flex items-center gap-2"
+                    >
+                        <RotateCcw size={18} />
+                        Re-record Video
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -13507,70 +15586,124 @@ Don't worry about making it perfect - just write from the heart. You can always 
 // Changes: Witness invitation UI visible before payment, sending blocked until paid
 'use client';
 
-import { useState } from 'react';
-import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield } from 'lucide-react';
-import { MemoriesStories } from '@/types/memorial';
+import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield, Loader2 } from 'lucide-react';
+import { MemoriesStories, WitnessRole } from '@/types/memorial';
+import { supabase } from '@/lib/supabase';
 
 interface Step7Props {
     data: MemoriesStories;
     onUpdate: (data: MemoriesStories) => void;
     onNext: () => void;
     onBack: () => void;
-    isPaid?: boolean; // NEW: passed from parent
-    readOnly?: boolean; // NEW: passed from parent
-    userRole?: 'owner' | 'co_guardian' | 'witness'; // NEW
-    onSubmitContribution?: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>; // NEW
+    isPaid?: boolean;
+    readOnly?: boolean;
+    userRole: WitnessRole;
+    onSubmitContribution: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>;
+    memorialId: string | null;
 }
 
-export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution }: Step7Props) {
+export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution, memorialId }: Step7Props) {
     const [newEmail, setNewEmail] = useState('');
     const [showPreviewEmail, setShowPreviewEmail] = useState(false);
     const [previewRecipient, setPreviewRecipient] = useState('');
     const [personalMessage, setPersonalMessage] = useState(data.witnessPersonalMessage || '');
     const [sendingError, setSendingError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Local state for witness contribution
-    const [witnessContribution, setWitnessContribution] = useState({
+    // WITNESS CONTRIBUTION STATE
+    const [isAddingNew, setIsAddingNew] = useState(false);
+    const [newMemoryDraft, setNewMemoryDraft] = useState({
         title: '',
         content: '',
         author: '',
         relationship: ''
     });
 
-    const handleChange = (field: keyof MemoriesStories, value: any) => {
-        if (readOnly) return; // Prevent changes in readOnly mode
-        onUpdate({ ...data, [field]: value });
-    };
-
-    const handleWitnessContributionChange = (field: string, value: string) => {
-        setWitnessContribution(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSubmitContribution = async () => {
-        if (!onSubmitContribution) return;
-
-        // Basic validation
-        if (!witnessContribution.content.trim() || !witnessContribution.author.trim()) {
-            alert("Please provide at least the memory content and your name.");
+    const handleWitnessSubmit = async () => {
+        if (!newMemoryDraft.title || !newMemoryDraft.content) {
+            alert("Please provide at least a title and the memory text.");
             return;
         }
 
-        setIsSubmitting(true);
-        try {
-            await onSubmitContribution('memory', witnessContribution);
-            // Reset form on success
-            setWitnessContribution({
-                title: '',
-                content: '',
-                author: '',
-                relationship: ''
-            });
-        } catch (err: any) {
-            console.error("Submission error:", err);
-        } finally {
-            setIsSubmitting(false);
+        await onSubmitContribution('memory', newMemoryDraft);
+
+        // Reset form
+        setNewMemoryDraft({ title: '', content: '', author: '', relationship: '' });
+        setIsAddingNew(false);
+    };
+
+    const [pendingContributions, setPendingContributions] = useState<any[]>([]);
+    const [isFetching, setIsFetching] = useState(false);
+    const [disputingId, setDisputingId] = useState<string | null>(null);
+
+    // Fetch pending items only if the user is the Owner
+    useEffect(() => {
+        if (userRole === 'owner' && memorialId) {
+            fetchPendingContributions();
         }
+    }, [memorialId, userRole]);
+
+    const fetchPendingContributions = async () => {
+        setIsFetching(true);
+        const { data, error } = await supabase
+            .from('memorial_contributions')
+            .select('*')
+            .eq('memorial_id', memorialId)
+            .eq('status', 'pending_approval');
+
+        if (!error && data) {
+            setPendingContributions(data);
+        }
+        setIsFetching(false);
+    };
+
+    const handleDecision = async (
+        contribution: any,
+        decision: 'approved' | 'rejected',
+        overrideContent?: string // <--- NEW OPTIONAL ARGUMENT
+    ) => {
+        try {
+            // 1. Update the contribution record in Supabase
+            const { error: updateError } = await supabase
+                .from('memorial_contributions')
+                .update({ status: decision })
+                .eq('id', contribution.id);
+
+            if (updateError) throw updateError;
+
+            // 2. If approved, add it to the main archive data
+            if (decision === 'approved') {
+                const newMemory = {
+                    id: `witness-${contribution.id}`, // Maintain link to contribution
+                    title: contribution.content.title,
+                    // USE OVERRIDE CONTENT IF PROVIDED, OTHERWISE ORIGINAL
+                    content: overrideContent || contribution.content.content,
+                    author: contribution.witness_name,
+                    relationship: contribution.content.relationship || 'Friend',
+                    date: new Date().toISOString().split('T')[0]
+                };
+
+                // Update local state and trigger parent onUpdate
+                const updatedMemories = [...data.sharedMemories, newMemory];
+                onUpdate({ ...data, sharedMemories: updatedMemories });
+            }
+
+            // 3. Refresh the pending list
+            setPendingContributions(prev => prev.filter(item => item.id !== contribution.id));
+            // Clear dispute state if it exists
+            setDisputingId(null);
+
+            alert(decision === 'approved' ? "Processed successfully." : "Contribution rejected.");
+
+        } catch (err: any) {
+            console.error("Decision error:", err);
+            alert("Failed to process decision: " + err.message);
+        }
+    };
+
+    const handleChange = (field: keyof MemoriesStories, value: any) => {
+        if (readOnly) return; // Prevent changes in readOnly mode
+        onUpdate({ ...data, [field]: value });
     };
 
     // =============================================
@@ -13671,9 +15804,11 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    memorialId: memorialId, // Use the prop we added
                     emails: data.invitedEmails,
                     personalMessage,
-                    memorialId: data.memorialId, // passed from parent
+                    inviterName: "The Family", // We can improve this later with a real name
+                    deceasedName: "Your Loved One", // We can pass this from Step 1 later
                 }),
             });
 
@@ -13711,87 +15846,99 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
             </div>
 
             <div className="space-y-10">
-                {/* ========================================= */}
-                {/* WITNESS CONTRIBUTION FORM — NEW Step 2.1.2 */}
-                {/* ========================================= */}
-                {userRole === 'witness' && (
-                    <div className="p-8 bg-gradient-to-br from-sage/10 to-ivory border-2 border-sage/30 rounded-2xl space-y-6 shadow-sm">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 bg-sage rounded-full flex items-center justify-center text-ivory">
-                                <Heart size={20} />
-                            </div>
-                            <div>
-                                <h3 className="font-serif text-2xl text-charcoal">Share Your Memory</h3>
-                                <p className="text-sm text-charcoal/60">Your contribution will be reviewed by the archive owner.</p>
-                            </div>
+                {/* OWNER REVIEW QUEUE */}
+                {userRole === 'owner' && (
+                    <div className="mb-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-serif text-xl text-charcoal flex items-center gap-2">
+                                <Shield size={20} className="text-terracotta" />
+                                Witness Contributions
+                            </h3>
+                            <span className="text-xs bg-terracotta/10 text-terracotta px-2 py-1 rounded-full font-medium">
+                                {pendingContributions.length} Pending
+                            </span>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-medium text-charcoal/70 mb-1.5 uppercase tracking-wider">Memory Title</label>
-                                <input
-                                    type="text"
-                                    value={witnessContribution.title}
-                                    onChange={(e) => handleWitnessContributionChange('title', e.target.value)}
-                                    placeholder="e.g., A Summer Afternoon in the Garden"
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all bg-white/50"
-                                />
+                        {isFetching ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="animate-spin text-terracotta/40" size={24} />
                             </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-charcoal/70 mb-1.5 uppercase tracking-wider">Your Story</label>
-                                <textarea
-                                    value={witnessContribution.content}
-                                    onChange={(e) => handleWitnessContributionChange('content', e.target.value)}
-                                    placeholder="Share your memory, story, or message..."
-                                    rows={6}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none bg-white/50"
-                                />
+                        ) : pendingContributions.length === 0 ? (
+                            <div className="p-8 border-2 border-dashed border-sand/30 rounded-2xl text-center">
+                                <p className="text-sm text-charcoal/40 italic">No new contributions to review.</p>
                             </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {pendingContributions.map((item) => (
+                                    <div key={item.id} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${disputingId === item.id ? 'border-terracotta ring-1 ring-terracotta' : 'border-terracotta/10'}`}>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="font-medium text-charcoal">{item.content.title}</p>
+                                                <p className="text-xs text-charcoal/40">Submitted by {item.witness_name}</p>
+                                            </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-charcoal/70 mb-1.5 uppercase tracking-wider">Your Name</label>
-                                    <input
-                                        type="text"
-                                        value={witnessContribution.author}
-                                        onChange={(e) => handleWitnessContributionChange('author', e.target.value)}
-                                        placeholder="Your full name"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all bg-white/50"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-charcoal/70 mb-1.5 uppercase tracking-wider">Relationship</label>
-                                    <input
-                                        type="text"
-                                        value={witnessContribution.relationship}
-                                        onChange={(e) => handleWitnessContributionChange('relationship', e.target.value)}
-                                        placeholder="e.g., Lifelong Friend, Colleague"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all bg-white/50"
-                                    />
-                                </div>
+                                            {/* STANDARD ACTIONS */}
+                                            {disputingId !== item.id ? (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleDecision(item, 'approved')}
+                                                        className="px-3 py-1.5 bg-sage text-ivory text-xs rounded-lg font-medium hover:bg-sage/90"
+                                                    >
+                                                        Approve
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDisputingId(item.id)}
+                                                        className="px-3 py-1.5 border border-terracotta/30 text-terracotta text-xs rounded-lg font-medium hover:bg-terracotta/5"
+                                                    >
+                                                        Flag Conflict
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDecision(item, 'rejected')}
+                                                        className="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg font-medium hover:bg-red-100"
+                                                    >
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                /* CONFLICT RESOLUTION ACTIONS */
+                                                <div className="flex flex-col gap-2 items-end">
+                                                    <span className="text-[10px] font-bold text-terracotta uppercase tracking-wider">Mediation Mode</span>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const note = `[Legacy Vault Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
+                                                                handleDecision(item, 'approved', note);
+                                                            }}
+                                                            className="px-3 py-1.5 bg-terracotta text-ivory text-xs rounded-lg font-medium hover:bg-terracotta/90"
+                                                        >
+                                                            Accept with Context Note
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDisputingId(null)}
+                                                            className="px-3 py-1.5 text-charcoal/60 text-xs hover:text-charcoal"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <p className="text-sm text-charcoal/70 italic line-clamp-3">"{item.content.content}"</p>
+
+                                        {/* Visual indicator of conflict */}
+                                        {disputingId === item.id && (
+                                            <div className="mt-3 p-3 bg-terracotta/5 rounded-lg text-xs text-terracotta border border-terracotta/20">
+                                                <p><strong>Conflict Detected:</strong> Choose "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-
-                            <button
-                                onClick={handleSubmitContribution}
-                                disabled={isSubmitting}
-                                className="w-full py-4 bg-sage text-ivory rounded-xl font-semibold hover:bg-sage/90 shadow-lg shadow-sage/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send size={18} />
-                                        Submit Contribution for Approval
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        )}
                     </div>
                 )}
+
                 {/* ========================================= */}
                 {/* SHARED MEMORIES — Same as before           */}
                 {/* ========================================= */}
@@ -13810,7 +15957,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 key={memory.id}
                                 className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                             >
-                                {!readOnly && (
+                                {userRole === 'owner' && (
                                     <button
                                         onClick={() => removeMemory(memory.id)}
                                         className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all"
@@ -13828,8 +15975,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         onChange={(e) => updateMemory(memory.id, 'title', e.target.value)}
                                         placeholder="e.g., The Day She Changed My Life"
                                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
+                                        readOnly={userRole !== 'owner'}
+                                        disabled={userRole !== 'owner'}
                                     />
                                 </div>
 
@@ -13842,8 +15989,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             value={memory.date}
                                             onChange={(e) => updateMemory(memory.id, 'date', e.target.value)}
                                             className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                 </div>
@@ -13856,8 +16003,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         placeholder="Share the memory or story..."
                                         rows={6}
                                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
+                                        readOnly={userRole !== 'owner'}
+                                        disabled={userRole !== 'owner'}
                                     />
                                 </div>
 
@@ -13870,8 +16017,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             onChange={(e) => updateMemory(memory.id, 'author', e.target.value)}
                                             placeholder="e.g., Marcus Johnson"
                                             className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                     <div>
@@ -13882,21 +16029,70 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             onChange={(e) => updateMemory(memory.id, 'relationship', e.target.value)}
                                             placeholder="e.g., Former Student"
                                             className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
-                                            readOnly={readOnly}
-                                            disabled={readOnly}
+                                            readOnly={userRole !== 'owner'}
+                                            disabled={userRole !== 'owner'}
                                         />
                                     </div>
                                 </div>
                             </div>
                         ))}
 
-                        {!readOnly && (
+                        {/* WITNESS CONTRIBUTION FORM */}
+                        {isAddingNew ? (
+                            <div className="p-6 bg-sage/5 border-2 border-dashed border-sage/30 rounded-xl space-y-4 mb-6 animate-fadeIn">
+                                <h4 className="font-serif text-lg text-charcoal">Your Contribution</h4>
+                                <input
+                                    type="text"
+                                    placeholder="Memory Title"
+                                    value={newMemoryDraft.title}
+                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, title: e.target.value })}
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Your Name"
+                                        value={newMemoryDraft.author}
+                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, author: e.target.value })}
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Relationship"
+                                        value={newMemoryDraft.relationship}
+                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, relationship: e.target.value })}
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                    />
+                                </div>
+                                <textarea
+                                    placeholder="Share your story..."
+                                    rows={4}
+                                    value={newMemoryDraft.content}
+                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, content: e.target.value })}
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage resize-none outline-none"
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleWitnessSubmit}
+                                        className="flex-1 py-3 bg-sage text-ivory rounded-xl font-medium hover:bg-sage/90 transition-all"
+                                    >
+                                        Submit for Approval
+                                    </button>
+                                    <button
+                                        onClick={() => setIsAddingNew(false)}
+                                        className="px-6 py-3 border border-sand/40 text-charcoal/60 rounded-xl hover:bg-sand/5 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
                             <button
-                                onClick={addMemory}
+                                onClick={() => setIsAddingNew(true)}
                                 className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
-                                Add Shared Memory
+                                {userRole === 'owner' ? 'Add Shared Memory' : 'Submit a Memory'}
                             </button>
                         )}
                     </div>
@@ -14274,7 +16470,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
 // components/wizard/Step8Media.tsx - UPDATED (No Videos - they're in Step 9 now)
 'use client';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Mic, Star, Plus, X, Trash2, MousePointer } from 'lucide-react';
 import { MediaLegacy } from '@/types/memorial';
 import { secureUpload } from '@/lib/uploadService';
@@ -14301,13 +16497,18 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   const galleryRef = useRef<HTMLInputElement>(null);
   const interactiveGalleryRef = useRef<HTMLInputElement>(null);
   const voiceRef = useRef<HTMLInputElement>(null);
+  const dataRef = useRef(data);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleChange = (field: keyof MediaLegacy, value: any) => {
-    onUpdate({ ...data, [field]: value });
+    onUpdate({ ...dataRef.current, [field]: value });
   };
 
 
@@ -14335,11 +16536,12 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     try {
       const result = await secureUpload(file, 'memorial-media', path); // Using a 'memorial-media' bucket
       if (result.success) {
-        handleChange('coverPhoto', file);
-        // Save the remote URL as the preview to ensure persistence
-        handleChange('coverPhotoPreview', result.url);
-        // Save the Hash
-        handleChange('coverPhotoHash', result.hash);
+        onUpdate({
+          ...dataRef.current,
+          coverPhoto: file,
+          coverPhotoPreview: result.url || null,
+          coverPhotoHash: result.hash
+        });
       }
     } catch (error) {
       console.error('Cover photo upload failed', error);
@@ -14393,7 +16595,8 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         };
 
         // Add to state immediately
-        handleChange('gallery', [...data.gallery, tempItem]);
+        const currentData = dataRef.current;
+        onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), tempItem] });
 
         // 2. Perform Upload
         const fileExt = file.name.split('.').pop() || 'jpg';
@@ -14405,112 +16608,15 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           const result = await secureUpload(file, 'memorial-media', path);
 
           if (result.success) {
-            // Update the item with the real URL and HASH
+            const freshData = dataRef.current;
             onUpdate({
-              ...data,
-              gallery: [...data.gallery, { ...tempItem, preview: result.url!, sha256_hash: result.hash }]
+              ...freshData,
+              gallery: (freshData.gallery || []).map(item =>
+                item.id === tempId
+                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                  : item
+              )
             });
-
-            // Note: In a real react app, 'data' is stale inside the closure. 
-            // Ideally we should use the functional update form of onUpdate if available, 
-            // but here onUpdate takes MediaLegacy directly.
-            // We'll trust that the quick user action or subsequent updates will resolve this, 
-            // OR better: we should re-read the gallery from state if possible.
-            // However, based on the prompt's provided code, it uses onUpdate callback.
-            // The prompt's provided code uses:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // BUT `onUpdate` prop in Step8Props is defined as `(data: MediaLegacy) => void`. 
-            // It does NOT support functional updates based on the interface definition : `onUpdate: (data: MediaLegacy) => void;`
-            // I will use `data.gallery` which might be slightly stale if multiple finish at once, but for now I will follow the prompt's logic 
-            // but adapted to the prop signature.
-            // Actually, looking at the Prompt's requested code:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // This implies `onUpdate` SHOULD support functional updates. 
-            // Let's check `app/create/page.tsx`.
-            // `const updateStep8 = (data: MediaLegacy) => { setMemorialData(prev => ({ ...prev, step8: data ... })) }`
-            // It seems `updateStep8` just takes data. It does NOT take a function. 
-            // So `onUpdate((prev) => ...)` will FAIL if I paste it blindly.
-            // I must adapt it to: `onUpdate({ ...data, gallery: ... })`
-            // Wait, if I do that inside a loop callback, `data` is definitely stale.
-            // The prompt provided code might be assuming a different `onUpdate` signature or be slightly incorrect for this context.
-            // I will implement it such that it updates the *local* list and then calls `onUpdate`? 
-            // OR, since this is "agentic", I will try to fix it.
-            // `onUpdate` is passed from `app/create/page.tsx` as `updateStep8` which calls `setMemorialData`.
-            // Trying to pass a function to `updateStep8` will likely fail if `updateStep8` expects an object.
-            // Let's look at `updateStep8` in `app/create/page.tsx`:
-            // const updateStep8 = (data: MediaLegacy) => { setMemorialData(prev => ({ ...prev, step8: data ... })) };
-            // It expects `data`.
-
-            // So I cannot use the functional update `onUpdate(prev => ...)` as requested in the prompt.
-            // I have to do it differently.
-            // I will use the `onUpdate` with the current `data` and hope for the best, OR
-            // I will need to change `onUpdate` signature in `Step8Media` and `app/create/page.tsx` to support functional updates, 
-            // OR I will just follow the prompt's "intent" but make it work.
-            // The prompt code:
-            // onUpdate((prevData: MediaLegacy) => ({ ... }))
-            // This is strictly asking for functional update.
-            // Use `setMemorialData` logic from `page.tsx`? No I can't access it.
-
-            // I will implement a local fix:
-            // Since I can't change the parent easily without more context/files (though I have page.tsx open), 
-            // I will use `handleChange` (which calls `onUpdate`) but I'm still stuck with stale `data` in the closure.
-
-            // However, usually `filesToUpload` loop runs fast. Previews are added first.
-            // Then uploads finish asynchronously.
-            // Only the URL update needs to happen.
-
-            // I will stick to what works:
-            // I'll grab the LATEST data via a functional state or ref if I could, but I can't.
-            // I will modify the implementation to be safe-ish.
-
-            // actually, the prompt code says:
-            // `onUpdate((prevData: MediaLegacy) => ...)`
-            // If I use that, valid TypeScript will complain if the prop type doesn't match.
-            // The prop type is `(data: MediaLegacy) => void`.
-            // So passing a function is a TYPE ERROR.
-
-            // I'll stick to `handleChange` / `onUpdate` with the object.
-            // But to avoid overwriting, I should probably read from a Ref or just accept the race condition for now as it's a "prototype" / "MVP" feature request.
-            // OR, I can check if I can simply change the prop type?
-            // Changing the prop type requires changing the parent.
-            // `updateStep8` in parent ...
-
-            // Let's look at `updateStep8` again.
-            // 508:   const updateStep8 = (data: MediaLegacy) => {
-            // 509:     setMemorialData(prev => ({
-            // 510:       ...prev,
-            // 511:       step8: data,
-            // ...
-
-            // If I change this to accept `MediaLegacy | ((prev: MediaLegacy) => MediaLegacy)`, I can support it.
-            // But I'd rather not change the parent logic too much if I can avoid it.
-
-            // Let's look at what I CAN do.
-            // I can just call `onUpdate` with the modified gallery.
-            // If I use `handleChange('gallery', newGallery)`, it calls `onUpdate({...data, gallery: newGallery})`.
-
-            // I will try to implement it as close to the prompt as possible but correcting the syntax error.
-            // I will use `handleChange` but I will construct the new gallery from `data.gallery` (which might be stale).
-            // To mitigate staleness in a loop, it's tricky.
-            // But wait, the standard way in React without functional updates is difficult.
-            // I'll just use the `data.gallery` from the scope. It will be "correct enough" for sequential uploads or single uploads.
-            // For multiple files, this is buggy.
-
-            // User Request says: "I will provide the code... Replace with this version"
-            // The provided code uses `onUpdate((prevData) => ...)`
-            // The user EXPECTS functional updates. 
-            // The user might mistakenly think `onUpdate` supports it, OR they want me to MAKE it support it.
-            // Given "Update Data Structures" was the previous task, maybe I should assume I CAN change things.
-
-            // I will change `Step8Props` `onUpdate` to allow functional updates?
-            // No, `handleChange` depends on it being `(data) => void`.
-
-            // Let's look at `handleGalleryUpload` in the prompt.
-            // It uses `onUpdate((prevData...))`.
-
-            // I will just use `onUpdate({ ...data, gallery: ... })` and fix the prompt's code to match the actual signature.
-            // I will explain this deviation if needed (or just do it, as I'm the "expert").
-            // I'll use `handleChange` which uses `data` from props. Rest of logic remains.
           }
         } catch (err) {
           console.error("Gallery upload failed for file:", file.name, err);
@@ -14567,10 +16673,8 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         };
 
         // Add to state immediately
-        // Note: Using data.interactiveGallery here might be slightly stale in a fast loop, but adequate for this setup.
-        // Ideally we'd use a functional update but Step8Props.onUpdate is defined as (data) => void.
-        const updatedGallery = [...(data.interactiveGallery || []), tempItem];
-        handleChange('interactiveGallery', updatedGallery);
+        const currentData = dataRef.current;
+        onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), tempItem] });
 
         // Secure Upload
         const fileExt = file.name.split('.').pop() || 'jpg';
@@ -14582,17 +16686,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           const result = await secureUpload(file, 'memorial-media', path);
 
           if (result.success) {
-            // Update the item with the real URL and HASH
-            // We read from 'data' again to minimize staleness, though still imperfect without functional updates.
+            const freshData = dataRef.current;
             onUpdate({
-              ...data,
-              interactiveGallery: (data.interactiveGallery || []).map((item) =>
+              ...freshData,
+              interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
                 item.id === tempId
-                  ? { ...item, preview: result.url!, sha256_hash: result.hash }
+                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
                   : item
               ),
-              // Ensure we include the new item if it was just added but not yet in 'data' (race condition mitigation)
-              // Actually, trusting the previous handleChange might rely on parent re-render.
             });
           }
         } catch (err) {
@@ -14663,17 +16764,17 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       };
 
       // Update local state
-      handleChange('voiceRecordings', [...data.voiceRecordings, newRecording]);
+      const currentData = dataRef.current;
+      onUpdate({ ...currentData, voiceRecordings: [...currentData.voiceRecordings, newRecording] });
 
       try {
         const result = await secureUpload(file, 'memorial-media', path);
 
         if (result.success) {
-          // Update with Hash
-          // Note: We use the update pattern compatible with the prop signature
+          const freshData = dataRef.current;
           onUpdate({
-            ...data,
-            voiceRecordings: data.voiceRecordings.map((item) =>
+            ...freshData,
+            voiceRecordings: freshData.voiceRecordings.map((item) =>
               item.id === tempId
                 ? { ...item, sha256_hash: result.hash } // Add the hash
                 : item
@@ -15747,8 +17848,10 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/supabase-js": "^2.93.1",
+    "@xyflow/react": "^12.10.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
     "next": "^16.1.1",

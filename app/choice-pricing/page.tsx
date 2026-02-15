@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, Users, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 export default function ChoicePricingPage() {
@@ -111,13 +112,23 @@ export default function ChoicePricingPage() {
         localStorage.setItem('legacy-vault-mode', mode);
         // REDIRECT TO /create to start the ritual immediately, 
         // /create is smart and will handle the user session there too.
-        router.push(`/create?mode=${mode}`);
+        router.push(`/dashboard/${mode}/${currentUserId}`);
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 flex items-center justify-center p-6">
             <div className="max-w-6xl w-full">
                 {/* Header */}
+                <div className="mb-8">
+                    <Link
+                        href="/"
+                        className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                        <span>Back</span>
+                    </Link>
+                </div>
+
                 <div className="text-center mb-12">
                     <h1 className="font-serif text-5xl text-charcoal mb-4">
                         Choose Your Experience
@@ -291,6 +302,6 @@ export default function ChoicePricingPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

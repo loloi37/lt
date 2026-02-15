@@ -243,7 +243,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                     <h1 className="font-serif text-3xl text-charcoal mb-3">Project Not Found</h1>
                     <p className="text-charcoal/60 mb-6">{error || 'This project does not exist.'}</p>
                     <button
-                        onClick={() => router.push('/choice')}
+                        onClick={() => router.push('/choice-pricing')}
                         className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all"
                     >
                         Go to Home
