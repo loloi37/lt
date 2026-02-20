@@ -11,9 +11,10 @@ interface Step3Props {
     onNext: () => void;
     onBack: () => void;
     readOnly?: boolean;
+    isSelfArchive?: boolean; // NEW PROP
 }
 
-export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }: Step3Props) {
+export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, isSelfArchive = false }: Step3Props) {
     const [newHighlight, setNewHighlight] = useState('');
 
     const handleChange = (field: keyof CareerEducation, value: any) => {
@@ -72,7 +73,9 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }
                     Career & Education
                 </h2>
                 <p className="text-charcoal/60 text-lg">
-                    Tell us about their professional life and educational achievements.
+                    {isSelfArchive
+                        ? "Tell us about your professional life and educational achievements."
+                        : "Tell us about their professional life and educational achievements."}
                 </p>
             </div>
 
@@ -81,7 +84,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
                         <Briefcase size={18} className="text-terracotta" />
-                        What did they do for work?
+                        {isSelfArchive ? "What did you do for work?" : "What did they do for work?"}
                     </label>
 
                     <div className="space-y-4">
@@ -149,7 +152,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }
                                 <textarea
                                     value={occupation.description}
                                     onChange={(e) => updateOccupation(occupation.id, 'description', e.target.value)}
-                                    placeholder="Brief description of their role and responsibilities..."
+                                    placeholder={isSelfArchive ? "Brief description of your role and responsibilities..." : "Brief description of their role and responsibilities..."}
                                     rows={3}
                                     className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={readOnly}
@@ -270,7 +273,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly }
                     </div>
 
                     <p className="text-xs text-charcoal/40 mt-2">
-                        Optional - Fill this in if they pursued higher education
+                        {isSelfArchive ? "Optional - Fill this in if you pursued higher education" : "Optional - Fill this in if they pursued higher education"}
                     </p>
                 </div>
             </div>

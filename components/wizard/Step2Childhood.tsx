@@ -11,6 +11,7 @@ interface Step2Props {
     onNext: () => void;
     onBack: () => void;
     readOnly?: boolean;
+    isSelfArchive?: boolean; // NEW PROP
 }
 
 const PERSONALITY_OPTIONS = [
@@ -20,7 +21,7 @@ const PERSONALITY_OPTIONS = [
     'Serious', 'Social', 'Independent', 'Helpful', 'Imaginative'
 ];
 
-export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnly }: Step2Props) {
+export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnly, isSelfArchive = false }: Step2Props) {
     const [newInterest, setNewInterest] = useState('');
     const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,7 +97,9 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                     Early Life & Childhood
                 </h2>
                 <p className="text-charcoal/60 text-lg">
-                    Tell us about their formative years. You can skip any section and come back later.
+                    {isSelfArchive
+                        ? "Tell us about your formative years. You can skip any section and come back later."
+                        : "Tell us about their formative years. You can skip any section and come back later."}
                 </p>
             </div>
 
@@ -105,20 +108,20 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <Home size={18} className="text-sage" />
-                        Where did they grow up?
+                        {isSelfArchive ? "Where did you grow up?" : "Where did they grow up?"}
                     </label>
                     <textarea
                         value={data.childhoodHome}
                         onChange={(e) => handleChange('childhoodHome', e.target.value)}
-                        placeholder="Describe their childhood home and neighborhood..."
+                        placeholder={isSelfArchive ? "Describe your childhood home and neighborhood..." : "Describe their childhood home and neighborhood..."}
                         rows={4}
                         disabled={readOnly}
                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts to help you:</p>
-                        <p>• What was their neighborhood like?</p>
-                        <p>• What kind of home did they live in?</p>
+                        <p>• What was {isSelfArchive ? "your" : "their"} neighborhood like?</p>
+                        <p>• What kind of home did {isSelfArchive ? "you" : "they"} live in?</p>
                         <p>• City or countryside?</p>
                     </div>
                 </div>
@@ -127,21 +130,21 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <Users size={18} className="text-terracotta" />
-                        Tell us about their family
+                        {isSelfArchive ? "Tell us about your family" : "Tell us about their family"}
                     </label>
                     <textarea
                         value={data.familyBackground}
                         onChange={(e) => handleChange('familyBackground', e.target.value)}
-                        placeholder="Describe their family life and upbringing..."
+                        placeholder={isSelfArchive ? "Describe your family life and upbringing..." : "Describe their family life and upbringing..."}
                         rows={5}
                         disabled={readOnly}
                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts:</p>
-                        <p>• Who raised them?</p>
-                        <p>• How many siblings?</p>
-                        <p>• What was family life like?</p>
+                        <p>• Who raised {isSelfArchive ? "you" : "them"}?</p>
+                        <p>• How many siblings do {isSelfArchive ? "you have" : "they have"}?</p>
+                        <p>• What was {isSelfArchive ? "your" : "their"} family life like?</p>
                     </div>
                 </div>
 
@@ -149,7 +152,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <GraduationCap size={18} className="text-sage" />
-                        Where did they go to school?
+                        {isSelfArchive ? "Where did you go to school?" : "Where did they go to school?"}
                     </label>
                     <div className="space-y-3">
                         <div>
@@ -199,9 +202,11 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <Sparkles size={18} className="text-terracotta" />
-                        What were they like as a child?
+                        {isSelfArchive ? "What were you like as a child?" : "What were they like as a child?"}
                     </label>
-                    <p className="text-xs text-charcoal/40 mb-4">Select 3-5 traits that best describe them</p>
+                    <p className="text-xs text-charcoal/40 mb-4">
+                        {isSelfArchive ? "Select 3-5 traits that best describe you back then" : "Select 3-5 traits that best describe them"}
+                    </p>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {PERSONALITY_OPTIONS.map((trait) => {
@@ -233,7 +238,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <Heart size={18} className="text-terracotta" />
-                        What did they love doing?
+                        {isSelfArchive ? "What did you love doing?" : "What did they love doing?"}
                     </label>
 
                     <div className="flex gap-2 mb-3">

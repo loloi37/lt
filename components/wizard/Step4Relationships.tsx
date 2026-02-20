@@ -11,6 +11,7 @@ interface Step4Props {
     onNext: () => void;
     onBack: () => void;
     readOnly?: boolean;
+    isSelfArchive?: boolean; // NEW PROP
 }
 
 const EVENT_CATEGORIES = [
@@ -22,7 +23,7 @@ const EVENT_CATEGORIES = [
     { value: 'milestone', label: 'Milestone', color: 'bg-amber-100 text-amber-700' },
 ] as const;
 
-export default function Step4Relationships({ data, onUpdate, onNext, onBack, readOnly }: Step4Props) {
+export default function Step4Relationships({ data, onUpdate, onNext, onBack, readOnly, isSelfArchive = false }: Step4Props) {
     const partnerPhotoRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
     const handleChange = (field: keyof RelationshipsFamily, value: any) => {
@@ -127,7 +128,9 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                     Relationships & Family
                 </h2>
                 <p className="text-charcoal/60 text-lg">
-                    Tell us about the important people in their life and major life events.
+                    {isSelfArchive
+                        ? "Tell us about the important people in your life and major life events."
+                        : "Tell us about the important people in their life and major life events."}
                 </p>
             </div>
 
@@ -244,7 +247,7 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                                 <textarea
                                     value={partner.description}
                                     onChange={(e) => updatePartner(partner.id, 'description', e.target.value)}
-                                    placeholder="Brief description of their relationship..."
+                                    placeholder={isSelfArchive ? "Brief description of your relationship..." : "Brief description of their relationship..."}
                                     rows={2}
                                     className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                                     disabled={readOnly}
@@ -341,7 +344,7 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                         Major Life Events Timeline
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
-                        Add significant moments and turning points throughout their life
+                        {isSelfArchive ? "Add significant moments and turning points throughout your life" : "Add significant moments and turning points throughout their life"}
                     </p>
 
                     <div className="space-y-4">

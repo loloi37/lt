@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort, History } from 'lucide-react';
+import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort, History, Lock } from 'lucide-react';
 import PreviewModal from '@/components/wizard/PreviewModal';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import PathCard from '@/components/wizard/PathCard';
@@ -18,6 +18,7 @@ import Step6LifeStory from '@/components/wizard/Step6LifeStory';
 import Step7Memories from '@/components/wizard/Step7Memories';
 import Step8Media from '@/components/wizard/Step8Media';
 import Step9Videos from '@/components/wizard/Step9Videos';
+import Step10Review from '@/components/wizard/Step10Review';
 import TutorialPopup from '@/components/TutorialPopup';
 import VersionHistory from '@/components/VersionHistory';
 import {
@@ -69,6 +70,8 @@ const getInitialData = (): MemorialData => ({
     birthDate: '',
     deathDate: null,
     isStillLiving: false,
+    isSelfArchive: false, // NEW: Default to false
+    privateUntilDeath: false, // NEW: Default to false
     birthPlace: '',
     deathPlace: '',
     profilePhoto: null,
@@ -151,9 +154,22 @@ function CreateMemorialPageContent() {
   const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [userRole, setUserRole] = useState<WitnessRole>('owner'); // Default to owner
+  const [hasSuccessor, setHasSuccessor] = useState(false); // NEW: Track if user has a successor
 
   // Ref to track data when entering a step (for version diffing)
   const stepEntryDataRef = useRef<MemorialData>(getInitialData());
+
+  useEffect(() => {
+    // Send heartbeat when user enters the wizard
+    const userId = localStorage.getItem('user-id');
+    if (userId && !userId.startsWith('user-')) {
+      fetch('/api/user/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      }).catch(console.error); // Fire and forget
+    }
+  }, []);
 
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
@@ -222,6 +238,22 @@ function CreateMemorialPageContent() {
     };
 
     ensureUserExists();
+  }, []);
+
+  // NEW: Check for successor on mount
+  useEffect(() => {
+    const checkSuccessor = async () => {
+      const userId = localStorage.getItem('user-id');
+      if (!userId || userId.startsWith('user-')) return; // Skip for temp users
+
+      const { count } = await supabase
+        .from('user_successors')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      setHasSuccessor(!!count && count > 0);
+    };
+    checkSuccessor();
   }, []);
 
   useEffect(() => {
@@ -611,22 +643,65 @@ function CreateMemorialPageContent() {
     }
   };
 
+  const isSelf = memorialData.step1.isSelfArchive;
+  const isPrivate = memorialData.step1.privateUntilDeath; // Helper
+
+  const texts = {
+    header: isSelf ? "Your Legacy Archive" : "The Crossroads",
+    subHeader: isSelf
+      ? (isPrivate
+        ? "This archive is currently sealed. It will strictly remain accessible only to you until the succession process is triggered."
+        : "You are creating your own permanent record. You can choose to share this at any time.")
+      : mode === 'family'
+        ? "This is a shared space to preserve your family's heritage."
+        : "A private sanctuary to honor a unique life.",
+    cards: {
+      facts: isSelf
+        ? "Your birth, origins, and vital details."
+        : "Birth, death, and the proof of existence. The foundation of the memory.",
+      body: isSelf
+        ? "Your childhood, career, and the family you built."
+        : "Eras of life, from childhood to career and the families built along the way.",
+      soul: isSelf
+        ? "Your personality, values, and your full life story."
+        : "Personality, traits, and the full life story. Who they were in essence.",
+      witnesses: isSelf
+        ? "Invite friends and family to share their memories of you."
+        : (mode === 'family'
+          ? "Centralize the family's stories. Invite members to build this archive together."
+          : "Invite close friends to share memories. Entirely optional and moderated by you."),
+      presence: isSelf
+        ? "Your photos, videos, and your voice for the future."
+        : "Photos, videos, and the return of the voice."
+    }
+  };
+
   return (
     <div className="min-h-screen bg-ivory relative">
       {viewMode === 'hub' ? (
         /* --- THE HUB VIEW (The Crossroads) --- */
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center mb-16">
-            {/* 3. INSERT BADGE IN HUB HEADER */}
+            {/* Badge */}
             <div className="flex justify-center mb-4">
               <ModeBadge />
             </div>
-            <h1 className="font-serif text-5xl text-charcoal mb-4">The Crossroads</h1>
 
+            {/* PRIVATE STATUS BADGE */}
+            {memorialData.step1.privateUntilDeath && (
+              <div className="flex justify-center mb-6 animate-fadeIn">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal text-ivory rounded-full text-xs font-bold tracking-wide shadow-md border border-ivory/20">
+                  <Lock size={12} />
+                  LOCKED: PRIVATE UNTIL DEATH
+                </div>
+              </div>
+            )}
 
-            {/* // In app/create/page.tsx
+            {/* Dynamic Header */}
+            <h1 className="font-serif text-5xl text-charcoal mb-4">
+              {texts.header}
+            </h1>
 
-                        // ... inside the Top Bar div ... */}
 
             {/* Version History Button */}
             {currentMemorialId && (
@@ -712,17 +787,17 @@ function CreateMemorialPageContent() {
                   </div>
 
                   <p className="text-lg text-charcoal/60 max-w-xl mx-auto">
-                    {mode === 'family' ? (
+                    {texts.subHeader}
+                    {mode === 'family' && !isSelf && (
                       <>
-                        This is a shared space to preserve your family's heritage.
                         <br />
                         <span className="text-sm mt-2 block text-terracotta">
                           Designed for collaboration. You will invite members in the Witnesses section.
                         </span>
                       </>
-                    ) : (
+                    )}
+                    {!isSelf && mode !== 'family' && (
                       <>
-                        A private sanctuary to honor a unique life.
                         <br />
                         <span className="text-sm mt-2 block text-sage">
                           You are the sole guardian. Sharing is optional and controlled by you.
@@ -738,39 +813,36 @@ function CreateMemorialPageContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <PathCard
               id="facts"
-              title="The Facts"
-              description="Birth, death, and the proof of existence. The foundation of the memory."
+              title={isSelf ? "The Facts (You)" : "The Facts"}
+              description={texts.cards.facts}
               status={getPathStatus(memorialData, 'facts')}
               onClick={handlePathClick}
             />
             <PathCard
               id="body"
-              title="The Body"
-              description="Eras of life, from childhood to career and the families built along the way."
+              title={isSelf ? "Your Journey" : "The Body"}
+              description={texts.cards.body}
               status={getPathStatus(memorialData, 'body')}
               onClick={handlePathClick}
             />
             <PathCard
               id="soul"
-              title="The Soul"
-              description="Personality, traits, and the full life story. Who they were in essence."
+              title={isSelf ? "Your Essence" : "The Soul"}
+              description={texts.cards.soul}
               status={getPathStatus(memorialData, 'soul')}
               onClick={handlePathClick}
             />
             <PathCard
               id="witnesses"
-              title={mode === 'family' ? "Family Contributors" : "Witnesses & Tributes"}
-              description={mode === 'family'
-                ? "Centralize the family's stories. Invite members to build this archive together."
-                : "Invite close friends to share memories. Entirely optional and moderated by you."
-              }
+              title={mode === 'family' && !isSelf ? "Family Contributors" : (isSelf ? "Your Witnesses" : "Witnesses & Tributes")}
+              description={texts.cards.witnesses}
               status={getPathStatus(memorialData, 'witnesses')}
               onClick={handlePathClick}
             />
             <PathCard
               id="presence"
-              title="The Presence"
-              description="Photos, videos, and the return of the voice."
+              title={isSelf ? "Your Presence" : "The Presence"}
+              description={texts.cards.presence}
               status={memorialData.paid ? getPathStatus(memorialData, 'presence') : (completedPathsCount >= 2 ? 'in_progress' : 'locked')}
               onClick={handlePathClick}
             />
@@ -944,6 +1016,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep1}
                           onNext={() => setViewMode('hub')}
                           readOnly={!canEditStep(1)}
+                          memorialId={currentMemorialId}
                         />
                       )}
                       {memorialData.currentStep === 2 && (
@@ -953,6 +1026,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 3 }))}
                           onBack={() => setViewMode('hub')}
                           readOnly={!canEditStep(2)}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
                         />
                       )}
                       {memorialData.currentStep === 3 && (
@@ -962,6 +1036,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 4 }))}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 2 }))}
                           readOnly={!canEditStep(3)}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
                         />
                       )}
                       {memorialData.currentStep === 4 && (
@@ -971,6 +1046,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 3 }))}
                           readOnly={!canEditStep(4)}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
                         />
                       )}
                       {memorialData.currentStep === 5 && (
@@ -980,6 +1056,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 6 }))}
                           onBack={() => setViewMode('hub')}
                           readOnly={!canEditStep(5)}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
                         />
                       )}
                       {memorialData.currentStep === 6 && (
@@ -989,6 +1066,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 5 }))}
                           readOnly={!canEditStep(6)}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
                         />
                       )}
                       {memorialData.currentStep === 7 && (
@@ -1025,6 +1103,16 @@ function CreateMemorialPageContent() {
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 8 }))}
                           memorialId={currentMemorialId}
                           readOnly={!canEditStep(9)}
+                        />
+                      )}
+                      {memorialData.currentStep === 10 && (
+                        <Step10Review
+                          data={memorialData}
+                          memorialId={currentMemorialId}
+                          onBack={goToPreviousStep}
+                          onJumpToStep={goToStep}
+                          isSelfArchive={memorialData.step1.isSelfArchive}
+                          hasSuccessor={hasSuccessor}
                         />
                       )}
                     </div>

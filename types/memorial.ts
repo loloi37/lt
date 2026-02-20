@@ -5,6 +5,8 @@ export interface BasicInfo {
   birthDate: string;
   deathDate: string | null;
   isStillLiving: boolean;
+  isSelfArchive?: boolean; // NEW: Track if user is creating for themselves
+  privateUntilDeath?: boolean; // NEW: Controls visibility logic
   birthPlace: string;
   deathPlace: string;
   profilePhoto: File | null;

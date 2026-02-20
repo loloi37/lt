@@ -11,6 +11,7 @@ interface Step5Props {
     onNext: () => void;
     onBack: () => void;
     readOnly?: boolean;
+    isSelfArchive?: boolean; // NEW PROP
 }
 
 const PERSONALITY_TRAITS = [
@@ -31,7 +32,7 @@ const CORE_VALUES = [
     'Peace', 'Generosity', 'Wisdom', 'Humility', 'Perseverance'
 ];
 
-export default function Step5Personality({ data, onUpdate, onNext, onBack, readOnly }: Step5Props) {
+export default function Step5Personality({ data, onUpdate, onNext, onBack, readOnly, isSelfArchive = false }: Step5Props) {
     const [newPassion, setNewPassion] = useState('');
     const [newSaying, setNewSaying] = useState('');
     const [customValue, setCustomValue] = useState('');
@@ -125,7 +126,9 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                     Personality, Values & Passions
                 </h2>
                 <p className="text-charcoal/60 text-lg">
-                    Help us understand who they were at their core.
+                    {isSelfArchive
+                        ? "Help us understand who you are at your core."
+                        : "Help us understand who they were at their core."}
                 </p>
             </div>
 
@@ -134,9 +137,11 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
                         <Sparkles size={18} className="text-terracotta" />
-                        How would you describe them?
+                        {isSelfArchive ? "How would you describe yourself?" : "How would you describe them?"}
                     </label>
-                    <p className="text-xs text-charcoal/40 mb-4">Select 5-10 traits that capture their essence</p>
+                    <p className="text-xs text-charcoal/40 mb-4">
+                        {isSelfArchive ? "Select 5-10 traits that capture your essence" : "Select 5-10 traits that capture their essence"}
+                    </p>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                         {PERSONALITY_TRAITS.map((trait) => {
@@ -168,7 +173,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
                         <Compass size={18} className="text-sage" />
-                        What mattered most to them?
+                        {isSelfArchive ? "What matters most to you?" : "What mattered most to them?"}
                     </label>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
@@ -237,7 +242,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
                         <Heart size={18} className="text-terracotta" />
-                        What did they love?
+                        {isSelfArchive ? "What do you love?" : "What did they love?"}
                     </label>
 
                     {data.passions.length > 0 && (
@@ -292,12 +297,12 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
                         <Compass size={18} className="text-terracotta" />
-                        Did they have a motto or life philosophy?
+                        {isSelfArchive ? "Do you have a motto or life philosophy?" : "Did they have a motto or life philosophy?"}
                     </label>
                     <textarea
                         value={data.lifePhilosophy}
                         onChange={(e) => handleChange('lifePhilosophy', e.target.value)}
-                        placeholder="What did they believe about how to live a good life?"
+                        placeholder={isSelfArchive ? "What do you believe about how to live a good life?" : "What did they believe about how to live a good life?"}
                         rows={4}
                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                         disabled={readOnly}
@@ -305,8 +310,8 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                     <div className="mt-2 p-3 bg-sage/5 rounded-lg border border-sage/20">
                         <p className="text-xs font-medium text-sage mb-2">Examples:</p>
                         <ul className="space-y-1 text-xs text-charcoal/60">
-                            <li>• "She believed kindness was never wasted"</li>
-                            <li>• "He lived by: leave things better than you found them"</li>
+                            <li>• "{isSelfArchive ? "I believe kindness is never wasted" : "She believed kindness was never wasted"}"</li>
+                            <li>• "{isSelfArchive ? "Live by: leave things better than you found them" : "He lived by: leave things better than you found them"}"</li>
                             <li>• "Family first, always"</li>
                         </ul>
                     </div>
@@ -318,7 +323,9 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         <Quote size={18} className="text-sage" />
                         Favorite Quotes (Optional)
                     </label>
-                    <p className="text-xs text-charcoal/40 mb-4">Quotes that were meaningful to them</p>
+                    <p className="text-xs text-charcoal/40 mb-4">
+                        {isSelfArchive ? "Quotes that are meaningful to you" : "Quotes that were meaningful to them"}
+                    </p>
 
                     <div className="space-y-4">
                         {data.favoriteQuotes.map((quote) => (
@@ -354,7 +361,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                         type="text"
                                         value={quote.context}
                                         onChange={(e) => updateQuote(quote.id, 'context', e.target.value)}
-                                        placeholder="e.g., She had this framed in her classroom"
+                                        placeholder={isSelfArchive ? "e.g., I have this framed in my office" : "e.g., She had this framed in her classroom"}
                                         className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
                                         disabled={readOnly}
                                     />
@@ -380,7 +387,9 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         <MessageCircle size={18} className="text-terracotta" />
                         Memorable Sayings (Optional)
                     </label>
-                    <p className="text-xs text-charcoal/40 mb-4">Things they would always say</p>
+                    <p className="text-xs text-charcoal/40 mb-4">
+                        {isSelfArchive ? "Things you always say" : "Things they would always say"}
+                    </p>
 
                     {data.memorableSayings.length > 0 && (
                         <div className="space-y-2 mb-3">

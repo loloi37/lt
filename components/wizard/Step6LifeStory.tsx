@@ -11,9 +11,10 @@ interface Step6Props {
     onNext: () => void;
     onBack: () => void;
     readOnly?: boolean;
+    isSelfArchive?: boolean; // NEW PROP
 }
 
-const WRITING_PROMPTS = [
+const WRITING_PROMPTS_DEFAULT = [
     "What challenges did they overcome?",
     "What made them unique?",
     "How did they treat others?",
@@ -24,6 +25,19 @@ const WRITING_PROMPTS = [
     "What wisdom did they share?",
     "What was their impact on others?",
     "What legacy did they leave?"
+];
+
+const WRITING_PROMPTS_SELF = [
+    "What challenges did you overcome?",
+    "What made you unique?",
+    "How did you treat others?",
+    "What brought you joy?",
+    "What would you like to be remembered for?",
+    "What were your proudest moments?",
+    "How did you handle adversity?",
+    "What wisdom would you like to share?",
+    "What was your impact on others?",
+    "What legacy do you want to leave?"
 ];
 
 const BIOGRAPHY_TEMPLATE = `[Opening - Who they were in essence]
@@ -45,7 +59,8 @@ const BIOGRAPHY_TEMPLATE = `[Opening - Who they were in essence]
 
 `;
 
-export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnly }: Step6Props) {
+export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnly, isSelfArchive = false }: Step6Props) {
+    const WRITING_PROMPTS = isSelfArchive ? WRITING_PROMPTS_SELF : WRITING_PROMPTS_DEFAULT;
     const [showPrompts, setShowPrompts] = useState(true);
     const [showTemplate, setShowTemplate] = useState(false);
     const [previousBiography, setPreviousBiography] = useState<string | null>(null);
@@ -188,11 +203,10 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                         <textarea
                             value={data.biography}
                             onChange={(e) => handleChange('biography', e.target.value)}
-                            placeholder="Tell their complete story here...
-
-Start with who they were in essence, then guide us through their journey from early life through their final years. What made them special? What did they overcome? How did they touch lives?
-
-Don't worry about making it perfect - just write from the heart. You can always edit later."
+                            placeholder={isSelfArchive
+                                ? "Tell your complete story here...\n\nStart with who you are in essence, then guide us through your journey from early life through today. What made you special? What did you overcome? How did you touch lives?\n\nDon't worry about making it perfect - just write from the heart. You can always edit later."
+                                : "Tell their complete story here...\n\nStart with who they were in essence, then guide us through their journey from early life through their final years. What made them special? What did they overcome? How did they touch lives?\n\nDon't worry about making it perfect - just write from the heart. You can always edit later."
+                            }
                             rows={20}
                             className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
                             disabled={readOnly}
@@ -293,7 +307,7 @@ Don't worry about making it perfect - just write from the heart. You can always 
                                         <textarea
                                             value={chapter.description}
                                             onChange={(e) => updateChapter(chapter.id, 'description', e.target.value)}
-                                            placeholder="Describe this period of their life (3-5 lines)..."
+                                            placeholder={isSelfArchive ? "Describe this period of your life (3-5 lines)..." : "Describe this period of their life (3-5 lines)..."}
                                             rows={4}
                                             className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                                             disabled={readOnly}

@@ -9,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // ============================================
 // EXISTING MEMORIAL INTERFACE
 // ============================================
+
 export interface Memorial {
     id: string;
     created_at: string;
@@ -32,7 +33,13 @@ export interface Memorial {
     profile_photo_url: string | null;
     cover_photo_url: string | null;
     completed_steps: number[];
+
+    // NEW: Soft Delete Fields
+    deleted?: boolean;
+    deleted_at?: string | null;
+    paid?: boolean; // Ensuring this is typed too
 }
+
 
 // ============================================
 // CONCIERGE EXPORTS (re-export from types)
@@ -101,7 +108,7 @@ export interface MemorialAuthorization {
     signature_type: 'typed' | 'drawn'; // NEW
     electronic_signature: string;      // The text name OR base64 image
     signature_date: string;
-    
+
     // Technical Evidence
     signature_ip_address: string | null;
     signature_user_agent: string | null;

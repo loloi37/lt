@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import ImageViewer from '@/components/ImageViewer';
 import IntegrityBadge from '@/components/IntegrityBadge';
+import BioWithLinks from '@/components/BioWithLinks';
 
 
 interface MemorialRendererProps {
     data: any;               // Memorial data (step1-step9)
+    relations?: any[];       // Related individuals
     isPreview?: boolean;     // true = show watermark + badge
     compact?: boolean;       // true = LiveMirror sidebar mode (scrollable, smaller)
     className?: string;
@@ -27,6 +29,7 @@ interface MemorialRendererProps {
 
 export default function MemorialRenderer({
     data,
+    relations = [],
     isPreview = false,
     compact = false,
     className = '',
@@ -244,9 +247,15 @@ export default function MemorialRenderer({
                                 Life Story
                             </h2>
                             <div className="prose prose-lg max-w-none">
-                                <p className={`text-charcoal/80 leading-relaxed whitespace-pre-wrap font-serif ${s.bodyText}`}>
-                                    {compact ? data.step6.biography.substring(0, 500) + (data.step6.biography.length > 500 ? '...' : '') : data.step6.biography}
-                                </p>
+                                <div className={`text-charcoal/80 leading-relaxed font-serif ${s.bodyText}`}>
+                                    <BioWithLinks
+                                        text={compact
+                                            ? data.step6.biography.substring(0, 500) + (data.step6.biography.length > 500 ? '...' : '')
+                                            : data.step6.biography
+                                        }
+                                        relations={relations}
+                                    />
+                                </div>
                             </div>
                         </section>
                     )}

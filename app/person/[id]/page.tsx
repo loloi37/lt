@@ -18,6 +18,7 @@ export default function PersonMemorialPage({ params }: {
     const memorialId = unwrappedParams.id;
 
     const [memorialData, setMemorialData] = useState<any>(null);
+    const [relations, setRelations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [hoveredInteractive, setHoveredInteractive] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export default function PersonMemorialPage({ params }: {
         setLoading(true);
         setError(null);
         try {
+            // 1. Fetch main memorial data
             const { data, error } = await supabase
                 .from('memorials')
                 .select('*')
@@ -55,8 +57,33 @@ export default function PersonMemorialPage({ params }: {
                 step6: data.step6,
                 step7: data.step7,
                 step8: data.step8,
-                step9: data.step9 || { videos: [] }, // UPDATED: Added step9 with fallback
+                step9: data.step9 || { videos: [] },
             });
+
+            // 2. Fetch Relations (NEW)
+            const { data: rels } = await supabase
+                .from('memorial_relations')
+                .select('*')
+                .eq('from_memorial_id', memorialId);
+
+            if (rels && rels.length > 0) {
+                const targetIds = rels.map(r => r.to_memorial_id);
+                const { data: targets } = await supabase
+                    .from('memorials')
+                    .select('id, full_name')
+                    .in('id', targetIds);
+
+                // Merge relation info with target name
+                const combinedRelations = rels.map(r => {
+                    const target = targets?.find(t => t.id === r.to_memorial_id);
+                    return {
+                        ...r,
+                        target_name: target?.full_name
+                    };
+                }).filter(r => r.target_name); // Only keep valid ones
+
+                setRelations(combinedRelations);
+            }
         } catch (err: any) {
             console.error('Error loading memorial:', err);
             setError(err.message || 'Failed to load memorial');
@@ -112,6 +139,7 @@ export default function PersonMemorialPage({ params }: {
     return (
         <MemorialRenderer
             data={memorialData}
+            relations={relations}
             isPreview={false}
             compact={false}
         />

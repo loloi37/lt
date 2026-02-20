@@ -1,7 +1,7 @@
 // components/wizard/Step1BasicInfo.tsx
 'use client';
 import { useState, useRef } from 'react';
-import { Upload, X, Calendar, MapPin, Quote, User } from 'lucide-react';
+import { Upload, X, Calendar, MapPin, Quote, User, AlertTriangle, Users, Eye, ArrowRight, Loader2, Lock } from 'lucide-react';
 import { BasicInfo } from '@/types/memorial';
 
 interface Step1Props {
@@ -9,10 +9,14 @@ interface Step1Props {
     onUpdate: (data: BasicInfo) => void;
     onNext: () => void;
     readOnly?: boolean;
+    memorialId: string | null;
 }
 
-export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly }: Step1Props) {
+export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memorialId }: Step1Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [potentialDuplicates, setPotentialDuplicates] = useState<any[]>([]);
+    const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+
 
     const handleChange = (field: keyof BasicInfo, value: any) => {
         onUpdate({ ...data, [field]: value });
@@ -56,8 +60,74 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly }: Ste
         return data.fullName.trim() !== '' && data.birthDate !== '';
     };
 
+    const checkForDuplicates = async () => {
+        if (data.fullName.length < 3) return [];
+
+        setCheckingDuplicates(true);
+        try {
+            const res = await fetch('/api/memorials/check-duplicate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullName: data.fullName,
+                    birthDate: data.birthDate,
+                    deathDate: data.deathDate,
+                    excludeId: memorialId
+                })
+            });
+            const result = await res.json();
+            const duplicates = result.duplicates || [];
+            setPotentialDuplicates(duplicates);
+            return duplicates;
+        } catch (err) {
+            console.error("Duplicate check failed", err);
+            return [];
+        } finally {
+            setCheckingDuplicates(false);
+        }
+    };
+
+    const handleNextClick = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+
+        // If we haven't found any duplicates yet, check now
+        let currentDuplicates = potentialDuplicates;
+        if (currentDuplicates.length === 0) {
+            currentDuplicates = await checkForDuplicates();
+        }
+
+        // If after checking (or if already checked) there are no matches, proceed
+        if (currentDuplicates.length === 0) {
+            onNext();
+        }
+        // If there are duplicates, we stay on this step to show them (UI handled in next task)
+    };
+
+    const handleRequestCollab = async (duplicate: any) => {
+        const requesterId = localStorage.getItem('user-id');
+
+        try {
+            const res = await fetch('/api/memorials/request-collaboration', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    memorialId: duplicate.id,
+                    targetOwnerId: duplicate.user_id,
+                    requesterId: requesterId
+                })
+            });
+
+            if (res.ok) {
+                alert("Collaboration request sent to the owner of that archive!");
+                // Redirect to dashboard or stay here
+            }
+        } catch (err) {
+            alert("Failed to send request.");
+        }
+    };
+
     return (
-        <form autoComplete="off" onSubmit={(e) => { e.preventDefault(); onNext(); }}>
+        <form autoComplete="off" onSubmit={handleNextClick}>
             {/* Hidden dummy input to trick browser autofill heuristics */}
             <input type="text" className="hidden" aria-hidden="true" autoComplete="off" name="hidden_dummy_input" tabIndex={-1} />
 
@@ -132,14 +202,71 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly }: Ste
                                     isStillLiving: isChecked,
                                     deathDate: isChecked ? null : data.deathDate,
                                     deathPlace: isChecked ? '' : data.deathPlace,
+                                    isSelfArchive: isChecked ? data.isSelfArchive : false
                                 });
                             }}
                             className="w-5 h-5 text-sage border-sand/40 rounded focus:ring-sage/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         />
-                        <label htmlFor="stillLiving" className="text-sm text-charcoal cursor-pointer">
+                        <label htmlFor="stillLiving" className="text-sm font-medium text-charcoal cursor-pointer">
                             This person is still living
                         </label>
                     </div>
+
+                    {/* NEW: Self-Archive Checkbox (Only visible if Living) */}
+                    {data.isStillLiving && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 pl-8 border-l-2 border-sage/20 animate-fadeIn">
+                                <input
+                                    type="checkbox"
+                                    id="selfArchive"
+                                    checked={!!data.isSelfArchive}
+                                    disabled={readOnly}
+                                    onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        handleChange('isSelfArchive', isChecked);
+                                        // Reset private flag if self archive is unchecked
+                                        if (!isChecked) handleChange('privateUntilDeath', false);
+                                    }}
+                                    className="w-5 h-5 text-terracotta border-sand/40 rounded focus:ring-terracotta/30 cursor-pointer disabled:opacity-50"
+                                />
+                                <div>
+                                    <label htmlFor="selfArchive" className="text-sm text-charcoal cursor-pointer font-medium">
+                                        I am creating this archive for myself
+                                    </label>
+                                    <p className="text-xs text-charcoal/50 mt-0.5">
+                                        Content will be framed in the first person ("I was born...", "My story")
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* NEW: PRIVATE UNTIL DEATH TOGGLE */}
+                            {data.isSelfArchive && (
+                                <div className="ml-8 p-4 bg-white/60 border border-terracotta/20 rounded-xl animate-fadeIn">
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-0.5 p-1.5 bg-terracotta/10 rounded-full text-terracotta">
+                                            <Lock size={16} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="flex items-center gap-3 cursor-pointer mb-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!data.privateUntilDeath}
+                                                    disabled={readOnly}
+                                                    onChange={(e) => handleChange('privateUntilDeath', e.target.checked)}
+                                                    className="w-5 h-5 text-terracotta border-sand/40 rounded focus:ring-terracotta"
+                                                />
+                                                <span className="font-medium text-charcoal text-sm">Keep this archive private until my death</span>
+                                            </label>
+                                            <p className="text-xs text-charcoal/60 leading-relaxed">
+                                                If enabled, this archive will be accessible <strong>only by you</strong>.
+                                                It will only be revealed to your designated successor(s) after the inheritance process is officially activated.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {!data.isStillLiving && (
                         <div>
@@ -289,17 +416,76 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly }: Ste
                     </div>
                 </div>
 
+                {/* DUPLICATE WARNING BLOCK */}
+                {potentialDuplicates.length > 0 && (
+                    <div className="mt-8 p-6 bg-terracotta/5 border-2 border-terracotta/20 rounded-2xl animate-fadeIn">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-terracotta/10 p-2 rounded-lg text-terracotta">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-serif text-lg text-charcoal mb-2">Similar Archive Detected</h3>
+                                <p className="text-sm text-charcoal/70 mb-4">
+                                    It looks like an archive for <strong>{data.fullName}</strong> might already exist in your family constellation.
+                                </p>
+
+                                <div className="space-y-3 mb-6">
+                                    {potentialDuplicates.map((dup) => (
+                                        <div key={dup.id} className="bg-white p-4 rounded-xl border border-sand/30 flex items-center justify-between shadow-sm">
+                                            <div>
+                                                <p className="font-medium text-sm text-charcoal">{dup.full_name}</p>
+                                                <p className="text-xs text-charcoal/40">
+                                                    {dup.birth_date?.substring(0, 4)} — {dup.death_date?.substring(0, 4)}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <a
+                                                    href={`/person/${dup.id}`}
+                                                    target="_blank"
+                                                    className="p-2 text-charcoal/40 hover:text-sage transition-colors"
+                                                    title="View existing archive"
+                                                >
+                                                    <Eye size={18} />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleRequestCollab(dup)}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sage/10 text-sage text-xs rounded-lg font-medium hover:bg-sage/20"
+                                                >
+                                                    <Users size={14} />
+                                                    Collaborate
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setPotentialDuplicates([]); // Clear warnings
+                                            onNext(); // Proceed anyway
+                                        }}
+                                        className="text-xs text-charcoal/40 hover:text-charcoal transition-colors underline"
+                                    >
+                                        This is a different person, continue anyway
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="mt-12 flex gap-4">
                     <button
                         data-tutorial="save-continue"
                         type="submit"
-                        disabled={!isValid()}
-                        className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all ${isValid()
+                        disabled={!isValid() || checkingDuplicates}
+                        className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all ${isValid() && !checkingDuplicates
                             ? 'bg-terracotta hover:bg-terracotta/90 text-ivory'
                             : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                             }`}
                     >
-                        Save & Continue →
+                        {checkingDuplicates ? 'Checking...' : 'Save & Continue →'}
                     </button>
                 </div>
 

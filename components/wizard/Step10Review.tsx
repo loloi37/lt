@@ -6,18 +6,21 @@ import { useState } from 'react';
 import {
   CheckCircle, Edit, Eye, Send, ArrowLeft, User, Home, Briefcase, Heart,
   Sparkles, BookOpen, MessageCircle, Image as ImageIcon, Film, AlertCircle,
-  Users, Shield, Gift, PartyPopper
+  Users, Shield, Gift, PartyPopper, X
 } from 'lucide-react';
 import { MemorialData } from '@/types/memorial';
 import { calculateCompletion, isEnrichmentStep } from '@/lib/completionLogic';
 import { createFullSnapshot } from '@/lib/versionService';
 import PreviewModal from './PreviewModal';
+import SuccessorSettings from '@/components/SuccessorSettings';
 
 interface Step10Props {
   data: MemorialData;
   memorialId: string | null;
   onBack: () => void;
   onJumpToStep: (step: number) => void;
+  isSelfArchive?: boolean;
+  hasSuccessor?: boolean;
 }
 
 // Map step numbers to icons
@@ -45,12 +48,23 @@ const STEP_COLORS: Record<number, { text: string; bg: string }> = {
   9: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
 };
 
-export default function Step10Review({ data, memorialId, onBack, onJumpToStep }: Step10Props) {
+export default function Step10Review({
+  data,
+  memorialId,
+  onBack,
+  onJumpToStep,
+  isSelfArchive = false,
+  hasSuccessor = false
+}: Step10Props) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSuccessorModal, setShowSuccessorModal] = useState(false);
 
   // Use centralized completion logic
   const completion = calculateCompletion(data);
+
+  // NEW: Check for Self-Archive blocking condition
+  const isBlockedBySuccessor = isSelfArchive && !hasSuccessor;
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -167,6 +181,32 @@ export default function Step10Review({ data, memorialId, onBack, onJumpToStep }:
           </div>
         )}
       </div>
+
+      {/* NEW: SELF-ARCHIVE SUCCESSOR WARNING */}
+      {isBlockedBySuccessor && (
+        <div className="mb-10 p-6 bg-terracotta/5 border-2 border-terracotta/20 rounded-xl animate-fadeIn">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-terracotta/10 rounded-full text-terracotta shrink-0">
+              <Shield size={24} />
+            </div>
+            <div>
+              <h3 className="font-serif text-xl text-charcoal mb-2">Successor Designation Required</h3>
+              <p className="text-charcoal/70 text-sm mb-4 leading-relaxed">
+                Since this is your own archive ("Living Person"), you <strong>must</strong> designate an Archive Steward (Successor) before publishing.
+                <br /><br />
+                This ensures your archive isn't lost if something happens to you. Your steward will only gain access after the verification process.
+              </p>
+              <button
+                onClick={() => setShowSuccessorModal(true)}
+                className="px-6 py-3 bg-terracotta text-ivory rounded-lg font-medium hover:bg-terracotta/90 transition-all flex items-center gap-2"
+              >
+                <Users size={18} />
+                Designate a Successor Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================= */}
       {/* CORE SECTIONS                             */}
@@ -302,8 +342,8 @@ export default function Step10Review({ data, memorialId, onBack, onJumpToStep }:
 
         <button
           onClick={handlePublish}
-          disabled={isPublishing || !completion.canPublish}
-          className={`w-full py-5 px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-lg ${isPublishing || !completion.canPublish
+          disabled={isPublishing || !completion.canPublish || isBlockedBySuccessor}
+          className={`w-full py-5 px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-lg ${isPublishing || !completion.canPublish || isBlockedBySuccessor
             ? 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
             : 'bg-gradient-to-r from-sage to-terracotta hover:shadow-lg text-ivory'
             }`}
@@ -324,6 +364,12 @@ export default function Step10Review({ data, memorialId, onBack, onJumpToStep }:
         {!completion.canPublish && (
           <p className="text-sm text-center text-terracotta">
             Please complete at least the Basic Information section to publish
+          </p>
+        )}
+
+        {isBlockedBySuccessor && (
+          <p className="text-sm text-center text-terracotta font-medium animate-pulse">
+            ⚠️ You must designate a successor before publishing
           </p>
         )}
 
@@ -349,6 +395,24 @@ export default function Step10Review({ data, memorialId, onBack, onJumpToStep }:
           data={data}
           onClose={() => setShowPreview(false)}
         />
+      )}
+
+      {/* NEW: Successor Modal */}
+      {showSuccessorModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative">
+            <button
+              onClick={() => setShowSuccessorModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-sand/20 rounded-full transition-colors z-10"
+            >
+              <X size={20} className="text-charcoal/60" />
+            </button>
+            <div className="max-h-[90vh] overflow-y-auto">
+              {/* We assume user is logged in if they are at this stage */}
+              <SuccessorSettings userId={localStorage.getItem('user-id') || ''} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

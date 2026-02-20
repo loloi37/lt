@@ -3,22 +3,24 @@
 // ============================================
 'use client';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function DashboardRedirect() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const savedMode = localStorage.getItem('legacy-vault-mode') || 'personal';
     const userId = localStorage.getItem('user-id');
+    const checkin = searchParams.get('checkin');
 
     if (userId) {
-      router.push(`/dashboard/${savedMode}/${userId}`);
+      const url = `/dashboard/${savedMode}/${userId}${checkin ? '?checkin=true' : ''}`;
+      router.push(url);
     } else {
-      // If no user exists yet, send them to pricing to start the process
       router.push('/choice-pricing');
     }
-  }, [router]);
+  }, [router, searchParams]);
 
 
   return (
