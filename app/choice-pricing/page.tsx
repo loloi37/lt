@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
+import { FileEdit, User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -17,13 +17,11 @@ export default function ChoicePricingPage() {
     const initUser = async () => {
         let savedUserId = localStorage.getItem('user-id');
 
-        // If it's a real UUID (doesn't start with 'user-'), we use it
         if (savedUserId && !savedUserId.startsWith('user-')) {
             setUserId(savedUserId);
             return;
         }
 
-        // Otherwise (missing or mock), create a REAL database user
         console.log("Pricing: Initializing real user session...");
         try {
             const { data, error } = await supabase
@@ -41,18 +39,16 @@ export default function ChoicePricingPage() {
             }
         } catch (err) {
             console.error("Pricing: Failed to auto-init user:", err);
-            // We set it to null so the click handlers can try again
             setUserId(null);
         }
     };
 
-    const handleModeSelection = async (mode: 'personal' | 'family') => {
+    const ensureUser = async (): Promise<string | null> => {
         let currentUserId = userId || localStorage.getItem('user-id');
 
         if (!currentUserId || currentUserId.startsWith('user-')) {
-            console.log("Pricing: Creating user on demand...");
             try {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('users')
                     .insert([{ email: `user-pricing-onclick-${Date.now()}@legacyvault.temp` }])
                     .select()
@@ -67,6 +63,26 @@ export default function ChoicePricingPage() {
                 console.error("Pricing: Failed to create user on click:", err);
             }
         }
+
+        return currentUserId || null;
+    };
+
+    // Draft: free start → dashboard/draft
+    const handleDraftStart = async () => {
+        const currentUserId = await ensureUser();
+
+        if (!currentUserId) {
+            alert('We are having trouble setting up your session. Please try again.');
+            return;
+        }
+
+        localStorage.setItem('legacy-vault-mode', 'draft');
+        router.push(`/dashboard/draft/${currentUserId}`);
+    };
+
+    // Personal or Family: paid → confirmation page
+    const handleModeSelection = async (mode: 'personal' | 'family') => {
+        const currentUserId = await ensureUser();
 
         if (!currentUserId) {
             alert('We are having trouble setting up your session. Please try again.');
@@ -83,41 +99,12 @@ export default function ChoicePricingPage() {
     };
 
     const handleConciergeSelection = () => {
-        // UPDATED: Point to the Request page (which is now Under Construction), NOT confirmation
         router.push('/concierge/request');
-    };
-
-    const handleFreeStart = async (mode: 'personal' | 'family') => {
-        let currentUserId = userId || localStorage.getItem('user-id');
-
-        if (!currentUserId || currentUserId.startsWith('user-')) {
-            // Creation logic
-            try {
-                const { data } = await supabase
-                    .from('users')
-                    .insert([{ email: `user-free-onclick-${Date.now()}@legacyvault.temp` }])
-                    .select()
-                    .single();
-
-                if (data) {
-                    currentUserId = data.id;
-                    localStorage.setItem('user-id', data.id);
-                    setUserId(data.id);
-                }
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        localStorage.setItem('legacy-vault-mode', mode);
-        // REDIRECT TO /create to start the ritual immediately, 
-        // /create is smart and will handle the user session there too.
-        router.push(`/dashboard/${mode}/${currentUserId}`);
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 flex items-center justify-center p-6">
-            <div className="max-w-6xl w-full">
+            <div className="max-w-7xl w-full">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
@@ -138,9 +125,55 @@ export default function ChoicePricingPage() {
                     </p>
                 </div>
 
-                {/* Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Personal Mode */}
+                {/* Cards Grid — 4 cards: Draft | Personal | Family | Concierge */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                    {/* Draft — free, independent plan */}
+                    <button
+                        onClick={handleDraftStart}
+                        disabled={!userId}
+                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-charcoal/30 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
+                    >
+                        <div className="w-16 h-16 bg-gradient-to-br from-charcoal/80 to-charcoal/60 rounded-2xl flex items-center justify-center mb-6">
+                            <FileEdit size={32} className="text-ivory" />
+                        </div>
+                        <h2 className="font-serif text-3xl text-charcoal mb-3">Draft</h2>
+
+                        {/* Price */}
+                        <div className="mb-4">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-bold text-charcoal/70">Free</span>
+                            </div>
+                        </div>
+
+                        <p className="text-charcoal/70 mb-6">Build your memorial at your own pace</p>
+
+                        {/* Features */}
+                        <ul className="space-y-2 mb-6 text-sm text-charcoal/70">
+                            <li className="flex items-start gap-2">
+                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                                <span>Full memorial builder access</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                                <span>Save your progress anytime</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                                <span>Preview with watermark</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                                <span>Upgrade to Personal anytime</span>
+                            </li>
+                        </ul>
+
+                        <div className="inline-flex items-center gap-2 text-charcoal/60 font-medium group-hover:gap-3 transition-all">
+                            Start for Free <ArrowRight size={18} />
+                        </div>
+                    </button>
+
+                    {/* Personal */}
                     <button
                         onClick={() => handleModeSelection('personal')}
                         disabled={!userId}
@@ -186,7 +219,7 @@ export default function ChoicePricingPage() {
                         </div>
                     </button>
 
-                    {/* Family Mode */}
+                    {/* Family */}
                     <button
                         onClick={() => handleModeSelection('family')}
                         disabled={!userId}
@@ -232,7 +265,7 @@ export default function ChoicePricingPage() {
                         </div>
                     </button>
 
-                    {/* Concierge Mode */}
+                    {/* Concierge */}
                     <button
                         onClick={handleConciergeSelection}
                         className="p-8 rounded-2xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
@@ -283,25 +316,13 @@ export default function ChoicePricingPage() {
                     </button>
                 </div>
 
-                {/* Comparison note and Free Draft option */}
+                {/* Comparison note */}
                 <div className="mt-12 text-center">
-                    <p className="text-sm text-charcoal/50 mb-8">
-                        Not sure which to choose? Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
+                    <p className="text-sm text-charcoal/50">
+                        Not sure which to choose? <strong>Draft</strong> is free to start — you can upgrade to Personal at any time. Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
                     </p>
-
-                    <div className="mt-12 pt-12 border-t border-sand/20">
-                        <p className="text-charcoal/60 mb-4 text-sm font-serif italic">
-                            "The memory belongs to you before it belongs to the world."
-                        </p>
-                        <button
-                            onClick={() => handleFreeStart('personal')}
-                            className="px-8 py-3 border border-sand/40 rounded-xl text-charcoal/60 hover:text-charcoal hover:border-sage transition-all text-sm font-medium"
-                        >
-                            Begin your draft for free
-                        </button>
-                    </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

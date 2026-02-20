@@ -4,11 +4,12 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle } from 'lucide-react';
 
-
 function PaymentSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const memorialId = searchParams.get('id'); // Get ID from URL
+    const memorialId = searchParams.get('id');
+    // plan comes from the Stripe success_url we set: ?plan=personal or ?plan=family
+    const planParam = searchParams.get('plan') || 'personal';
 
     useEffect(() => {
         const finalizePayment = async () => {
@@ -20,7 +21,6 @@ function PaymentSuccessContent() {
 
             try {
                 console.log('Calling finalize-payment API for:', memorialId);
-                // Call our new SECURE server route
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -33,18 +33,22 @@ function PaymentSuccessContent() {
                     throw new Error(result.error);
                 }
 
-                // ✅ TOUT est fait côté serveur (update + snapshot)
                 console.log("Archive successfully activated:", result.message);
 
-                // Redirection to the correct Dashboard
+                // Redirect to the correct dashboard.
+                // Use plan from URL (set by create-checkout) rather than potentially stale localStorage.
+                // Draft upgrades → plan=personal → /dashboard/personal/...
                 setTimeout(() => {
-                    const mode = localStorage.getItem('legacy-vault-mode') || 'personal';
                     const userId = localStorage.getItem('user-id');
+                    // Normalise: 'personal' or 'family' — anything else defaults to 'personal'
+                    const mode = planParam === 'family' ? 'family' : 'personal';
+
+                    // Update localStorage so subsequent navigation is consistent
+                    localStorage.setItem('legacy-vault-mode', mode);
 
                     if (userId) {
                         router.push(`/dashboard/${mode}/${userId}`);
                     } else {
-                        // Fallback to create if for some reason userId is missing
                         router.push(`/create?id=${memorialId}`);
                     }
                 }, 3000);
@@ -56,7 +60,7 @@ function PaymentSuccessContent() {
         };
 
         finalizePayment();
-    }, [memorialId, router]);
+    }, [memorialId, planParam, router]);
 
     return (
         <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
@@ -70,7 +74,7 @@ function PaymentSuccessContent() {
                 </p>
                 <div className="flex items-center justify-center gap-2 text-sage font-medium">
                     <Loader2 className="animate-spin" size={20} />
-                    <span>Redirecting to your Crossroads...</span>
+                    <span>Redirecting to your dashboard...</span>
                 </div>
             </div>
         </div>

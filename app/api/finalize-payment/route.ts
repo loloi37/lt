@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { createFullSnapshot } from '@/lib/versionService';
 
 export async function POST(request: NextRequest) {
     try {
         const { memorialId } = await request.json();
 
-        // NEW CHECK
         if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
             console.error('[Finalize Payment] Invalid memorial ID:', memorialId);
             return NextResponse.json({
@@ -16,11 +14,10 @@ export async function POST(request: NextRequest) {
 
         console.log('[Finalize Payment] Starting for memorial:', memorialId);
 
-        // Initialize Supabase admin client with service role key
         const { createClient } = await import('@supabase/supabase-js');
         const supabaseAdmin = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!, // Service key, pas anon key
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
             {
                 auth: {
                     autoRefreshToken: false,
@@ -29,14 +26,33 @@ export async function POST(request: NextRequest) {
             }
         );
 
-        // 1. Mettre à jour le statut de paiement
-        // ✅ APRÈS (met les 2 colonnes)
+        // Fetch current memorial to check its mode
+        const { data: currentMemorial, error: fetchCurrentError } = await supabaseAdmin
+            .from('memorials')
+            .select('mode, user_id')
+            .eq('id', memorialId)
+            .single();
+
+        if (fetchCurrentError || !currentMemorial) {
+            console.error('Memorial not found:', fetchCurrentError);
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        // Build update payload — always mark paid and confirmed
+        // If memorial was in draft mode, upgrade it to personal
+        const updatePayload: Record<string, any> = {
+            paid: true,
+            payment_confirmed_at: new Date().toISOString(),
+        };
+
+        if (currentMemorial.mode === 'draft') {
+            updatePayload.mode = 'personal';
+            console.log('[Finalize Payment] Draft upgraded to Personal for memorial:', memorialId);
+        }
+
         const { error: updateError } = await supabaseAdmin
             .from('memorials')
-            .update({
-                paid: true,        // ⬅️ AJOUTE CETTE LIGNE
-                payment_confirmed_at: new Date().toISOString()
-            })
+            .update(updatePayload)
             .eq('id', memorialId);
 
         if (updateError) {
@@ -44,8 +60,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: updateError.message }, { status: 500 });
         }
 
-        // 2. Récupérer les données du memorial pour le snapshot
-        // Use supabaseAdmin to bypass RLS since this is a server-side system action
+        // Fetch full memorial data for snapshot
         const { data: memorialData, error: fetchError } = await supabaseAdmin
             .from('memorials')
             .select('*')
@@ -53,23 +68,21 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (fetchError || !memorialData) {
-            console.error('Fetch error:', fetchError);
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+            console.error('Fetch error after update:', fetchError);
+            return NextResponse.json({ error: 'Memorial not found after update' }, { status: 404 });
         }
 
-        // 3. Créer le snapshot CÔTÉ SERVEUR (avec service account Supabase)
-        // ⚠️ IMPORTANT : Utilise un client Supabase avec service_role key ici
-        // (supabaseAdmin déjà initialisé en haut de la fonction)
-
-        // Construire l'objet de snapshot
+        // Create version snapshot
         const snapshotData = {
             memorial_id: memorialId,
-            version_number: 1, // Ou calculer le prochain numéro
+            version_number: 1,
             snapshot_data: memorialData,
             is_full_snapshot: true,
-            steps_modified: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // Toutes les étapes
+            steps_modified: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             change_type: 'manual',
-            change_summary: 'Archive activated — payment confirmed',
+            change_summary: currentMemorial.mode === 'draft'
+                ? 'Archive activated — Draft upgraded to Personal plan'
+                : 'Archive activated — payment confirmed',
             change_reason: null,
             created_by: memorialData.user_id || null,
             created_by_name: 'Owner',
@@ -82,13 +95,13 @@ export async function POST(request: NextRequest) {
 
         if (snapshotError) {
             console.error('Snapshot creation failed:', snapshotError);
-            // Ne pas bloquer le paiement si le snapshot échoue
-            // Juste logger l'erreur
+            // Don't block payment finalization if snapshot fails
         }
 
         return NextResponse.json({
             success: true,
-            message: 'Payment finalized and snapshot created'
+            message: 'Payment finalized and snapshot created',
+            upgradedFromDraft: currentMemorial.mode === 'draft',
         });
 
     } catch (error: any) {

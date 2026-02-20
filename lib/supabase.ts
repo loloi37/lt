@@ -15,7 +15,7 @@ export interface Memorial {
     created_at: string;
     updated_at: string;
     user_id: string;
-    mode: 'personal' | 'family';
+    mode: 'draft' | 'personal' | 'family';
     step1: any;
     step2: any;
     step3: any;

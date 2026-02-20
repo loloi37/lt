@@ -178,11 +178,13 @@ function CreateMemorialPageContent() {
   const ModeBadge = () => (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
       ? 'bg-terracotta/10 text-terracotta border-terracotta/20'
-      : 'bg-sage/10 text-sage border-sage/20'
+      : mode === 'draft'
+        ? 'bg-charcoal/10 text-charcoal/60 border-charcoal/20'
+        : 'bg-sage/10 text-sage border-sage/20'
       }`}>
       {mode === 'family' ? <Users size={12} /> : <User size={12} />}
       <span className="uppercase tracking-wider">
-        {mode === 'family' ? 'Family Archive' : 'Personal Archive'}
+        {mode === 'family' ? 'Family Archive' : mode === 'draft' ? 'Draft' : 'Personal Archive'}
       </span>
     </div>
   );
@@ -912,10 +914,15 @@ function CreateMemorialPageContent() {
                 </p>
 
                 <button
-                  onClick={() => router.push('/personal-confirmation')}
+                  onClick={() => {
+                    const upgradeUrl = currentMemorialId
+                      ? `/personal-confirmation?memorialId=${currentMemorialId}`
+                      : '/personal-confirmation';
+                    router.push(upgradeUrl);
+                  }}
                   className="px-12 py-4 bg-terracotta text-ivory rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
                 >
-                  Become a Permanent Guardian ($1,500)
+                  {mode === 'draft' ? 'Upgrade to Personal ($1,500)' : 'Become a Permanent Guardian ($1,500)'}
                 </button>
               </div>
             )

@@ -1,15 +1,20 @@
 // app/personal-confirmation/page.tsx
 'use client';
-import { useState } from 'react';
-import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
+import { useState, Suspense } from 'react';
+import { ArrowLeft, Check, ExternalLink, ArrowUpCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Ensure useRouter is imported
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function PersonalConfirmationPage() {
+function PersonalConfirmationContent() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // If memorialId is in URL, this is a Draft → Personal upgrade
+    const upgradeMemorialId = searchParams.get('memorialId');
+    const isDraftUpgrade = !!upgradeMemorialId;
 
     const handlePayment = async () => {
         if (!acceptedTerms) {
@@ -20,9 +25,9 @@ export default function PersonalConfirmationPage() {
         setIsProcessing(true);
 
         try {
-            let memorialId = localStorage.getItem('current-memorial-id');
+            let memorialId = upgradeMemorialId || localStorage.getItem('current-memorial-id');
 
-            // Initialize if missing (existing logic)
+            // If still no memorial (direct purchase, no draft), create a fresh one
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 const userId = localStorage.getItem('user-id');
                 const { data, error: insertError } = await supabase
@@ -30,6 +35,7 @@ export default function PersonalConfirmationPage() {
                     .insert({
                         user_id: userId,
                         slug: `memorial-${Date.now()}`,
+                        mode: 'personal',
                         paid: false,
                     })
                     .select()
@@ -40,7 +46,7 @@ export default function PersonalConfirmationPage() {
                 localStorage.setItem('current-memorial-id', memorialId!);
             }
 
-            // 1. Call Checkout API
+            // Call Checkout API — plan is always Personal here
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -48,22 +54,22 @@ export default function PersonalConfirmationPage() {
                     memorialId: memorialId,
                     plan: 'Personal',
                     amount: 1500,
+                    isDraftUpgrade: isDraftUpgrade,
                 }),
             });
 
             const data = await response.json();
 
-            // 2. STRICT BARRIER CHECK
+            // Authorization barrier
             if (!response.ok) {
                 if (data.code === 'LEGAL_AUTH_REQUIRED') {
-                    // Redirect to the new authorization page we built
                     router.push(`/authorization/${memorialId}?redirect=personal`);
                     return;
                 }
                 throw new Error(data.error || 'Payment initialization failed');
             }
 
-            // 3. Proceed to Stripe
+            // Proceed to Stripe
             if (data.url) {
                 window.location.href = data.url;
             }
@@ -81,11 +87,11 @@ export default function PersonalConfirmationPage() {
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <Link
-                        href="/choice-pricing"
+                        href={isDraftUpgrade ? `/dashboard/draft/${localStorage.getItem?.('user-id') ?? ''}` : '/choice-pricing'}
                         className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
                     >
                         <ArrowLeft size={20} />
-                        <span>Back to plans</span>
+                        <span>{isDraftUpgrade ? 'Back to my drafts' : 'Back to plans'}</span>
                     </Link>
                 </div>
             </div>
@@ -94,19 +100,43 @@ export default function PersonalConfirmationPage() {
             <div className="max-w-4xl mx-auto px-6 py-12">
                 {/* Title */}
                 <div className="text-center mb-12">
-                    <h1 className="font-serif text-4xl text-charcoal mb-4">
-                        Confirm Your Order
-                    </h1>
-                    <p className="text-lg text-charcoal/70">
-                        Personal Plan - $1,500
-                    </p>
+                    {isDraftUpgrade ? (
+                        <>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-sage/10 text-sage rounded-full text-sm font-semibold mb-4">
+                                <ArrowUpCircle size={16} />
+                                Upgrading from Draft to Personal
+                            </div>
+                            <h1 className="font-serif text-4xl text-charcoal mb-4">
+                                Activate Your Memorial
+                            </h1>
+                            <p className="text-lg text-charcoal/70">
+                                Your draft is ready — unlock the full Personal plan for $1,500
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h1 className="font-serif text-4xl text-charcoal mb-4">
+                                Confirm Your Order
+                            </h1>
+                            <p className="text-lg text-charcoal/70">
+                                Personal Plan - $1,500
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {/* Order Summary Card */}
                 <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
                     <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
 
-                    {/* Lorem Ipsum Content */}
+                    {isDraftUpgrade && (
+                        <div className="mb-6 p-4 bg-sage/5 border border-sage/20 rounded-xl">
+                            <p className="text-sm text-charcoal/70">
+                                <strong>Draft upgrade:</strong> Your existing draft memorial will be upgraded to the Personal plan. All your work is preserved — watermarks are removed and lifetime hosting is activated immediately after payment.
+                            </p>
+                        </div>
+                    )}
+
                     <div className="prose max-w-none mb-8">
                         <p className="text-charcoal/70 leading-relaxed mb-4">
                             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
@@ -125,7 +155,9 @@ export default function PersonalConfirmationPage() {
                     {/* Price Breakdown */}
                     <div className="border-t border-sand/30 pt-6">
                         <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Personal Plan</span>
+                            <span className="text-charcoal/70">
+                                {isDraftUpgrade ? 'Draft → Personal Upgrade' : 'Personal Plan'}
+                            </span>
                             <span className="text-charcoal font-medium">$1,500.00</span>
                         </div>
                         <div className="flex justify-between items-center mb-3">
@@ -139,7 +171,7 @@ export default function PersonalConfirmationPage() {
                     </div>
                 </div>
 
-                {/* Terms and Conditions - UPDATED */}
+                {/* Terms and Conditions */}
                 <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
                     <h3 className="text-lg font-semibold text-charcoal mb-6">Before Payment</h3>
 
@@ -173,7 +205,7 @@ export default function PersonalConfirmationPage() {
                         </div>
                     </label>
 
-                    {/* NEW: Memorial Authorization Link */}
+                    {/* Memorial Authorization Link */}
                     <div className="p-6 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border-2 border-sage/20">
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-1">
@@ -196,7 +228,7 @@ export default function PersonalConfirmationPage() {
                                     Open Memorial Authorization Form
                                 </Link>
                                 <p className="text-xs text-charcoal/60 mt-3">
-                                    💡 This will open in a new tab. You can close it when done and return here to proceed with payment.
+                                    This will open in a new tab. You can close it when done and return here to proceed with payment.
                                 </p>
                             </div>
                         </div>
@@ -220,7 +252,7 @@ export default function PersonalConfirmationPage() {
                     ) : acceptedTerms ? (
                         <>
                             <Check size={20} />
-                            Proceed to Payment
+                            {isDraftUpgrade ? 'Upgrade to Personal ($1,500)' : 'Proceed to Payment ($1,500)'}
                         </>
                     ) : (
                         'Please accept the terms to continue'
@@ -230,10 +262,18 @@ export default function PersonalConfirmationPage() {
                 {/* Security Note */}
                 <div className="mt-6 text-center">
                     <p className="text-xs text-charcoal/50">
-                        🔒 Secure payment powered by Stripe. Your information is encrypted and protected.
+                        Secure payment powered by Stripe. Your information is encrypted and protected.
                     </p>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PersonalConfirmationPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PersonalConfirmationContent />
+        </Suspense>
     );
 }
