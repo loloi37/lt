@@ -401,7 +401,8 @@ function CreateMemorialPageContent() {
     setSaveStatus('saving');
     try {
       const slug = generateSlug(memorialData.step1.fullName);
-      const currentMode = searchParams.get('mode') || localStorage.getItem('legacy-vault-mode') || 'personal';
+      const rawMode = searchParams.get('mode') || localStorage.getItem('legacy-vault-mode') || 'personal';
+      const currentMode = ['personal', 'family'].includes(rawMode) ? rawMode : 'personal';
 
       const memorialRecord = {
         id: currentMemorialId || undefined, // ⬅ CRITICAL: Include ID if exists
