@@ -27,6 +27,19 @@ function PersonalConfirmationContent() {
         try {
             let memorialId = upgradeMemorialId || localStorage.getItem('current-memorial-id');
 
+            // Verify the cached memorial actually exists in DB (guard against stale localStorage)
+            if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
+                const { data: existing } = await supabase
+                    .from('memorials')
+                    .select('id')
+                    .eq('id', memorialId)
+                    .maybeSingle();
+                if (!existing) {
+                    memorialId = null;
+                    localStorage.removeItem('current-memorial-id');
+                }
+            }
+
             // If still no memorial (direct purchase, no draft), create a fresh one
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 const userId = localStorage.getItem('user-id');
