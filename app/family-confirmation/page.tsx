@@ -7,9 +7,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function FamilyConfirmationPage() {
-    const router = useRouter(); // <--- ADD THIS LINE
+    const router = useRouter();
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isOpeningAuth, setIsOpeningAuth] = useState(false);
 
     const handlePayment = async () => {
     if (!acceptedTerms) {
@@ -90,6 +91,31 @@ export default function FamilyConfirmationPage() {
         setIsProcessing(false);
     }
 };
+
+    const handleOpenAuthorization = async () => {
+        setIsOpeningAuth(true);
+        try {
+            let memorialId = localStorage.getItem('current-memorial-id');
+
+            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+                const userId = localStorage.getItem('user-id');
+                const { data, error: insertError } = await supabase
+                    .from('memorials')
+                    .insert({ user_id: userId, slug: `family-memorial-${Date.now()}`, mode: 'family', paid: false })
+                    .select()
+                    .single();
+                if (insertError || !data) throw new Error('Could not initialize your archive');
+                memorialId = data.id;
+                localStorage.setItem('current-memorial-id', memorialId!);
+            }
+
+            router.push(`/authorization/${memorialId}?type=account&redirect=family`);
+        } catch (err: any) {
+            alert(err.message || 'An error occurred. Please try again.');
+        } finally {
+            setIsOpeningAuth(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-stone/10 via-ivory to-mist/10">
@@ -202,17 +228,20 @@ export default function FamilyConfirmationPage() {
                                 <p className="text-sm text-charcoal/70 mb-4">
                                     Before proceeding to payment, you must review and complete the Memorial Authorization Form. This establishes your legal authority to create a memorial.
                                 </p>
-                                <Link
-                                    href="/legal/memorial-authorization"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-stone hover:bg-stone/90 text-ivory rounded-lg text-sm font-medium transition-all"
+                                <button
+                                    onClick={handleOpenAuthorization}
+                                    disabled={isOpeningAuth}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-stone hover:bg-stone/90 text-ivory rounded-lg text-sm font-medium transition-all disabled:opacity-60"
                                 >
-                                    <ExternalLink size={16} />
+                                    {isOpeningAuth ? (
+                                        <div className="w-4 h-4 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
+                                    ) : (
+                                        <ExternalLink size={16} />
+                                    )}
                                     Open Memorial Authorization Form
-                                </Link>
+                                </button>
                                 <p className="text-xs text-charcoal/60 mt-3">
-                                    💡 This will open in a new tab. You can close it when done and return here to proceed with payment.
+                                    Complete the authorization form, then return here and proceed to payment.
                                 </p>
                             </div>
                         </div>

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
             .from('memorial_authorizations')
             .select('id, authorization_type')
             .eq('memorial_id', memorialId)
-            .eq('status', 'approved')
+            .in('status', ['pending', 'approved'])
             .maybeSingle();
 
         // Family plan requires account-level auth; Personal (direct or draft upgrade) requires individual
