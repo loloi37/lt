@@ -22,6 +22,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
     
     // Check if this is a Master Account authorization or a Specific Individual one
     const isAccountLevel = searchParams.get('type') === 'account';
+    // Opened in a popup window from the confirmation page
+    const isPopup = searchParams.get('popup') === 'true';
 
     const [loading, setLoading] = useState(true);
     const [memorialName, setMemorialName] = useState('');
@@ -173,19 +175,29 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
             setIsSuccess(true);
 
-            // Wait 3 seconds so they can read the confirmation before redirecting
-            setTimeout(() => {
-                const redirectTo = searchParams.get('redirect');
-                if (redirectTo === 'personal') {
-                    router.push('/personal-confirmation?authorized=true');
-                } else if (redirectTo === 'family') {
-                    router.push('/family-confirmation?authorized=true');
-                } else if (isAccountLevel) {
-                    router.push('/family-confirmation?authorized=true');
-                } else {
-                    router.push(`/create?id=${memorialId}&authorized=true`);
-                }
-            }, 3500);
+            if (isPopup) {
+                // Signal the parent confirmation window that auth is done
+                try {
+                    window.opener?.postMessage({ type: 'lv-auth-complete', memorialId }, '*');
+                } catch (_) {}
+                // Write to localStorage as a fallback (parent polls this)
+                localStorage.setItem(`lv-auth-${memorialId}`, 'done');
+                // No auto-redirect — user closes the window manually
+            } else {
+                // Normal flow: redirect back after 3.5 s
+                setTimeout(() => {
+                    const redirectTo = searchParams.get('redirect');
+                    if (redirectTo === 'personal') {
+                        router.push('/personal-confirmation?authorized=true');
+                    } else if (redirectTo === 'family') {
+                        router.push('/family-confirmation?authorized=true');
+                    } else if (isAccountLevel) {
+                        router.push('/family-confirmation?authorized=true');
+                    } else {
+                        router.push(`/create?id=${memorialId}&authorized=true`);
+                    }
+                }, 3500);
+            }
 
         } catch (err: any) {
             console.error("Authorization failed:", err);
@@ -489,22 +501,37 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 {isSuccess && (
                     <div className="fixed inset-0 z-[110] bg-ivory/95 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
                         <div className="max-w-md w-full text-center">
-                            <div className="w-20 h-20 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                {/* <CheckCircle className="text-mist" size={40} /> */}
+                            <div className="w-16 h-16 bg-charcoal rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Check className="text-ivory" size={28} strokeWidth={2.5} />
                             </div>
                             <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Complete</h2>
-                            <p className="text-charcoal/70 mb-8 leading-relaxed">
+                            <p className="text-charcoal/60 mb-8 leading-relaxed">
                                 Your legal declaration and signature have been recorded.
-                                {wantsVideo && (
-                                    <span className="block mt-4 p-4 bg-white rounded-xl border border-sand/40 text-sm font-medium">
-                                        🛡️ Your video signature is securely stored and will only be accessible if legally required.
-                                    </span>
-                                )}
                             </p>
-                            <div className="flex items-center justify-center gap-2 text-charcoal/40 text-sm italic">
-                                <Loader2 size={16} className="animate-spin" />
-                                Returning to your archive...
-                            </div>
+
+                            {isPopup ? (
+                                /* Popup mode: ask user to close this window */
+                                <div className="bg-parchment border border-sand rounded-2xl p-6">
+                                    <p className="font-medium text-charcoal mb-1">
+                                        You can now close this window.
+                                    </p>
+                                    <p className="text-sm text-charcoal/55 mb-5">
+                                        Return to the previous window to proceed with your payment.
+                                    </p>
+                                    <button
+                                        onClick={() => window.close()}
+                                        className="px-6 py-2.5 bg-charcoal text-ivory rounded-full text-sm font-medium hover:bg-charcoal/90 transition-all"
+                                    >
+                                        Close this window
+                                    </button>
+                                </div>
+                            ) : (
+                                /* Normal mode: auto-redirect */
+                                <div className="flex items-center justify-center gap-2 text-charcoal/40 text-sm italic">
+                                    <Loader2 size={16} className="animate-spin" />
+                                    Returning to your archive…
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
