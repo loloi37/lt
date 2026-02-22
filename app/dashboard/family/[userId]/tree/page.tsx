@@ -10,7 +10,7 @@ import Link from 'next/link';
 // Custom Node Style (The "Box")
 const nodeStyle = {
     background: '#fff',
-    border: '1px solid #d7ccc8', // Sand color
+    border: '1px solid #D8D2C4', // Sand color
     borderRadius: '12px',
     padding: '10px',
     width: 180,
@@ -59,9 +59,9 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                     label: (
                         <div className="flex flex-col items-center">
                             {person.profile_photo_url ? (
-                                <img src={person.profile_photo_url} alt="" className="w-12 h-12 rounded-full object-cover mb-2 border-2 border-sage/20" />
+                                <img src={person.profile_photo_url} alt="" className="w-12 h-12 rounded-full object-cover mb-2 border-2 border-mist/20" />
                             ) : (
-                                <div className="w-12 h-12 rounded-full bg-sage/10 mb-2" />
+                                <div className="w-12 h-12 rounded-full bg-mist/10 mb-2" />
                             )}
                             <div className="font-semibold text-charcoal text-sm">{person.full_name}</div>
                             <div className="text-xs text-charcoal/50">{person.birth_date?.substring(0, 4) || '????'}</div>
@@ -81,9 +81,9 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                 label: rel.relationship_type,
                 type: 'smoothstep',
                 animated: false,
-                style: { stroke: '#8a9a5b' }, // Sage color lines
-                labelStyle: { fill: '#2c3e50', fontSize: 10 },
-                markerEnd: { type: MarkerType.ArrowClosed, color: '#8a9a5b' },
+                style: { stroke: '#8AABB4' }, // Sage color lines
+                labelStyle: { fill: '#36454F', fontSize: 10 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#8AABB4' },
             }));
 
             setNodes(graphNodes);
@@ -115,7 +115,7 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
             <div className="flex-1 w-full h-full relative">
                 {loading ? (
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="animate-spin text-sage" size={32} />
+                        <Loader2 className="animate-spin text-mist" size={32} />
                     </div>
                 ) : (
                     <ReactFlow
@@ -126,7 +126,7 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                         fitView
                         attributionPosition="bottom-right"
                     >
-                        <Background color="#d7ccc8" gap={16} />
+                        <Background color="#D8D2C4" gap={16} />
                         <Controls showInteractive={false} />
                     </ReactFlow>
                 )}

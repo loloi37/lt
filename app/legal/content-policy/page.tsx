@@ -41,9 +41,9 @@ export default function ContentPolicyPage() {
             </div>
 
             {/* Hero Section */}
-            <div className="bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 border-b border-sand/30">
+            <div className="bg-gradient-to-br from-mist/10 via-ivory to-stone/10 border-b border-sand/30">
                 <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-sage/20 text-sage rounded-full border border-sage/30 mb-6">
+                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-mist/20 text-mist rounded-full border border-mist/30 mb-6">
                         <Heart size={16} />
                         <span className="text-sm font-medium">Community Standards</span>
                     </div>
@@ -55,11 +55,11 @@ export default function ContentPolicyPage() {
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-6 text-sm text-charcoal/60">
                         <span className="flex items-center gap-2">
-                            <Clock size={16} className="text-sage" />
+                            <Clock size={16} className="text-mist" />
                             Updated Feb 2026
                         </span>
                         <span className="flex items-center gap-2">
-                            <Shield size={16} className="text-terracotta" />
+                            <Shield size={16} className="text-stone" />
                             Safety Focused
                         </span>
                     </div>
@@ -78,16 +78,16 @@ export default function ContentPolicyPage() {
                                     <a
                                         key={idx}
                                         href={`#${section.id}`}
-                                        className="block text-sm text-charcoal/60 hover:text-sage hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-sage"
+                                        className="block text-sm text-charcoal/60 hover:text-mist hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-mist"
                                     >
                                         {section.title}
                                     </a>
                                 ))}
                             </nav>
 
-                            <div className="mt-8 p-4 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border border-sand/30">
+                            <div className="mt-8 p-4 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border border-sand/30">
                                 <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
-                                    <AlertTriangle size={16} className="text-terracotta" />
+                                    <AlertTriangle size={16} className="text-stone" />
                                     Report Issue
                                 </h4>
                                 <p className="text-xs text-charcoal/60 mb-3">
@@ -95,7 +95,7 @@ export default function ContentPolicyPage() {
                                 </p>
                                 <a
                                     href="mailto:reports@legacyvault.com"
-                                    className="text-xs text-terracotta hover:text-terracotta/80 underline"
+                                    className="text-xs text-stone hover:text-stone/80 underline"
                                 >
                                     Report Violation
                                 </a>
@@ -105,7 +105,7 @@ export default function ContentPolicyPage() {
 
                     {/* Content */}
                     <div className="lg:col-span-3">
-                        <article className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-charcoal prose-p:text-charcoal/80 prose-p:leading-relaxed prose-a:text-sage hover:prose-a:text-sage/80 prose-strong:text-charcoal">
+                        <article className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:text-charcoal prose-p:text-charcoal/80 prose-p:leading-relaxed prose-a:text-mist hover:prose-a:text-mist/80 prose-strong:text-charcoal">
                             {/* Process the content manually for better styling */}
                             <div className="space-y-8">
                                 {content.split(/^## /m).slice(1).map((section, idx) => {
@@ -120,7 +120,7 @@ export default function ContentPolicyPage() {
                                     return (
                                         <section key={idx} id={id} className="scroll-mt-24">
                                             <h2 className="font-serif text-2xl md:text-3xl text-charcoal mb-4 flex items-start gap-3">
-                                                <span className="text-terracotta mt-1">§</span>
+                                                <span className="text-stone mt-1">§</span>
                                                 {title.replace(/^\d+\.\s*/, '')}
                                             </h2>
                                             <div className="text-charcoal/80 leading-relaxed space-y-4 text-base md:text-lg">
@@ -133,9 +133,9 @@ export default function ContentPolicyPage() {
                                                                 <div key={pidx} className="my-6 overflow-x-auto">
                                                                     <table className="w-full text-sm border-collapse">
                                                                         <thead>
-                                                                            <tr className="border-b-2 border-sage/30">
+                                                                            <tr className="border-b-2 border-mist/30">
                                                                                 {rows[0].split('|').filter(Boolean).map((cell, cidx) => (
-                                                                                    <th key={cidx} className="text-left py-2 px-4 font-semibold text-charcoal bg-sage/5">
+                                                                                    <th key={cidx} className="text-left py-2 px-4 font-semibold text-charcoal bg-mist/5">
                                                                                         {cell.trim().replace(/\*\*/g, '')}
                                                                                     </th>
                                                                                 ))}
@@ -143,7 +143,7 @@ export default function ContentPolicyPage() {
                                                                         </thead>
                                                                         <tbody>
                                                                             {rows.slice(2).map((row, ridx) => (
-                                                                                <tr key={ridx} className="border-b border-sand/30 hover:bg-sage/5">
+                                                                                <tr key={ridx} className="border-b border-sand/30 hover:bg-mist/5">
                                                                                     {row.split('|').filter(Boolean).map((cell, cidx) => (
                                                                                         <td key={cidx} className="py-2 px-4 text-charcoal/70">
                                                                                             {cell.trim().replace(/\*\*/g, '')}
@@ -165,7 +165,7 @@ export default function ContentPolicyPage() {
                                                             <ul key={pidx} className="space-y-2 my-4">
                                                                 {items.map((item, iidx) => (
                                                                     <li key={iidx} className="flex items-start gap-3 text-charcoal/80">
-                                                                        <span className="text-sage mt-1.5">•</span>
+                                                                        <span className="text-mist mt-1.5">•</span>
                                                                         <span dangerouslySetInnerHTML={{
                                                                             __html: item.replace(/^[-\*]\s*/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                                                                         }} />
@@ -195,7 +195,7 @@ export default function ContentPolicyPage() {
                                                             <p key={pidx} className="text-charcoal/80" dangerouslySetInnerHTML={{
                                                                 __html: paragraph
                                                                     .replace(/\*\*(.+?)\*\*/g, '<strong class="text-charcoal">$1</strong>')
-                                                                    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-sage hover:underline">$1</a>')
+                                                                    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" class="text-mist hover:underline">$1</a>')
                                                             }} />
                                                         );
                                                     }
@@ -209,8 +209,8 @@ export default function ContentPolicyPage() {
                         </article>
 
                         {/* Contact CTA */}
-                        <div className="mt-16 p-8 bg-gradient-to-br from-sage/10 to-terracotta/10 rounded-2xl border border-sand/30 text-center">
-                            <Shield className="mx-auto mb-4 text-sage" size={32} />
+                        <div className="mt-16 p-8 bg-gradient-to-br from-mist/10 to-stone/10 rounded-2xl border border-sand/30 text-center">
+                            <Shield className="mx-auto mb-4 text-mist" size={32} />
                             <h3 className="font-serif text-2xl text-charcoal mb-3">Commitment to Safety</h3>
                             <p className="text-charcoal/70 mb-6 max-w-md mx-auto">
                                 We are dedicated to maintaining a respectful environment. If you encounter any issues, please let us know.
@@ -218,14 +218,14 @@ export default function ContentPolicyPage() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
                                     href="mailto:reports@legacyvault.com"
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all"
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all"
                                 >
                                     <Mail size={18} />
                                     Report Content
                                 </a>
                                 <Link
                                     href="/legal/terms"
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-sage text-charcoal rounded-xl font-medium transition-all"
+                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-mist text-charcoal rounded-xl font-medium transition-all"
                                 >
                                     <FileText size={18} />
                                     Terms of Service

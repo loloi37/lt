@@ -31,7 +31,7 @@ export default function ProgressBar({ currentStep, completedSteps, onStepClick }
 
                 <div className="relative h-2 bg-sand/30 rounded-full overflow-hidden">
                     <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-sage to-terracotta rounded-full transition-all duration-500 ease-out"
+                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-mist to-stone rounded-full transition-all duration-500 ease-out"
                         style={{ width: `${completionPercentage}%` }}
                     />
                 </div>
@@ -51,9 +51,9 @@ export default function ProgressBar({ currentStep, completedSteps, onStepClick }
                             >
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${isCompleted
-                                        ? 'bg-sage text-ivory group-hover:bg-sage/80'
+                                        ? 'bg-mist text-ivory group-hover:bg-mist/80'
                                         : isCurrent
-                                            ? 'bg-terracotta text-ivory ring-4 ring-terracotta/20 group-hover:ring-terracotta/30'
+                                            ? 'bg-stone text-ivory ring-4 ring-stone/20 group-hover:ring-stone/30'
                                             : 'bg-sand/40 text-charcoal/40 group-hover:bg-sand/60'
                                         }`}
                                 >

@@ -68,7 +68,7 @@ export default function SuccessionRequestPage() {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
                 <div className="max-w-md bg-white p-10 rounded-2xl shadow-xl border border-sand/30">
-                    <CheckCircle className="mx-auto text-sage mb-6" size={64} />
+                    <CheckCircle className="mx-auto text-mist mb-6" size={64} />
                     <h1 className="font-serif text-3xl mb-4">Request Received</h1>
                     <p className="text-charcoal/70 mb-8">
                         The verification process has begun. Our legal team will review the documents within 48 hours.
@@ -89,11 +89,11 @@ export default function SuccessionRequestPage() {
                 </Link>
 
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-sand/30">
-                    <div className="p-8 bg-terracotta/10 border-b border-terracotta/20 flex items-center gap-4">
-                        <ShieldAlert className="text-terracotta" size={32} />
+                    <div className="p-8 bg-stone/10 border-b border-stone/20 flex items-center gap-4">
+                        <ShieldAlert className="text-stone" size={32} />
                         <div>
                             <h1 className="font-serif text-2xl text-charcoal">Account Succession Request</h1>
-                            <p className="text-terracotta/70 text-sm">Formal activation of Stewardship</p>
+                            <p className="text-stone/70 text-sm">Formal activation of Stewardship</p>
                         </div>
                     </div>
 
@@ -104,7 +104,7 @@ export default function SuccessionRequestPage() {
                             <input
                                 required
                                 type="email"
-                                className="w-full p-3 rounded-xl border border-sand/30 focus:ring-sage"
+                                className="w-full p-3 rounded-xl border border-sand/30 focus:ring-mist"
                                 placeholder="The email where you received the invitation"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +129,7 @@ export default function SuccessionRequestPage() {
                                 <button
                                     type="button"
                                     onClick={() => deathCertRef.current?.click()}
-                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-sage/10 text-sage' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-mist/10 text-mist' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
                                 >
                                     {files.deathCert ? `Selected: ${files.deathCert.name}` : "Upload Certificate (PDF/JPG)"}
                                 </button>
@@ -150,7 +150,7 @@ export default function SuccessionRequestPage() {
                                 <button
                                     type="button"
                                     onClick={() => idProofRef.current?.click()}
-                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-sage/10 text-sage' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-mist/10 text-mist' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
                                 >
                                     {files.idProof ? `Selected: ${files.idProof.name}` : "Upload ID Proof (PDF/JPG)"}
                                 </button>

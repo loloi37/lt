@@ -298,22 +298,22 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
         )}
 
         {/* Upload Guidelines */}
-        <div className="p-6 bg-gradient-to-br from-terracotta/5 to-sage/5 rounded-xl border border-sand/30">
+        <div className="p-6 bg-gradient-to-br from-stone/5 to-mist/5 rounded-xl border border-sand/30">
           <h3 className="font-semibold text-charcoal mb-3 flex items-center gap-2">
-            <Film size={18} className="text-terracotta" />
+            <Film size={18} className="text-stone" />
             📹 Video Guidelines
           </h3>
           <ul className="space-y-2 text-sm text-charcoal/70">
             <li className="flex items-start gap-2">
-              <span className="text-sage mt-0.5">•</span>
+              <span className="text-mist mt-0.5">•</span>
               <span><strong>Best quality:</strong> MP4 format recommended</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-sage mt-0.5">•</span>
+              <span className="text-mist mt-0.5">•</span>
               <span><strong>File size:</strong> Maximum 50MB per video</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-terracotta mt-0.5">⚠️</span>
+              <span className="text-stone mt-0.5">⚠️</span>
               <span><strong>Important:</strong> Stay on this page until upload completes!</span>
             </li>
           </ul>
@@ -329,7 +329,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
               {data.videos.map((video) => (
                 <div
                   key={video.id}
-                  className="relative p-4 bg-white border-2 border-sand/40 rounded-xl group hover:border-sage/40 transition-all"
+                  className="relative p-4 bg-white border-2 border-sand/40 rounded-xl group hover:border-mist/40 transition-all"
                 >
                   {/* Video Player */}
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-charcoal/10 mb-3">
@@ -351,7 +351,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                       value={video.title}
                       onChange={(e) => updateVideo(video.id, 'title', e.target.value)}
                       placeholder="Video Title"
-                      className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-sm font-medium disabled:opacity-60 disabled:bg-sand/10"
+                      className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all text-sm font-medium disabled:opacity-60 disabled:bg-sand/10"
                       disabled={readOnly}
                     />
                     <input
@@ -359,7 +359,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                       value={video.description || ''}
                       onChange={(e) => updateVideo(video.id, 'description', e.target.value)}
                       placeholder="Description (optional)"
-                      className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-sm disabled:opacity-60 disabled:bg-sand/10"
+                      className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all text-sm disabled:opacity-60 disabled:bg-sand/10"
                       disabled={readOnly}
                     />
                   </div>
@@ -402,13 +402,13 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
               ? 'opacity-70 cursor-wait'
               : data.videos.length >= maxVideos
                 ? 'border-sand/20 cursor-not-allowed opacity-50'
-                : 'border-sand/40 cursor-pointer hover:border-sage/40 hover:bg-sage/5'
+                : 'border-sand/40 cursor-pointer hover:border-mist/40 hover:bg-mist/5'
               }`}
           >
             {uploading ? (
               <div className="flex flex-col items-center justify-center">
-                <div className="w-12 h-12 border-4 border-sage/30 border-t-sage rounded-full animate-spin mb-4" />
-                <p className="text-sage font-medium text-lg">{uploadProgress}</p>
+                <div className="w-12 h-12 border-4 border-mist/30 border-t-mist rounded-full animate-spin mb-4" />
+                <p className="text-mist font-medium text-lg">{uploadProgress}</p>
                 <p className="text-charcoal/60 text-sm mt-2">⚠️ Please stay on this page until upload completes</p>
               </div>
             ) : data.videos.length >= maxVideos ? (
@@ -428,7 +428,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
             ) : (
               <>
                 <div className="mb-6 relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-br from-terracotta/20 to-sage/20 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-stone/20 to-mist/20 rounded-full flex items-center justify-center">
                     <Film size={48} className="text-charcoal/40" />
                   </div>
                 </div>
@@ -438,7 +438,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                 <p className="text-charcoal/60 mb-6 max-w-md mx-auto">
                   Click here to upload video files. You can select multiple videos at once.
                 </p>
-                <div className="inline-flex items-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all">
+                <div className="inline-flex items-center gap-2 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all">
                   <Upload size={20} />
                   Choose Video Files
                 </div>
@@ -470,7 +470,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
         <button
           onClick={onNext}
           disabled={uploading}
-          className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all disabled:opacity-50"
+          className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all disabled:opacity-50"
         >
           {data.videos.length > 0 ? 'Save & Continue to Review →' : 'Skip Videos & Continue →'}
         </button>

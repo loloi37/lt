@@ -15,9 +15,9 @@ export default function PathCard({ id, title, description, status, onClick }: Pa
 
     const statusStyles = {
         locked: "opacity-50 cursor-not-allowed border-sand/20 bg-sand/5",
-        empty: "border-sand/40 bg-white hover:border-sage/60 hover:shadow-md",
-        in_progress: "border-sage/40 bg-sage/5 hover:border-sage/60 hover:shadow-md",
-        completed: "border-sage bg-white hover:shadow-md"
+        empty: "border-sand/40 bg-white hover:border-mist/60 hover:shadow-md",
+        in_progress: "border-mist/40 bg-mist/5 hover:border-mist/60 hover:shadow-md",
+        completed: "border-mist bg-white hover:shadow-md"
     };
 
     return (
@@ -28,13 +28,13 @@ export default function PathCard({ id, title, description, status, onClick }: Pa
         >
             <div className="flex justify-between items-start mb-6">
                 <div className={`p-3 rounded-xl ${isLocked ? 'bg-sand/20' : 'bg-ivory'}`}>
-                    {status === 'completed' && <CheckCircle className="text-sage" size={24} />}
-                    {status === 'in_progress' && <PlayCircle className="text-sage" size={24} />}
+                    {status === 'completed' && <CheckCircle className="text-mist" size={24} />}
+                    {status === 'in_progress' && <PlayCircle className="text-mist" size={24} />}
                     {status === 'empty' && <Circle className="text-sand" size={24} />}
                     {status === 'locked' && <Lock className="text-charcoal/40" size={24} />}
                 </div>
                 {status === 'completed' && (
-                    <span className="text-[10px] uppercase tracking-widest text-sage font-bold">Chapter Complete</span>
+                    <span className="text-[10px] uppercase tracking-widest text-mist font-bold">Chapter Complete</span>
                 )}
             </div>
 

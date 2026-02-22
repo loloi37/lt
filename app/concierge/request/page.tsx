@@ -15,7 +15,7 @@ export default function ConciergeRequestPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10">
+        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10">
 
             {/* Header */}
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
@@ -34,7 +34,7 @@ export default function ConciergeRequestPage() {
             <div className="max-w-2xl mx-auto px-6 py-20 text-center">
 
                 {/* Icon */}
-                <div className="w-24 h-24 bg-gradient-to-br from-sage to-terracotta rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-sage/20">
+                <div className="w-24 h-24 bg-gradient-to-br from-mist to-stone rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-mist/20">
                     <Sparkles size={40} className="text-ivory" />
                 </div>
 
@@ -43,7 +43,7 @@ export default function ConciergeRequestPage() {
                 </h1>
 
                 <div className="bg-white p-8 rounded-2xl border border-sand/30 shadow-sm mb-8">
-                    <div className="flex items-center justify-center gap-2 text-terracotta font-medium mb-4">
+                    <div className="flex items-center justify-center gap-2 text-stone font-medium mb-4">
                         <Hammer size={20} />
                         <span>Currently Under Construction</span>
                     </div>
@@ -71,7 +71,7 @@ export default function ConciergeRequestPage() {
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="flex-1 px-4 py-3 rounded-xl border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/30 bg-white"
+                                className="flex-1 px-4 py-3 rounded-xl border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/30 bg-white"
                             />
                             <button
                                 type="submit"
@@ -82,7 +82,7 @@ export default function ConciergeRequestPage() {
                         </div>
                     </form>
                 ) : (
-                    <div className="bg-sage/10 text-sage border border-sage/20 p-4 rounded-xl inline-flex items-center gap-2 animate-fadeIn">
+                    <div className="bg-mist/10 text-mist border border-mist/20 p-4 rounded-xl inline-flex items-center gap-2 animate-fadeIn">
                         <Mail size={18} />
                         <span>Thank you! We've added you to the priority list.</span>
                     </div>
@@ -91,7 +91,7 @@ export default function ConciergeRequestPage() {
                 <div className="mt-12">
                     <Link
                         href="/choice-pricing"
-                        className="text-sage hover:text-sage/80 font-medium underline underline-offset-4"
+                        className="text-mist hover:text-mist/80 font-medium underline underline-offset-4"
                     >
                         Create a Personal Memorial instead &rarr;
                     </Link>

@@ -105,7 +105,7 @@ export default function MemorialRenderer({
             <div className={compact ? 'h-full overflow-y-auto' : ''}>
 
                 {/* HERO SECTION */}
-                <div className={`relative ${s.heroH} bg-gradient-to-br from-sage/30 to-terracotta/30`}>
+                <div className={`relative ${s.heroH} bg-gradient-to-br from-mist/30 to-stone/30`}>
                     {data.step8?.coverPhotoPreview ? (
                         <>
                             <img src={data.step8.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
@@ -172,7 +172,7 @@ export default function MemorialRenderer({
                     {/* Epitaph */}
                     {data.step1?.epitaph && (
                         <div className={`text-center py-${compact ? '6' : '12'} border-y border-sand/30`}>
-                            <Quote size={compact ? 24 : 40} className="text-terracotta mx-auto mb-4 opacity-50" />
+                            <Quote size={compact ? 24 : 40} className="text-stone mx-auto mb-4 opacity-50" />
                             <p className={`font-serif ${s.quoteSize} text-charcoal/80 italic leading-relaxed max-w-4xl mx-auto`}>
                                 "{data.step1.epitaph}"
                             </p>
@@ -184,8 +184,8 @@ export default function MemorialRenderer({
                         {data.step1?.birthPlace && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
-                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
-                                        <MapPin size={compact ? 16 : 24} className="text-sage" />
+                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                        <MapPin size={compact ? 16 : 24} className="text-mist" />
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Born in</p>
@@ -197,8 +197,8 @@ export default function MemorialRenderer({
                         {data.step1?.deathPlace && !data.step1?.isStillLiving && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
-                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
-                                        <MapPin size={compact ? 16 : 24} className="text-sage" />
+                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                        <MapPin size={compact ? 16 : 24} className="text-mist" />
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Passed in</p>
@@ -210,8 +210,8 @@ export default function MemorialRenderer({
                         {data.step3?.occupations?.length > 0 && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
-                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-terracotta/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
-                                        <Briefcase size={compact ? 16 : 24} className="text-terracotta" />
+                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                        <Briefcase size={compact ? 16 : 24} className="text-stone" />
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Career</p>
@@ -223,8 +223,8 @@ export default function MemorialRenderer({
                         {data.step4?.children?.length > 0 && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
-                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
-                                        <Heart size={compact ? 16 : 24} className="text-sage" />
+                                    <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
+                                        <Heart size={compact ? 16 : 24} className="text-mist" />
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Family</p>
@@ -241,8 +241,8 @@ export default function MemorialRenderer({
                     {data.step6?.biography && (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center`}>
-                                    <Quote size={compact ? 16 : 24} className="text-sage" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
+                                    <Quote size={compact ? 16 : 24} className="text-mist" />
                                 </div>
                                 Life Story
                             </h2>
@@ -266,15 +266,15 @@ export default function MemorialRenderer({
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'}`}>Life Chapters</h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
                                 {data.step6.lifeChapters.map((chapter: any, index: number) => (
-                                    <div key={chapter.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6 md:p-8'} shadow-sm border-l-4 border-sage`}>
+                                    <div key={chapter.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6 md:p-8'} shadow-sm border-l-4 border-mist`}>
                                         <div className="flex items-start gap-4">
-                                            <div className={`${compact ? 'w-8 h-8 text-sm' : 'w-12 h-12 text-xl'} bg-sage text-ivory rounded-full flex items-center justify-center font-serif font-bold flex-shrink-0`}>
+                                            <div className={`${compact ? 'w-8 h-8 text-sm' : 'w-12 h-12 text-xl'} bg-mist text-ivory rounded-full flex items-center justify-center font-serif font-bold flex-shrink-0`}>
                                                 {index + 1}
                                             </div>
                                             <div className="flex-1">
                                                 <h3 className={`font-serif ${compact ? 'text-base' : 'text-2xl'} text-charcoal mb-2`}>{chapter.title}</h3>
-                                                {chapter.period && <span className={`px-3 py-1 bg-sage/10 text-sage rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium mr-2`}>{chapter.period}</span>}
-                                                {chapter.ageRange && <span className={`px-3 py-1 bg-terracotta/10 text-terracotta rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{chapter.ageRange}</span>}
+                                                {chapter.period && <span className={`px-3 py-1 bg-mist/10 text-mist rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium mr-2`}>{chapter.period}</span>}
+                                                {chapter.ageRange && <span className={`px-3 py-1 bg-stone/10 text-stone rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{chapter.ageRange}</span>}
                                                 <p className={`text-charcoal/70 leading-relaxed mt-3 ${compact ? 'text-xs' : ''}`}>{chapter.description}</p>
                                             </div>
                                         </div>
@@ -286,10 +286,10 @@ export default function MemorialRenderer({
 
                     {/* Early Life */}
                     {(data.step2?.childhoodHome || data.step2?.familyBackground) && (
-                        <section className={`bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-2xl ${s.sectionPadding} border border-sand/30`}>
+                        <section className={`bg-gradient-to-br from-mist/5 to-stone/5 rounded-2xl ${s.sectionPadding} border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-terracotta/10 rounded-xl flex items-center justify-center`}>
-                                    <Home size={compact ? 16 : 24} className="text-terracotta" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
+                                    <Home size={compact ? 16 : 24} className="text-stone" />
                                 </div>
                                 Early Life & Childhood
                             </h2>
@@ -309,7 +309,7 @@ export default function MemorialRenderer({
                                 {data.step2?.childhoodPersonality?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {data.step2.childhoodPersonality.map((trait: string) => (
-                                            <span key={trait} className={`px-3 py-1.5 bg-sage/10 text-sage rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{trait}</span>
+                                            <span key={trait} className={`px-3 py-1.5 bg-mist/10 text-mist rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{trait}</span>
                                         ))}
                                     </div>
                                 )}
@@ -321,8 +321,8 @@ export default function MemorialRenderer({
                     {data.step3?.occupations?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-terracotta/10 rounded-xl flex items-center justify-center`}>
-                                    <Briefcase size={compact ? 16 : 24} className="text-terracotta" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
+                                    <Briefcase size={compact ? 16 : 24} className="text-stone" />
                                 </div>
                                 Career & Achievements
                             </h2>
@@ -331,7 +331,7 @@ export default function MemorialRenderer({
                                     <div key={job.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-sand/30`}>
                                         <h4 className={`font-semibold ${compact ? 'text-sm' : 'text-xl'} text-charcoal`}>{job.title}</h4>
                                         <p className={`text-charcoal/60 ${compact ? 'text-xs' : ''} mb-2`}>{job.company}</p>
-                                        <span className={`px-3 py-1 bg-terracotta/10 text-terracotta rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>
+                                        <span className={`px-3 py-1 bg-stone/10 text-stone rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>
                                             {job.yearsFrom} - {job.yearsTo}
                                         </span>
                                         {job.description && <p className={`text-charcoal/70 leading-relaxed mt-3 ${compact ? 'text-xs' : ''}`}>{job.description}</p>}
@@ -345,8 +345,8 @@ export default function MemorialRenderer({
                     {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0)) && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center`}>
-                                    <Heart size={compact ? 16 : 24} className="text-sage" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
+                                    <Heart size={compact ? 16 : 24} className="text-mist" />
                                 </div>
                                 Family & Relationships
                             </h2>
@@ -379,8 +379,8 @@ export default function MemorialRenderer({
                     {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy) && (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-terracotta/10 rounded-xl flex items-center justify-center`}>
-                                    <Sparkles size={compact ? 16 : 24} className="text-terracotta" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
+                                    <Sparkles size={compact ? 16 : 24} className="text-stone" />
                                 </div>
                                 Personality, Values & Passions
                             </h2>
@@ -388,19 +388,19 @@ export default function MemorialRenderer({
                                 {data.step5?.personalityTraits?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {data.step5.personalityTraits.map((trait: string) => (
-                                            <span key={trait} className={`px-3 py-1.5 bg-sage/10 text-sage rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{trait}</span>
+                                            <span key={trait} className={`px-3 py-1.5 bg-mist/10 text-mist rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{trait}</span>
                                         ))}
                                     </div>
                                 )}
                                 {data.step5?.coreValues?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {data.step5.coreValues.map((value: string) => (
-                                            <span key={value} className={`px-3 py-1.5 bg-terracotta/10 text-terracotta rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{value}</span>
+                                            <span key={value} className={`px-3 py-1.5 bg-stone/10 text-stone rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{value}</span>
                                         ))}
                                     </div>
                                 )}
                                 {data.step5?.lifePhilosophy && (
-                                    <div className="bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl p-6 border border-sand/20">
+                                    <div className="bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl p-6 border border-sand/20">
                                         <p className={`text-charcoal/80 leading-relaxed italic ${compact ? 'text-xs' : ''}`}>{data.step5.lifePhilosophy}</p>
                                     </div>
                                 )}
@@ -412,8 +412,8 @@ export default function MemorialRenderer({
                     {(data.step7?.sharedMemories?.length > 0 || data.step7?.impactStories?.length > 0) && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
-                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-sage/10 rounded-xl flex items-center justify-center`}>
-                                    <MessageCircle size={compact ? 16 : 24} className="text-sage" />
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
+                                    <MessageCircle size={compact ? 16 : 24} className="text-mist" />
                                 </div>
                                 Memories & Stories
                             </h2>
@@ -483,8 +483,8 @@ export default function MemorialRenderer({
 
                     {/* Legacy Statement */}
                     {data.step8?.legacyStatement && (
-                        <section className={`bg-gradient-to-br from-sage/20 via-ivory to-terracotta/20 rounded-2xl ${compact ? 'p-6' : 'p-12 md:p-16'} text-center border-2 border-sand/30 shadow-lg`}>
-                            <Star size={compact ? 24 : 48} className="text-terracotta mx-auto mb-4" />
+                        <section className={`bg-gradient-to-br from-mist/20 via-ivory to-stone/20 rounded-2xl ${compact ? 'p-6' : 'p-12 md:p-16'} text-center border-2 border-sand/30 shadow-lg`}>
+                            <Star size={compact ? 24 : 48} className="text-stone mx-auto mb-4" />
                             <h2 className={`font-serif ${compact ? 'text-lg' : 'text-3xl'} text-charcoal mb-4`}>Legacy</h2>
                             <p className={`${compact ? 'text-sm' : 'text-xl md:text-2xl'} text-charcoal/80 leading-relaxed max-w-4xl mx-auto font-serif`}>
                                 {data.step8.legacyStatement}

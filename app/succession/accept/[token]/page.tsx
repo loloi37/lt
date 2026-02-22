@@ -60,17 +60,17 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
 
     if (loading) return (
         <div className="min-h-screen bg-ivory flex items-center justify-center">
-            <Loader2 className="animate-spin text-sage" size={32} />
+            <Loader2 className="animate-spin text-mist" size={32} />
         </div>
     );
 
     if (error) return (
         <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
             <div className="max-w-md">
-                <AlertCircle className="mx-auto text-terracotta mb-4" size={48} />
+                <AlertCircle className="mx-auto text-stone mb-4" size={48} />
                 <h1 className="font-serif text-2xl mb-2">Invitation Invalid</h1>
                 <p className="text-charcoal/60 mb-6">{error}</p>
-                <button onClick={() => router.push('/')} className="text-sage font-medium underline">Return to Home</button>
+                <button onClick={() => router.push('/')} className="text-mist font-medium underline">Return to Home</button>
             </div>
         </div>
     );
@@ -79,7 +79,7 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
         <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
             <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-sand/30">
                 <div className="p-8 md:p-12">
-                    <div className="w-16 h-16 bg-charcoal text-sage rounded-full flex items-center justify-center mx-auto mb-8">
+                    <div className="w-16 h-16 bg-charcoal text-mist rounded-full flex items-center justify-center mx-auto mb-8">
                         <Shield size={32} />
                     </div>
 

@@ -44,7 +44,7 @@ export default function ChoicePage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6">
             <div className="max-w-6xl w-full">
                 <div className="text-center mb-12">
                     <h1 className="font-serif text-5xl text-charcoal mb-4">Choose Your Experience</h1>
@@ -56,14 +56,14 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('personal')}
                         disabled={!userId}
-                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-mist/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
-                        <div className="w-16 h-16 bg-gradient-to-br from-sage to-sage/80 rounded-2xl flex items-center justify-center mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-mist to-mist/80 rounded-2xl flex items-center justify-center mb-6">
                             <User size={32} className="text-ivory" />
                         </div>
                         <h2 className="font-serif text-3xl text-charcoal mb-3">Personal</h2>
                         <p className="text-charcoal/70 mb-6">Create one memorial yourself</p>
-                        <div className="inline-flex items-center gap-2 text-sage font-medium">
+                        <div className="inline-flex items-center gap-2 text-mist font-medium">
                             Choose Personal <ArrowRight size={18} />
                         </div>
                     </button>
@@ -72,14 +72,14 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('family')}
                         disabled={!userId}
-                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-stone/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
-                        <div className="w-16 h-16 bg-gradient-to-br from-terracotta to-terracotta/80 rounded-2xl flex items-center justify-center mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-br from-stone to-stone/80 rounded-2xl flex items-center justify-center mb-6">
                             <Users size={32} className="text-ivory" />
                         </div>
                         <h2 className="font-serif text-3xl text-charcoal mb-3">Family</h2>
                         <p className="text-charcoal/70 mb-6">Create unlimited memorials</p>
-                        <div className="inline-flex items-center gap-2 text-terracotta font-medium">
+                        <div className="inline-flex items-center gap-2 text-stone font-medium">
                             Choose Family <ArrowRight size={18} />
                         </div>
                     </button>
@@ -87,14 +87,14 @@ export default function ChoicePage() {
                     {/* NEW: Concierge Mode */}
                     <button
                         onClick={handleConciergeSelection}
-                        className="p-8 rounded-2xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
+                        className="p-8 rounded-2xl border-2 border-mist/40 bg-gradient-to-br from-mist/5 to-stone/5 hover:border-mist/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
                     >
                         {/* Premium badge */}
-                        <div className="absolute top-4 right-4 px-3 py-1 bg-sage/20 text-sage text-xs font-semibold rounded-full border border-sage/30">
+                        <div className="absolute top-4 right-4 px-3 py-1 bg-mist/20 text-mist text-xs font-semibold rounded-full border border-mist/30">
                             Premium
                         </div>
 
-                        <div className="w-16 h-16 bg-gradient-to-br from-sage via-terracotta to-sage/80 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <div className="w-16 h-16 bg-gradient-to-br from-mist via-stone to-mist/80 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                             <Sparkles size={32} className="text-ivory" />
                         </div>
 
@@ -103,20 +103,20 @@ export default function ChoicePage() {
 
                         <div className="space-y-2 mb-6 text-sm text-charcoal/60">
                             <p className="flex items-start gap-2">
-                                <span className="text-sage mt-0.5">✓</span>
+                                <span className="text-mist mt-0.5">✓</span>
                                 <span>Personal dedicated service</span>
                             </p>
                             <p className="flex items-start gap-2">
-                                <span className="text-sage mt-0.5">✓</span>
+                                <span className="text-mist mt-0.5">✓</span>
                                 <span>We handle everything</span>
                             </p>
                             <p className="flex items-start gap-2">
-                                <span className="text-sage mt-0.5">✓</span>
+                                <span className="text-mist mt-0.5">✓</span>
                                 <span>You just share materials</span>
                             </p>
                         </div>
 
-                        <div className="inline-flex items-center gap-2 text-sage font-medium group-hover:gap-3 transition-all">
+                        <div className="inline-flex items-center gap-2 text-mist font-medium group-hover:gap-3 transition-all">
                             Request First Call <ArrowRight size={18} />
                         </div>
                     </button>

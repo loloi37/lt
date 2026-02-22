@@ -15,7 +15,7 @@ export default function IntegrityBadge({ hash, className = '' }: IntegrityBadgeP
     return (
         <div className={`absolute top-2 left-2 z-20 group ${className}`}>
             {/* The Badge Icon */}
-            <div className="bg-white/90 backdrop-blur-sm text-sage p-1.5 rounded-full shadow-sm border border-sage/20 cursor-help transition-transform hover:scale-110">
+            <div className="bg-white/90 backdrop-blur-sm text-mist p-1.5 rounded-full shadow-sm border border-mist/20 cursor-help transition-transform hover:scale-110">
                 <ShieldCheck size={14} />
             </div>
 

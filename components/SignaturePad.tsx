@@ -30,7 +30,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         // Style
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = '#2c3e50'; // Charcoal color
+        ctx.strokeStyle = '#36454F'; // Charcoal color
     }, []);
 
     const getCoords = (e: React.MouseEvent | React.TouchEvent) => {
@@ -121,7 +121,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
             <div className="flex justify-end mt-2">
                 <button 
                     onClick={clear}
-                    className="text-xs flex items-center gap-1 text-charcoal/50 hover:text-terracotta transition-colors"
+                    className="text-xs flex items-center gap-1 text-charcoal/50 hover:text-stone transition-colors"
                 >
                     <Eraser size={14} /> Clear Signature
                 </button>

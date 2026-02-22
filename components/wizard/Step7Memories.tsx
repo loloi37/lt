@@ -267,17 +267,17 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                     <div className="mb-10">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="font-serif text-xl text-charcoal flex items-center gap-2">
-                                <Shield size={20} className="text-terracotta" />
+                                <Shield size={20} className="text-stone" />
                                 Witness Contributions
                             </h3>
-                            <span className="text-xs bg-terracotta/10 text-terracotta px-2 py-1 rounded-full font-medium">
+                            <span className="text-xs bg-stone/10 text-stone px-2 py-1 rounded-full font-medium">
                                 {pendingContributions.length} Pending
                             </span>
                         </div>
 
                         {isFetching ? (
                             <div className="flex justify-center py-8">
-                                <Loader2 className="animate-spin text-terracotta/40" size={24} />
+                                <Loader2 className="animate-spin text-stone/40" size={24} />
                             </div>
                         ) : pendingContributions.length === 0 ? (
                             <div className="p-8 border-2 border-dashed border-sand/30 rounded-2xl text-center">
@@ -286,7 +286,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                         ) : (
                             <div className="space-y-4">
                                 {pendingContributions.map((item) => (
-                                    <div key={item.id} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${disputingId === item.id ? 'border-terracotta ring-1 ring-terracotta' : 'border-terracotta/10'}`}>
+                                    <div key={item.id} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${disputingId === item.id ? 'border-stone ring-1 ring-stone' : 'border-stone/10'}`}>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="font-medium text-charcoal">{item.content.title}</p>
@@ -298,13 +298,13 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleDecision(item, 'approved')}
-                                                        className="px-3 py-1.5 bg-sage text-ivory text-xs rounded-lg font-medium hover:bg-sage/90"
+                                                        className="px-3 py-1.5 bg-mist text-ivory text-xs rounded-lg font-medium hover:bg-mist/90"
                                                     >
                                                         Approve
                                                     </button>
                                                     <button
                                                         onClick={() => setDisputingId(item.id)}
-                                                        className="px-3 py-1.5 border border-terracotta/30 text-terracotta text-xs rounded-lg font-medium hover:bg-terracotta/5"
+                                                        className="px-3 py-1.5 border border-stone/30 text-stone text-xs rounded-lg font-medium hover:bg-stone/5"
                                                     >
                                                         Flag Conflict
                                                     </button>
@@ -318,14 +318,14 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             ) : (
                                                 /* CONFLICT RESOLUTION ACTIONS */
                                                 <div className="flex flex-col gap-2 items-end">
-                                                    <span className="text-[10px] font-bold text-terracotta uppercase tracking-wider">Mediation Mode</span>
+                                                    <span className="text-[10px] font-bold text-stone uppercase tracking-wider">Mediation Mode</span>
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => {
                                                                 const note = `[Legacy Vault Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
                                                                 handleDecision(item, 'approved', note);
                                                             }}
-                                                            className="px-3 py-1.5 bg-terracotta text-ivory text-xs rounded-lg font-medium hover:bg-terracotta/90"
+                                                            className="px-3 py-1.5 bg-stone text-ivory text-xs rounded-lg font-medium hover:bg-stone/90"
                                                         >
                                                             Accept with Context Note
                                                         </button>
@@ -344,7 +344,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
                                         {/* Visual indicator of conflict */}
                                         {disputingId === item.id && (
-                                            <div className="mt-3 p-3 bg-terracotta/5 rounded-lg text-xs text-terracotta border border-terracotta/20">
+                                            <div className="mt-3 p-3 bg-stone/5 rounded-lg text-xs text-stone border border-stone/20">
                                                 <p><strong>Conflict Detected:</strong> Choose "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
                                             </div>
                                         )}
@@ -360,7 +360,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 {/* ========================================= */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Heart size={18} className="text-terracotta" />
+                        <Heart size={18} className="text-stone" />
                         Shared Memories
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -376,7 +376,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 {userRole === 'owner' && (
                                     <button
                                         onClick={() => removeMemory(memory.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all"
+                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-stone hover:bg-stone/10 rounded-lg transition-all"
                                         title="Remove memory"
                                     >
                                         <Trash2 size={18} />
@@ -390,7 +390,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         value={memory.title}
                                         onChange={(e) => updateMemory(memory.id, 'title', e.target.value)}
                                         placeholder="e.g., The Day She Changed My Life"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
                                         readOnly={userRole !== 'owner'}
                                         disabled={userRole !== 'owner'}
                                     />
@@ -404,7 +404,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             type="date"
                                             value={memory.date}
                                             onChange={(e) => updateMemory(memory.id, 'date', e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
+                                            className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
                                             readOnly={userRole !== 'owner'}
                                             disabled={userRole !== 'owner'}
                                         />
@@ -418,7 +418,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         onChange={(e) => updateMemory(memory.id, 'content', e.target.value)}
                                         placeholder="Share the memory or story..."
                                         rows={6}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
                                         readOnly={userRole !== 'owner'}
                                         disabled={userRole !== 'owner'}
                                     />
@@ -432,7 +432,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             value={memory.author}
                                             onChange={(e) => updateMemory(memory.id, 'author', e.target.value)}
                                             placeholder="e.g., Marcus Johnson"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
                                             readOnly={userRole !== 'owner'}
                                             disabled={userRole !== 'owner'}
                                         />
@@ -444,7 +444,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                             value={memory.relationship}
                                             onChange={(e) => updateMemory(memory.id, 'relationship', e.target.value)}
                                             placeholder="e.g., Former Student"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
                                             readOnly={userRole !== 'owner'}
                                             disabled={userRole !== 'owner'}
                                         />
@@ -455,14 +455,14 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
                         {/* WITNESS CONTRIBUTION FORM */}
                         {isAddingNew ? (
-                            <div className="p-6 bg-sage/5 border-2 border-dashed border-sage/30 rounded-xl space-y-4 mb-6 animate-fadeIn">
+                            <div className="p-6 bg-mist/5 border-2 border-dashed border-mist/30 rounded-xl space-y-4 mb-6 animate-fadeIn">
                                 <h4 className="font-serif text-lg text-charcoal">Your Contribution</h4>
                                 <input
                                     type="text"
                                     placeholder="Memory Title"
                                     value={newMemoryDraft.title}
                                     onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, title: e.target.value })}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-mist outline-none"
                                 />
                                 <div className="grid grid-cols-2 gap-4">
                                     <input
@@ -470,14 +470,14 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         placeholder="Your Name"
                                         value={newMemoryDraft.author}
                                         onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, author: e.target.value })}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-mist outline-none"
                                     />
                                     <input
                                         type="text"
                                         placeholder="Relationship"
                                         value={newMemoryDraft.relationship}
                                         onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, relationship: e.target.value })}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage outline-none"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-mist outline-none"
                                     />
                                 </div>
                                 <textarea
@@ -485,12 +485,12 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                     rows={4}
                                     value={newMemoryDraft.content}
                                     onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, content: e.target.value })}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-sage resize-none outline-none"
+                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:ring-mist resize-none outline-none"
                                 />
                                 <div className="flex gap-2">
                                     <button
                                         onClick={handleWitnessSubmit}
-                                        className="flex-1 py-3 bg-sage text-ivory rounded-xl font-medium hover:bg-sage/90 transition-all"
+                                        className="flex-1 py-3 bg-mist text-ivory rounded-xl font-medium hover:bg-mist/90 transition-all"
                                     >
                                         Submit for Approval
                                     </button>
@@ -505,7 +505,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                         ) : (
                             <button
                                 onClick={() => setIsAddingNew(true)}
-                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
                                 {userRole === 'owner' ? 'Add Shared Memory' : 'Submit a Memory'}
@@ -519,7 +519,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 {/* ========================================= */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Star size={18} className="text-sage" />
+                        <Star size={18} className="text-mist" />
                         Impact Stories
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -535,7 +535,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 {!readOnly && (
                                     <button
                                         onClick={() => removeImpactStory(story.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all"
+                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-stone hover:bg-stone/10 rounded-lg transition-all"
                                         title="Remove story"
                                     >
                                         <Trash2 size={18} />
@@ -549,7 +549,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         value={story.title}
                                         onChange={(e) => updateImpactStory(story.id, 'title', e.target.value)}
                                         placeholder="e.g., The Teacher Who Saved My Life"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all font-medium disabled:bg-sand/10 disabled:text-charcoal/70"
                                         readOnly={readOnly}
                                         disabled={readOnly}
                                     />
@@ -562,7 +562,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         onChange={(e) => updateImpactStory(story.id, 'content', e.target.value)}
                                         placeholder="Tell the story of how they made a difference..."
                                         rows={6}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:bg-sand/10 disabled:text-charcoal/70"
                                         readOnly={readOnly}
                                         disabled={readOnly}
                                     />
@@ -575,7 +575,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         value={story.author}
                                         onChange={(e) => updateImpactStory(story.id, 'author', e.target.value)}
                                         placeholder="e.g., David Chen, Former Student (Class of 2003)"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
                                         readOnly={readOnly}
                                         disabled={readOnly}
                                     />
@@ -586,7 +586,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                         {!readOnly && (
                             <button
                                 onClick={addImpactStory}
-                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add Impact Story
@@ -594,7 +594,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                         )}
                     </div>
 
-                    <div className="mt-4 p-3 bg-terracotta/5 rounded-lg border border-terracotta/20">
+                    <div className="mt-4 p-3 bg-stone/5 rounded-lg border border-stone/20">
                         <p className="text-xs text-charcoal/60">
                             💡 Examples: "She inspired me to become a teacher", "He helped me through the hardest time", "They believed in me when no one else did"
                         </p>
@@ -608,11 +608,11 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <label className="flex items-center gap-2 text-sm font-medium text-charcoal">
-                            <Users size={18} className="text-terracotta" />
+                            <Users size={18} className="text-stone" />
                             Invite Witnesses to Contribute
                         </label>
                         {isPaid ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-sage/10 text-sage rounded-full text-xs font-medium">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-mist/10 text-mist rounded-full text-xs font-medium">
                                 <Send size={12} />
                                 Ready to Send
                             </span>
@@ -631,15 +631,15 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
                     {/* Witness invitation card */}
                     <div className={`p-6 rounded-2xl border-2 transition-all ${isPaid
-                        ? 'bg-white border-sage/30'
-                        : 'bg-gradient-to-br from-sage/5 to-terracotta/5 border-sand/30'
+                        ? 'bg-white border-mist/30'
+                        : 'bg-gradient-to-br from-mist/5 to-stone/5 border-sand/30'
                         }`}>
 
                         {/* Pre-payment info banner */}
                         {!isPaid && (
-                            <div className="mb-6 p-4 bg-white/80 rounded-xl border border-sage/20 flex items-start gap-3">
-                                <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <Eye size={18} className="text-sage" />
+                            <div className="mb-6 p-4 bg-white/80 rounded-xl border border-mist/20 flex items-start gap-3">
+                                <div className="w-10 h-10 bg-mist/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <Eye size={18} className="text-mist" />
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-charcoal mb-1">
@@ -663,7 +663,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 onChange={(e) => handlePersonalMessageChange(e.target.value)}
                                 placeholder="Write a personal note to your witnesses. Example: 'Dear friend, I'm creating a memorial archive for Mom. Your memories of her would mean the world to our family. Any story, photo, or moment you remember would help preserve her legacy...'"
                                 rows={4}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none text-sm disabled:bg-sand/10 disabled:text-charcoal/70"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none text-sm disabled:bg-sand/10 disabled:text-charcoal/70"
                                 readOnly={readOnly}
                                 disabled={readOnly}
                             />
@@ -688,10 +688,10 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                                 className="flex items-center justify-between p-3 bg-white rounded-lg border border-sand/30"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <Mail size={16} className={wasSent ? 'text-sage' : 'text-charcoal/30'} />
+                                                    <Mail size={16} className={wasSent ? 'text-mist' : 'text-charcoal/30'} />
                                                     <span className="text-sm text-charcoal">{email}</span>
                                                     {wasSent && (
-                                                        <span className="text-xs bg-sage/10 text-sage px-2 py-0.5 rounded-full">
+                                                        <span className="text-xs bg-mist/10 text-mist px-2 py-0.5 rounded-full">
                                                             Sent
                                                         </span>
                                                     )}
@@ -700,10 +700,10 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                                     {!readOnly && !wasSent && (
                                                         <button
                                                             onClick={() => handlePreviewEmail(email)}
-                                                            className="p-1.5 hover:bg-sage/10 rounded-lg transition-all"
+                                                            className="p-1.5 hover:bg-mist/10 rounded-lg transition-all"
                                                             title="Preview invitation"
                                                         >
-                                                            <Eye size={14} className="text-sage" />
+                                                            <Eye size={14} className="text-mist" />
                                                         </button>
                                                     )}
                                                     {!readOnly && (
@@ -728,14 +728,14 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                     onChange={(e) => setNewEmail(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEmail())}
                                     placeholder="friend@example.com"
-                                    className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
+                                    className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:bg-sand/10 disabled:text-charcoal/70"
                                     readOnly={readOnly}
                                     disabled={readOnly}
                                 />
                                 {!readOnly && (
                                     <button
                                         onClick={addEmail}
-                                        className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                        className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2"
                                     >
                                         <Plus size={18} />
                                         Add
@@ -756,7 +756,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 {isPaid ? (
                                     <button
                                         onClick={handleSendInvitations}
-                                        className="w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                                        className="w-full py-4 bg-gradient-to-r from-mist to-mist/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
                                     >
                                         <Send size={18} />
                                         Send {data.invitedEmails.filter(e => !data.sentInvitations?.some(s => s.email === e)).length} Invitation(s)
@@ -807,8 +807,8 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                             <div className="bg-gradient-to-br from-ivory to-sand/10 border-2 border-sand/20 rounded-xl p-8 font-serif">
                                 {/* Email header */}
                                 <div className="text-center mb-6 pb-6 border-b border-sand/20">
-                                    <div className="w-12 h-12 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <Shield size={24} className="text-sage" />
+                                    <div className="w-12 h-12 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <Shield size={24} className="text-mist" />
                                     </div>
                                     <p className="text-xs text-charcoal/40 uppercase tracking-widest">Legacy Vault</p>
                                     <p className="text-xs text-charcoal/40">Memorial Witness Invitation</p>
@@ -823,7 +823,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         This is not a request for photos. It is an invitation to bear witness.
                                     </p>
                                     {personalMessage && (
-                                        <div className="pl-4 border-l-2 border-sage/30 italic text-charcoal/70">
+                                        <div className="pl-4 border-l-2 border-mist/30 italic text-charcoal/70">
                                             "{personalMessage}"
                                         </div>
                                     )}
@@ -833,7 +833,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
                                     {/* CTA button preview */}
                                     <div className="text-center pt-4">
-                                        <div className="inline-block px-8 py-3 bg-sage text-ivory rounded-xl font-medium text-sm">
+                                        <div className="inline-block px-8 py-3 bg-mist text-ivory rounded-xl font-medium text-sm">
                                             Accept & Bear Witness
                                         </div>
                                     </div>
@@ -864,7 +864,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

@@ -92,7 +92,7 @@ export default function FamilyConfirmationPage() {
 };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-terracotta/10 via-ivory to-sage/10">
+        <div className="min-h-screen bg-gradient-to-br from-stone/10 via-ivory to-mist/10">
             {/* Header */}
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
@@ -150,7 +150,7 @@ export default function FamilyConfirmationPage() {
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
                             <span className="text-charcoal">Total</span>
-                            <span className="text-terracotta">$3,000.00</span>
+                            <span className="text-stone">$3,000.00</span>
                         </div>
                     </div>
                 </div>
@@ -166,7 +166,7 @@ export default function FamilyConfirmationPage() {
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-6 h-6 text-terracotta border-2 border-sand/40 rounded focus:ring-2 focus:ring-terracotta/30 cursor-pointer"
+                                className="w-6 h-6 text-stone border-2 border-sand/40 rounded focus:ring-2 focus:ring-stone/30 cursor-pointer"
                             />
                             {acceptedTerms && (
                                 <Check size={16} className="absolute top-1 left-1 text-ivory pointer-events-none" />
@@ -175,11 +175,11 @@ export default function FamilyConfirmationPage() {
                         <div className="flex-1">
                             <p className="text-charcoal group-hover:text-charcoal/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-terracotta hover:text-terracotta/80 underline font-medium">
+                                <Link href="/legal/terms" className="text-stone hover:text-stone/80 underline font-medium">
                                     General Conditions
                                 </Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-terracotta hover:text-terracotta/80 underline font-medium">
+                                <Link href="/legal/privacy" className="text-stone hover:text-stone/80 underline font-medium">
                                     Privacy Policy
                                 </Link>
                             </p>
@@ -190,11 +190,11 @@ export default function FamilyConfirmationPage() {
                     </label>
 
                     {/* Memorial Authorization Link */}
-                    <div className="p-6 bg-gradient-to-br from-terracotta/5 to-sage/5 rounded-xl border-2 border-terracotta/20">
+                    <div className="p-6 bg-gradient-to-br from-stone/5 to-mist/5 rounded-xl border-2 border-stone/20">
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-1">
-                                <div className="w-8 h-8 bg-terracotta/20 rounded-full flex items-center justify-center">
-                                    <ExternalLink size={16} className="text-terracotta" />
+                                <div className="w-8 h-8 bg-stone/20 rounded-full flex items-center justify-center">
+                                    <ExternalLink size={16} className="text-stone" />
                                 </div>
                             </div>
                             <div className="flex-1">
@@ -206,7 +206,7 @@ export default function FamilyConfirmationPage() {
                                     href="/legal/memorial-authorization"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg text-sm font-medium transition-all"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-stone hover:bg-stone/90 text-ivory rounded-lg text-sm font-medium transition-all"
                                 >
                                     <ExternalLink size={16} />
                                     Open Memorial Authorization Form
@@ -224,7 +224,7 @@ export default function FamilyConfirmationPage() {
                     onClick={handlePayment}
                     disabled={!acceptedTerms || isProcessing}
                     className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
-                        ? 'bg-gradient-to-r from-terracotta to-terracotta/90 hover:shadow-lg text-ivory'
+                        ? 'bg-gradient-to-r from-stone to-stone/90 hover:shadow-lg text-ivory'
                         : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                         }`}
                 >

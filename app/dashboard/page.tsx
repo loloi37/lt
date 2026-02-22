@@ -26,7 +26,7 @@ export default function DashboardRedirect() {
   return (
     <div className="min-h-screen bg-ivory flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-sage/30 border-t-sage rounded-full animate-spin mx-auto mb-4" />
+        <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin mx-auto mb-4" />
         <p className="text-charcoal/60">Redirecting to dashboard...</p>
       </div>
     </div>

@@ -177,10 +177,10 @@ function CreateMemorialPageContent() {
   // 2. HELPER FOR BADGE UI
   const ModeBadge = () => (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
-      ? 'bg-terracotta/10 text-terracotta border-terracotta/20'
+      ? 'bg-stone/10 text-stone border-stone/20'
       : mode === 'draft'
         ? 'bg-charcoal/10 text-charcoal/60 border-charcoal/20'
-        : 'bg-sage/10 text-sage border-sage/20'
+        : 'bg-mist/10 text-mist border-mist/20'
       }`}>
       {mode === 'family' ? <Users size={12} /> : <User size={12} />}
       <span className="uppercase tracking-wider">
@@ -608,7 +608,7 @@ function CreateMemorialPageContent() {
     return (
       <div className="min-h-screen bg-ivory flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-sage/30 border-t-sage rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin mx-auto mb-4" />
           <p className="text-charcoal/60">Loading memorial...</p>
         </div>
       </div>
@@ -763,7 +763,7 @@ function CreateMemorialPageContent() {
                 }
               }}
               id="btn-export-zip"
-              className="flex items-center gap-2 px-3 py-1.5 bg-sage text-ivory border border-sage rounded-xl hover:opacity-90 transition-all text-xs ml-2"
+              className="flex items-center gap-2 px-3 py-1.5 bg-mist text-ivory border border-mist rounded-xl hover:opacity-90 transition-all text-xs ml-2"
               title="Download the full offline archive (ZIP)"
             >
               <span className="hidden sm:inline">📦 Export ZIP</span>
@@ -779,7 +779,7 @@ function CreateMemorialPageContent() {
                   <div className="inline-flex items-center gap-3 px-4 py-2 bg-sand/10 border border-sand/20 rounded-full mb-6">
                     <div className="flex gap-1">
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className={`w-2 h-2 rounded-full ${i <= completedPathsCount ? 'bg-sage' : 'bg-sand/30'}`} />
+                        <div key={i} className={`w-2 h-2 rounded-full ${i <= completedPathsCount ? 'bg-mist' : 'bg-sand/30'}`} />
                       ))}
                     </div>
                     <span className="text-xs font-medium text-charcoal/60 uppercase tracking-widest">
@@ -794,7 +794,7 @@ function CreateMemorialPageContent() {
                     {mode === 'family' && !isSelf && (
                       <>
                         <br />
-                        <span className="text-sm mt-2 block text-terracotta">
+                        <span className="text-sm mt-2 block text-stone">
                           Designed for collaboration. You will invite members in the Witnesses section.
                         </span>
                       </>
@@ -802,7 +802,7 @@ function CreateMemorialPageContent() {
                     {!isSelf && mode !== 'family' && (
                       <>
                         <br />
-                        <span className="text-sm mt-2 block text-sage">
+                        <span className="text-sm mt-2 block text-mist">
                           You are the sole guardian. Sharing is optional and controlled by you.
                         </span>
                       </>
@@ -859,10 +859,10 @@ function CreateMemorialPageContent() {
                   setMemorialData(prev => ({ ...prev, currentStep: 7 }));
                   setViewMode('path');
                 }}
-                className="w-full p-8 rounded-2xl border-2 border-sage bg-white hover:shadow-xl transition-all text-left flex items-center justify-between group"
+                className="w-full p-8 rounded-2xl border-2 border-mist bg-white hover:shadow-xl transition-all text-left flex items-center justify-between group"
               >
                 <div className="flex items-center gap-6">
-                  <div className="p-4 bg-sage/10 rounded-2xl text-sage group-hover:scale-110 transition-transform">
+                  <div className="p-4 bg-mist/10 rounded-2xl text-mist group-hover:scale-110 transition-transform">
                     <Users size={32} />
                   </div>
                   <div>
@@ -870,7 +870,7 @@ function CreateMemorialPageContent() {
                     <p className="text-sm text-charcoal/60">Invite family and friends to add their own stories and shared memories.</p>
                   </div>
                 </div>
-                <div className="px-6 py-2 bg-sage text-ivory rounded-full text-sm font-bold">
+                <div className="px-6 py-2 bg-mist text-ivory rounded-full text-sm font-bold">
                   Open for Contributions
                 </div>
               </button>
@@ -878,8 +878,8 @@ function CreateMemorialPageContent() {
           )}
 
           {memorialData.paid ? (
-            <div className="mt-12 p-10 bg-sage/5 border-2 border-sage/20 rounded-3xl text-center animate-fadeIn">
-              <div className="w-16 h-16 bg-sage text-ivory rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <div className="mt-12 p-10 bg-mist/5 border-2 border-mist/20 rounded-3xl text-center animate-fadeIn">
+              <div className="w-16 h-16 bg-mist text-ivory rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <CheckCircle size={32} />
               </div>
               <h3 className="font-serif text-3xl text-charcoal mb-4">This Memory is Now Eternal</h3>
@@ -897,7 +897,7 @@ function CreateMemorialPageContent() {
                 </Link>
                 <button
                   onClick={() => alert("Invite Witnesses feature coming soon!")}
-                  className="px-8 py-3 border border-sage text-sage rounded-xl font-medium hover:bg-sage/5 transition-all"
+                  className="px-8 py-3 border border-mist text-mist rounded-xl font-medium hover:bg-mist/5 transition-all"
                 >
                   Invite Witnesses
                 </button>
@@ -905,9 +905,9 @@ function CreateMemorialPageContent() {
             </div>
           ) : (
             completedPathsCount >= 2 && (
-              <div className="mt-12 p-10 bg-white border-2 border-sage/30 rounded-3xl text-center shadow-xl animate-fadeIn">
-                <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Sparkles className="text-sage" size={32} />
+              <div className="mt-12 p-10 bg-white border-2 border-mist/30 rounded-3xl text-center shadow-xl animate-fadeIn">
+                <div className="w-16 h-16 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="text-mist" size={32} />
                 </div>
                 <h3 className="font-serif text-3xl text-charcoal mb-4">You have reconstructed their story.</h3>
                 <p className="text-charcoal/60 max-w-lg mx-auto mb-8">
@@ -921,7 +921,7 @@ function CreateMemorialPageContent() {
                       : '/personal-confirmation';
                     router.push(upgradeUrl);
                   }}
-                  className="px-12 py-4 bg-terracotta text-ivory rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
+                  className="px-12 py-4 bg-stone text-ivory rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
                 >
                   {mode === 'draft' ? 'Upgrade to Personal ($1,500)' : 'Become a Permanent Guardian ($1,500)'}
                 </button>
@@ -963,7 +963,7 @@ function CreateMemorialPageContent() {
                   </div>
                 )}
                 {saveStatus === 'saved' && (
-                  <div className="flex items-center gap-2 text-sm text-sage">
+                  <div className="flex items-center gap-2 text-sm text-mist">
                     <Save size={16} />
                     <span className="hidden sm:inline">Saved</span>
                   </div>
@@ -972,7 +972,7 @@ function CreateMemorialPageContent() {
                   <div className="text-sm text-red-600">Failed to save</div>
                 )}
               </div>
-              <span className="text-xs text-sage font-medium bg-sage/5 px-3 py-1 rounded-full border border-sage/20">
+              <span className="text-xs text-mist font-medium bg-mist/5 px-3 py-1 rounded-full border border-mist/20">
                 Path: {activePath?.toUpperCase() || 'WIZARD'}
               </span>
 
@@ -1006,7 +1006,7 @@ function CreateMemorialPageContent() {
                             key={stepNumber}
                             onClick={() => setMemorialData(prev => ({ ...prev, currentStep: stepNumber }))}
                             className={`flex-1 py-4 px-2 text-xs font-medium transition-all border-b-2 ${memorialData.currentStep === stepNumber
-                              ? 'border-sage text-sage bg-white'
+                              ? 'border-mist text-mist bg-white'
                               : 'border-transparent text-charcoal/40 hover:text-charcoal/60'
                               }`}
                           >
@@ -1132,8 +1132,8 @@ function CreateMemorialPageContent() {
               {!isMobile && (
                 <>
                   {/* RESIZE HANDLE */}
-                  <Separator className="w-2 bg-transparent hover:bg-sage/10 transition-colors group flex items-center justify-center cursor-col-resize">
-                    <div className="w-0.5 h-16 bg-sand/40 rounded-full group-hover:bg-sage/50 transition-colors" />
+                  <Separator className="w-2 bg-transparent hover:bg-mist/10 transition-colors group flex items-center justify-center cursor-col-resize">
+                    <div className="w-0.5 h-16 bg-sand/40 rounded-full group-hover:bg-mist/50 transition-colors" />
                   </Separator>
 
                   {/* RIGHT PANEL: The Mirror */}
@@ -1214,7 +1214,7 @@ export default function CreateMemorialPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-ivory flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-sage/30 border-t-sage rounded-full animate-spin" />
+        <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin" />
       </div>
     }>
       <CreateMemorialPageContent />

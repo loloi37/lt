@@ -215,10 +215,10 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
 
     // Get file icon
     const getFileIcon = (mimeType: string) => {
-        if (mimeType.startsWith('image/')) return <ImageIcon size={20} className="text-sage" />;
-        if (mimeType.startsWith('video/')) return <Film size={20} className="text-terracotta" />;
-        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-sage" />;
-        if (mimeType.includes('pdf') || mimeType.includes('document')) return <FileText size={20} className="text-terracotta" />;
+        if (mimeType.startsWith('image/')) return <ImageIcon size={20} className="text-mist" />;
+        if (mimeType.startsWith('video/')) return <Film size={20} className="text-stone" />;
+        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-mist" />;
+        if (mimeType.includes('pdf') || mimeType.includes('document')) return <FileText size={20} className="text-stone" />;
         return <FileIcon size={20} className="text-charcoal/40" />;
     };
 
@@ -226,7 +226,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
+                    <Loader2 size={48} className="text-mist animate-spin mx-auto mb-4" />
                     <p className="text-charcoal/60">Loading your space...</p>
                 </div>
             </div>
@@ -244,7 +244,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                     <p className="text-charcoal/60 mb-6">{error || 'This project does not exist.'}</p>
                     <button
                         onClick={() => router.push('/choice-pricing')}
-                        className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all"
+                        className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all"
                     >
                         Go to Home
                     </button>
@@ -256,7 +256,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
     const statusConfig = CONCIERGE_STATUS_CONFIG[project.status];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/5 via-ivory to-terracotta/5">
+        <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-stone/5">
             {/* Header */}
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
                 <div className="max-w-5xl mx-auto px-6 py-6">
@@ -277,7 +277,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
 
             <div className="max-w-5xl mx-auto px-6 py-12 space-y-8">
                 {/* Reassuring Message */}
-                <div className="bg-gradient-to-br from-sage/10 to-terracotta/10 rounded-2xl p-8 border border-sage/20">
+                <div className="bg-gradient-to-br from-mist/10 to-stone/10 rounded-2xl p-8 border border-mist/20">
                     <h2 className="font-serif text-2xl text-charcoal mb-3">
                         {project.status === 'requested' && "We'll contact you soon"}
                         {project.status === 'in_progress' && "Your archive is being created"}
@@ -295,12 +295,12 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                         href={project.zoom_link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block p-6 bg-white rounded-xl border-2 border-sage/30 hover:border-sage/50 hover:shadow-md transition-all"
+                        className="block p-6 bg-white rounded-xl border-2 border-mist/30 hover:border-mist/50 hover:shadow-md transition-all"
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-sage/10 rounded-xl flex items-center justify-center">
-                                    <Video size={24} className="text-sage" />
+                                <div className="w-12 h-12 bg-mist/10 rounded-xl flex items-center justify-center">
+                                    <Video size={24} className="text-mist" />
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-charcoal mb-1">
@@ -311,7 +311,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                                     </p>
                                 </div>
                             </div>
-                            <Calendar size={20} className="text-sage" />
+                            <Calendar size={20} className="text-mist" />
                         </div>
                     </a>
                 )}
@@ -319,7 +319,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                 {/* File Upload Zone */}
                 <div className="bg-white rounded-2xl border-2 border-sand/30 p-8">
                     <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                        <Upload size={20} className="text-sage" />
+                        <Upload size={20} className="text-mist" />
                         Share your materials
                     </h3>
                     <p className="text-sm text-charcoal/60 mb-6">
@@ -334,14 +334,14 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                         onDrop={handleDrop}
                         onClick={() => !uploading && fileInputRef.current?.click()}
                         className={`relative border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${isDragging
-                            ? 'border-sage bg-sage/5 scale-[1.02]'
-                            : 'border-sand/40 hover:border-sage/40 hover:bg-sage/5'
+                            ? 'border-mist bg-mist/5 scale-[1.02]'
+                            : 'border-sand/40 hover:border-mist/40 hover:bg-mist/5'
                             } ${uploading ? 'opacity-50 cursor-wait' : ''}`}
                     >
                         {uploading ? (
                             <div className="flex flex-col items-center">
-                                <Loader2 size={40} className="text-sage animate-spin mb-4" />
-                                <p className="text-sage font-medium">{uploadProgress}</p>
+                                <Loader2 size={40} className="text-mist animate-spin mb-4" />
+                                <p className="text-mist font-medium">{uploadProgress}</p>
                                 <p className="text-sm text-charcoal/60 mt-2">Please stay on this page...</p>
                             </div>
                         ) : (
@@ -388,7 +388,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                                             {getFileCategory(file.file_type)} • {formatFileSize(file.file_size)}
                                         </p>
                                     </div>
-                                    <CheckCircle size={16} className="text-sage flex-shrink-0" />
+                                    <CheckCircle size={16} className="text-mist flex-shrink-0" />
                                 </div>
                             ))}
                         </div>
@@ -398,7 +398,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                 {/* Send a Note */}
                 <div className="bg-white rounded-2xl border border-sand/30 p-6">
                     <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                        <MessageCircle size={20} className="text-terracotta" />
+                        <MessageCircle size={20} className="text-stone" />
                         Send us a message
                     </h3>
                     <p className="text-sm text-charcoal/60 mb-4">
@@ -411,13 +411,13 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                             onChange={(e) => setNewNote(e.target.value)}
                             placeholder="Type anything you'd like us to know..."
                             rows={3}
-                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none"
+                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none"
                             disabled={sendingNote}
                         />
                         <button
                             onClick={handleSendNote}
                             disabled={!newNote.trim() || sendingNote}
-                            className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed self-end"
+                            className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed self-end"
                         >
                             {sendingNote ? (
                                 <Loader2 size={18} className="animate-spin" />
@@ -455,7 +455,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
 
                 {/* Content Preview (what we're building) */}
                 {project.content_preview && Object.keys(project.content_preview).length > 0 && (
-                    <div className="bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-2xl border-2 border-sage/20 p-8">
+                    <div className="bg-gradient-to-br from-mist/5 to-stone/5 rounded-2xl border-2 border-mist/20 p-8">
                         <h3 className="font-serif text-2xl text-charcoal mb-4">What we're building</h3>
                         <p className="text-sm text-charcoal/60 mb-6">
                             Here's what's taking shape. This will update as we make progress.
@@ -496,8 +496,8 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                                     <div className="space-y-2">
                                         {project.content_preview.structure.map((item, idx) => (
                                             <div key={idx} className="flex items-center gap-3 p-3 bg-white/50 rounded-lg">
-                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-sage' :
-                                                    item.status === 'in_progress' ? 'bg-terracotta' :
+                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-mist' :
+                                                    item.status === 'in_progress' ? 'bg-stone' :
                                                         'bg-sand'
                                                     }`} />
                                                 <span className="text-sm text-charcoal">{item.section}</span>

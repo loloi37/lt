@@ -101,7 +101,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                                 key={img.id}
                                 onClick={() => setCurrentIndex(idx)}
                                 className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentIndex
-                                    ? 'border-sage scale-110'
+                                    ? 'border-mist scale-110'
                                     : 'border-transparent opacity-60 hover:opacity-100'
                                     }`}
                             >

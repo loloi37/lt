@@ -103,10 +103,10 @@ export default function VideoRecorder({ fullName, deceasedName, onComplete }: Vi
     return (
         <div className="space-y-6">
             {/* The Script Prompt - CRITICAL for legal validity */}
-            <div className="bg-charcoal text-ivory p-4 rounded-xl text-center border-2 border-sage/40">
+            <div className="bg-charcoal text-ivory p-4 rounded-xl text-center border-2 border-mist/40">
                 <p className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Read this aloud:</p>
                 <p className="font-serif italic text-lg leading-relaxed">
-                    "I am <span className="text-sage not-italic font-bold">{fullName || '[Name]'}</span>. I authorize the creation of this archive for <span className="text-sage not-italic font-bold">{deceasedName}</span> on <span className="text-sage not-italic font-bold">{today}</span>. This is my video signature."
+                    "I am <span className="text-mist not-italic font-bold">{fullName || '[Name]'}</span>. I authorize the creation of this archive for <span className="text-mist not-italic font-bold">{deceasedName}</span> on <span className="text-mist not-italic font-bold">{today}</span>. This is my video signature."
                 </p>
             </div>
 
@@ -141,7 +141,7 @@ export default function VideoRecorder({ fullName, deceasedName, onComplete }: Vi
                         className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
                             isRecording 
                             ? 'bg-red-600 text-white hover:bg-red-700' 
-                            : 'bg-sage text-ivory hover:shadow-lg scale-105'
+                            : 'bg-mist text-ivory hover:shadow-lg scale-105'
                         }`}
                     >
                         {isRecording ? <Square size={18} /> : <Video size={18} />}

@@ -192,7 +192,7 @@ function MemorialAuthorizationContent() {
                     </div>
 
                     {/* Section 5: Critical Checkboxes */}
-                    <div className="bg-terracotta/10 rounded-xl border-2 border-terracotta/30 p-6">
+                    <div className="bg-stone/10 rounded-xl border-2 border-stone/30 p-6">
                         <h2 className="text-2xl font-semibold text-charcoal mb-4">
                             Legal Acknowledgments *
                         </h2>
@@ -274,7 +274,7 @@ function MemorialAuthorizationContent() {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full py-4 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-xl font-semibold text-lg disabled:opacity-50"
+                        className="w-full py-4 bg-stone hover:bg-stone/90 text-ivory rounded-xl font-semibold text-lg disabled:opacity-50"
                     >
                         {submitting ? 'Submitting...' : 'Submit Authorization'}
                     </button>

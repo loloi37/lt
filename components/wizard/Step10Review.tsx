@@ -37,15 +37,15 @@ const STEP_ICONS: Record<number, any> = {
 };
 
 const STEP_COLORS: Record<number, { text: string; bg: string }> = {
-  1: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
-  2: { text: 'text-sage', bg: 'bg-sage/10' },
-  3: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
-  4: { text: 'text-sage', bg: 'bg-sage/10' },
-  5: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
-  6: { text: 'text-sage', bg: 'bg-sage/10' },
-  7: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
-  8: { text: 'text-sage', bg: 'bg-sage/10' },
-  9: { text: 'text-terracotta', bg: 'bg-terracotta/10' },
+  1: { text: 'text-stone', bg: 'bg-stone/10' },
+  2: { text: 'text-mist', bg: 'bg-mist/10' },
+  3: { text: 'text-stone', bg: 'bg-stone/10' },
+  4: { text: 'text-mist', bg: 'bg-mist/10' },
+  5: { text: 'text-stone', bg: 'bg-stone/10' },
+  6: { text: 'text-mist', bg: 'bg-mist/10' },
+  7: { text: 'text-stone', bg: 'bg-stone/10' },
+  8: { text: 'text-mist', bg: 'bg-mist/10' },
+  9: { text: 'text-stone', bg: 'bg-stone/10' },
 };
 
 export default function Step10Review({
@@ -101,14 +101,14 @@ export default function Step10Review({
       {/* COMPLETION STATUS BANNER                  */}
       {/* ========================================= */}
       <div className={`mb-10 p-6 rounded-xl border-2 ${completion.status === 'complete' || completion.status === 'complete_solo'
-        ? 'bg-gradient-to-br from-sage/10 via-ivory to-sage/5 border-sage/30'
-        : 'bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 border-sage/20'
+        ? 'bg-gradient-to-br from-mist/10 via-ivory to-mist/5 border-mist/30'
+        : 'bg-gradient-to-br from-mist/10 via-ivory to-stone/10 border-mist/20'
         }`}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-charcoal mb-1 flex items-center gap-2">
               {(completion.status === 'complete' || completion.status === 'complete_solo') && (
-                <CheckCircle size={20} className="text-sage" />
+                <CheckCircle size={20} className="text-mist" />
               )}
               Memorial {completion.status === 'complete' || completion.status === 'complete_solo' ? 'Complete' : 'Progress'}
             </h3>
@@ -117,7 +117,7 @@ export default function Step10Review({
             </p>
           </div>
           <div className="text-right">
-            <div className={`text-3xl font-bold ${completion.percentage === 100 ? 'text-sage' : 'text-charcoal/70'
+            <div className={`text-3xl font-bold ${completion.percentage === 100 ? 'text-mist' : 'text-charcoal/70'
               }`}>
               {completion.percentage}%
             </div>
@@ -129,8 +129,8 @@ export default function Step10Review({
         <div className="h-3 bg-sand/30 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${completion.percentage === 100
-              ? 'bg-sage'
-              : 'bg-gradient-to-r from-sage to-terracotta'
+              ? 'bg-mist'
+              : 'bg-gradient-to-r from-mist to-stone'
               }`}
             style={{ width: `${completion.percentage}%` }}
           />
@@ -138,9 +138,9 @@ export default function Step10Review({
 
         {/* Solo complete message */}
         {completion.status === 'complete_solo' && (
-          <div className="mt-4 p-4 bg-white/60 rounded-xl border border-sage/20 flex items-start gap-3">
-            <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <Gift size={20} className="text-sage" />
+          <div className="mt-4 p-4 bg-white/60 rounded-xl border border-mist/20 flex items-start gap-3">
+            <div className="w-10 h-10 bg-mist/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <Gift size={20} className="text-mist" />
             </div>
             <div>
               <p className="text-sm font-medium text-charcoal mb-1">
@@ -156,9 +156,9 @@ export default function Step10Review({
 
         {/* Full complete celebration */}
         {completion.status === 'complete' && (
-          <div className="mt-4 p-4 bg-white/60 rounded-xl border border-sage/20 flex items-start gap-3">
-            <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center flex-shrink-0">
-              <PartyPopper size={20} className="text-sage" />
+          <div className="mt-4 p-4 bg-white/60 rounded-xl border border-mist/20 flex items-start gap-3">
+            <div className="w-10 h-10 bg-mist/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <PartyPopper size={20} className="text-mist" />
             </div>
             <div>
               <p className="text-sm font-medium text-charcoal mb-1">
@@ -174,7 +174,7 @@ export default function Step10Review({
         {/* In progress — show remaining core steps only */}
         {completion.status !== 'complete' && completion.status !== 'complete_solo' && (
           <div className="mt-4 flex items-start gap-2 text-sm text-charcoal/60">
-            <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-terracotta" />
+            <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-stone" />
             <p>
               You can publish now, or go back and complete more core sections for a richer memorial.
             </p>
@@ -184,9 +184,9 @@ export default function Step10Review({
 
       {/* NEW: SELF-ARCHIVE SUCCESSOR WARNING */}
       {isBlockedBySuccessor && (
-        <div className="mb-10 p-6 bg-terracotta/5 border-2 border-terracotta/20 rounded-xl animate-fadeIn">
+        <div className="mb-10 p-6 bg-stone/5 border-2 border-stone/20 rounded-xl animate-fadeIn">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-terracotta/10 rounded-full text-terracotta shrink-0">
+            <div className="p-3 bg-stone/10 rounded-full text-stone shrink-0">
               <Shield size={24} />
             </div>
             <div>
@@ -198,7 +198,7 @@ export default function Step10Review({
               </p>
               <button
                 onClick={() => setShowSuccessorModal(true)}
-                className="px-6 py-3 bg-terracotta text-ivory rounded-lg font-medium hover:bg-terracotta/90 transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-stone text-ivory rounded-lg font-medium hover:bg-stone/90 transition-all flex items-center gap-2"
               >
                 <Users size={18} />
                 Designate a Successor Now
@@ -241,7 +241,7 @@ export default function Step10Review({
                         <p className="text-sm text-charcoal/60 mt-0.5">{section.summary}</p>
                       </div>
                       {section.completed ? (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-sage/10 text-sage rounded-full text-xs font-medium flex-shrink-0">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-mist/10 text-mist rounded-full text-xs font-medium flex-shrink-0">
                           <CheckCircle size={14} />
                           Complete
                         </div>
@@ -254,7 +254,7 @@ export default function Step10Review({
                     </div>
                     <button
                       onClick={() => onJumpToStep(section.step)}
-                      className="text-sm text-terracotta hover:text-terracotta/80 transition-colors flex items-center gap-1.5 mt-2"
+                      className="text-sm text-stone hover:text-stone/80 transition-colors flex items-center gap-1.5 mt-2"
                     >
                       <Edit size={14} />
                       Edit this section
@@ -288,7 +288,7 @@ export default function Step10Review({
               <div
                 key={section.step}
                 className={`p-5 rounded-xl border-2 transition-all ${section.completed
-                  ? 'bg-white border-sage/20'
+                  ? 'bg-white border-mist/20'
                   : 'bg-ivory border-dashed border-sand/30'
                   }`}
               >
@@ -303,7 +303,7 @@ export default function Step10Review({
                         <p className="text-sm text-charcoal/60 mt-0.5">{section.summary}</p>
                       </div>
                       {section.completed ? (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-sage/10 text-sage rounded-full text-xs font-medium flex-shrink-0">
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-mist/10 text-mist rounded-full text-xs font-medium flex-shrink-0">
                           <CheckCircle size={14} />
                           Added
                         </div>
@@ -316,7 +316,7 @@ export default function Step10Review({
                     </div>
                     <button
                       onClick={() => onJumpToStep(section.step)}
-                      className="text-sm text-terracotta hover:text-terracotta/80 transition-colors flex items-center gap-1.5 mt-2"
+                      className="text-sm text-stone hover:text-stone/80 transition-colors flex items-center gap-1.5 mt-2"
                     >
                       <Edit size={14} />
                       {section.completed ? 'Edit this section' : 'Add this enrichment'}
@@ -334,7 +334,7 @@ export default function Step10Review({
       <div className="space-y-4">
         <button
           onClick={() => setShowPreview(true)}
-          className="w-full py-4 px-6 bg-white border-2 border-sage rounded-xl text-sage font-medium hover:bg-sage/5 transition-all flex items-center justify-center gap-2"
+          className="w-full py-4 px-6 bg-white border-2 border-mist rounded-xl text-mist font-medium hover:bg-mist/5 transition-all flex items-center justify-center gap-2"
         >
           <Eye size={20} />
           Preview Memorial
@@ -345,7 +345,7 @@ export default function Step10Review({
           disabled={isPublishing || !completion.canPublish || isBlockedBySuccessor}
           className={`w-full py-5 px-6 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-lg ${isPublishing || !completion.canPublish || isBlockedBySuccessor
             ? 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
-            : 'bg-gradient-to-r from-sage to-terracotta hover:shadow-lg text-ivory'
+            : 'bg-gradient-to-r from-mist to-stone hover:shadow-lg text-ivory'
             }`}
         >
           {isPublishing ? (
@@ -362,13 +362,13 @@ export default function Step10Review({
         </button>
 
         {!completion.canPublish && (
-          <p className="text-sm text-center text-terracotta">
+          <p className="text-sm text-center text-stone">
             Please complete at least the Basic Information section to publish
           </p>
         )}
 
         {isBlockedBySuccessor && (
-          <p className="text-sm text-center text-terracotta font-medium animate-pulse">
+          <p className="text-sm text-center text-stone font-medium animate-pulse">
             ⚠️ You must designate a successor before publishing
           </p>
         )}
@@ -383,7 +383,7 @@ export default function Step10Review({
       </div>
 
       {/* Save Draft Note */}
-      <div className="mt-8 p-4 bg-sage/5 rounded-lg border border-sage/20 text-center">
+      <div className="mt-8 p-4 bg-mist/5 rounded-lg border border-mist/20 text-center">
         <p className="text-sm text-charcoal/60">
           💾 Your work is automatically saved. You can close this page and come back anytime.
         </p>

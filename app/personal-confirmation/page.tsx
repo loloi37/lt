@@ -95,7 +95,7 @@ function PersonalConfirmationContent() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10">
+        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10">
             {/* Header */}
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
@@ -115,7 +115,7 @@ function PersonalConfirmationContent() {
                 <div className="text-center mb-12">
                     {isDraftUpgrade ? (
                         <>
-                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-sage/10 text-sage rounded-full text-sm font-semibold mb-4">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-mist/10 text-mist rounded-full text-sm font-semibold mb-4">
                                 <ArrowUpCircle size={16} />
                                 Upgrading from Draft to Personal
                             </div>
@@ -143,7 +143,7 @@ function PersonalConfirmationContent() {
                     <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
 
                     {isDraftUpgrade && (
-                        <div className="mb-6 p-4 bg-sage/5 border border-sage/20 rounded-xl">
+                        <div className="mb-6 p-4 bg-mist/5 border border-mist/20 rounded-xl">
                             <p className="text-sm text-charcoal/70">
                                 <strong>Draft upgrade:</strong> Your existing draft memorial will be upgraded to the Personal plan. All your work is preserved — watermarks are removed and lifetime hosting is activated immediately after payment.
                             </p>
@@ -179,7 +179,7 @@ function PersonalConfirmationContent() {
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
                             <span className="text-charcoal">Total</span>
-                            <span className="text-sage">$1,500.00</span>
+                            <span className="text-mist">$1,500.00</span>
                         </div>
                     </div>
                 </div>
@@ -195,7 +195,7 @@ function PersonalConfirmationContent() {
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-6 h-6 text-sage border-2 border-sand/40 rounded focus:ring-2 focus:ring-sage/30 cursor-pointer"
+                                className="w-6 h-6 text-mist border-2 border-sand/40 rounded focus:ring-2 focus:ring-mist/30 cursor-pointer"
                             />
                             {acceptedTerms && (
                                 <Check size={16} className="absolute top-1 left-1 text-ivory pointer-events-none" />
@@ -204,11 +204,11 @@ function PersonalConfirmationContent() {
                         <div className="flex-1">
                             <p className="text-charcoal group-hover:text-charcoal/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-sage hover:text-sage/80 underline font-medium">
+                                <Link href="/legal/terms" className="text-mist hover:text-mist/80 underline font-medium">
                                     General Conditions
                                 </Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-sage hover:text-sage/80 underline font-medium">
+                                <Link href="/legal/privacy" className="text-mist hover:text-mist/80 underline font-medium">
                                     Privacy Policy
                                 </Link>
                             </p>
@@ -219,11 +219,11 @@ function PersonalConfirmationContent() {
                     </label>
 
                     {/* Memorial Authorization Link */}
-                    <div className="p-6 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border-2 border-sage/20">
+                    <div className="p-6 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border-2 border-mist/20">
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-1">
-                                <div className="w-8 h-8 bg-sage/20 rounded-full flex items-center justify-center">
-                                    <ExternalLink size={16} className="text-sage" />
+                                <div className="w-8 h-8 bg-mist/20 rounded-full flex items-center justify-center">
+                                    <ExternalLink size={16} className="text-mist" />
                                 </div>
                             </div>
                             <div className="flex-1">
@@ -235,7 +235,7 @@ function PersonalConfirmationContent() {
                                     href="/legal/memorial-authorization"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg text-sm font-medium transition-all"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-mist hover:bg-mist/90 text-ivory rounded-lg text-sm font-medium transition-all"
                                 >
                                     <ExternalLink size={16} />
                                     Open Memorial Authorization Form
@@ -253,7 +253,7 @@ function PersonalConfirmationContent() {
                     onClick={handlePayment}
                     disabled={!acceptedTerms || isProcessing}
                     className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
-                        ? 'bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory'
+                        ? 'bg-gradient-to-r from-mist to-mist/90 hover:shadow-lg text-ivory'
                         : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                         }`}
                 >

@@ -136,7 +136,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Personality Traits */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Sparkles size={18} className="text-terracotta" />
+                        <Sparkles size={18} className="text-stone" />
                         {isSelfArchive ? "How would you describe yourself?" : "How would you describe them?"}
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -152,8 +152,8 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                     onClick={() => !readOnly && toggleTrait(trait)}
                                     disabled={readOnly}
                                     className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
-                                        ? 'bg-sage text-ivory border-sage shadow-md'
-                                        : 'bg-white text-charcoal border-sand/40 hover:border-sage/40 hover:bg-sage/5'
+                                        ? 'bg-mist text-ivory border-mist shadow-md'
+                                        : 'bg-white text-charcoal border-sand/40 hover:border-mist/40 hover:bg-mist/5'
                                         } ${readOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {trait}
@@ -163,7 +163,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                     </div>
 
                     {data.personalityTraits.length > 0 && (
-                        <p className="text-xs text-sage mt-3">
+                        <p className="text-xs text-mist mt-3">
                             ✓ Selected {data.personalityTraits.length} trait{data.personalityTraits.length !== 1 ? 's' : ''}
                         </p>
                     )}
@@ -172,7 +172,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Core Values */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Compass size={18} className="text-sage" />
+                        <Compass size={18} className="text-mist" />
                         {isSelfArchive ? "What matters most to you?" : "What mattered most to them?"}
                     </label>
 
@@ -185,8 +185,8 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                     onClick={() => !readOnly && toggleValue(value)}
                                     disabled={readOnly}
                                     className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
-                                        ? 'bg-terracotta text-ivory border-terracotta shadow-md'
-                                        : 'bg-white text-charcoal border-sand/40 hover:border-terracotta/40 hover:bg-terracotta/5'
+                                        ? 'bg-stone text-ivory border-stone shadow-md'
+                                        : 'bg-white text-charcoal border-sand/40 hover:border-stone/40 hover:bg-stone/5'
                                         } ${readOnly ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 >
                                     {value}
@@ -202,13 +202,13 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                             .map((value, idx) => (
                                 <div
                                     key={idx}
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-terracotta/10 text-terracotta border border-terracotta/30 rounded-full mr-2"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-stone/10 text-stone border border-stone/30 rounded-full mr-2"
                                 >
                                     <span className="text-sm font-medium">{value}</span>
                                     {!readOnly && (
                                         <button
                                             onClick={() => removeCustomValue(value)}
-                                            className="hover:bg-terracotta/20 rounded-full p-1 transition-all"
+                                            className="hover:bg-stone/20 rounded-full p-1 transition-all"
                                         >
                                             <X size={14} />
                                         </button>
@@ -225,11 +225,11 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                 onChange={(e) => setCustomValue(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomValue())}
                                 placeholder="Add custom value..."
-                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all"
                             />
                             <button
                                 onClick={addCustomValue}
-                                className="px-6 py-3 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-stone hover:bg-stone/90 text-ivory rounded-xl transition-all flex items-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add
@@ -241,7 +241,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Passions & Interests */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Heart size={18} className="text-terracotta" />
+                        <Heart size={18} className="text-stone" />
                         {isSelfArchive ? "What do you love?" : "What did they love?"}
                     </label>
 
@@ -250,13 +250,13 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                             {data.passions.map((passion, idx) => (
                                 <div
                                     key={idx}
-                                    className="flex items-center gap-2 px-4 py-2 bg-sage/10 text-sage border border-sage/30 rounded-full"
+                                    className="flex items-center gap-2 px-4 py-2 bg-mist/10 text-mist border border-mist/30 rounded-full"
                                 >
                                     <span className="text-sm font-medium">{passion}</span>
                                     {!readOnly && (
                                         <button
                                             onClick={() => removePassion(passion)}
-                                            className="hover:bg-sage/20 rounded-full p-1 transition-all"
+                                            className="hover:bg-mist/20 rounded-full p-1 transition-all"
                                         >
                                             <X size={14} />
                                         </button>
@@ -274,11 +274,11 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                 onChange={(e) => setNewPassion(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addPassion())}
                                 placeholder="e.g., Jazz music, gardening, teaching..."
-                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all"
                             />
                             <button
                                 onClick={addPassion}
-                                className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add
@@ -286,7 +286,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         </div>
                     )}
 
-                    <div className="mt-3 p-3 bg-terracotta/5 rounded-lg border border-terracotta/20">
+                    <div className="mt-3 p-3 bg-stone/5 rounded-lg border border-stone/20">
                         <p className="text-xs text-charcoal/60">
                             💡 Examples: Hobbies, sports, arts, music genres, books, cooking, nature, travel, volunteer work
                         </p>
@@ -296,7 +296,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Life Philosophy */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Compass size={18} className="text-terracotta" />
+                        <Compass size={18} className="text-stone" />
                         {isSelfArchive ? "Do you have a motto or life philosophy?" : "Did they have a motto or life philosophy?"}
                     </label>
                     <textarea
@@ -304,11 +304,11 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         onChange={(e) => handleChange('lifePhilosophy', e.target.value)}
                         placeholder={isSelfArchive ? "What do you believe about how to live a good life?" : "What did they believe about how to live a good life?"}
                         rows={4}
-                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                         disabled={readOnly}
                     />
-                    <div className="mt-2 p-3 bg-sage/5 rounded-lg border border-sage/20">
-                        <p className="text-xs font-medium text-sage mb-2">Examples:</p>
+                    <div className="mt-2 p-3 bg-mist/5 rounded-lg border border-mist/20">
+                        <p className="text-xs font-medium text-mist mb-2">Examples:</p>
                         <ul className="space-y-1 text-xs text-charcoal/60">
                             <li>• "{isSelfArchive ? "I believe kindness is never wasted" : "She believed kindness was never wasted"}"</li>
                             <li>• "{isSelfArchive ? "Live by: leave things better than you found them" : "He lived by: leave things better than you found them"}"</li>
@@ -320,7 +320,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Favorite Quotes */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Quote size={18} className="text-sage" />
+                        <Quote size={18} className="text-mist" />
                         Favorite Quotes (Optional)
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -336,7 +336,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                 {!readOnly && (
                                     <button
                                         onClick={() => removeQuote(quote.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-stone hover:bg-stone/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                         title="Remove"
                                     >
                                         <Trash2 size={18} />
@@ -350,7 +350,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                         onChange={(e) => updateQuote(quote.id, 'text', e.target.value)}
                                         placeholder="The quote itself..."
                                         rows={2}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                                         disabled={readOnly}
                                     />
                                 </div>
@@ -362,7 +362,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                         value={quote.context}
                                         onChange={(e) => updateQuote(quote.id, 'context', e.target.value)}
                                         placeholder={isSelfArchive ? "e.g., I have this framed in my office" : "e.g., She had this framed in her classroom"}
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-60 disabled:bg-sand/10"
                                         disabled={readOnly}
                                     />
                                 </div>
@@ -372,7 +372,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         {!readOnly && (
                             <button
                                 onClick={addQuote}
-                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add Favorite Quote
@@ -384,7 +384,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 {/* Memorable Sayings */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <MessageCircle size={18} className="text-terracotta" />
+                        <MessageCircle size={18} className="text-stone" />
                         Memorable Sayings (Optional)
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -396,16 +396,16 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                             {data.memorableSayings.map((saying, idx) => (
                                 <div
                                     key={idx}
-                                    className="flex items-start gap-3 p-4 bg-terracotta/5 border border-terracotta/20 rounded-xl group"
+                                    className="flex items-start gap-3 p-4 bg-stone/5 border border-stone/20 rounded-xl group"
                                 >
-                                    <Quote size={16} className="text-terracotta mt-1 flex-shrink-0" />
+                                    <Quote size={16} className="text-stone mt-1 flex-shrink-0" />
                                     <p className="flex-1 text-charcoal italic">"{saying}"</p>
                                     {!readOnly && (
                                         <button
                                             onClick={() => removeSaying(idx)}
-                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-terracotta/20 rounded transition-all"
+                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-stone/20 rounded transition-all"
                                         >
-                                            <X size={16} className="text-terracotta" />
+                                            <X size={16} className="text-stone" />
                                         </button>
                                     )}
                                 </div>
@@ -421,11 +421,11 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                                 onChange={(e) => setNewSaying(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSaying())}
                                 placeholder='e.g., "Measure twice, cut once"'
-                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all"
+                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all"
                             />
                             <button
                                 onClick={addSaying}
-                                className="px-6 py-3 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-stone hover:bg-stone/90 text-ivory rounded-xl transition-all flex items-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add
@@ -433,7 +433,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         </div>
                     )}
 
-                    <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
+                    <div className="mt-3 p-3 bg-mist/5 rounded-lg border border-mist/20">
                         <p className="text-xs text-charcoal/60">
                             💡 Examples: "That's a blessing in disguise", "Life's too short for bad coffee", "When in doubt, dance it out"
                         </p>
@@ -451,7 +451,7 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

@@ -142,7 +142,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
     const getFileIcon = (mimeType: string) => {
         if (mimeType.startsWith('image/')) return <Image size={20} className="text-blue-600" />;
         if (mimeType.startsWith('video/')) return <Film size={20} className="text-purple-600" />;
-        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-green-600" />;
+        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-mist" />;
         return <FileText size={20} className="text-slate-600" />;
     };
 
@@ -446,7 +446,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                 {notes.map(note => (
                                     <div
                                         key={note.id}
-                                        className={`p-4 rounded-lg ${note.from_user ? 'bg-blue-50 border border-blue-200' : 'bg-green-50 border border-green-200'}`}
+                                        className={`p-4 rounded-lg ${note.from_user ? 'bg-blue-50 border border-blue-200' : 'bg-parchment border border-sand'}`}
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <span className="text-xs font-medium text-slate-600">
@@ -503,7 +503,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                         <h4 className="font-semibold text-slate-900 mb-4">What We're Building</h4>
                                         {project.content_preview.structure.map((item: any, idx: number) => (
                                             <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg mb-2">
-                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-green-500' :
+                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-mist' :
                                                         item.status === 'in_progress' ? 'bg-blue-500' : 'bg-slate-300'
                                                     }`} />
                                                 <span className="text-slate-700">{item.section}</span>

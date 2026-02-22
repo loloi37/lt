@@ -203,19 +203,19 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
     if (loading) {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-sage/30 border-t-sage rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-mist/30 border-t-mist rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-ivory text-charcoal font-sans selection:bg-sage/20 pb-20">
+        <div className="min-h-screen bg-ivory text-charcoal font-sans selection:bg-mist/20 pb-20">
             <header className="border-b border-sand/30 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
                     <button onClick={() => router.back()} className="text-sm text-charcoal/60 hover:text-charcoal flex items-center gap-2 transition-colors">
                         <ArrowLeft size={16} /> Back
                     </button>
-                    <div className="flex items-center gap-2 text-sage font-medium">
+                    <div className="flex items-center gap-2 text-mist font-medium">
                         <Shield size={18} />
                         <span className="text-sm tracking-wide uppercase">
                             {isAccountLevel ? 'Master Account Authorization' : 'Archive Authorization'}
@@ -226,7 +226,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
             <main className="max-w-2xl mx-auto px-6 py-12">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-sage/10 rounded-2xl text-sage mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-mist/10 rounded-2xl text-mist mb-6">
                         {isAccountLevel ? <Users size={32} /> : <User size={32} />}
                     </div>
                     <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
@@ -243,7 +243,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 {/* 1. Identity Form */}
                 <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8">
                     <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">1</span>
+                        <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">1</span>
                         Your Identity
                     </h2>
                     <div className="space-y-4">
@@ -254,7 +254,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                                 value={identity.fullName}
                                 onChange={e => setIdentity({...identity, fullName: e.target.value})}
                                 placeholder="e.g. Eleanor Marie Thompson"
-                                className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30"
+                                className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,7 +265,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                                     value={identity.email}
                                     onChange={e => setIdentity({...identity, email: e.target.value})}
                                     placeholder="name@example.com"
-                                    className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30"
+                                    className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30"
                                 />
                             </div>
                             <div>
@@ -278,7 +278,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                                     onChange={e => setIdentity({...identity, relationship: e.target.value})}
                                     placeholder={isAccountLevel ? "Account Holder" : "e.g. Daughter, Executor"}
                                     disabled={isAccountLevel} // User doesn't need to type it for Account level
-                                    className={`w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30 ${isAccountLevel ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    className={`w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30 ${isAccountLevel ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                         </div>
@@ -288,13 +288,13 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 {/* 2. Declarations - Dynamic Wording */}
                 <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!isIdentityComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                     <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">2</span>
+                        <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">2</span>
                         Solemn Declarations
                     </h2>
                     
                     <div className="space-y-4">
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.legal_authority ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.legal_authority ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.legal_authority ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.legal_authority ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
                                 {agreements.legal_authority && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.legal_authority} onChange={() => toggleAgreement('legal_authority')} />
@@ -308,8 +308,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.good_faith ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.good_faith ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.good_faith ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.good_faith ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
                                 {agreements.good_faith && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.good_faith} onChange={() => toggleAgreement('good_faith')} />
@@ -319,8 +319,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.permanence ? 'border-sage/50 bg-sage/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.permanence ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.permanence ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.permanence ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
                                 {agreements.permanence && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.permanence} onChange={() => toggleAgreement('permanence')} />
@@ -330,8 +330,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.indemnification ? 'border-terracotta/50 bg-terracotta/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.indemnification ? 'bg-terracotta border-terracotta text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.indemnification ? 'border-stone/50 bg-stone/5' : 'border-transparent hover:bg-sand/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.indemnification ? 'bg-stone border-stone text-ivory' : 'border-sand/60 bg-white'}`}>
                                 {agreements.indemnification && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.indemnification} onChange={() => toggleAgreement('indemnification')} />
@@ -348,7 +348,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!allAgreed ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                     <div className="flex items-start justify-between mb-4">
                         <h2 className="font-serif text-xl text-charcoal flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">2.5</span>
+                            <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">2.5</span>
                             Video Signature
                         </h2>
                         {isMandatory ? (
@@ -356,7 +356,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                                 <Shield size={10} /> Required
                             </div>
                         ) : (
-                            <div className="px-3 py-1 bg-terracotta/10 text-terracotta text-[10px] font-bold uppercase tracking-widest rounded-full border border-terracotta/20">
+                            <div className="px-3 py-1 bg-stone/10 text-stone text-[10px] font-bold uppercase tracking-widest rounded-full border border-stone/20">
                                 Recommended
                             </div>
                         )}
@@ -371,8 +371,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
                     {/* The Mandatory Reason Banner */}
                     {isMandatory && (
-                        <div className="mb-6 p-4 bg-sage/5 border border-sage/20 rounded-xl flex items-start gap-3">
-                            <AlertTriangle size={18} className="text-sage flex-shrink-0 mt-0.5" />
+                        <div className="mb-6 p-4 bg-mist/5 border border-mist/20 rounded-xl flex items-start gap-3">
+                            <AlertTriangle size={18} className="text-mist flex-shrink-0 mt-0.5" />
                             <p className="text-xs text-charcoal/70 leading-relaxed">
                                 <strong>Why is this required?</strong> {mandatoryReason} 
                                 <br />
@@ -384,9 +384,9 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                     <label className={`flex items-center gap-4 p-4 rounded-xl border-2 border-dashed transition-all ${
                         isMandatory 
                         ? 'bg-ivory border-sand/20 opacity-80 cursor-default' 
-                        : 'border-sand/60 hover:border-sage/40 hover:bg-sage/5 cursor-pointer group'
+                        : 'border-sand/60 hover:border-mist/40 hover:bg-mist/5 cursor-pointer group'
                     }`}>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${wantsVideo ? 'bg-sage border-sage text-ivory' : 'border-sand/60 bg-white group-hover:border-sand'}`}>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${wantsVideo ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white group-hover:border-sand'}`}>
                             {wantsVideo && <Check size={14} strokeWidth={3} />}
                         </div>
                         <input 
@@ -410,7 +410,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             />
                             
                             {videoBlob && (
-                                <div className="mt-4 flex items-center justify-center gap-2 text-sage font-medium text-sm animate-fadeIn">
+                                <div className="mt-4 flex items-center justify-center gap-2 text-mist font-medium text-sm animate-fadeIn">
                                     Video recorded and signed.
                                 </div>
                             )}
@@ -422,7 +422,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 {allAgreed && isIdentityComplete && (
                     <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 animate-fadeIn">
                         <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-sage text-ivory flex items-center justify-center text-xs font-sans">3</span>
+                            <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">3</span>
                             Digital Signature
                         </h2>
 
@@ -438,7 +438,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                         <div className="mb-6">
                             {signatureType === 'typed' ? (
                                 <div className="space-y-2">
-                                    <input type="text" placeholder={`Type "${identity.fullName}" to sign`} className="w-full px-4 py-4 rounded-xl border-2 border-sand/40 focus:outline-none focus:ring-2 focus:ring-sage/20 bg-ivory/30 font-serif text-xl text-center" onChange={(e) => handleSignatureInput(e.target.value)} value={signatureValue || ''} />
+                                    <input type="text" placeholder={`Type "${identity.fullName}" to sign`} className="w-full px-4 py-4 rounded-xl border-2 border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30 font-serif text-xl text-center" onChange={(e) => handleSignatureInput(e.target.value)} value={signatureValue || ''} />
                                     {signatureValue && !isSignatureValid && <p className="text-xs text-red-500 text-center">Must exactly match your full name.</p>}
                                 </div>
                             ) : ( <SignaturePad onEnd={handleSignatureInput} /> )}
@@ -448,7 +448,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             <div className="p-6 bg-sand/5 rounded-xl border border-sand/20 animate-fadeIn">
                                 <div className="flex flex-col items-center gap-2">
                                     {signatureType === 'drawn' ? <img src={signatureValue!} alt="Signature" className="h-16 object-contain" /> : <p className="font-serif text-3xl text-charcoal italic">{signatureValue}</p>}
-                                    <div className="flex items-center gap-1.5 text-xs text-sage font-mono mt-2 bg-white px-3 py-1 rounded-full border border-sage/20">
+                                    <div className="flex items-center gap-1.5 text-xs text-mist font-mono mt-2 bg-white px-3 py-1 rounded-full border border-mist/20">
                                         <Clock size={12} /> {signatureTimestamp}
                                     </div>
                                 </div>
@@ -468,7 +468,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
                 <div className="text-center pb-8">
                     {wantsVideo && !videoBlob && allAgreed && isSignatureValid && (
-                        <p className="text-xs text-terracotta mb-4 flex items-center justify-center gap-1 animate-pulse">Please complete your 10-second video recording to continue.</p>
+                        <p className="text-xs text-stone mb-4 flex items-center justify-center gap-1 animate-pulse">Please complete your 10-second video recording to continue.</p>
                     )}
                     <button 
                         onClick={handleAuthorize}
@@ -489,8 +489,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 {isSuccess && (
                     <div className="fixed inset-0 z-[110] bg-ivory/95 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
                         <div className="max-w-md w-full text-center">
-                            <div className="w-20 h-20 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                {/* <CheckCircle className="text-sage" size={40} /> */}
+                            <div className="w-20 h-20 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                {/* <CheckCircle className="text-mist" size={40} /> */}
                             </div>
                             <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Complete</h2>
                             <p className="text-charcoal/70 mb-8 leading-relaxed">

@@ -100,12 +100,12 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
         loadData();
     };
 
-    if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin inline text-sage" /></div>;
+    if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin inline text-mist" /></div>;
 
     return (
         <div className="bg-sand/10 rounded-xl p-6 border border-sand/30">
             <h3 className="font-serif text-xl text-charcoal mb-4 flex items-center gap-2">
-                <Link2 size={20} className="text-terracotta" />
+                <Link2 size={20} className="text-stone" />
                 Family Connections
             </h3>
 
@@ -118,8 +118,8 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                                 {rel.target_photo ? (
                                     <img src={rel.target_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
                                 ) : (
-                                    <div className="w-10 h-10 bg-sage/10 rounded-full flex items-center justify-center">
-                                        <User size={16} className="text-sage" />
+                                    <div className="w-10 h-10 bg-mist/10 rounded-full flex items-center justify-center">
+                                        <User size={16} className="text-mist" />
                                     </div>
                                 )}
                                 <div>
@@ -127,7 +127,7 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                                     <p className="text-xs text-charcoal/60 capitalize">{rel.relationship_type}</p>
                                 </div>
                             </div>
-                            <button onClick={() => unlink(rel.id)} className="text-charcoal/40 hover:text-terracotta p-2">
+                            <button onClick={() => unlink(rel.id)} className="text-charcoal/40 hover:text-stone p-2">
                                 <X size={16} />
                             </button>
                         </div>
@@ -143,7 +143,7 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                     <p className="text-xs font-medium text-charcoal/70 uppercase tracking-wider">Add Connection</p>
                     <div className="flex gap-2">
                         <select
-                            className="flex-1 p-2 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                            className="flex-1 p-2 rounded-lg border border-sand/30 text-sm focus:ring-mist"
                             value={selectedCandidate}
                             onChange={(e) => setSelectedCandidate(e.target.value)}
                         >
@@ -156,7 +156,7 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                         <span className="self-center text-charcoal/40 font-serif italic">is</span>
 
                         <select
-                            className="w-32 p-2 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                            className="w-32 p-2 rounded-lg border border-sand/30 text-sm focus:ring-mist"
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
                         >

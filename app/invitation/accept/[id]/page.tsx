@@ -82,7 +82,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
     if (loading) {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <Loader2 className="animate-spin text-sage" size={32} />
+                <Loader2 className="animate-spin text-mist" size={32} />
             </div>
         );
     }
@@ -91,10 +91,10 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
                 <div className="max-w-md">
-                    <AlertCircle className="mx-auto text-terracotta mb-4" size={48} />
+                    <AlertCircle className="mx-auto text-stone mb-4" size={48} />
                     <h1 className="font-serif text-2xl mb-2 text-charcoal">Invitation Unavailable</h1>
                     <p className="text-charcoal/60 mb-6">{error}</p>
-                    <button onClick={() => router.push('/')} className="text-sage font-medium underline">Return to Home</button>
+                    <button onClick={() => router.push('/')} className="text-mist font-medium underline">Return to Home</button>
                 </div>
             </div>
         );
@@ -104,8 +104,8 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
         <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
             <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-sand/30">
                 <div className="p-8 md:p-12">
-                    <div className="w-16 h-16 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-8">
-                        <Shield size={32} className="text-sage" />
+                    <div className="w-16 h-16 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <Shield size={32} className="text-mist" />
                     </div>
 
                     <h1 className="font-serif text-3xl text-center text-charcoal mb-4">
@@ -126,13 +126,13 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
                         </p>
                     </div>
 
-                    <label className="flex items-start gap-4 p-4 bg-sage/5 rounded-xl border border-sage/20 cursor-pointer group transition-all hover:bg-sage/10 mb-8">
+                    <label className="flex items-start gap-4 p-4 bg-mist/5 rounded-xl border border-mist/20 cursor-pointer group transition-all hover:bg-mist/10 mb-8">
                         <div className="relative flex-shrink-0 mt-1">
                             <input
                                 type="checkbox"
                                 checked={accepted}
                                 onChange={(e) => setAccepted(e.target.checked)}
-                                className="w-6 h-6 rounded border-sand/40 text-sage focus:ring-sage cursor-pointer"
+                                className="w-6 h-6 rounded border-sand/40 text-mist focus:ring-mist cursor-pointer"
                             />
                         </div>
                         <span className="text-sm text-charcoal leading-tight">

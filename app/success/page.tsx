@@ -31,7 +31,7 @@ export default function SuccessPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6 relative overflow-hidden">
             {/* Confetti Effect */}
             {showConfetti && (
                 <div className="absolute inset-0 pointer-events-none">
@@ -62,10 +62,10 @@ export default function SuccessPage() {
                 {/* Success Icon */}
                 <div className="flex justify-center mb-6">
                     <div className="relative">
-                        <div className="w-24 h-24 bg-gradient-to-br from-sage to-sage/80 rounded-full flex items-center justify-center shadow-lg">
+                        <div className="w-24 h-24 bg-gradient-to-br from-mist to-mist/80 rounded-full flex items-center justify-center shadow-lg">
                             <CheckCircle size={48} className="text-ivory" strokeWidth={2.5} />
                         </div>
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-terracotta rounded-full flex items-center justify-center animate-bounce">
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-stone rounded-full flex items-center justify-center animate-bounce">
                             <Sparkles size={16} className="text-ivory" />
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export default function SuccessPage() {
                 </div>
 
                 {/* Memorial URL Card */}
-                <div className="mb-8 p-6 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border-2 border-sand/30">
+                <div className="mb-8 p-6 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border-2 border-sand/30">
                     <label className="block text-sm font-medium text-charcoal/70 mb-2">
                         Memorial Page URL
                     </label>
@@ -93,7 +93,7 @@ export default function SuccessPage() {
                         <button
                             onClick={copyToClipboard}
                             className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
-                                    ? 'bg-sage text-ivory'
+                                    ? 'bg-mist text-ivory'
                                     : 'bg-white border border-sand/40 text-charcoal hover:bg-sand/10'
                                 }`}
                         >
@@ -116,7 +116,7 @@ export default function SuccessPage() {
                 <div className="space-y-3 mb-8">
                     <Link
                         href={memorialUrl}
-                        className="w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-gradient-to-r from-mist to-mist/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
                     >
                         <Eye size={20} />
                         View Memorial Page
@@ -125,7 +125,7 @@ export default function SuccessPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={shareViaEmail}
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-sage hover:bg-sage/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                            className="py-3 bg-white border-2 border-sand/40 hover:border-mist hover:bg-mist/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Mail size={18} />
                             Share via Email
@@ -133,7 +133,7 @@ export default function SuccessPage() {
 
                         <button
                             onClick={copyToClipboard}
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-terracotta hover:bg-terracotta/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                            className="py-3 bg-white border-2 border-sand/40 hover:border-stone hover:bg-stone/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Share2 size={18} />
                             Share Link
@@ -143,9 +143,9 @@ export default function SuccessPage() {
 
                 {/* Info Cards */}
                 <div className="space-y-4 mb-8">
-                    <div className="p-4 bg-sage/10 border border-sage/30 rounded-xl">
+                    <div className="p-4 bg-mist/10 border border-mist/30 rounded-xl">
                         <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                            <CheckCircle size={18} className="text-sage" />
+                            <CheckCircle size={18} className="text-mist" />
                             What happens next?
                         </h3>
                         <ul className="text-sm text-charcoal/70 space-y-1.5 ml-6">
@@ -156,9 +156,9 @@ export default function SuccessPage() {
                         </ul>
                     </div>
 
-                    <div className="p-4 bg-terracotta/10 border border-terracotta/30 rounded-xl">
+                    <div className="p-4 bg-stone/10 border border-stone/30 rounded-xl">
                         <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                            <Sparkles size={18} className="text-terracotta" />
+                            <Sparkles size={18} className="text-stone" />
                             Want to enhance your memorial?
                         </h3>
                         <ul className="text-sm text-charcoal/70 space-y-1.5 ml-6">
@@ -182,7 +182,7 @@ export default function SuccessPage() {
 
                     <Link
                         href="/create"
-                        className="flex-1 py-3 bg-terracotta/10 border-2 border-terracotta/30 hover:bg-terracotta/20 text-terracotta rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-3 bg-stone/10 border-2 border-stone/30 hover:bg-stone/20 text-stone rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                     >
                         <Sparkles size={18} />
                         Create Another

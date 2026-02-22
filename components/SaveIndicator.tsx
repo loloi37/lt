@@ -36,27 +36,27 @@ export default function SaveIndicator({ status, lastSavedAt, error, onRetry }: S
             )}
 
             {status === 'saving' && (
-                <div className="flex items-center gap-1.5 text-sage animate-pulse">
+                <div className="flex items-center gap-1.5 text-mist animate-pulse">
                     <Loader2 size={14} className="animate-spin" />
                     <span>Saving...</span>
                 </div>
             )}
 
             {status === 'saved' && (
-                <div className="flex items-center gap-1.5 text-sage transition-opacity">
+                <div className="flex items-center gap-1.5 text-mist transition-opacity">
                     <Check size={14} />
                     <span>All changes saved</span>
                 </div>
             )}
 
             {status === 'error' && (
-                <div className="flex items-center gap-1.5 text-terracotta">
+                <div className="flex items-center gap-1.5 text-stone">
                     <AlertTriangle size={14} />
                     <span>Save failed</span>
                     {onRetry && (
                         <button
                             onClick={onRetry}
-                            className="underline hover:text-terracotta/80 transition-colors ml-1"
+                            className="underline hover:text-stone/80 transition-colors ml-1"
                         >
                             Retry
                         </button>

@@ -2,11 +2,11 @@
 
 export const ARCHE_CSS = `
   :root {
-    --color-ivory: #f9f7f3;
-    --color-charcoal: #2c3e50;
-    --color-sand: #d7ccc8;
-    --color-terracotta: #a0522d;
-    --color-sage: #8a9a5b;
+    --color-ivory: #F5F2ED;
+    --color-charcoal: #36454F;
+    --color-sand: #D8D2C4;
+    --color-stone: #9E8E82;
+    --color-mist: #8AABB4;
     --font-sans: system-ui, -apple-system, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
   }
@@ -93,8 +93,8 @@ export const ARCHE_CSS = `
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.85rem;
-    background: rgba(138, 154, 91, 0.1);
-    color: var(--color-sage);
+    background: rgba(138, 171, 180, 0.1);
+    color: var(--color-mist);
     margin-right: 5px;
     margin-bottom: 5px;
   }

@@ -44,8 +44,8 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                     {/* Content */}
                     <div className="mb-6">
                         <div className="flex items-center gap-2 mb-3">
-                            <div className="w-8 h-8 bg-sage/10 rounded-full flex items-center justify-center">
-                                <span className="text-sage font-semibold text-sm">
+                            <div className="w-8 h-8 bg-mist/10 rounded-full flex items-center justify-center">
+                                <span className="text-mist font-semibold text-sm">
                                     {currentStep + 1}
                                 </span>
                             </div>
@@ -62,9 +62,9 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                             <div
                                 key={idx}
                                 className={`h-1.5 rounded-full transition-all ${idx === currentStep
-                                    ? 'w-8 bg-sage'
+                                    ? 'w-8 bg-mist'
                                     : idx < currentStep
-                                        ? 'w-1.5 bg-sage/50'
+                                        ? 'w-1.5 bg-mist/50'
                                         : 'w-1.5 bg-sand/40'
                                     }`}
                             />
@@ -84,7 +84,7 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                         )}
                         <button
                             onClick={goToNext}
-                            className="flex-1 py-2.5 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center justify-center gap-2 font-medium"
+                            className="flex-1 py-2.5 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center justify-center gap-2 font-medium"
                         >
                             {currentStep < steps.length - 1 ? 'Next' : 'Got it!'}
                             {currentStep < steps.length - 1 && <ArrowRight size={18} />}

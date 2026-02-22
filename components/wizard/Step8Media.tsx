@@ -347,7 +347,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         {/* Cover Photo */}
         <div className={!isPaid && data.coverPhotoPreview ? "opacity-50 pointer-events-none" : ""}>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-            <ImageIcon size={18} className="text-terracotta" />
+            <ImageIcon size={18} className="text-stone" />
             Cover Photo
           </label>
           <p className="text-xs text-charcoal/40 mb-4">
@@ -356,7 +356,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           {!data.coverPhotoPreview ? (
             <div
               onClick={() => !readOnly && coverPhotoRef.current?.click()}
-              className={`relative h-64 border-2 border-dashed border-sand/40 rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-sage/40 hover:bg-sage/5'}`}
+              className={`relative h-64 border-2 border-dashed border-sand/40 rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-mist/40 hover:bg-mist/5'}`}
             >
               <Upload className="mb-3 text-charcoal/40" size={32} />
               <p className="text-sm text-charcoal/60 mb-1">Click to upload cover photo</p>
@@ -373,7 +373,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                 <div className="absolute inset-0 bg-charcoal/0 group-hover:bg-charcoal/50 transition-all flex items-center justify-center">
                   <button
                     onClick={removeCoverPhoto}
-                    className="opacity-0 group-hover:opacity-100 px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg transition-all flex items-center gap-2"
+                    className="opacity-0 group-hover:opacity-100 px-4 py-2 bg-stone hover:bg-stone/90 text-ivory rounded-lg transition-all flex items-center gap-2"
                   >
                     <X size={16} />
                     Remove Cover Photo
@@ -395,7 +395,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         {/* Photo Gallery */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-            <ImageIcon size={18} className="text-sage" />
+            <ImageIcon size={18} className="text-mist" />
             Photo Gallery
           </label>
           <p className="text-xs text-charcoal/40 mb-4">
@@ -432,7 +432,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                           value={item.caption}
                           onChange={(e) => updateGalleryItem(item.id, 'caption', e.target.value)}
                           placeholder="Caption (optional)"
-                          className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30"
+                          className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-mist/30"
                           disabled={readOnly}
                         />
                         <input
@@ -440,7 +440,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                           value={item.year}
                           onChange={(e) => updateGalleryItem(item.id, 'year', e.target.value)}
                           placeholder="Year (optional)"
-                          className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30"
+                          className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-mist/30"
                           disabled={readOnly}
                         />
                       </div>
@@ -454,7 +454,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                     disabled={data.gallery.length >= (isPaid ? Infinity : 10)}
                     className={`w-full py-4 border-2 border-dashed rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${data.gallery.length >= (isPaid ? Infinity : 10)
                       ? 'border-sand/20 text-charcoal/30 cursor-not-allowed'
-                      : 'border-sand/40 text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage'
+                      : 'border-sand/40 text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist'
                       }`}
                   >
                     <Plus size={18} />
@@ -467,7 +467,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
             ) : (
               <div
                 onClick={() => !readOnly && galleryRef.current?.click()}
-                className={`border-2 border-dashed border-sand/40 rounded-xl p-8 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-sage/40 hover:bg-sage/5'}`}
+                className={`border-2 border-dashed border-sand/40 rounded-xl p-8 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-mist/40 hover:bg-mist/5'}`}
               >
                 <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
                 <p className="text-sm text-charcoal/60 mb-1">Click to upload photos</p>
@@ -492,7 +492,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         {/* Interactive Photo Stories */}
         <div className={!isPaid && (data.interactiveGallery?.length || 0) >= 1 ? "opacity-50 pointer-events-none" : ""}>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-            <MousePointer size={18} className="text-sage" />
+            <MousePointer size={18} className="text-mist" />
             Interactive Photo Stories (Optional)
           </label>
           <p className="text-xs text-charcoal/40 mb-4">
@@ -510,7 +510,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                       style={{ cursor: 'none' }}
                     >
                       <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <div className="bg-gradient-to-br from-sage/20 via-ivory/90 to-terracotta/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                        <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
                           <p className="text-xl md:text-2xl font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm">
                             {item.description || 'Add your story below and hover to see the magic! ✨'}
                           </p>
@@ -553,7 +553,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                         onChange={(e) => updateInteractiveDescription(item.id, e.target.value)}
                         placeholder="Example: 'This was the day she taught me how to bake her famous apple pie. I can still remember the smell of cinnamon filling the kitchen...'"
                         rows={4}
-                        className="w-full px-4 py-3 text-sm border-2 border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all resize-none font-serif"
+                        className="w-full px-4 py-3 text-sm border-2 border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/50 focus:border-mist transition-all resize-none font-serif"
                         disabled={readOnly}
                       />
                       <p className="text-xs text-charcoal/40 mt-1">
@@ -566,7 +566,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               {isPaid && !readOnly && (
                 <button
                   onClick={() => interactiveGalleryRef.current?.click()}
-                  className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
                 >
                   <Plus size={18} />
                   Add More Interactive Photos
@@ -576,11 +576,11 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           ) : (
             <div
               onClick={() => !readOnly && (isPaid ? interactiveGalleryRef.current?.click() : setShowPaywall(true))}
-              className={`border-2 border-dashed border-sand/40 rounded-xl p-12 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-sage/40 hover:bg-sage/5'}`}
+              className={`border-2 border-dashed border-sand/40 rounded-xl p-12 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-mist/40 hover:bg-mist/5'}`}
             >
               <div className="mb-4 relative inline-block">
                 <MousePointer className="text-charcoal/40 animate-pulse" size={48} />
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-terracotta rounded-full flex items-center justify-center">
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-stone rounded-full flex items-center justify-center">
                   <span className="text-ivory text-xs font-bold">✨</span>
                 </div>
               </div>
@@ -605,7 +605,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         {/* Voice Recordings */}
         <div className={!isPaid && data.voiceRecordings.length >= 1 ? "opacity-50 pointer-events-none" : ""}>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-            <Mic size={18} className="text-sage" />
+            <Mic size={18} className="text-mist" />
             Voice Recordings (Optional)
           </label>
           <p className="text-xs text-charcoal/40 mb-4">
@@ -618,13 +618,13 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                   key={recording.id}
                   className="flex items-center gap-3 p-4 bg-white border border-sand/40 rounded-xl"
                 >
-                  <Mic size={18} className="text-terracotta flex-shrink-0" />
+                  <Mic size={18} className="text-stone flex-shrink-0" />
                   <input
                     type="text"
                     value={recording.title}
                     onChange={(e) => updateVoiceTitle(recording.id, e.target.value)}
                     placeholder="Recording title..."
-                    className="flex-1 px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-sage/30 text-sm"
+                    className="flex-1 px-3 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-mist/30 text-sm"
                     disabled={readOnly}
                   />
                   {!readOnly && (
@@ -642,7 +642,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           {!readOnly && (
             <button
               onClick={() => isPaid ? voiceRef.current?.click() : setShowPaywall(true)}
-              className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+              className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
             >
               <Upload size={18} />
               Upload Voice Recording
@@ -662,7 +662,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         {/* Legacy Statement */}
         <div>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-            <Star size={18} className="text-terracotta" />
+            <Star size={18} className="text-stone" />
             Final Legacy Statement
           </label>
           <p className="text-xs text-charcoal/40 mb-4">
@@ -675,10 +675,10 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
 
 What did they stand for? How did they make the world better? What will their memory inspire in others?"
             rows={8}
-            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
+            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
             disabled={readOnly}
           />
-          <div className="mt-3 p-4 bg-gradient-to-br from-terracotta/5 to-sage/5 rounded-lg border border-sand/30">
+          <div className="mt-3 p-4 bg-gradient-to-br from-stone/5 to-mist/5 rounded-lg border border-sand/30">
             <p className="text-xs text-charcoal/60 leading-relaxed">
               💡 This statement will appear prominently on the memorial page. Think about what you'd want their great-grandchildren to know about them.
             </p>
@@ -696,7 +696,7 @@ What did they stand for? How did they make the world better? What will their mem
         </button>
         <button
           onClick={onNext}
-          className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+          className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
         >
           Save & Continue →
         </button>
@@ -706,7 +706,7 @@ What did they stand for? How did they make the world better? What will their mem
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-charcoal/60 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-3xl p-10 max-w-lg w-full shadow-2xl text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-sage via-terracotta to-sage" />
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-mist via-stone to-mist" />
 
             <button
               onClick={() => setShowPaywall(false)}
@@ -715,8 +715,8 @@ What did they stand for? How did they make the world better? What will their mem
               <X size={20} />
             </button>
 
-            <div className="w-20 h-20 bg-sage/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Sparkles size={40} className="text-sage" />
+            <div className="w-20 h-20 bg-mist/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Sparkles size={40} className="text-mist" />
             </div>
 
             <h3 className="font-serif text-3xl text-charcoal mb-4">Unlock The Full Presence</h3>
@@ -729,7 +729,7 @@ What did they stand for? How did they make the world better? What will their mem
             <div className="space-y-4">
               <button
                 onClick={onBackToHub}
-                className="w-full py-4 bg-terracotta text-ivory rounded-xl font-bold hover:shadow-xl transition-all shadow-lg"
+                className="w-full py-4 bg-stone text-ivory rounded-xl font-bold hover:shadow-xl transition-all shadow-lg"
               >
                 Become a Permanent Guardian ($1,500)
               </button>

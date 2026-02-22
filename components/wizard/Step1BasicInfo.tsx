@@ -144,7 +144,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                 <div className="space-y-8">
                     <div>
                         <label className="block text-sm font-medium text-charcoal mb-2">
-                            Full Name <span className="text-terracotta">*</span>
+                            Full Name <span className="text-stone">*</span>
                         </label>
                         <div className="relative">
                             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
@@ -159,7 +159,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 onChange={(e) => handleChange('fullName', e.target.value)}
                                 placeholder="e.g., Eleanor Marie Thompson"
                                 disabled={readOnly}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <p className="text-xs text-charcoal/40 mt-1">Their full legal name or the name they were known by</p>
@@ -167,7 +167,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
 
                     <div>
                         <label className="block text-sm font-medium text-charcoal mb-2">
-                            Birth Date <span className="text-terracotta">*</span>
+                            Birth Date <span className="text-stone">*</span>
                         </label>
                         <div className="relative">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
@@ -178,11 +178,11 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 value={data.birthDate}
                                 onChange={(e) => handleChange('birthDate', e.target.value)}
                                 disabled={readOnly}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         {calculateAge() && (
-                            <p className="text-xs text-sage mt-1">
+                            <p className="text-xs text-mist mt-1">
                                 {data.isStillLiving ? `Currently ${calculateAge()} years old` : `Lived ${calculateAge()} years`}
                             </p>
                         )}
@@ -205,7 +205,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                     isSelfArchive: isChecked ? data.isSelfArchive : false
                                 });
                             }}
-                            className="w-5 h-5 text-sage border-sand/40 rounded focus:ring-sage/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-5 h-5 text-mist border-sand/40 rounded focus:ring-mist/30 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <label htmlFor="stillLiving" className="text-sm font-medium text-charcoal cursor-pointer">
                             This person is still living
@@ -215,7 +215,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                     {/* NEW: Self-Archive Checkbox (Only visible if Living) */}
                     {data.isStillLiving && (
                         <div className="space-y-4">
-                            <div className="flex items-center gap-3 pl-8 border-l-2 border-sage/20 animate-fadeIn">
+                            <div className="flex items-center gap-3 pl-8 border-l-2 border-mist/20 animate-fadeIn">
                                 <input
                                     type="checkbox"
                                     id="selfArchive"
@@ -227,7 +227,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                         // Reset private flag if self archive is unchecked
                                         if (!isChecked) handleChange('privateUntilDeath', false);
                                     }}
-                                    className="w-5 h-5 text-terracotta border-sand/40 rounded focus:ring-terracotta/30 cursor-pointer disabled:opacity-50"
+                                    className="w-5 h-5 text-stone border-sand/40 rounded focus:ring-stone/30 cursor-pointer disabled:opacity-50"
                                 />
                                 <div>
                                     <label htmlFor="selfArchive" className="text-sm text-charcoal cursor-pointer font-medium">
@@ -241,9 +241,9 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
 
                             {/* NEW: PRIVATE UNTIL DEATH TOGGLE */}
                             {data.isSelfArchive && (
-                                <div className="ml-8 p-4 bg-white/60 border border-terracotta/20 rounded-xl animate-fadeIn">
+                                <div className="ml-8 p-4 bg-white/60 border border-stone/20 rounded-xl animate-fadeIn">
                                     <div className="flex items-start gap-3">
-                                        <div className="mt-0.5 p-1.5 bg-terracotta/10 rounded-full text-terracotta">
+                                        <div className="mt-0.5 p-1.5 bg-stone/10 rounded-full text-stone">
                                             <Lock size={16} />
                                         </div>
                                         <div className="flex-1">
@@ -253,7 +253,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                                     checked={!!data.privateUntilDeath}
                                                     disabled={readOnly}
                                                     onChange={(e) => handleChange('privateUntilDeath', e.target.checked)}
-                                                    className="w-5 h-5 text-terracotta border-sand/40 rounded focus:ring-terracotta"
+                                                    className="w-5 h-5 text-stone border-sand/40 rounded focus:ring-stone"
                                                 />
                                                 <span className="font-medium text-charcoal text-sm">Keep this archive private until my death</span>
                                             </label>
@@ -282,7 +282,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                     value={data.deathDate || ''}
                                     onChange={(e) => handleChange('deathDate', e.target.value)}
                                     disabled={readOnly}
-                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -302,7 +302,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 onChange={(e) => handleChange('birthPlace', e.target.value)}
                                 placeholder="e.g., Charleston, South Carolina"
                                 disabled={readOnly}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <p className="text-xs text-charcoal/40 mt-1">City and state/country where they were born</p>
@@ -323,7 +323,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                     onChange={(e) => handleChange('deathPlace', e.target.value)}
                                     placeholder="e.g., Boston, Massachusetts"
                                     disabled={readOnly}
-                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -337,7 +337,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                             !readOnly ? (
                                 <div
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                    className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-mist/40 hover:bg-mist/5 transition-all"
                                 >
                                     <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
                                     <p className="text-sm text-charcoal/60 mb-1">
@@ -398,15 +398,15 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 maxLength={200}
                                 rows={3}
                                 disabled={readOnly}
-                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full pl-12 pr-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div className="flex justify-between items-center mt-1">
                             <p className="text-xs text-charcoal/40">Optional but recommended</p>
                             <p className="text-xs text-charcoal/40">{(data?.epitaph || '').length}/200</p>
                         </div>
-                        <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
-                            <p className="text-xs font-medium text-sage mb-2">Examples:</p>
+                        <div className="mt-3 p-3 bg-mist/5 rounded-lg border border-mist/20">
+                            <p className="text-xs font-medium text-mist mb-2">Examples:</p>
                             <ul className="space-y-1 text-xs text-charcoal/60">
                                 <li>• "She taught us how to see beauty in ordinary moments"</li>
                                 <li>• "A gentle soul who lived with fierce purpose"</li>
@@ -418,9 +418,9 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
 
                 {/* DUPLICATE WARNING BLOCK */}
                 {potentialDuplicates.length > 0 && (
-                    <div className="mt-8 p-6 bg-terracotta/5 border-2 border-terracotta/20 rounded-2xl animate-fadeIn">
+                    <div className="mt-8 p-6 bg-stone/5 border-2 border-stone/20 rounded-2xl animate-fadeIn">
                         <div className="flex items-start gap-4">
-                            <div className="bg-terracotta/10 p-2 rounded-lg text-terracotta">
+                            <div className="bg-stone/10 p-2 rounded-lg text-stone">
                                 <AlertTriangle size={24} />
                             </div>
                             <div className="flex-1">
@@ -442,14 +442,14 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                                 <a
                                                     href={`/person/${dup.id}`}
                                                     target="_blank"
-                                                    className="p-2 text-charcoal/40 hover:text-sage transition-colors"
+                                                    className="p-2 text-charcoal/40 hover:text-mist transition-colors"
                                                     title="View existing archive"
                                                 >
                                                     <Eye size={18} />
                                                 </a>
                                                 <button
                                                     onClick={() => handleRequestCollab(dup)}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-sage/10 text-sage text-xs rounded-lg font-medium hover:bg-sage/20"
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-mist/10 text-mist text-xs rounded-lg font-medium hover:bg-mist/20"
                                                 >
                                                     <Users size={14} />
                                                     Collaborate
@@ -481,7 +481,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                         type="submit"
                         disabled={!isValid() || checkingDuplicates}
                         className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all ${isValid() && !checkingDuplicates
-                            ? 'bg-terracotta hover:bg-terracotta/90 text-ivory'
+                            ? 'bg-stone hover:bg-stone/90 text-ivory'
                             : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                             }`}
                     >

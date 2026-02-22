@@ -107,7 +107,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Childhood Home */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Home size={18} className="text-sage" />
+                        <Home size={18} className="text-mist" />
                         {isSelfArchive ? "Where did you grow up?" : "Where did they grow up?"}
                     </label>
                     <textarea
@@ -116,7 +116,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                         placeholder={isSelfArchive ? "Describe your childhood home and neighborhood..." : "Describe their childhood home and neighborhood..."}
                         rows={4}
                         disabled={readOnly}
-                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts to help you:</p>
@@ -129,7 +129,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Family Background */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Users size={18} className="text-terracotta" />
+                        <Users size={18} className="text-stone" />
                         {isSelfArchive ? "Tell us about your family" : "Tell us about their family"}
                     </label>
                     <textarea
@@ -138,7 +138,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                         placeholder={isSelfArchive ? "Describe your family life and upbringing..." : "Describe their family life and upbringing..."}
                         rows={5}
                         disabled={readOnly}
-                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                     <div className="mt-2 text-xs text-charcoal/40 space-y-1">
                         <p>💡 Prompts:</p>
@@ -151,7 +151,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Education */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <GraduationCap size={18} className="text-sage" />
+                        <GraduationCap size={18} className="text-mist" />
                         {isSelfArchive ? "Where did you go to school?" : "Where did they go to school?"}
                     </label>
                     <div className="space-y-3">
@@ -162,7 +162,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                 onChange={(e) => handleSchoolChange('elementary', e.target.value)}
                                 placeholder="Elementary/Primary school"
                                 disabled={readOnly}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -172,7 +172,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                 onChange={(e) => handleSchoolChange('highSchool', e.target.value)}
                                 placeholder="High school"
                                 disabled={readOnly}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -182,7 +182,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                 onChange={(e) => handleSchoolChange('college', e.target.value)}
                                 placeholder="College/University (with degree if applicable)"
                                 disabled={readOnly}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                         <div>
@@ -192,7 +192,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                 onChange={(e) => handleSchoolChange('additionalEducation', e.target.value)}
                                 placeholder="Additional education (optional)"
                                 disabled={readOnly}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -201,7 +201,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Childhood Personality */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Sparkles size={18} className="text-terracotta" />
+                        <Sparkles size={18} className="text-stone" />
                         {isSelfArchive ? "What were you like as a child?" : "What were they like as a child?"}
                     </label>
                     <p className="text-xs text-charcoal/40 mb-4">
@@ -217,8 +217,8 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                     onClick={() => togglePersonality(trait)}
                                     disabled={readOnly}
                                     className={`px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${isSelected
-                                        ? 'bg-sage text-ivory border-sage'
-                                        : 'bg-white text-charcoal border-sand/40 hover:border-sage/40 hover:bg-sage/5'
+                                        ? 'bg-mist text-ivory border-mist'
+                                        : 'bg-white text-charcoal border-sand/40 hover:border-mist/40 hover:bg-mist/5'
                                         } ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {trait}
@@ -228,7 +228,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                     </div>
 
                     {data.childhoodPersonality.length > 0 && (
-                        <p className="text-xs text-sage mt-3">
+                        <p className="text-xs text-mist mt-3">
                             Selected: {data.childhoodPersonality.length} trait{data.childhoodPersonality.length !== 1 ? 's' : ''}
                         </p>
                     )}
@@ -237,7 +237,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Early Interests */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Heart size={18} className="text-terracotta" />
+                        <Heart size={18} className="text-stone" />
                         {isSelfArchive ? "What did you love doing?" : "What did they love doing?"}
                     </label>
 
@@ -249,12 +249,12 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
                             placeholder="e.g., reading, sports, music..."
                             disabled={readOnly}
-                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         {!readOnly && (
                             <button
                                 onClick={addInterest}
-                                className="px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add
@@ -267,13 +267,13 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             {data.earlyInterests.map((interest, idx) => (
                                 <div
                                     key={idx}
-                                    className="flex items-center gap-2 px-4 py-2 bg-terracotta/10 text-terracotta border border-terracotta/30 rounded-full"
+                                    className="flex items-center gap-2 px-4 py-2 bg-stone/10 text-stone border border-stone/30 rounded-full"
                                 >
                                     <span className="text-sm">{interest}</span>
                                     {!readOnly && (
                                         <button
                                             onClick={() => removeInterest(interest)}
-                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-terracotta/20 rounded-full p-1 transition-all"
+                                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-stone/20 rounded-full p-1 transition-all"
                                         >
                                             <X size={14} />
                                         </button>
@@ -283,7 +283,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                         </div>
                     )}
 
-                    <div className="mt-3 p-3 bg-sage/5 rounded-lg border border-sage/20">
+                    <div className="mt-3 p-3 bg-mist/5 rounded-lg border border-mist/20">
                         <p className="text-xs text-charcoal/60">
                             💡 Examples: reading, baseball, piano, drawing, building things, nature walks, cooking with grandma
                         </p>
@@ -293,7 +293,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 {/* Childhood Photos */}
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-3">
-                        <Upload size={18} className="text-sage" />
+                        <Upload size={18} className="text-mist" />
                         Upload Childhood Photos (Optional)
                     </label>
 
@@ -301,7 +301,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                         !readOnly ? (
                             <div
                                 onClick={() => photoInputRef.current?.click()}
-                                className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                className="border-2 border-dashed border-sand/40 rounded-xl p-8 text-center cursor-pointer hover:border-mist/40 hover:bg-mist/5 transition-all"
                             >
                                 <Upload className="mx-auto mb-3 text-charcoal/40" size={32} />
                                 <p className="text-sm text-charcoal/60 mb-1">
@@ -345,7 +345,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                                 onChange={(e) => updatePhotoCaption(idx, e.target.value)}
                                                 placeholder="Caption (optional)"
                                                 disabled={readOnly}
-                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30 disabled:opacity-50"
+                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-mist/30 disabled:opacity-50"
                                             />
                                             <input
                                                 type="text"
@@ -353,7 +353,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                                                 onChange={(e) => updatePhotoYear(idx, e.target.value)}
                                                 placeholder="Year (optional)"
                                                 disabled={readOnly}
-                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-sage/30 disabled:opacity-50"
+                                                className="w-full px-2 py-1 text-xs border border-sand/40 rounded focus:outline-none focus:ring-1 focus:ring-mist/30 disabled:opacity-50"
                                             />
                                         </div>
                                     </div>
@@ -363,7 +363,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             {!readOnly && (
                                 <button
                                     onClick={() => photoInputRef.current?.click()}
-                                    className="w-full py-3 border-2 border-dashed border-sand/40 rounded-xl text-sm text-charcoal/60 hover:border-sage/40 hover:bg-sage/5 transition-all"
+                                    className="w-full py-3 border-2 border-dashed border-sand/40 rounded-xl text-sm text-charcoal/60 hover:border-mist/40 hover:bg-mist/5 transition-all"
                                 >
                                     + Add More Photos
                                 </button>
@@ -392,7 +392,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

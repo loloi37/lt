@@ -58,13 +58,13 @@ function Footer() {
               Navigation
             </p>
             <div className="mt-1 flex flex-col gap-1 text-sm text-charcoal/80">
-              <a href="/process" className="hover:text-terracotta">
+              <a href="/process" className="hover:text-stone">
                 Process
               </a>
-              <a href="/plans" className="hover:text-terracotta">
+              <a href="/plans" className="hover:text-stone">
                 Plans
               </a>
-              <a href="/advisor" className="hover:text-terracotta">
+              <a href="/advisor" className="hover:text-stone">
                 Advisor
               </a>
             </div>
@@ -80,7 +80,7 @@ function Footer() {
             {/* remplace l’email par le tien */}
             <a
               href="mailto:contact@legacyvault.example"
-              className="text-sm text-charcoal/80 underline underline-offset-4 hover:text-terracotta"
+              className="text-sm text-charcoal/80 underline underline-offset-4 hover:text-stone"
             >
               contact@legacyvault.example
             </a>

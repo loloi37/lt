@@ -33,9 +33,9 @@ export default function RefundPolicyPage() {
             </div>
 
             {/* Hero Section */}
-            <div className="bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10 border-b border-sand/30">
+            <div className="bg-gradient-to-br from-mist/10 via-ivory to-stone/10 border-b border-sand/30">
                 <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-sage/20 text-sage rounded-full border border-sage/30 mb-6">
+                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-mist/20 text-mist rounded-full border border-mist/30 mb-6">
                         <RotateCcw size={16} />
                         <span className="text-sm font-medium">Fair & Transparent</span>
                     </div>
@@ -48,15 +48,15 @@ export default function RefundPolicyPage() {
                     </p>
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-charcoal/60">
                         <span className="flex items-center gap-2">
-                            <DollarSign size={16} className="text-sage" />
+                            <DollarSign size={16} className="text-mist" />
                             30-Day Cooling Off
                         </span>
                         <span className="flex items-center gap-2">
-                            <Shield size={16} className="text-terracotta" />
+                            <Shield size={16} className="text-stone" />
                             Family Dispute Protection
                         </span>
                         <span className="flex items-center gap-2">
-                            <CreditCard size={16} className="text-sage" />
+                            <CreditCard size={16} className="text-mist" />
                             No Chargeback Fees
                         </span>
                     </div>
@@ -75,16 +75,16 @@ export default function RefundPolicyPage() {
                                     <a
                                         key={idx}
                                         href={`#${section.id}`}
-                                        className="block text-sm text-charcoal/60 hover:text-sage hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-sage"
+                                        className="block text-sm text-charcoal/60 hover:text-mist hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-mist"
                                     >
                                         {section.title}
                                     </a>
                                 ))}
                             </nav>
 
-                            <div className="mt-8 p-4 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border border-sand/30">
+                            <div className="mt-8 p-4 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border border-sand/30">
                                 <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
-                                    <AlertCircle size={16} className="text-terracotta" />
+                                    <AlertCircle size={16} className="text-stone" />
                                     Request Refund
                                 </h4>
                                 <p className="text-xs text-charcoal/60 mb-3">
@@ -92,7 +92,7 @@ export default function RefundPolicyPage() {
                                 </p>
                                 <a
                                     href="mailto:refunds@legacyvault.com"
-                                    className="text-xs text-sage hover:text-sage/80 underline font-medium"
+                                    className="text-xs text-mist hover:text-mist/80 underline font-medium"
                                 >
                                     refunds@legacyvault.com
                                 </a>
@@ -106,22 +106,22 @@ export default function RefundPolicyPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
                             <div className="p-6 bg-white rounded-xl border border-sand/30 shadow-sm">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div className="p-2 bg-sage/10 rounded-lg">
-                                        <DollarSign className="text-sage" size={20} />
+                                    <div className="p-2 bg-mist/10 rounded-lg">
+                                        <DollarSign className="text-mist" size={20} />
                                     </div>
                                     <h3 className="font-serif text-lg text-charcoal">Personal Plan</h3>
                                 </div>
                                 <ul className="space-y-2 text-sm text-charcoal/70">
                                     <li className="flex items-start gap-2">
-                                        <span className="text-sage">✓</span>
+                                        <span className="text-mist">✓</span>
                                         Full refund before publication
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-terracotta">✗</span>
+                                        <span className="text-stone">✗</span>
                                         No refund after publication
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-sage">30</span>
+                                        <span className="text-mist">30</span>
                                         Day cooling-off period
                                     </li>
                                 </ul>
@@ -129,22 +129,22 @@ export default function RefundPolicyPage() {
 
                             <div className="p-6 bg-white rounded-xl border border-sand/30 shadow-sm">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div className="p-2 bg-terracotta/10 rounded-lg">
-                                        <DollarSign className="text-terracotta" size={20} />
+                                    <div className="p-2 bg-stone/10 rounded-lg">
+                                        <DollarSign className="text-stone" size={20} />
                                     </div>
                                     <h3 className="font-serif text-lg text-charcoal">Family Plan</h3>
                                 </div>
                                 <ul className="space-y-2 text-sm text-charcoal/70">
                                     <li className="flex items-start gap-2">
-                                        <span className="text-sage">100%</span>
+                                        <span className="text-mist">100%</span>
                                         Before work starts
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-amber-500">50%</span>
+                                        <span className="text-stone">50%</span>
                                         During curation work
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <span className="text-terracotta">0%</span>
+                                        <span className="text-stone">0%</span>
                                         After publication
                                     </li>
                                 </ul>
@@ -161,7 +161,7 @@ export default function RefundPolicyPage() {
                                     return (
                                         <section key={idx} id={id} className="scroll-mt-24">
                                             <h2 className="font-serif text-2xl md:text-3xl text-charcoal mb-4 flex items-start gap-3">
-                                                <span className="text-terracotta mt-1">§</span>
+                                                <span className="text-stone mt-1">§</span>
                                                 {title.replace(/\\d+\\.\\d+\\s*/, '').replace(/\\d+\\.\\s*/, '')}
                                             </h2>
                                             <div className="text-charcoal/80 leading-relaxed space-y-4 text-base md:text-lg">
@@ -183,7 +183,7 @@ export default function RefundPolicyPage() {
                                                             <ul key={pidx} className="space-y-2 my-4">
                                                                 {items.map((item, iidx) => (
                                                                     <li key={iidx} className="flex items-start gap-3 text-charcoal/80">
-                                                                        <span className="text-sage mt-1.5">•</span>
+                                                                        <span className="text-mist mt-1.5">•</span>
                                                                         <span dangerouslySetInnerHTML={{
                                                                             __html: item.replace(/^[-\\*]\\s*/, '').replace(/\\*\\*(.+?)\\*\\*/g, '<strong class="text-charcoal">$1</strong>')
                                                                         }} />
@@ -199,7 +199,7 @@ export default function RefundPolicyPage() {
                                                             <p key={pidx} className="text-charcoal/80" dangerouslySetInnerHTML={{
                                                                 __html: paragraph
                                                                     .replace(/\\*\\*(.+?)\\*\\*/g, '<strong class="text-charcoal">$1</strong>')
-                                                                    .replace(/\\[(.+?)\\]\\((.+?)\\)/g, '<a href="$2" class="text-sage hover:underline">$1</a>')
+                                                                    .replace(/\\[(.+?)\\]\\((.+?)\\)/g, '<a href="$2" class="text-mist hover:underline">$1</a>')
                                                                     .replace(/^\\s*##?\\s*/, '')
                                                             }} />
                                                         );
@@ -214,26 +214,26 @@ export default function RefundPolicyPage() {
                         </article>
 
                         {/* Contact CTA */}
-                        <div className="mt-16 p-8 bg-gradient-to-br from-sage/10 to-terracotta/10 rounded-2xl border border-sand/30">
+                        <div className="mt-16 p-8 bg-gradient-to-br from-mist/10 to-stone/10 rounded-2xl border border-sand/30">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
                                 <div>
-                                    <RotateCcw className="mx-auto mb-3 text-sage" size={28} />
+                                    <RotateCcw className="mx-auto mb-3 text-mist" size={28} />
                                     <h4 className="font-medium text-charcoal mb-1">Refund Requests</h4>
-                                    <a href="mailto:refunds@legacyvault.com" className="text-sm text-sage hover:underline">
+                                    <a href="mailto:refunds@legacyvault.com" className="text-sm text-mist hover:underline">
                                         refunds@legacyvault.com
                                     </a>
                                 </div>
                                 <div>
-                                    <FileText className="mx-auto mb-3 text-terracotta" size={28} />
+                                    <FileText className="mx-auto mb-3 text-stone" size={28} />
                                     <h4 className="font-medium text-charcoal mb-1">Family Disputes</h4>
-                                    <a href="mailto:disputes@legacyvault.com" className="text-sm text-terracotta hover:underline">
+                                    <a href="mailto:disputes@legacyvault.com" className="text-sm text-stone hover:underline">
                                         disputes@legacyvault.com
                                     </a>
                                 </div>
                                 <div>
-                                    <CreditCard className="mx-auto mb-3 text-sage" size={28} />
+                                    <CreditCard className="mx-auto mb-3 text-mist" size={28} />
                                     <h4 className="font-medium text-charcoal mb-1">Billing Issues</h4>
-                                    <a href="mailto:billing@legacyvault.com" className="text-sm text-sage hover:underline">
+                                    <a href="mailto:billing@legacyvault.com" className="text-sm text-mist hover:underline">
                                         billing@legacyvault.com
                                     </a>
                                 </div>
@@ -244,11 +244,11 @@ export default function RefundPolicyPage() {
                         <div className="mt-8 text-center">
                             <p className="text-charcoal/60 text-sm">
                                 Also see:{' '}
-                                <Link href="/legal/terms" className="text-sage hover:underline">Terms of Service</Link>
+                                <Link href="/legal/terms" className="text-mist hover:underline">Terms of Service</Link>
                                 {' • '}
-                                <Link href="/legal/content-policy" className="text-sage hover:underline">Content Policy</Link>
+                                <Link href="/legal/content-policy" className="text-mist hover:underline">Content Policy</Link>
                                 {' • '}
-                                <Link href="/legal/privacy" className="text-sage hover:underline">Privacy Policy</Link>
+                                <Link href="/legal/privacy" className="text-mist hover:underline">Privacy Policy</Link>
                             </p>
                         </div>
                     </div>

@@ -155,14 +155,14 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <label className="flex items-center gap-2 text-sm font-medium text-charcoal">
-                                <BookOpen size={18} className="text-terracotta" />
+                                <BookOpen size={18} className="text-stone" />
                                 Biography
                             </label>
                             <div className="flex items-center gap-2">
                                 {previousBiography !== null && !readOnly && (
                                     <button
                                         onClick={undoTemplate}
-                                        className="text-xs px-3 py-2 bg-terracotta/10 text-terracotta border border-terracotta/30 rounded-lg hover:bg-terracotta/20 transition-all flex items-center gap-2"
+                                        className="text-xs px-3 py-2 bg-stone/10 text-stone border border-stone/30 rounded-lg hover:bg-stone/20 transition-all flex items-center gap-2"
                                     >
                                         <X size={14} />
                                         Undo Template
@@ -181,15 +181,15 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                         </div>
 
                         {showTemplate && (
-                            <div className="mb-4 p-4 bg-terracotta/5 border border-terracotta/20 rounded-xl">
+                            <div className="mb-4 p-4 bg-stone/5 border border-stone/20 rounded-xl">
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-2">
-                                        <FileText size={16} className="text-terracotta" />
+                                        <FileText size={16} className="text-stone" />
                                         <p className="text-sm font-medium text-charcoal">Suggested Structure</p>
                                     </div>
                                     <button
                                         onClick={useTemplate}
-                                        className="text-xs px-3 py-1.5 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg transition-all"
+                                        className="text-xs px-3 py-1.5 bg-stone hover:bg-stone/90 text-ivory rounded-lg transition-all"
                                     >
                                         Use This Template
                                     </button>
@@ -208,13 +208,13 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                 : "Tell their complete story here...\n\nStart with who they were in essence, then guide us through their journey from early life through their final years. What made them special? What did they overcome? How did they touch lives?\n\nDon't worry about making it perfect - just write from the heart. You can always edit later."
                             }
                             rows={20}
-                            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
+                            className="w-full px-6 py-4 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none font-serif text-base leading-relaxed disabled:opacity-60 disabled:bg-sand/10"
                             disabled={readOnly}
                         />
 
                         <div className="flex items-center justify-between text-xs text-charcoal/60">
                             <div className="flex items-center gap-4">
-                                <span className={wordCount >= 500 ? 'text-sage font-medium' : ''}>
+                                <span className={wordCount >= 500 ? 'text-mist font-medium' : ''}>
                                     {wordCount} words {wordCount < 500 && `(${500 - wordCount} more recommended)`}
                                 </span>
                                 <span className="text-charcoal/40">•</span>
@@ -222,7 +222,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                             </div>
                             <button
                                 onClick={onNext}
-                                className="text-sage hover:text-sage/80 transition-colors"
+                                className="text-mist hover:text-mist/80 transition-colors"
                             >
                                 I'll continue this later →
                             </button>
@@ -234,7 +234,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-1">
-                                    <BookOpen size={18} className="text-sage" />
+                                    <BookOpen size={18} className="text-mist" />
                                     Life Chapters (Optional but Recommended)
                                 </label>
                                 <p className="text-xs text-charcoal/40">
@@ -250,7 +250,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                     className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
                                 >
                                     {/* Chapter number badge */}
-                                    <div className="absolute -top-3 -left-3 w-10 h-10 bg-sage text-ivory rounded-full flex items-center justify-center font-serif text-lg font-bold shadow-md">
+                                    <div className="absolute -top-3 -left-3 w-10 h-10 bg-mist text-ivory rounded-full flex items-center justify-center font-serif text-lg font-bold shadow-md">
                                         {index + 1}
                                     </div>
 
@@ -258,7 +258,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                     {!readOnly && (
                                         <button
                                             onClick={() => removeChapter(chapter.id)}
-                                            className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-terracotta hover:bg-terracotta/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                            className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-stone hover:bg-stone/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                             title="Remove chapter"
                                         >
                                             <Trash2 size={18} />
@@ -273,7 +273,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                                 value={chapter.period}
                                                 onChange={(e) => updateChapter(chapter.id, 'period', e.target.value)}
                                                 placeholder="e.g., 1960-1975"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-60 disabled:bg-sand/10"
                                                 disabled={readOnly}
                                             />
                                         </div>
@@ -284,7 +284,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                                 value={chapter.ageRange}
                                                 onChange={(e) => updateChapter(chapter.id, 'ageRange', e.target.value)}
                                                 placeholder="e.g., Ages 18-33"
-                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all disabled:opacity-60 disabled:bg-sand/10"
+                                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-60 disabled:bg-sand/10"
                                                 disabled={readOnly}
                                             />
                                         </div>
@@ -297,7 +297,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                             value={chapter.title}
                                             onChange={(e) => updateChapter(chapter.id, 'title', e.target.value)}
                                             placeholder="e.g., Finding My Path"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all font-medium disabled:opacity-60 disabled:bg-sand/10"
                                             disabled={readOnly}
                                         />
                                     </div>
@@ -309,7 +309,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                             onChange={(e) => updateChapter(chapter.id, 'description', e.target.value)}
                                             placeholder={isSelfArchive ? "Describe this period of your life (3-5 lines)..." : "Describe this period of their life (3-5 lines)..."}
                                             rows={4}
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
+                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-60 disabled:bg-sand/10"
                                             disabled={readOnly}
                                         />
                                     </div>
@@ -320,13 +320,13 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                         <div className="space-y-2">
                                             {chapter.keyEvents.map((event, eventIdx) => (
                                                 <div key={eventIdx} className="flex gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-sage mt-3 flex-shrink-0" />
+                                                    <div className="w-2 h-2 rounded-full bg-mist mt-3 flex-shrink-0" />
                                                     <input
                                                         type="text"
                                                         value={event}
                                                         onChange={(e) => updateKeyEvent(chapter.id, eventIdx, e.target.value)}
                                                         placeholder="Describe a key event..."
-                                                        className="flex-1 px-4 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage transition-all text-sm disabled:opacity-60 disabled:bg-sand/10"
+                                                        className="flex-1 px-4 py-2 border border-sand/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all text-sm disabled:opacity-60 disabled:bg-sand/10"
                                                         disabled={readOnly}
                                                     />
                                                     {!readOnly && (
@@ -342,7 +342,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                             {!readOnly && (
                                                 <button
                                                     onClick={() => addKeyEvent(chapter.id)}
-                                                    className="text-xs text-sage hover:text-sage/80 transition-colors flex items-center gap-1 ml-4"
+                                                    className="text-xs text-mist hover:text-mist/80 transition-colors flex items-center gap-1 ml-4"
                                                 >
                                                     <Plus size={14} />
                                                     Add Key Event
@@ -356,7 +356,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                             {!readOnly && (
                                 <button
                                     onClick={addChapter}
-                                    className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-sage hover:bg-sage/5 hover:text-sage transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
                                 >
                                     <Plus size={18} />
                                     Add Life Chapter
@@ -364,7 +364,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                             )}
 
                             {data.lifeChapters.length > 0 && (
-                                <div className="p-3 bg-sage/5 rounded-lg border border-sage/20">
+                                <div className="p-3 bg-mist/5 rounded-lg border border-mist/20">
                                     <p className="text-xs text-charcoal/60">
                                         💡 Tip: Most life stories work well with 4-6 chapters covering different periods
                                     </p>
@@ -377,10 +377,10 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                 {/* Sidebar with Writing Prompts */}
                 <div className="lg:col-span-1">
                     <div className="sticky top-24">
-                        <div className="bg-gradient-to-br from-terracotta/5 to-sage/5 rounded-xl p-6 border border-sand/30">
+                        <div className="bg-gradient-to-br from-stone/5 to-mist/5 rounded-xl p-6 border border-sand/30">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
-                                    <Lightbulb size={18} className="text-terracotta" />
+                                    <Lightbulb size={18} className="text-stone" />
                                     <h3 className="text-sm font-medium text-charcoal">Writing Prompts</h3>
                                 </div>
                                 <button
@@ -396,7 +396,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                                     {WRITING_PROMPTS.map((prompt, idx) => (
                                         <div
                                             key={idx}
-                                            className="p-3 bg-white/50 rounded-lg border border-sand/20 hover:border-sage/30 hover:bg-white transition-all cursor-pointer"
+                                            className="p-3 bg-white/50 rounded-lg border border-sand/20 hover:border-mist/30 hover:bg-white transition-all cursor-pointer"
                                         >
                                             <p className="text-xs text-charcoal/70 leading-relaxed">{prompt}</p>
                                         </div>
@@ -419,23 +419,23 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                             <h4 className="text-xs font-medium text-charcoal mb-3">Quick Tips</h4>
                             <ul className="space-y-2 text-xs text-charcoal/60">
                                 <li className="flex items-start gap-2">
-                                    <span className="text-sage">✓</span>
+                                    <span className="text-mist">✓</span>
                                     <span>Write like you're talking to a friend</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-sage">✓</span>
+                                    <span className="text-mist">✓</span>
                                     <span>Include specific memories and details</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-sage">✓</span>
+                                    <span className="text-mist">✓</span>
                                     <span>Share their unique qualities and quirks</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-sage">✓</span>
+                                    <span className="text-mist">✓</span>
                                     <span>Don't worry about perfect grammar</span>
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-sage">✓</span>
+                                    <span className="text-mist">✓</span>
                                     <span>Take breaks if you need to</span>
                                 </li>
                             </ul>
@@ -454,7 +454,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-terracotta hover:bg-terracotta/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

@@ -34,9 +34,9 @@ const STEP_NAMES: Record<number, string> = {
 };
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-    manual: { label: 'Manual Edit', color: 'bg-sage/10 text-sage' },
+    manual: { label: 'Manual Edit', color: 'bg-mist/10 text-mist' },
     auto_save: { label: 'Auto-save', color: 'bg-sand/20 text-charcoal/50' },
-    witness_contribution: { label: 'Witness', color: 'bg-terracotta/10 text-terracotta' },
+    witness_contribution: { label: 'Witness', color: 'bg-stone/10 text-stone' },
     restore: { label: 'Restored', color: 'bg-purple-100 text-purple-700' },
 };
 
@@ -184,7 +184,7 @@ export default function VersionHistory({
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setConfirmRestore(viewingVersion)}
-                                    className="px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg font-medium transition-all flex items-center gap-2 text-sm"
+                                    className="px-4 py-2 bg-stone hover:bg-stone/90 text-ivory rounded-lg font-medium transition-all flex items-center gap-2 text-sm"
                                 >
                                     <RotateCcw size={16} />
                                     Restore This Version
@@ -234,8 +234,8 @@ export default function VersionHistory({
                     {/* Header */}
                     <div className="flex items-center justify-between mb-8 px-2">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-sage/20 rounded-xl flex items-center justify-center">
-                                <History size={24} className="text-sage" />
+                            <div className="w-12 h-12 bg-mist/20 rounded-xl flex items-center justify-center">
+                                <History size={24} className="text-mist" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-serif text-ivory">Version History</h2>
@@ -255,7 +255,7 @@ export default function VersionHistory({
                     {/* Loading */}
                     {loading && (
                         <div className="text-center py-20">
-                            <Loader2 size={32} className="text-sage animate-spin mx-auto mb-4" />
+                            <Loader2 size={32} className="text-mist animate-spin mx-auto mb-4" />
                             <p className="text-ivory/60">Loading history...</p>
                         </div>
                     )}
@@ -292,7 +292,7 @@ export default function VersionHistory({
                                     return (
                                         <div key={version.id} className="relative pl-14">
                                             {/* Timeline dot */}
-                                            <div className={`absolute left-4 top-5 w-5 h-5 rounded-full border-2 border-ivory/20 ${idx === 0 ? 'bg-sage' : version.change_type === 'restore' ? 'bg-purple-500' : 'bg-charcoal'
+                                            <div className={`absolute left-4 top-5 w-5 h-5 rounded-full border-2 border-ivory/20 ${idx === 0 ? 'bg-mist' : version.change_type === 'restore' ? 'bg-purple-500' : 'bg-charcoal'
                                                 }`} />
 
                                             {/* Version card */}
@@ -308,7 +308,7 @@ export default function VersionHistory({
                                                                 {typeInfo.label}
                                                             </span>
                                                             {version.is_full_snapshot && (
-                                                                <span className="px-2 py-0.5 bg-sage/10 text-sage rounded-full text-[10px] font-medium">
+                                                                <span className="px-2 py-0.5 bg-mist/10 text-mist rounded-full text-[10px] font-medium">
                                                                     Full Snapshot
                                                                 </span>
                                                             )}
@@ -354,7 +354,7 @@ export default function VersionHistory({
 
                                                 {/* Change reason (if provided) */}
                                                 {version.change_reason && (
-                                                    <div className="mb-3 pl-3 border-l-2 border-sage/30">
+                                                    <div className="mb-3 pl-3 border-l-2 border-mist/30">
                                                         <p className="text-ivory/50 text-xs italic">
                                                             "{version.change_reason}"
                                                         </p>
@@ -374,7 +374,7 @@ export default function VersionHistory({
                                                     {idx !== 0 && (
                                                         <button
                                                             onClick={() => setConfirmRestore(version)}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg text-xs transition-all"
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-stone/10 hover:bg-stone/20 text-stone rounded-lg text-xs transition-all"
                                                         >
                                                             <RotateCcw size={14} />
                                                             Restore
@@ -421,8 +421,8 @@ function RestoreConfirmModal({
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-charcoal/70">
             <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
-                <div className="w-14 h-14 bg-terracotta/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <RotateCcw size={28} className="text-terracotta" />
+                <div className="w-14 h-14 bg-stone/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <RotateCcw size={28} className="text-stone" />
                 </div>
 
                 <h3 className="font-serif text-2xl text-charcoal text-center mb-2">
@@ -440,9 +440,9 @@ function RestoreConfirmModal({
                     "{version.change_summary}"
                 </p>
 
-                <div className="p-4 bg-sage/5 rounded-xl border border-sage/20 mb-6">
+                <div className="p-4 bg-mist/5 rounded-xl border border-mist/20 mb-6">
                     <div className="flex items-start gap-2">
-                        <Shield size={16} className="text-sage mt-0.5 flex-shrink-0" />
+                        <Shield size={16} className="text-mist mt-0.5 flex-shrink-0" />
                         <p className="text-xs text-charcoal/60 leading-relaxed">
                             This will revert the memorial to this version. Your current state will be saved
                             as a new version in the history — nothing is ever lost.
@@ -461,7 +461,7 @@ function RestoreConfirmModal({
                     <button
                         onClick={onConfirm}
                         disabled={isRestoring}
-                        className="flex-1 py-3 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-xl font-medium transition-all flex items-center justify-center gap-2 text-sm"
+                        className="flex-1 py-3 bg-stone hover:bg-stone/90 text-ivory rounded-xl font-medium transition-all flex items-center justify-center gap-2 text-sm"
                     >
                         {isRestoring ? (
                             <>

@@ -83,11 +83,11 @@ function renderBiography(data: MemorialData): string {
     }
 
     if (chapters.length > 0) {
-        html += `<div style="border-left: 4px solid var(--color-sage); padding-left: 20px; margin-top: 30px;">`;
+        html += `<div style="border-left: 4px solid var(--color-mist); padding-left: 20px; margin-top: 30px;">`;
         chapters.forEach((chapter, index) => {
             html += `
                 <div style="margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 5px; color: var(--color-terracotta);">
+                    <h3 style="margin-bottom: 5px; color: var(--color-stone);">
                         Chapter ${index + 1}: ${chapter.title}
                     </h3>
                     ${chapter.period ? `<span class="badge">${chapter.period}</span>` : ''}
@@ -123,7 +123,7 @@ function renderTimeline(data: MemorialData): string {
     return `
     <style>
         .timeline-item { display: flex; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed #eee; }
-        .timeline-year { font-weight: bold; font-family: var(--font-serif); font-size: 1.2rem; color: var(--color-terracotta); width: 80px; flex-shrink: 0; }
+        .timeline-year { font-weight: bold; font-family: var(--font-serif); font-size: 1.2rem; color: var(--color-stone); width: 80px; flex-shrink: 0; }
         .timeline-title { font-weight: bold; margin-bottom: 5px; }
         .timeline-desc { color: #555; font-size: 0.95rem; margin-bottom: 8px; }
     </style>
@@ -227,7 +227,7 @@ function renderTributes(data: MemorialData): string {
         .tribute-card { background: #fdfdfd; border: 1px solid #eee; padding: 25px; border-radius: 8px; }
         .tribute-card h3 { margin-bottom: 10px; font-size: 1.2rem; color: var(--color-charcoal); }
         .tribute-card p { font-style: italic; color: #555; margin-bottom: 15px; }
-        .tribute-author { text-align: right; font-weight: bold; font-size: 0.9rem; color: var(--color-terracotta); }
+        .tribute-author { text-align: right; font-weight: bold; font-size: 0.9rem; color: var(--color-stone); }
     </style>
     <div class="section">
         <h2 class="section-title">Tributes & Memories</h2>

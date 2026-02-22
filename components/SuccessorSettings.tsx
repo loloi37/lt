@@ -88,13 +88,13 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
         }
     };
 
-    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline text-sage" /></div>;
+    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline text-mist" /></div>;
 
     return (
         <div className="bg-white rounded-2xl border border-sand/30 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-sand/20 bg-charcoal text-ivory">
                 <h3 className="font-serif text-xl flex items-center gap-2">
-                    <Shield size={22} className="text-sage" />
+                    <Shield size={22} className="text-mist" />
                     Archive Steward
                 </h3>
                 <p className="text-ivory/60 text-xs mt-1">Designate a successor to manage your family archives if you pass away.</p>
@@ -103,10 +103,10 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
             <div className="p-6">
                 {successor ? (
                     <div className="space-y-6">
-                        <div className={`p-4 rounded-xl border-2 flex items-start gap-4 ${successor.status === 'accepted' ? 'bg-sage/5 border-sage/20' : 'bg-sand/5 border-sand/20'
+                        <div className={`p-4 rounded-xl border-2 flex items-start gap-4 ${successor.status === 'accepted' ? 'bg-mist/5 border-mist/20' : 'bg-sand/5 border-sand/20'
                             }`}>
                             {successor.status === 'accepted' ? (
-                                <CheckCircle className="text-sage mt-1" size={20} />
+                                <CheckCircle className="text-mist mt-1" size={20} />
                             ) : (
                                 <Clock className="text-charcoal/40 mt-1" size={20} />
                             )}
@@ -114,7 +114,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                                 <p className="font-medium text-charcoal">{successor.successor_name}</p>
                                 <p className="text-sm text-charcoal/60">{successor.successor_email} • {successor.relationship}</p>
                                 <div className="mt-3">
-                                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${successor.status === 'accepted' ? 'bg-sage text-ivory' : 'bg-sand text-charcoal/60'
+                                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${successor.status === 'accepted' ? 'bg-mist text-ivory' : 'bg-sand text-charcoal/60'
                                         }`}>
                                         {successor.status === 'accepted' ? 'Steward Active' : 'Waiting for Acceptance'}
                                     </span>
@@ -131,7 +131,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 pr-8">
                                     <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                                        <Clock size={16} className="text-terracotta" />
+                                        <Clock size={16} className="text-stone" />
                                         Dead Man's Switch
                                     </h4>
                                     <p className="text-xs text-charcoal/60 mt-1 leading-relaxed">
@@ -140,7 +140,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                                 </div>
                                 <button
                                     onClick={toggleDeadMansSwitch}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isSwitchEnabled ? 'bg-sage' : 'bg-sand'}`}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isSwitchEnabled ? 'bg-mist' : 'bg-sand'}`}
                                 >
                                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isSwitchEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                                 </button>
@@ -149,8 +149,8 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                     </div>
                 ) : (
                     <form onSubmit={handleDesignate} className="space-y-4">
-                        <div className="p-4 bg-terracotta/5 border border-terracotta/10 rounded-xl flex items-start gap-3 mb-4">
-                            <AlertTriangle className="text-terracotta shrink-0 mt-0.5" size={16} />
+                        <div className="p-4 bg-stone/5 border border-stone/10 rounded-xl flex items-start gap-3 mb-4">
+                            <AlertTriangle className="text-stone shrink-0 mt-0.5" size={16} />
                             <p className="text-xs text-charcoal/70 leading-relaxed">
                                 Choose someone you trust implicitly. They will have full access to view, edit, and export all family archives in your account.
                             </p>
@@ -161,7 +161,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                             <input
                                 required
                                 type="text"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
                                 placeholder="e.g., Sarah Thompson"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -173,7 +173,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                             <input
                                 required
                                 type="email"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
                                 placeholder="sarah@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -185,7 +185,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                             <input
                                 required
                                 type="text"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-sage"
+                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
                                 placeholder="e.g., Daughter / Attorney"
                                 value={formData.relationship}
                                 onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
