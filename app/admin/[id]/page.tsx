@@ -176,7 +176,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowSettings(!showSettings)}
-                                className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2"
+                                className="btn-paper px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2"
                             >
                                 <Settings size={18} />
                                 Settings
@@ -185,7 +185,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+                                className="btn-paper px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
                             >
                                 {saving ? (
                                     <>
@@ -379,7 +379,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
                                     defaultValue={JSON.stringify(project.content_preview, null, 2)}
                                 />
-                                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                                <button className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
                                     Update Preview
                                 </button>
                             </div>
@@ -472,7 +472,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={!newMessage.trim()}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50"
+                                    className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50"
                                 >
                                     Send Message
                                 </button>

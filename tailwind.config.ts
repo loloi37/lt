@@ -8,11 +8,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ivory: '#f9f7f3',
-        charcoal: '#2c3e50',
-        sand: '#d7ccc8',
-        terracotta: '#a0522d',
-        sage: '#8a9a5b',
+        ivory: '#fdf6f0',
+        charcoal: '#5a6b78',
+        sand: '#e8d8cc',
+        terracotta: '#d4958a',
+        sage: '#89b896',
+        lavender: '#b5a7c7',
+        blush: '#f0c4c8',
+        peach: '#f0c4a8',
       },
       fontFamily: {
         sans: ['var(--font-inter)'],

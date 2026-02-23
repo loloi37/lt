@@ -196,14 +196,14 @@ export default function PrivacyPage() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
                                     href="mailto:privacy@legacyvault.com"
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all"
+                                    className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all"
                                 >
                                     <Mail size={18} />
                                     Contact DPO
                                 </a>
                                 <Link
                                     href="/legal/terms"
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-sage text-charcoal rounded-xl font-medium transition-all"
+                                    className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-sage text-charcoal rounded-lg font-medium transition-all"
                                 >
                                     <FileText size={18} />
                                     View Terms of Service

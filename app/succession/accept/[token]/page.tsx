@@ -109,7 +109,7 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
                     <button
                         onClick={handleAccept}
                         disabled={processing}
-                        className="w-full py-4 bg-charcoal text-ivory rounded-xl font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                        className="btn-paper w-full py-4 bg-charcoal text-ivory rounded-lg font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
                     >
                         {processing ? <Loader2 className="animate-spin" size={20} /> : "I Accept This Responsibility"}
                     </button>

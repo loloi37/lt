@@ -126,7 +126,7 @@ export default function PersonMemorialPage({ params }: {
                     </div>
                     <h1 className="font-serif text-3xl text-charcoal mb-3">Memorial Not Found</h1>
                     <p className="text-charcoal/60 mb-6">{error || 'This memorial does not exist.'}</p>
-                    <a href="/dashboard" className="inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-xl font-medium transition-all">
+                    <a href="/dashboard" className="btn-paper inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all">
                         Go to Dashboard
                     </a>
                 </div>

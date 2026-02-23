@@ -56,7 +56,7 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('personal')}
                         disabled={!userId}
-                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-sage to-sage/80 rounded-2xl flex items-center justify-center mb-6">
                             <User size={32} className="text-ivory" />
@@ -72,7 +72,7 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('family')}
                         disabled={!userId}
-                        className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-terracotta to-terracotta/80 rounded-2xl flex items-center justify-center mb-6">
                             <Users size={32} className="text-ivory" />
@@ -87,7 +87,7 @@ export default function ChoicePage() {
                     {/* NEW: Concierge Mode */}
                     <button
                         onClick={handleConciergeSelection}
-                        className="p-8 rounded-2xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
+                        className="btn-paper p-8 rounded-xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
                     >
                         {/* Premium badge */}
                         <div className="absolute top-4 right-4 px-3 py-1 bg-sage/20 text-sage text-xs font-semibold rounded-full border border-sage/30">

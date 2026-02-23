@@ -10,7 +10,7 @@ import Link from 'next/link';
 // Custom Node Style (The "Box")
 const nodeStyle = {
     background: '#fff',
-    border: '1px solid #d7ccc8', // Sand color
+    border: '1px solid #e8d8cc', // Sand color
     borderRadius: '12px',
     padding: '10px',
     width: 180,
@@ -81,9 +81,9 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                 label: rel.relationship_type,
                 type: 'smoothstep',
                 animated: false,
-                style: { stroke: '#8a9a5b' }, // Sage color lines
-                labelStyle: { fill: '#2c3e50', fontSize: 10 },
-                markerEnd: { type: MarkerType.ArrowClosed, color: '#8a9a5b' },
+                style: { stroke: '#89b896' }, // Sage color lines
+                labelStyle: { fill: '#5a6b78', fontSize: 10 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: '#89b896' },
             }));
 
             setNodes(graphNodes);
@@ -126,7 +126,7 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                         fitView
                         attributionPosition="bottom-right"
                     >
-                        <Background color="#d7ccc8" gap={16} />
+                        <Background color="#e8d8cc" gap={16} />
                         <Controls showInteractive={false} />
                     </ReactFlow>
                 )}

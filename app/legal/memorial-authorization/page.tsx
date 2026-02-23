@@ -274,7 +274,7 @@ function MemorialAuthorizationContent() {
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full py-4 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-xl font-semibold text-lg disabled:opacity-50"
+                        className="btn-paper w-full py-4 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg font-semibold text-lg disabled:opacity-50"
                     >
                         {submitting ? 'Submitting...' : 'Submit Authorization'}
                     </button>

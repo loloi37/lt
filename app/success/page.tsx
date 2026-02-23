@@ -49,7 +49,7 @@ export default function SuccessPage() {
                             <div
                                 className="w-3 h-3 rounded-full"
                                 style={{
-                                    backgroundColor: ['#8A9A7B', '#D97758', '#E8DCC4'][Math.floor(Math.random() * 3)],
+                                    backgroundColor: ['#89b896', '#d4958a', '#b5a7c7', '#f0c4c8', '#f0c4a8'][Math.floor(Math.random() * 5)],
                                 }}
                             />
                         </div>
@@ -92,7 +92,7 @@ export default function SuccessPage() {
                         </div>
                         <button
                             onClick={copyToClipboard}
-                            className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
+                            className={`btn-paper px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
                                     ? 'bg-sage text-ivory'
                                     : 'bg-white border border-sand/40 text-charcoal hover:bg-sand/10'
                                 }`}
@@ -116,7 +116,7 @@ export default function SuccessPage() {
                 <div className="space-y-3 mb-8">
                     <Link
                         href={memorialUrl}
-                        className="w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                        className="btn-paper w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
                     >
                         <Eye size={20} />
                         View Memorial Page
@@ -125,7 +125,7 @@ export default function SuccessPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={shareViaEmail}
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-sage hover:bg-sage/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                            className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-sage hover:bg-sage/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Mail size={18} />
                             Share via Email
@@ -133,7 +133,7 @@ export default function SuccessPage() {
 
                         <button
                             onClick={copyToClipboard}
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-terracotta hover:bg-terracotta/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                            className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-terracotta hover:bg-terracotta/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Share2 size={18} />
                             Share Link
@@ -174,7 +174,7 @@ export default function SuccessPage() {
                 <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                         href="/"
-                        className="flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                        className="btn-paper flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                     >
                         <Home size={18} />
                         Back to Home
@@ -182,7 +182,7 @@ export default function SuccessPage() {
 
                     <Link
                         href="/create"
-                        className="flex-1 py-3 bg-terracotta/10 border-2 border-terracotta/30 hover:bg-terracotta/20 text-terracotta rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                        className="btn-paper flex-1 py-3 bg-terracotta/10 border-2 border-terracotta/30 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                     >
                         <Sparkles size={18} />
                         Create Another

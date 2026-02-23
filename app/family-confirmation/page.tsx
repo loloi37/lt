@@ -206,7 +206,7 @@ export default function FamilyConfirmationPage() {
                                     href="/legal/memorial-authorization"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg text-sm font-medium transition-all"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg btn-paper text-sm font-medium transition-all"
                                 >
                                     <ExternalLink size={16} />
                                     Open Memorial Authorization Form
@@ -223,7 +223,7 @@ export default function FamilyConfirmationPage() {
                 <button
                     onClick={handlePayment}
                     disabled={!acceptedTerms || isProcessing}
-                    className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
+                    className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
                         ? 'bg-gradient-to-r from-terracotta to-terracotta/90 hover:shadow-lg text-ivory'
                         : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                         }`}
