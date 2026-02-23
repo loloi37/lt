@@ -30,7 +30,11 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         // Style
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
+<<<<<<< HEAD
         ctx.strokeStyle = '#36454F'; // Charcoal color
+=======
+        ctx.strokeStyle = '#5a6b78'; // Charcoal color
+>>>>>>> origin/claude/pastel-color-palette-avZIb
     }, []);
 
     const getCoords = (e: React.MouseEvent | React.TouchEvent) => {

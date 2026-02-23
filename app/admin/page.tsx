@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                                                 <td className="px-6 py-4">
                                                     <Link
                                                         href={`/admin/${project.id}`}
-                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 inline-flex"
+                                                        className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 inline-flex"
                                                     >
                                                         <Edit size={16} />
                                                         Manage

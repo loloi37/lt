@@ -109,11 +109,11 @@ export default function MemorialRenderer({
                     {data.step8?.coverPhotoPreview ? (
                         <>
                             <img src={data.step8.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#7a7979] via-[#7a7979]/20 to-[#7a7979]/10" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#6b7f8e] via-[#6b7f8e]/20 to-[#6b7f8e]/10" />
                             <IntegrityBadge hash={data.step8.coverPhotoHash} className="top-4 left-4" />
                         </>
                     ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#706b6b] via-[#706b6b] to-[#706b6b]" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#8a9ba8] via-[#7d8e9b] to-[#6b7f8e]" />
                     )}
 
                     <div className="absolute bottom-0 left-0 right-0">

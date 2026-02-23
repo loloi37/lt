@@ -138,7 +138,11 @@ function RequestedContent() {
                                 </p>
                                 <Link
                                     href={`/concierge/${projectId}`}
+<<<<<<< HEAD
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-mist hover:bg-mist/90 text-ivory rounded-lg text-sm font-medium transition-all"
+=======
+                                    className="btn-paper inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg text-sm font-medium transition-all"
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     Visit Your Space
                                     <ArrowRight size={16} />
@@ -157,14 +161,18 @@ function RequestedContent() {
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
                             href="/choice-pricing"
-                            className="flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-xl font-medium transition-all text-center"
+                            className="btn-paper flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-lg font-medium transition-all text-center"
                         >
                             Back to Home
                         </Link>
 
                         <a
                             href="mailto:contact@legacyvault.com"
+<<<<<<< HEAD
                             className="flex-1 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+=======
+                            className="btn-paper flex-1 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                         >
                             Contact Us Directly
                             <ArrowRight size={18} />

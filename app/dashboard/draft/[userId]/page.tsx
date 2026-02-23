@@ -110,7 +110,11 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                             {/* Upgrade CTA */}
                             <button
                                 onClick={() => router.push('/choice-pricing')}
+<<<<<<< HEAD
                                 className="px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 border-2 border-mist text-mist hover:bg-mist/10 transition-all text-sm"
+=======
+                                className="btn-paper px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage text-sage hover:bg-sage/10 transition-all text-sm"
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                             >
                                 <ArrowUpCircle size={18} />
                                 Upgrade to Personal
@@ -118,7 +122,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
 
                             <button
                                 onClick={handleCreate}
-                                className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-gradient-to-r from-charcoal/80 to-charcoal hover:shadow-lg text-ivory"
+                                className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-charcoal/80 to-charcoal hover:shadow-lg text-ivory"
                             >
                                 <Plus size={20} />
                                 New Draft
@@ -139,7 +143,11 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                     </div>
                     <button
                         onClick={() => memorials.length > 0 ? handleUpgrade(memorials[0].id) : router.push('/personal-confirmation')}
+<<<<<<< HEAD
                         className="ml-6 flex-shrink-0 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-semibold transition-all flex items-center gap-2"
+=======
+                        className="btn-paper ml-6 flex-shrink-0 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold transition-all flex items-center gap-2"
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                     >
                         <ArrowUpCircle size={18} />
                         Upgrade Now ($1,500)
@@ -161,7 +169,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                         <p className="text-charcoal/50 mb-6 max-w-sm mx-auto">
                             Build your memorial at your own pace. No payment required to get started.
                         </p>
-                        <button onClick={handleCreate} className="inline-flex items-center gap-2 px-6 py-3 bg-charcoal/80 hover:bg-charcoal text-ivory rounded-xl font-semibold">
+                        <button onClick={handleCreate} className="btn-paper inline-flex items-center gap-2 px-6 py-3 bg-charcoal/80 hover:bg-charcoal text-ivory rounded-lg font-semibold">
                             <Plus size={20} />
                             Create Draft
                         </button>
@@ -199,13 +207,13 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                     <div className="flex gap-2 mb-3">
                                         <Link
                                             href={`/create?id=${memorial.id}&mode=draft`}
-                                            className="flex-1 py-2 px-3 bg-charcoal/10 hover:bg-charcoal/20 text-charcoal rounded-lg font-medium text-center text-sm"
+                                            className="btn-paper flex-1 py-2 px-3 bg-charcoal/10 hover:bg-charcoal/20 text-charcoal rounded-lg font-medium text-center text-sm"
                                         >
                                             <Edit size={16} className="inline mr-1" />Edit
                                         </Link>
                                         <button
                                             onClick={() => softDeleteMemorial(memorial.id)}
-                                            className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                                            className="btn-paper py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
                                             title="Delete draft"
                                         >
                                             <Trash2 size={16} />
@@ -214,7 +222,11 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                     {/* Per-memorial upgrade button */}
                                     <button
                                         onClick={() => handleUpgrade(memorial.id)}
+<<<<<<< HEAD
                                         className="w-full py-2.5 px-3 bg-gradient-to-r from-mist to-mist/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+=======
+                                        className="btn-paper w-full py-2.5 px-3 bg-gradient-to-r from-sage to-sage/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                                     >
                                         <ArrowUpCircle size={16} />
                                         Upgrade to Personal ($1,500)

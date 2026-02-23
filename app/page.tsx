@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 
-const CHARCOAL = "#36454F";
-const BG = "#F5F2ED";
-const BG_ALT = "#EDE9E1";
-const SAND_BORDER = "#D8D2C4";
-const TEXT = "#1a2428";
-const TEXT_MUTED = "#6b7c84";
+const CHARCOAL = "#5a6b78";
+const BG = "#fdf6f0";
+const BG_ALT = "#f5ede4";
+const SAND_BORDER = "#e8d8cc";
+const TEXT = "#4e5d6a";
+const TEXT_MUTED = "#94a3af";
+const SAGE = "#89b896";
+const TERRACOTTA = "#d4958a";
+const LAVENDER = "#b5a7c7";
+const BLUSH = "#f0c4c8";
 
 function Btn({ children, outline = false, large = false }: { children: React.ReactNode; outline?: boolean; large?: boolean }) {
     const [hov, setHov] = useState(false);
@@ -19,16 +23,21 @@ function Btn({ children, outline = false, large = false }: { children: React.Rea
                 padding: large ? "14px 36px" : "10px 24px",
                 fontSize: large ? "1rem" : "0.875rem",
                 fontFamily: "inherit",
-                borderRadius: "999px",
-                border: `1.5px solid ${CHARCOAL}`,
+                borderRadius: "8px",
+                border: outline ? `1.5px solid ${CHARCOAL}` : "1.5px solid transparent",
                 cursor: "pointer",
                 letterSpacing: "0.04em",
                 fontWeight: 500,
                 transition: "all 0.2s",
+                transform: hov ? "translateY(-1px)" : "translateY(0)",
                 background: outline
                     ? hov ? CHARCOAL : "transparent"
-                    : hov ? "#2a343c" : CHARCOAL,
+                    : hov ? SAGE : CHARCOAL,
                 color: outline ? (hov ? "#fff" : CHARCOAL) : "#fff",
+                boxShadow: hov
+                    ? "0 4px 8px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)"
+                    : "0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.5)",
+                backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.02) 100%)",
             }}
         >
             {children}
@@ -48,15 +57,15 @@ function Tag({ label }: { label: string }) {
     return (
         <span style={{
             display: "inline-block",
-            border: `1px solid ${CHARCOAL}`,
+            border: `1px solid ${SAND_BORDER}`,
             color: CHARCOAL,
             fontSize: "0.7rem",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
             padding: "4px 14px",
-            borderRadius: "999px",
+            borderRadius: "20px",
             marginBottom: 24,
-            background: "transparent",
+            background: "rgba(232, 216, 204, 0.15)",
         }}>{label}</span>
     );
 }
@@ -146,7 +155,7 @@ export default function App() {
                         </p>
                     </div>
                     <div style={{
-                        background: "#E8E3DA", borderRadius: 12, height: 320,
+                        background: "linear-gradient(135deg, rgba(137,184,150,0.1) 0%, rgba(212,149,138,0.1) 50%, rgba(181,167,199,0.1) 100%)", borderRadius: 12, height: 320,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         color: TEXT_MUTED, fontSize: "0.85rem", letterSpacing: "0.06em",
                         border: `1px solid ${SAND_BORDER}`,
@@ -171,7 +180,7 @@ export default function App() {
                             background: BG, borderRadius: 10, padding: "28px 24px",
                             border: `1px solid ${SAND_BORDER}`,
                         }}>
-                            <div style={{ width: 32, height: 3, background: CHARCOAL, marginBottom: 16, borderRadius: 2 }} />
+                            <div style={{ width: 32, height: 3, background: SAGE, marginBottom: 16, borderRadius: 2 }} />
                             <h3 style={{ fontWeight: 600, fontSize: "1rem", marginBottom: 10, color: TEXT }}>{p.title}</h3>
                             <p style={{ color: TEXT_MUTED, fontSize: "0.9rem", lineHeight: 1.7 }}>{p.body}</p>
                         </div>
@@ -215,7 +224,7 @@ export default function App() {
                             border: `1.5px solid ${plan.highlight ? CHARCOAL : SAND_BORDER}`,
                             borderRadius: 12, padding: "36px 28px",
                             display: "flex", flexDirection: "column", gap: 16,
-                            boxShadow: plan.highlight ? "0 4px 24px rgba(54,69,79,0.13)" : "none",
+                            boxShadow: plan.highlight ? "0 4px 24px rgba(90,107,120,0.15)" : "0 2px 8px rgba(0,0,0,0.03)",
                         }}>
                             <div>
                                 <div style={{ fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, opacity: 0.6 }}>
@@ -226,7 +235,7 @@ export default function App() {
                             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
                                 {plan.features.map(f => (
                                     <li key={f} style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: 8, opacity: 0.9 }}>
-                                        <span style={{ width: 16, height: 1, background: plan.highlight ? "#fff" : CHARCOAL, display: "inline-block", flexShrink: 0 }} />
+                                        <span style={{ width: 16, height: 1, background: plan.highlight ? "#fff" : SAGE, display: "inline-block", flexShrink: 0 }} />
                                         {f}
                                     </li>
                                 ))}
@@ -235,13 +244,17 @@ export default function App() {
                                 {plan.highlight
                                     ? <button style={{
                                         width: "100%", padding: "12px", background: "#fff", color: CHARCOAL,
-                                        border: "none", borderRadius: "999px", fontFamily: "inherit", fontWeight: 600,
+                                        border: "none", borderRadius: "8px", fontFamily: "inherit", fontWeight: 600,
                                         fontSize: "0.875rem", cursor: "pointer", letterSpacing: "0.04em",
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.5)",
+                                        backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.02) 100%)",
                                     }}>Choose this plan</button>
                                     : <button style={{
                                         width: "100%", padding: "12px", background: "transparent", color: CHARCOAL,
-                                        border: `1.5px solid ${CHARCOAL}`, borderRadius: "999px", fontFamily: "inherit",
+                                        border: `1.5px solid ${SAND_BORDER}`, borderRadius: "8px", fontFamily: "inherit",
                                         fontWeight: 500, fontSize: "0.875rem", cursor: "pointer", letterSpacing: "0.04em",
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.4)",
+                                        backgroundImage: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.02) 100%)",
                                     }}>Choose this plan</button>
                                 }
                             </div>
@@ -275,7 +288,7 @@ export default function App() {
                         <span key={l} style={{ cursor: "pointer" }}>{l}</span>
                     ))}
                 </div>
-                <span>© 2025 Legacy Vault. All rights reserved.</span>
+                <span>© {new Date().getFullYear()} Legacy Vault. All rights reserved.</span>
             </footer>
         </div>
     );

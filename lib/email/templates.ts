@@ -7,31 +7,54 @@ export function getWitnessInvitationEmail(
   personalMessage?: string
 ): string {
   return `
+<<<<<<< HEAD
     <div style="background-color: #EDE9E1; padding: 50px; font-family: 'Georgia', serif; color: #36454F; line-height: 1.8;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #F5F2ED; padding: 60px; border: 1px solid #D8D2C4; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
         
         <div style="text-align: center; margin-bottom: 40px;">
           <h2 style="font-weight: normal; font-style: italic; color: #9E8E82; margin: 0; font-size: 24px;">An Invitation to Bear Witness</h2>
+=======
+    <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #fdfbf7; padding: 60px; border: 1px solid #e8d8cc; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h2 style="font-weight: normal; font-style: italic; color: #d4958a; margin: 0; font-size: 24px;">An Invitation to Bear Witness</h2>
+>>>>>>> origin/claude/pastel-color-palette-avZIb
         </div>
 
         <p style="font-size: 16px; margin-bottom: 25px;">
           ${inviterName} has entrusted you with a portion of the memory of 
+<<<<<<< HEAD
           <strong style="color: #36454F;">${deceasedName}</strong>.
         </p>
 
         <p style="font-size: 16px; margin-bottom: 25px; font-style: italic; border-left: 3px solid #8AABB4; padding-left: 20px; color: #555;">
+=======
+          <strong style="color: #5a6b78;">${deceasedName}</strong>.
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 25px; font-style: italic; border-left: 3px solid #89b896; padding-left: 20px; color: #555;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           "This is not a request for photos. This is an invitation to bear witness. Your contribution will become part of the permanent historical archives."
         </p>
 
         ${personalMessage ? `
+<<<<<<< HEAD
         <div style="margin: 30px 0; padding: 20px; background-color: #F5F2ED; border: 1px dashed #D8D2C4; font-size: 15px;">
+=======
+        <div style="margin: 30px 0; padding: 20px; background-color: #fdf6f0; border: 1px dashed #e8d8cc; font-size: 15px;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           <strong>Message from ${inviterName}:</strong><br/>
           ${personalMessage}
         </div>
         ` : ''}
 
         <div style="text-align: center; margin-top: 50px;">
+<<<<<<< HEAD
           <a href="${inviteLink}" style="background-color: #36454F; color: #F5F2ED; padding: 18px 35px; text-decoration: none; border-radius: 2px; font-size: 14px; letter-spacing: 0.1em; display: inline-block; text-transform: uppercase;">
+=======
+          <a href="${inviteLink}" style="background-color: #5a6b78; color: #fdf6f0; padding: 18px 35px; text-decoration: none; border-radius: 2px; font-size: 14px; letter-spacing: 0.1em; display: inline-block; text-transform: uppercase;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
             Accept and Bear Witness
           </a>
         </div>
@@ -52,11 +75,19 @@ export function getSuccessorInvitationEmail(
   acceptLink: string
 ): string {
   return `
+<<<<<<< HEAD
     <div style="background-color: #EDE9E1; padding: 50px; font-family: 'Georgia', serif; color: #36454F; line-height: 1.8;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 60px; border: 2px solid #36454F; border-radius: 4px;">
         
         <div style="text-align: center; margin-bottom: 40px;">
           <h2 style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 18px; color: #36454F; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+=======
+    <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 60px; border: 2px solid #5a6b78; border-radius: 4px;">
+        
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h2 style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 18px; color: #5a6b78; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
             Legacy Vault Stewardship
           </h2>
         </div>
@@ -71,7 +102,11 @@ export function getSuccessorInvitationEmail(
           This is a position of significant trust. It means that in the event of their passing, you will be granted full control and legal authority over their family archives stored within Legacy Vault.
         </p>
 
+<<<<<<< HEAD
         <div style="background-color: #f8f9fa; padding: 20px; margin: 30px 0; font-size: 14px; border-left: 4px solid #36454F;">
+=======
+        <div style="background-color: #f8f9fa; padding: 20px; margin: 30px 0; font-size: 14px; border-left: 4px solid #5a6b78;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           <strong>Responsibilities include:</strong>
           <ul style="margin-top: 10px; padding-left: 20px;">
             <li>Preserving the family history</li>
@@ -85,7 +120,11 @@ export function getSuccessorInvitationEmail(
         </p>
 
         <div style="text-align: center; margin-top: 40px;">
+<<<<<<< HEAD
           <a href="${acceptLink}" style="background-color: #36454F; color: #ffffff; padding: 16px 30px; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 14px;">
+=======
+          <a href="${acceptLink}" style="background-color: #5a6b78; color: #ffffff; padding: 16px 30px; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 14px;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
             I Accept This Responsibility
           </a>
         </div>
@@ -97,9 +136,15 @@ export function getSuccessorInvitationEmail(
 
 export function getProofOfLifeEmail(userName: string, checkInLink: string): string {
   return `
+<<<<<<< HEAD
     <div style="background-color: #F5F2ED; padding: 40px; font-family: sans-serif; color: #36454F;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; border: 1px solid #D8D2C4;">
         <h2 style="font-family: serif; color: #36454F; font-size: 24px; margin-bottom: 20px;">
+=======
+    <div style="background-color: #fdf6f0; padding: 40px; font-family: sans-serif; color: #5a6b78;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; border: 1px solid #e8d8cc;">
+        <h2 style="font-family: serif; color: #5a6b78; font-size: 24px; margin-bottom: 20px;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           Legacy Vault: Annual Verification
         </h2>
         <p>Dear ${userName},</p>
@@ -112,7 +157,11 @@ export function getProofOfLifeEmail(userName: string, checkInLink: string): stri
           If you do not respond within <strong>90 days</strong>, we will notify your designated successor.
         </p>
         <div style="text-align: center; margin: 30px 0;">
+<<<<<<< HEAD
           <a href="${checkInLink}" style="background-color: #8AABB4; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+=======
+          <a href="${checkInLink}" style="background-color: #89b896; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
             I am here - Reset Timer
           </a>
         </div>
@@ -130,9 +179,15 @@ export function getSuccessorAlertEmail(
   claimLink: string
 ): string {
   return `
+<<<<<<< HEAD
     <div style="background-color: #F5F2ED; padding: 40px; font-family: sans-serif; color: #36454F;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; border: 2px solid #9E8E82;">
         <h2 style="font-family: serif; color: #9E8E82; font-size: 24px; margin-bottom: 20px; text-transform: uppercase;">
+=======
+    <div style="background-color: #fdf6f0; padding: 40px; font-family: sans-serif; color: #5a6b78;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; border: 2px solid #d4958a;">
+        <h2 style="font-family: serif; color: #d4958a; font-size: 24px; margin-bottom: 20px; text-transform: uppercase;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           Urgent: Archive Status Alert
         </h2>
         <p>Dear ${successorName},</p>
@@ -143,12 +198,20 @@ export function getSuccessorAlertEmail(
           We have not received a response from ${ownerName} regarding their annual verification check for over 90 days. 
           Per their instructions, we are notifying you to investigate their status.
         </p>
+<<<<<<< HEAD
         <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #9E8E82; margin: 20px 0;">
+=======
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #d4958a; margin: 20px 0;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
           <strong>Next Steps:</strong><br/>
           If ${ownerName} has passed away or is incapacitated, please use the link below to begin the archive transfer process.
         </div>
         <div style="text-align: center; margin: 30px 0;">
+<<<<<<< HEAD
           <a href="${claimLink}" style="background-color: #36454F; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+=======
+          <a href="${claimLink}" style="background-color: #5a6b78; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+>>>>>>> origin/claude/pastel-color-palette-avZIb
             View Options & Report Status
           </a>
         </div>

@@ -75,7 +75,7 @@ export default function ConciergeRequestPage() {
                             />
                             <button
                                 type="submit"
-                                className="px-6 py-3 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-all"
+                                className="px-6 py-3 bg-charcoal text-ivory rounded-lg btn-paper font-medium hover:bg-charcoal/90 transition-all"
                             >
                                 Notify Me
                             </button>

@@ -167,7 +167,15 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     {!paidArchive && (
                         <button
                             onClick={handleCreate}
+<<<<<<< HEAD
                             className="flex items-center gap-2 px-5 py-2.5 bg-charcoal text-ivory rounded-full text-sm font-medium hover:bg-charcoal/90 transition-all"
+=======
+                            disabled={memorials.length >= 1}
+                            className={`btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 ${memorials.length >= 1
+                                    ? 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory'
+                                }`}
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                         >
                             <Plus size={16} />
                             Create Archive
@@ -178,8 +186,24 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 
             <div className="max-w-4xl mx-auto px-6 py-10">
                 {loading ? (
+<<<<<<< HEAD
                     <div className="flex justify-center py-24">
                         <Loader2 size={40} className="text-charcoal/30 animate-spin" />
+=======
+                    <div className="text-center py-20">
+                        <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
+                    </div>
+                ) : memorials.length === 0 ? (
+                    <div className="text-center py-20">
+                        <div className="w-24 h-24 bg-sage/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <User size={48} className="text-sage" />
+                        </div>
+                        <h2 className="font-serif text-3xl text-charcoal mb-3">Create Your Memorial</h2>
+                        <button onClick={handleCreate} className="btn-paper inline-flex items-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold">
+                            <Plus size={20} />
+                            Create
+                        </button>
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                     </div>
                 ) : paidArchive ? (
                     <ActiveArchive
@@ -189,6 +213,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         copied={copied}
                     />
                 ) : (
+<<<<<<< HEAD
                     <div className="text-center py-24">
                         <div className="w-20 h-20 bg-parchment border border-sand rounded-full flex items-center justify-center mx-auto mb-6">
                             <User size={36} className="text-charcoal/30" />
@@ -204,6 +229,40 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                             <Plus size={16} />
                             Create my archive
                         </button>
+=======
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {memorials.map((memorial) => (
+                            <div key={memorial.id} className="bg-white rounded-xl shadow-sm border border-sand/30 overflow-hidden">
+                                <div className="relative h-48 bg-gradient-to-br from-sage/10 to-sage/20">
+                                    {memorial.profile_photo_url ? (
+                                        <img src={memorial.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <User size={64} className="text-charcoal/20" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="font-serif text-2xl text-charcoal mb-4">{memorial.full_name || 'Untitled'}</h3>
+                                    <div className="flex gap-2">
+                                        <Link href={`/person/${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm">
+                                            <Eye size={16} className="inline mr-1" />View
+                                        </Link>
+                                        <Link href={`/create?id=${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm">
+                                            <Edit size={16} className="inline mr-1" />Edit
+                                        </Link>
+                                        <button
+                                            onClick={() => softDeleteMemorial(memorial.id)}
+                                            className="btn-paper py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+>>>>>>> origin/claude/pastel-color-palette-avZIb
                     </div>
                 )}
 
