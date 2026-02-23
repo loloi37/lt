@@ -143,7 +143,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
                     <button
                         onClick={handleAcceptance}
                         disabled={!accepted || processing}
-                        className={`w-full py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${accepted && !processing
+                        className={`btn-paper w-full py-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${accepted && !processing
                                 ? 'bg-charcoal text-ivory shadow-lg hover:bg-charcoal/90'
                                 : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                             }`}

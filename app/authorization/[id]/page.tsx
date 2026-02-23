@@ -492,7 +492,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             isSubmitting || 
                             (wantsVideo && !videoBlob) // <--- ADD THIS CHECK
                         }
-                        className="w-full py-4 rounded-xl bg-charcoal text-ivory font-medium shadow-lg hover:bg-charcoal/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        className="btn-paper w-full py-4 rounded-lg bg-charcoal text-ivory font-medium shadow-lg hover:bg-charcoal/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Shield size={20} />}
                         {isAccountLevel ? 'Authorize Family Account' : 'Authorize Memorial'}

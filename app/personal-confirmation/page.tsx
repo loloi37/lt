@@ -259,6 +259,7 @@ function PersonalConfirmationContent() {
                                 )}
                             </div>
                             <div className="flex-1">
+<<<<<<< HEAD
                                 <h4 className="font-semibold text-charcoal mb-1">Memorial Authorization</h4>
                                 {authorizationCompleted ? (
                                     <p className="text-sm text-charcoal/60 mb-4">
@@ -293,6 +294,24 @@ function PersonalConfirmationContent() {
                                         Waiting for authorization to be completed…
                                     </p>
                                 )}
+=======
+                                <h4 className="font-semibold text-charcoal mb-2">Required: Memorial Authorization</h4>
+                                <p className="text-sm text-charcoal/70 mb-4">
+                                    Before proceeding to payment, you must review and complete the Memorial Authorization Form. This establishes your legal authority to create a memorial.
+                                </p>
+                                <Link
+                                    href="/legal/memorial-authorization"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg btn-paper text-sm font-medium transition-all"
+                                >
+                                    <ExternalLink size={16} />
+                                    Open Memorial Authorization Form
+                                </Link>
+                                <p className="text-xs text-charcoal/60 mt-3">
+                                    This will open in a new tab. You can close it when done and return here to proceed with payment.
+                                </p>
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                             </div>
                         </div>
                     </div>
@@ -301,12 +320,20 @@ function PersonalConfirmationContent() {
                 {/* Payment Button */}
                 <button
                     onClick={handlePayment}
+<<<<<<< HEAD
                     disabled={!canPay}
                     className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
                         canPay
                             ? 'bg-charcoal hover:bg-charcoal/90 text-ivory hover:shadow-lg'
                             : 'bg-sand/30 text-charcoal/30 cursor-not-allowed'
                     }`}
+=======
+                    disabled={!acceptedTerms || isProcessing}
+                    className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
+                        ? 'bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory'
+                        : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
+                        }`}
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                 >
                     {isProcessing ? (
                         <>

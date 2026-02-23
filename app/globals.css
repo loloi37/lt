@@ -35,11 +35,11 @@
 
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(138, 154, 91, 0.3);
+    box-shadow: 0 0 20px rgba(137, 184, 150, 0.3);
   }
 
   50% {
-    box-shadow: 0 0 30px rgba(138, 154, 91, 0.6);
+    box-shadow: 0 0 30px rgba(137, 184, 150, 0.6);
   }
 }
 
@@ -63,11 +63,14 @@
 
 @layer base {
   :root {
-    --color-ivory: #f9f7f3;
-    --color-charcoal: #2c3e50;
-    --color-sand: #d7ccc8;
-    --color-terracotta: #a0522d;
-    --color-sage: #8a9a5b;
+    --color-ivory: #fdf6f0;
+    --color-charcoal: #5a6b78;
+    --color-sand: #e8d8cc;
+    --color-terracotta: #d4958a;
+    --color-sage: #89b896;
+    --color-lavender: #b5a7c7;
+    --color-blush: #f0c4c8;
+    --color-peach: #f0c4a8;
   }
 
   body {
@@ -86,5 +89,36 @@
 
   .font-serif {
     font-family: var(--font-cormorant), Georgia, serif;
+  }
+
+  .btn-paper {
+    border-radius: 8px;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.02) 100%
+    );
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  .btn-paper:hover {
+    box-shadow:
+      0 4px 8px rgba(0, 0, 0, 0.07),
+      0 2px 4px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .btn-paper:active {
+    transform: translateY(0);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.06),
+      inset 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 }

@@ -56,7 +56,11 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('personal')}
                         disabled={!userId}
+<<<<<<< HEAD
                         className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-mist/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+=======
+                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-mist to-mist/80 rounded-2xl flex items-center justify-center mb-6">
                             <User size={32} className="text-ivory" />
@@ -72,7 +76,11 @@ export default function ChoicePage() {
                     <button
                         onClick={() => handleModeSelection('family')}
                         disabled={!userId}
+<<<<<<< HEAD
                         className="p-8 rounded-2xl border-2 border-sand/40 bg-white hover:border-stone/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+=======
+                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-stone to-stone/80 rounded-2xl flex items-center justify-center mb-6">
                             <Users size={32} className="text-ivory" />
@@ -87,7 +95,11 @@ export default function ChoicePage() {
                     {/* NEW: Concierge Mode */}
                     <button
                         onClick={handleConciergeSelection}
+<<<<<<< HEAD
                         className="p-8 rounded-2xl border-2 border-mist/40 bg-gradient-to-br from-mist/5 to-stone/5 hover:border-mist/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
+=======
+                        className="btn-paper p-8 rounded-xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                     >
                         {/* Premium badge */}
                         <div className="absolute top-4 right-4 px-3 py-1 bg-mist/20 text-mist text-xs font-semibold rounded-full border border-mist/30">

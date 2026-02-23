@@ -244,7 +244,11 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                     <p className="text-charcoal/60 mb-6">{error || 'This project does not exist.'}</p>
                     <button
                         onClick={() => router.push('/choice-pricing')}
+<<<<<<< HEAD
                         className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all"
+=======
+                        className="btn-paper px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all"
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                     >
                         Go to Home
                     </button>
@@ -417,7 +421,11 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
                         <button
                             onClick={handleSendNote}
                             disabled={!newNote.trim() || sendingNote}
+<<<<<<< HEAD
                             className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed self-end"
+=======
+                            className="btn-paper px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed self-end"
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                         >
                             {sendingNote ? (
                                 <Loader2 size={18} className="animate-spin" />

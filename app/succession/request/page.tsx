@@ -75,7 +75,7 @@ export default function SuccessionRequestPage() {
                         <br /><br />
                         By law, a <strong>30-day notice period</strong> will now follow to allow for any family contestations. You will receive an email once the transfer is complete.
                     </p>
-                    <Link href="/" className="bg-charcoal text-ivory px-8 py-3 rounded-xl font-medium block">Return to Home</Link>
+                    <Link href="/" className="btn-paper bg-charcoal text-ivory px-8 py-3 rounded-lg font-medium block">Return to Home</Link>
                 </div>
             </div>
         );
@@ -160,7 +160,7 @@ export default function SuccessionRequestPage() {
                         <button
                             disabled={submitting}
                             type="submit"
-                            className="w-full py-4 bg-charcoal text-ivory rounded-xl font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                            className="btn-paper w-full py-4 bg-charcoal text-ivory rounded-lg font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
                         >
                             {submitting ? <Loader2 className="animate-spin" size={20} /> : "Submit Formal Request"}
                         </button>

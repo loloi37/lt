@@ -2,11 +2,19 @@
 
 export const ARCHE_CSS = `
   :root {
+<<<<<<< HEAD
     --color-ivory: #F5F2ED;
     --color-charcoal: #36454F;
     --color-sand: #D8D2C4;
     --color-stone: #9E8E82;
     --color-mist: #8AABB4;
+=======
+    --color-ivory: #fdf6f0;
+    --color-charcoal: #5a6b78;
+    --color-sand: #e8d8cc;
+    --color-terracotta: #d4958a;
+    --color-sage: #89b896;
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
     --font-sans: system-ui, -apple-system, sans-serif;
     --font-serif: Georgia, 'Times New Roman', serif;
   }

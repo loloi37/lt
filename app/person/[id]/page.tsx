@@ -131,10 +131,20 @@ export default function PersonMemorialPage({ params }: {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
                 <div className="text-center max-w-md">
+<<<<<<< HEAD
                     <h1 className="font-serif text-3xl text-charcoal mb-3">Archive not found</h1>
                     <p className="text-charcoal/60 mb-6">{error || 'This archive does not exist.'}</p>
                     <a href="/" className="inline-block px-6 py-3 border border-charcoal text-charcoal rounded-full text-sm font-medium hover:bg-charcoal hover:text-ivory transition-all">
                         Return home
+=======
+                    <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-4xl">😔</span>
+                    </div>
+                    <h1 className="font-serif text-3xl text-charcoal mb-3">Memorial Not Found</h1>
+                    <p className="text-charcoal/60 mb-6">{error || 'This memorial does not exist.'}</p>
+                    <a href="/dashboard" className="btn-paper inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all">
+                        Go to Dashboard
+>>>>>>> a4f7f7fb2118bb7f03022eb0256075d77c94f3a9
                     </a>
                 </div>
             </div>
