@@ -110,11 +110,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                             {/* Upgrade CTA */}
                             <button
                                 onClick={() => router.push('/choice-pricing')}
-<<<<<<< HEAD
-                                className="px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 border-2 border-mist text-mist hover:bg-mist/10 transition-all text-sm"
-=======
                                 className="btn-paper px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage text-sage hover:bg-sage/10 transition-all text-sm"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                             >
                                 <ArrowUpCircle size={18} />
                                 Upgrade to Personal
@@ -143,11 +139,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                     </div>
                     <button
                         onClick={() => memorials.length > 0 ? handleUpgrade(memorials[0].id) : router.push('/personal-confirmation')}
-<<<<<<< HEAD
-                        className="ml-6 flex-shrink-0 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-semibold transition-all flex items-center gap-2"
-=======
                         className="btn-paper ml-6 flex-shrink-0 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold transition-all flex items-center gap-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                     >
                         <ArrowUpCircle size={18} />
                         Upgrade Now ($1,500)
@@ -222,11 +214,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                     {/* Per-memorial upgrade button */}
                                     <button
                                         onClick={() => handleUpgrade(memorial.id)}
-<<<<<<< HEAD
-                                        className="w-full py-2.5 px-3 bg-gradient-to-r from-mist to-mist/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
-=======
                                         className="btn-paper w-full py-2.5 px-3 bg-gradient-to-r from-sage to-sage/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                     >
                                         <ArrowUpCircle size={16} />
                                         Upgrade to Personal ($1,500)

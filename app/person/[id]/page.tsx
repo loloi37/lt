@@ -97,7 +97,7 @@ export default function PersonMemorialPage({ params }: {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 size={48} className="text-mist animate-spin mx-auto mb-4" />
+                    <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
                     <p className="text-charcoal/60">Loading archive...</p>
                 </div>
             </div>
@@ -131,12 +131,6 @@ export default function PersonMemorialPage({ params }: {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
                 <div className="text-center max-w-md">
-<<<<<<< HEAD
-                    <h1 className="font-serif text-3xl text-charcoal mb-3">Archive not found</h1>
-                    <p className="text-charcoal/60 mb-6">{error || 'This archive does not exist.'}</p>
-                    <a href="/" className="inline-block px-6 py-3 border border-charcoal text-charcoal rounded-full text-sm font-medium hover:bg-charcoal hover:text-ivory transition-all">
-                        Return home
-=======
                     <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-4xl">😔</span>
                     </div>
@@ -144,10 +138,9 @@ export default function PersonMemorialPage({ params }: {
                     <p className="text-charcoal/60 mb-6">{error || 'This memorial does not exist.'}</p>
                     <a href="/dashboard" className="btn-paper inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all">
                         Go to Dashboard
->>>>>>> origin/claude/pastel-color-palette-avZIb
                     </a>
                 </div>
-            </div>
+            </div >
         );
     }
 

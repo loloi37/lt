@@ -43,7 +43,7 @@ export default function ContentPolicyPage() {
             {/* Hero Section */}
             <div className="bg-gradient-to-br from-mist/10 via-ivory to-stone/10 border-b border-sand/30">
                 <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-mist/20 text-mist rounded-full border border-mist/30 mb-6">
+                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-sage/20 text-sage rounded-full border border-sage/30 mb-6">
                         <Heart size={16} />
                         <span className="text-sm font-medium">Community Standards</span>
                     </div>
@@ -55,7 +55,7 @@ export default function ContentPolicyPage() {
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-6 text-sm text-charcoal/60">
                         <span className="flex items-center gap-2">
-                            <Clock size={16} className="text-mist" />
+                            <Clock size={16} className="text-sage" />
                             Updated Feb 2026
                         </span>
                         <span className="flex items-center gap-2">
@@ -78,7 +78,7 @@ export default function ContentPolicyPage() {
                                     <a
                                         key={idx}
                                         href={`#${section.id}`}
-                                        className="block text-sm text-charcoal/60 hover:text-mist hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-mist"
+                                        className="block text-sm text-charcoal/60 hover:text-sage hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-sage"
                                     >
                                         {section.title}
                                     </a>
@@ -218,22 +218,14 @@ export default function ContentPolicyPage() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
                                     href="mailto:reports@legacyvault.com"
-<<<<<<< HEAD
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all"
-=======
                                     className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     <Mail size={18} />
                                     Report Content
                                 </a>
                                 <Link
                                     href="/legal/terms"
-<<<<<<< HEAD
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-mist text-charcoal rounded-xl font-medium transition-all"
-=======
                                     className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-sage text-charcoal rounded-lg font-medium transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     <FileText size={18} />
                                     Terms of Service

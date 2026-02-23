@@ -763,11 +763,7 @@ function CreateMemorialPageContent() {
                 }
               }}
               id="btn-export-zip"
-<<<<<<< HEAD
-              className="flex items-center gap-2 px-3 py-1.5 bg-mist text-ivory border border-mist rounded-xl hover:opacity-90 transition-all text-xs ml-2"
-=======
               className="flex items-center gap-2 px-3 py-1.5 btn-paper bg-sage text-ivory border border-sage rounded-lg hover:opacity-90 transition-all text-xs ml-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
               title="Download the full offline archive (ZIP)"
             >
               <span className="hidden sm:inline">📦 Export ZIP</span>
@@ -874,11 +870,7 @@ function CreateMemorialPageContent() {
                     <p className="text-sm text-charcoal/60">Invite family and friends to add their own stories and shared memories.</p>
                   </div>
                 </div>
-<<<<<<< HEAD
-                <div className="px-6 py-2 bg-mist text-ivory rounded-full text-sm font-bold">
-=======
                 <div className="px-6 py-2 bg-sage text-ivory rounded-lg btn-paper text-sm font-bold">
->>>>>>> origin/claude/pastel-color-palette-avZIb
                   Open for Contributions
                 </div>
               </button>
@@ -905,11 +897,7 @@ function CreateMemorialPageContent() {
                 </Link>
                 <button
                   onClick={() => alert("Invite Witnesses feature coming soon!")}
-<<<<<<< HEAD
-                  className="px-8 py-3 border border-mist text-mist rounded-xl font-medium hover:bg-mist/5 transition-all"
-=======
                   className="px-8 py-3 border border-sage text-sage rounded-lg btn-paper font-medium hover:bg-sage/5 transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                 >
                   Invite Witnesses
                 </button>
@@ -933,11 +921,7 @@ function CreateMemorialPageContent() {
                       : '/personal-confirmation';
                     router.push(upgradeUrl);
                   }}
-<<<<<<< HEAD
-                  className="px-12 py-4 bg-stone text-ivory rounded-xl font-bold hover:scale-105 transition-all shadow-lg"
-=======
                   className="px-12 py-4 bg-terracotta text-ivory rounded-lg btn-paper font-bold hover:scale-105 transition-all shadow-lg"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                 >
                   {mode === 'draft' ? 'Upgrade to Personal ($1,500)' : 'Become a Permanent Guardian ($1,500)'}
                 </button>

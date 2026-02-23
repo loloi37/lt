@@ -92,14 +92,9 @@ export default function SuccessPage() {
                         </div>
                         <button
                             onClick={copyToClipboard}
-<<<<<<< HEAD
-                            className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
-                                    ? 'bg-mist text-ivory'
-=======
                             className={`btn-paper px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
-                                    ? 'bg-sage text-ivory'
->>>>>>> origin/claude/pastel-color-palette-avZIb
-                                    : 'bg-white border border-sand/40 text-charcoal hover:bg-sand/10'
+                                ? 'bg-sage text-ivory'
+                                : 'bg-white border border-sand/40 text-charcoal hover:bg-sand/10'
                                 }`}
                         >
                             {copied ? (
@@ -121,11 +116,7 @@ export default function SuccessPage() {
                 <div className="space-y-3 mb-8">
                     <Link
                         href={memorialUrl}
-<<<<<<< HEAD
-                        className="w-full py-4 bg-gradient-to-r from-mist to-mist/90 hover:shadow-lg text-ivory rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-=======
                         className="btn-paper w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                     >
                         <Eye size={20} />
                         View Memorial Page
@@ -134,11 +125,7 @@ export default function SuccessPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={shareViaEmail}
-<<<<<<< HEAD
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-mist hover:bg-mist/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
-=======
                             className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-sage hover:bg-sage/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                         >
                             <Mail size={18} />
                             Share via Email
@@ -146,11 +133,7 @@ export default function SuccessPage() {
 
                         <button
                             onClick={copyToClipboard}
-<<<<<<< HEAD
-                            className="py-3 bg-white border-2 border-sand/40 hover:border-stone hover:bg-stone/5 text-charcoal rounded-xl font-medium transition-all flex items-center justify-center gap-2"
-=======
                             className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-terracotta hover:bg-terracotta/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                         >
                             <Share2 size={18} />
                             Share Link
@@ -199,11 +182,7 @@ export default function SuccessPage() {
 
                     <Link
                         href="/create"
-<<<<<<< HEAD
-                        className="flex-1 py-3 bg-stone/10 border-2 border-stone/30 hover:bg-stone/20 text-stone rounded-xl font-medium transition-all flex items-center justify-center gap-2"
-=======
                         className="btn-paper flex-1 py-3 bg-terracotta/10 border-2 border-terracotta/30 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium transition-all flex items-center justify-center gap-2"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                     >
                         <Sparkles size={18} />
                         Create Another

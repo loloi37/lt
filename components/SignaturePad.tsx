@@ -30,18 +30,14 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         // Style
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-<<<<<<< HEAD
-        ctx.strokeStyle = '#36454F'; // Charcoal color
-=======
         ctx.strokeStyle = '#5a6b78'; // Charcoal color
->>>>>>> origin/claude/pastel-color-palette-avZIb
     }, []);
 
     const getCoords = (e: React.MouseEvent | React.TouchEvent) => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
-        
+
         let clientX, clientY;
         if ('touches' in e) {
             clientX = e.touches[0].clientX;
@@ -61,7 +57,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         setIsDrawing(true);
         const ctx = canvasRef.current?.getContext('2d');
         if (!ctx) return;
-        
+
         const coords = getCoords(e);
         ctx.beginPath();
         ctx.moveTo(coords.x, coords.y);
@@ -75,7 +71,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         const coords = getCoords(e);
         ctx.lineTo(coords.x, coords.y);
         ctx.stroke();
-        
+
         if (!hasSignature) setHasSignature(true);
     };
 
@@ -92,7 +88,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setHasSignature(false);
         onEnd(null);
@@ -112,7 +108,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
                     onTouchMove={draw}
                     onTouchEnd={endDrawing}
                 />
-                
+
                 {!hasSignature && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-charcoal/20">
                         <div className="flex items-center gap-2 text-sm font-handwriting">
@@ -121,9 +117,9 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
                     </div>
                 )}
             </div>
-            
+
             <div className="flex justify-end mt-2">
-                <button 
+                <button
                     onClick={clear}
                     className="text-xs flex items-center gap-1 text-charcoal/50 hover:text-stone transition-colors"
                 >

@@ -3,9 +3,9 @@ import path from 'path';
 import Link from 'next/link';
 import { ArrowLeft, Shield, Lock, Eye, FileText, Clock, Mail } from 'lucide-react';
 
-export default function PrivacyPage() {
+export default function TermsPage() {
     // Read the markdown file
-    const filePath = path.join(process.cwd(), 'content/legal/privacy.md');
+    const filePath = path.join(process.cwd(), 'content/legal/terms.md');
     const content = fs.readFileSync(filePath, 'utf8');
 
     // Parse the markdown content to extract sections for the TOC
@@ -36,12 +36,12 @@ export default function PrivacyPage() {
             {/* Hero Section */}
             <div className="bg-gradient-to-br from-mist/10 via-ivory to-stone/10 border-b border-sand/30">
                 <div className="max-w-4xl mx-auto px-6 py-16 text-center">
-                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-mist/20 text-mist rounded-full border border-mist/30 mb-6">
+                    <div className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-sage/20 text-sage rounded-full border border-sage/30 mb-6">
                         <Shield size={16} />
                         <span className="text-sm font-medium">Your Data is Sacred</span>
                     </div>
                     <h1 className="font-serif text-5xl md:text-6xl text-charcoal mb-4">
-                        Privacy Policy
+                        Terms of Service
                     </h1>
                     <p className="text-lg text-charcoal/70 max-w-2xl mx-auto leading-relaxed">
                         We treat your memorial data with the same care and reverence that you would give to a family archive.
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
                     </p>
                     <div className="mt-8 flex items-center justify-center gap-6 text-sm text-charcoal/60">
                         <span className="flex items-center gap-2">
-                            <Clock size={16} className="text-mist" />
+                            <Clock size={16} className="text-sage" />
                             Updated Feb 2026
                         </span>
                         <span className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
                                     <a
                                         key={idx}
                                         href={`#${section.id}`}
-                                        className="block text-sm text-charcoal/60 hover:text-mist hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-mist"
+                                        className="block text-sm text-charcoal/60 hover:text-sage hover:pl-2 transition-all py-1 border-l-2 border-transparent hover:border-sage"
                                     >
                                         {section.title}
                                     </a>
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
 
                             <div className="mt-8 p-4 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border border-sand/30">
                                 <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
-                                    <Mail size={16} className="text-mist" />
+                                    <Mail size={16} className="text-sage" />
                                     Questions?
                                 </h4>
                                 <p className="text-xs text-charcoal/60 mb-3">
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
                                 </p>
                                 <a
                                     href="mailto:privacy@legacyvault.com"
-                                    className="text-xs text-mist hover:text-mist/80 underline"
+                                    className="text-xs text-sage hover:text-sage/80 underline"
                                 >
                                     privacy@legacyvault.com
                                 </a>
@@ -195,26 +195,18 @@ export default function PrivacyPage() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
-                                    href="mailto:privacy@legacyvault.com"
-<<<<<<< HEAD
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-medium transition-all"
-=======
+                                    href="mailto:legal@legacyvault.com"
                                     className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     <Mail size={18} />
-                                    Contact DPO
+                                    Contact Legal
                                 </a>
                                 <Link
-                                    href="/legal/terms"
-<<<<<<< HEAD
-                                    className="inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-mist text-charcoal rounded-xl font-medium transition-all"
-=======
+                                    href="/legal/privacy"
                                     className="btn-paper inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-sand/40 hover:border-sage text-charcoal rounded-lg font-medium transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     <FileText size={18} />
-                                    View Terms of Service
+                                    View Privacy Policy
                                 </Link>
                             </div>
                         </div>

@@ -198,11 +198,7 @@ export default function ConciergeConfirmationPage() {
                                     href="/legal/memorial-authorization"
                                     target="_blank"
                                     rel="noopener noreferrer"
-<<<<<<< HEAD
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-mist hover:bg-mist/90 text-ivory rounded-lg text-sm font-medium transition-all"
-=======
                                     className="inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg btn-paper text-sm font-medium transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                 >
                                     <ExternalLink size={16} />
                                     Open Memorial Authorization Form
@@ -219,13 +215,8 @@ export default function ConciergeConfirmationPage() {
                 <button
                     onClick={handlePayment}
                     disabled={!acceptedTerms || isProcessing}
-<<<<<<< HEAD
-                    className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
-                        ? 'bg-gradient-to-r from-mist via-stone to-mist/90 hover:shadow-lg text-ivory'
-=======
                     className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
                         ? 'bg-gradient-to-r from-sage via-terracotta to-sage/90 hover:shadow-lg text-ivory'
->>>>>>> origin/claude/pastel-color-palette-avZIb
                         : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
                         }`}
                 >

@@ -138,22 +138,14 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                         <div className="flex gap-3">
                             <Link
                                 href={`/dashboard/family/${userId}/tree`}
-<<<<<<< HEAD
-                                className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 border-2 border-mist/20 text-mist hover:bg-mist/5 transition-all"
-=======
                                 className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage/20 text-sage hover:bg-sage/5 transition-all"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                             >
                                 <Network size={20} />
                                 View Constellation
                             </Link>
                             <button
                                 onClick={handleCreate}
-<<<<<<< HEAD
-                                className="px-6 py-3 rounded-xl font-semibold flex items-center gap-2 bg-gradient-to-r from-mist to-mist/90 hover:shadow-lg text-ivory"
-=======
                                 className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory"
->>>>>>> origin/claude/pastel-color-palette-avZIb
                             >
                                 <Plus size={20} />
                                 Create Memorial
@@ -194,7 +186,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
                 {loading ? (
                     <div className="text-center py-20">
-                        <Loader2 size={48} className="text-mist animate-spin mx-auto mb-4" />
+                        <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
                     </div>
                 ) : memorials.length === 0 && deletedMemorials.length === 0 ? (
                     <div className="text-center py-20">
@@ -202,11 +194,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                             <User size={48} className="text-mist" />
                         </div>
                         <h2 className="font-serif text-3xl text-charcoal mb-3">Create Your First Memorial</h2>
-<<<<<<< HEAD
-                        <button onClick={handleCreate} className="inline-flex items-center gap-2 px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl font-semibold">
-=======
                         <button onClick={handleCreate} className="btn-paper inline-flex items-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold">
->>>>>>> origin/claude/pastel-color-palette-avZIb
                             <Plus size={20} />
                             Create
                         </button>
@@ -227,17 +215,10 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                 <div className="p-6">
                                     <h3 className="font-serif text-2xl text-charcoal mb-4">{memorial.full_name || 'Untitled'}</h3>
                                     <div className="flex gap-2">
-<<<<<<< HEAD
-                                        <Link href={`/person/${memorial.id}`} className="flex-1 py-2 px-3 bg-mist/10 hover:bg-mist/20 text-mist rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
-                                            <Eye size={16} /> View
-                                        </Link>
-                                        <Link href={`/create?id=${memorial.id}`} className="flex-1 py-2 px-3 bg-stone/10 hover:bg-stone/20 text-stone rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
-=======
                                         <Link href={`/person/${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
                                             <Eye size={16} /> View
                                         </Link>
                                         <Link href={`/create?id=${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
->>>>>>> origin/claude/pastel-color-palette-avZIb
                                             <Edit size={16} /> Edit
                                         </Link>
                                         <button
