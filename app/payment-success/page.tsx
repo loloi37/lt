@@ -1,26 +1,28 @@
 // app/payment-success/page.tsx
+// Step 2.2: Post-payment ritual page — solemn and warm
 'use client';
-import { useEffect, Suspense } from 'react';
+
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 function PaymentSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const memorialId = searchParams.get('id');
-    // plan comes from the Stripe success_url we set: ?plan=personal or ?plan=family
     const planParam = searchParams.get('plan') || 'personal';
+
+    const [phase, setPhase] = useState<'finalizing' | 'sealed' | 'redirecting'>('finalizing');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const finalizePayment = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                console.error('No valid memorial ID');
-                alert('Payment successful, but no archive was created. Please contact support with your payment confirmation.');
+                setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
                 return;
             }
 
             try {
-                console.log('Calling finalize-payment API for:', memorialId);
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -33,49 +35,87 @@ function PaymentSuccessContent() {
                     throw new Error(result.error);
                 }
 
-                console.log("Archive successfully activated:", result.message);
+                // Phase 2: Show the "sealed" message
+                setPhase('sealed');
 
-                // Redirect to the correct dashboard.
-                // Use plan from URL (set by create-checkout) rather than potentially stale localStorage.
-                // Draft upgrades → plan=personal → /dashboard/personal/...
+                // After 4 seconds, begin redirect
                 setTimeout(() => {
+                    setPhase('redirecting');
                     const userId = localStorage.getItem('user-id');
-                    // Normalise: 'personal' or 'family' — anything else defaults to 'personal'
                     const mode = planParam === 'family' ? 'family' : 'personal';
-
-                    // Update localStorage so subsequent navigation is consistent
                     localStorage.setItem('legacy-vault-mode', mode);
 
-                    if (userId) {
-                        router.push(`/dashboard/${mode}/${userId}`);
-                    } else {
-                        router.push(`/create?id=${memorialId}`);
-                    }
-                }, 3000);
+                    setTimeout(() => {
+                        if (userId) {
+                            router.push(`/dashboard/${mode}/${userId}`);
+                        } else {
+                            router.push(`/create?id=${memorialId}`);
+                        }
+                    }, 2000);
+                }, 4000);
 
             } catch (err: any) {
-                console.error("Finalization failed:", err);
-                alert(`Payment successful, but finalization failed: ${err.message}. Please contact support.`);
+                console.error('Finalization failed:', err);
+                setError(`Payment successful, but finalization encountered an issue: ${err.message}. Your archive is safe. Please contact support.`);
             }
         };
 
         finalizePayment();
     }, [memorialId, planParam, router]);
 
+    if (error) {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+                <div className="max-w-md text-center">
+                    <p className="text-charcoal/60 mb-6 leading-relaxed">{error}</p>
+                    <a
+                        href="mailto:support@legacyvault.com"
+                        className="text-sm text-charcoal/40 underline hover:text-charcoal transition-colors"
+                    >
+                        Contact support@legacyvault.com
+                    </a>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
             <div className="text-center max-w-md">
-                <div className="w-20 h-20 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-                    <CheckCircle className="text-mist" size={40} />
-                </div>
-                <h1 className="font-serif text-4xl text-charcoal mb-4">Payment Successful</h1>
-                <p className="text-charcoal/60 mb-8 leading-relaxed">
-                    We are finalizing your eternal archive. Please wait a moment while we remove the watermarks...
-                </p>
-                <div className="flex items-center justify-center gap-2 text-mist font-medium">
-                    <Loader2 className="animate-spin" size={20} />
-                    <span>Redirecting to your dashboard...</span>
-                </div>
+                {phase === 'finalizing' && (
+                    <div className="animate-fadeIn">
+                        <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
+                        <p className="text-charcoal/40 text-sm">
+                            Sealing the archive...
+                        </p>
+                    </div>
+                )}
+
+                {phase === 'sealed' && (
+                    <div className="animate-fadeIn">
+                        <div className="w-20 h-20 bg-charcoal/5 rounded-full flex items-center justify-center mx-auto mb-8">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/50">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <h1 className="font-serif text-4xl text-charcoal mb-4">
+                            The archive is sealed.
+                        </h1>
+                        <p className="text-charcoal/40 leading-relaxed text-sm">
+                            What you have built is now permanent.
+                            It will endure, be shared, and be passed on.
+                        </p>
+                    </div>
+                )}
+
+                {phase === 'redirecting' && (
+                    <div className="animate-fadeIn">
+                        <div className="flex items-center justify-center gap-2 text-charcoal/25 text-xs">
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>Taking you to your archive...</span>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -83,7 +123,11 @@ function PaymentSuccessContent() {
 
 export default function PaymentSuccessPage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-ivory flex items-center justify-center">
+                <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+            </div>
+        }>
             <PaymentSuccessContent />
         </Suspense>
     );

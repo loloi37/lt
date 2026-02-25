@@ -184,10 +184,15 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 localStorage.setItem(`lv-auth-${memorialId}`, 'done');
                 // No auto-redirect — user closes the window manually
             } else {
-                // Normal flow: redirect back after 3.5 s
+                // Step 2.3.3: Post-signature, pre-payment transition
+                // Show "Your authorization has been recorded" for 3 seconds
+                // then redirect to the payment page
                 setTimeout(() => {
                     const redirectTo = searchParams.get('redirect');
-                    if (redirectTo === 'personal') {
+                    if (redirectTo === 'payment') {
+                        // New flow: authorization → payment page
+                        router.push(`/payment?memorialId=${memorialId}`);
+                    } else if (redirectTo === 'personal') {
                         router.push('/personal-confirmation?authorized=true');
                     } else if (redirectTo === 'family') {
                         router.push('/family-confirmation?authorized=true');
@@ -196,7 +201,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                     } else {
                         router.push(`/create?id=${memorialId}&authorized=true`);
                     }
-                }, 3500);
+                }, 3000);
             }
 
         } catch (err: any) {
@@ -504,9 +509,10 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             <div className="w-16 h-16 bg-charcoal rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Check className="text-ivory" size={28} strokeWidth={2.5} />
                             </div>
-                            <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Complete</h2>
-                            <p className="text-charcoal/60 mb-8 leading-relaxed">
-                                Your legal declaration and signature have been recorded.
+                            <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Recorded</h2>
+                            {/* Step 2.3.3: Transition message before payment */}
+                            <p className="text-charcoal/50 mb-8 leading-relaxed">
+                                Your authorization has been recorded. You may now proceed to payment.
                             </p>
 
                             {isPopup ? (

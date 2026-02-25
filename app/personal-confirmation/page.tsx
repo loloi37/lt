@@ -1,5 +1,8 @@
 // app/personal-confirmation/page.tsx
+// Legacy page — redirects to the new seal-confirmation flow
+// Kept for backward compatibility with existing links
 'use client';
+
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { ArrowLeft, Check, ExternalLink, ArrowUpCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -95,23 +98,8 @@ function PersonalConfirmationContent() {
                 setCurrentMemorialId(memorialId);
             }
 
-            const response = await fetch('/api/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ memorialId, plan: 'Personal', amount: 1500, isDraftUpgrade }),
-            });
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.code === 'LEGAL_AUTH_REQUIRED') {
-                    setAuthorizationCompleted(false);
-                    alert('Please complete the Memorial Authorization Form first.');
-                    return;
-                }
-                throw new Error(data.error || 'Payment initialization failed');
-            }
-
-            if (data.url) window.location.href = data.url;
+            // Redirect to the new Stripe Elements payment page
+            router.push(`/payment?memorialId=${memorialId}`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');
@@ -151,14 +139,14 @@ function PersonalConfirmationContent() {
     const canPay = acceptedTerms && authorizationCompleted && !isProcessing;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10">
-            <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
+        <div className="min-h-screen bg-ivory">
+            <div className="border-b border-sand/20 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <Link
                         href={isDraftUpgrade ? '/choice-pricing' : '/choice-pricing'}
-                        className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
+                        className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm"
                     >
-                        <ArrowLeft size={20} />
+                        <ArrowLeft size={16} />
                         <span>{isDraftUpgrade ? 'Back to my drafts' : 'Back to plans'}</span>
                     </Link>
                 </div>
@@ -172,57 +160,20 @@ function PersonalConfirmationContent() {
                                 <ArrowUpCircle size={16} />
                                 Upgrading from Draft to Personal
                             </div>
-                            <h1 className="font-serif text-4xl text-charcoal mb-4">Activate Your Memorial</h1>
-                            <p className="text-lg text-charcoal/70">Your draft is ready — unlock the full Personal plan for $1,500</p>
+                            <h1 className="font-serif text-4xl text-charcoal mb-4">Seal Your Archive</h1>
+                            <p className="text-lg text-charcoal/50">Your draft is ready. One-time payment of $1,500 — no subscription.</p>
                         </>
                     ) : (
                         <>
-                            <h1 className="font-serif text-4xl text-charcoal mb-4">Confirm Your Order</h1>
-                            <p className="text-lg text-charcoal/70">Personal Plan - $1,500</p>
+                            <h1 className="font-serif text-4xl text-charcoal mb-4">Seal the Archive</h1>
+                            <p className="text-lg text-charcoal/50">One-time payment of $1,500. No subscription. Lifetime access.</p>
                         </>
                     )}
                 </div>
 
-                {/* Order Summary */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
-                    {isDraftUpgrade && (
-                        <div className="mb-6 p-4 bg-mist/5 border border-mist/20 rounded-xl">
-                            <p className="text-sm text-charcoal/70">
-                                <strong>Draft upgrade:</strong> Your existing draft memorial will be upgraded to the Personal plan. All your work is preserved — watermarks are removed and lifetime hosting is activated immediately after payment.
-                            </p>
-                        </div>
-                    )}
-                    <div className="prose max-w-none mb-8">
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed">
-                            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-                        </p>
-                    </div>
-                    <div className="border-t border-sand/30 pt-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">{isDraftUpgrade ? 'Draft → Personal Upgrade' : 'Personal Plan'}</span>
-                            <span className="text-charcoal font-medium">$1,500.00</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Tax</span>
-                            <span className="text-charcoal font-medium">$0.00</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
-                            <span className="text-charcoal">Total</span>
-                            <span className="text-mist">$1,500.00</span>
-                        </div>
-                    </div>
-                </div>
-
                 {/* Steps before payment */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h3 className="text-lg font-semibold text-charcoal mb-6">Before Payment</h3>
+                <div className="bg-white rounded-2xl border border-sand/25 p-8 mb-8 max-w-2xl mx-auto">
+                    <h3 className="text-sm font-medium text-charcoal/40 uppercase tracking-wider mb-6">Before Payment</h3>
 
                     {/* Step 1 — Accept terms */}
                     <label className="flex items-start gap-4 cursor-pointer group mb-6">
@@ -231,66 +182,63 @@ function PersonalConfirmationContent() {
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-6 h-6 border-2 border-sand/40 rounded cursor-pointer accent-charcoal"
+                                className="w-5 h-5 border-2 border-sand/40 rounded cursor-pointer accent-charcoal"
                             />
                         </div>
                         <div className="flex-1">
-                            <p className="text-charcoal group-hover:text-charcoal/80 transition-colors">
+                            <p className="text-sm text-charcoal/60 group-hover:text-charcoal/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-mist hover:text-mist/80 underline font-medium" target="_blank">General Conditions</Link>
+                                <Link href="/legal/terms" className="text-charcoal underline font-medium" target="_blank">General Conditions</Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-mist hover:text-mist/80 underline font-medium" target="_blank">Privacy Policy</Link>
+                                <Link href="/legal/privacy" className="text-charcoal underline font-medium" target="_blank">Privacy Policy</Link>
                             </p>
                         </div>
                     </label>
 
                     {/* Step 2 — Authorization form */}
-                    <div className={`p-6 rounded-xl border-2 transition-all ${acceptedTerms ? 'border-sand/40 bg-parchment/40' : 'border-sand/20 bg-sand/10 opacity-50 pointer-events-none'}`}>
+                    <div className={`p-6 rounded-xl border transition-all ${acceptedTerms ? 'border-sand/30 bg-sand/5' : 'border-sand/15 bg-sand/5 opacity-40 pointer-events-none'}`}>
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-0.5">
                                 {authorizationCompleted ? (
-                                    <div className="w-8 h-8 bg-charcoal rounded-full flex items-center justify-center">
-                                        <Check size={16} className="text-ivory" strokeWidth={2.5} />
+                                    <div className="w-7 h-7 bg-charcoal rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-ivory" strokeWidth={2.5} />
                                     </div>
                                 ) : (
-                                    <div className="w-8 h-8 bg-mist/20 rounded-full flex items-center justify-center">
-                                        <ExternalLink size={16} className="text-mist" />
+                                    <div className="w-7 h-7 bg-sand/20 rounded-full flex items-center justify-center">
+                                        <ExternalLink size={14} className="text-charcoal/30" />
                                     </div>
                                 )}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-semibold text-charcoal mb-1">Memorial Authorization</h4>
+                                <h4 className="font-medium text-charcoal text-sm mb-1">Memorial Authorization</h4>
                                 {authorizationCompleted ? (
-                                    <p className="text-sm text-charcoal/60 mb-4">
+                                    <p className="text-xs text-charcoal/40">
                                         Authorization completed. You may now proceed to payment.
                                     </p>
                                 ) : (
-                                    <p className="text-sm text-charcoal/60 mb-4">
-                                        Complete the authorization form to confirm your legal authority to create this memorial.
-                                        The form opens in a new window — return here when done.
-                                    </p>
+                                    <>
+                                        <p className="text-xs text-charcoal/40 mb-4">
+                                            Confirm your legal authority to create this archive. The form opens in a new window.
+                                        </p>
+                                        <button
+                                            onClick={handleOpenAuthorization}
+                                            disabled={isOpeningAuth || !acceptedTerms}
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal hover:bg-charcoal/90 text-ivory rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                                        >
+                                            {isOpeningAuth ? (
+                                                <div className="w-3.5 h-3.5 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
+                                            ) : (
+                                                <ExternalLink size={13} />
+                                            )}
+                                            Open Authorization Form
+                                        </button>
+                                    </>
                                 )}
 
-                                {!authorizationCompleted && (
-                                    <button
-                                        onClick={handleOpenAuthorization}
-                                        disabled={isOpeningAuth || !acceptedTerms}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg btn-paper text-sm font-medium transition-all disabled:opacity-50"
-                                    >
-                                        {isOpeningAuth ? (
-                                            <div className="w-4 h-4 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
-                                        ) : (
-                                            <ExternalLink size={15} />
-                                        )}
-                                        Open Memorial Authorization Form
-                                    </button>
-                                )}
-
-                                {/* Waiting indicator — auth window opened but not yet completed */}
                                 {currentMemorialId && !authorizationCompleted && !isOpeningAuth && (
-                                    <p className="text-xs text-charcoal/40 mt-3 flex items-center gap-1.5">
-                                        <Loader2 size={11} className="animate-spin" />
-                                        Waiting for authorization to be completed…
+                                    <p className="text-[11px] text-charcoal/25 mt-3 flex items-center gap-1.5">
+                                        <Loader2 size={10} className="animate-spin" />
+                                        Waiting for authorization...
                                     </p>
                                 )}
                             </div>
@@ -299,33 +247,33 @@ function PersonalConfirmationContent() {
                 </div>
 
                 {/* Payment Button */}
-                <button
-                    onClick={handlePayment}
-                    disabled={!canPay}
-                    className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${canPay
-                            ? 'bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory'
-                            : 'bg-sand/30 text-charcoal/30 cursor-not-allowed'
-                        }`}
-                >
-                    {isProcessing ? (
-                        <>
-                            <div className="w-5 h-5 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
-                            Processing…
-                        </>
-                    ) : (
-                        isDraftUpgrade ? 'Upgrade to Personal ($1,500)' : 'Proceed to Payment ($1,500)'
+                <div className="max-w-2xl mx-auto">
+                    <button
+                        onClick={handlePayment}
+                        disabled={!canPay}
+                        className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${canPay
+                                ? 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                                : 'bg-sand/20 text-charcoal/25 cursor-not-allowed'
+                            }`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
+                                Preparing payment...
+                            </>
+                        ) : (
+                            'Proceed to payment'
+                        )}
+                    </button>
+
+                    {!authorizationCompleted && acceptedTerms && (
+                        <p className="text-center text-[11px] text-charcoal/25 mt-3">
+                            Complete the authorization form above to enable payment.
+                        </p>
                     )}
-                </button>
 
-                {!authorizationCompleted && acceptedTerms && (
-                    <p className="text-center text-xs text-charcoal/40 mt-3">
-                        Complete the authorization form above to enable payment.
-                    </p>
-                )}
-
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-charcoal/40">
-                        Secure payment powered by Stripe. Your information is encrypted and protected.
+                    <p className="text-center text-[11px] text-charcoal/20 mt-6">
+                        Secure payment powered by Stripe. Your information is encrypted.
                     </p>
                 </div>
             </div>
@@ -335,7 +283,11 @@ function PersonalConfirmationContent() {
 
 export default function PersonalConfirmationPage() {
     return (
-        <Suspense fallback={<div>Loading…</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-ivory flex items-center justify-center">
+                <div className="w-10 h-10 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+            </div>
+        }>
             <PersonalConfirmationContent />
         </Suspense>
     );
