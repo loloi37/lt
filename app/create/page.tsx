@@ -996,26 +996,38 @@ function CreateMemorialPageContent() {
             </div>
           ) : (
             completedPathsCount >= 2 && (
-              <div className="mt-12 p-10 bg-white border-2 border-mist/30 rounded-3xl text-center shadow-xl animate-fadeIn">
-                <div className="w-16 h-16 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Sparkles className="text-mist" size={32} />
-                </div>
-                <h3 className="font-serif text-3xl text-charcoal mb-4">You have reconstructed their story.</h3>
-                <p className="text-charcoal/60 max-w-lg mx-auto mb-8">
-                  The foundation is ready. To unlock the full <strong>Presence</strong>—including the complete gallery, high-definition videos, and permanent archival—complete the final step of the ritual.
+              /* Step 2.1.1 + 2.1.2: CTA appears as a revealed path, not a popup */
+              <div className="mt-12 max-w-2xl mx-auto animate-fadeIn">
+                <p className="text-xs text-charcoal/25 text-center mb-4 tracking-wide">
+                  A new path has opened.
                 </p>
+                <div className="p-10 bg-white border border-sand/30 rounded-2xl text-center">
+                  <h3 className="font-serif text-3xl text-charcoal mb-3">
+                    {memorialData.step1.fullName
+                      ? `The archive of ${memorialData.step1.fullName} is ready.`
+                      : 'The archive is ready.'}
+                  </h3>
+                  <p className="text-charcoal/40 max-w-md mx-auto mb-8 text-sm leading-relaxed">
+                    You have built something worth preserving. When you are ready, seal the archive to make it permanent.
+                  </p>
 
-                <button
-                  onClick={() => {
-                    const upgradeUrl = currentMemorialId
-                      ? `/personal-confirmation?memorialId=${currentMemorialId}`
-                      : '/personal-confirmation';
-                    router.push(upgradeUrl);
-                  }}
-                  className="px-12 py-4 bg-terracotta text-ivory rounded-lg btn-paper font-bold hover:scale-105 transition-all shadow-lg"
-                >
-                  {mode === 'draft' ? 'Upgrade to Personal ($1,500)' : 'Become a Permanent Guardian ($1,500)'}
-                </button>
+                  {/* Step 2.1.1: "Seal this archive" — no price on button */}
+                  <button
+                    onClick={() => {
+                      const sealUrl = currentMemorialId
+                        ? `/seal-confirmation?memorialId=${currentMemorialId}`
+                        : '/seal-confirmation';
+                      router.push(sealUrl);
+                    }}
+                    className="px-10 py-4 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-all"
+                  >
+                    Seal this archive
+                  </button>
+                  {/* Step 2.1.1: Subtext below — price context without commercialism */}
+                  <p className="text-xs text-charcoal/25 mt-4">
+                    One-time payment of $1,500. No subscription. Lifetime access.
+                  </p>
+                </div>
               </div>
             )
           )}
