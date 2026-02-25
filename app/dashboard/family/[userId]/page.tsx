@@ -3,10 +3,11 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield } from 'lucide-react';
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
+import { useSearchParams } from 'next/navigation';
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -15,19 +16,27 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]); // NEW: Deleted state
     const [loading, setLoading] = useState(true);
     const [managingId, setManagingId] = useState<string | null>(null);
+    const [showWelcome, setShowWelcome] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
 
+    const searchParams = useSearchParams();
+
     useEffect(() => {
         loadMemorials();
-    }, [userId]);
+        if (searchParams.get('welcome') === 'true') {
+            setShowWelcome(true);
+            window.history.replaceState({}, '', `/dashboard/family/${userId}`);
+            setTimeout(() => setShowWelcome(false), 5000);
+        }
+    }, [userId, searchParams]);
 
     const loadMemorials = async () => {
         setLoading(true);
         const { data, error } = await supabase
             .from('memorials')
-            .select('*')
+            .select('*, payment_confirmed_at')
             .eq('user_id', userId)
             .eq('mode', 'family')
             .order('updated_at', { ascending: false });
@@ -121,6 +130,15 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-mist/10">
+            {showWelcome && (
+                <div className="animate-fadeIn" style={{ backgroundColor: '#1a2332' }}>
+                    <div className="max-w-7xl mx-auto px-6 py-4 text-center">
+                        <p className="text-sm" style={{ color: 'rgba(253,246,240,0.60)', letterSpacing: '0.04em' }}>
+                            When you are ready, everything is here.
+                        </p>
+                    </div>
+                </div>
+            )}
             <div className="bg-white border-b border-sand/30 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-6">
                     <div className="flex items-center justify-between">
@@ -211,6 +229,14 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                             <User size={64} className="text-charcoal/20" />
                                         </div>
                                     )}
+                                    {memorial.paid && (
+                                        <div className="absolute top-3 right-3">
+                                            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-charcoal/50 border border-sand/30">
+                                                <Archive size={10} />
+                                                Sealed
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-6">
                                     <h3 className="font-serif text-2xl text-charcoal mb-4">{memorial.full_name || 'Untitled'}</h3>
@@ -264,6 +290,53 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                     </button>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ARCHIVE HEALTH — Status overview */}
+                {memorials.some(m => m.paid) && (
+                    <div className="mt-16 pt-10 border-t border-sand/30">
+                        <h3 className="text-xs uppercase tracking-widest text-charcoal/40 mb-6 font-medium">
+                            Status of your archive
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
+                                <Archive size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-charcoal/40 mb-0.5">Publication status</p>
+                                    <p className="text-sm font-medium text-charcoal">
+                                        Sealed — {memorials.filter(m => m.paid).length} active archive{memorials.filter(m => m.paid).length !== 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
+                                <Clock size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-charcoal/40 mb-0.5">Last modification</p>
+                                    <p className="text-sm font-medium text-charcoal">
+                                        {memorials.length > 0
+                                            ? new Date(memorials[0].updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                                            : '—'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
+                                <Shield size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-charcoal/40 mb-0.5">Successor designated</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-medium text-charcoal">Not set</p>
+                                        <Link
+                                            href="/succession/request"
+                                            className="text-xs text-mist underline hover:text-mist/80 transition-colors"
+                                        >
+                                            Set up
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

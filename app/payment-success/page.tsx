@@ -1,68 +1,141 @@
 // app/payment-success/page.tsx
-// Step 2.2: Post-payment ritual page — solemn and warm
+// Phase 1: The Post-Payment Ritual — Threshold Page + Three Doors
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Camera, BookOpen, Circle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
+// ─── Memorial data we need for the Threshold Page ────────────────────────────
+interface ThresholdMemorial {
+    full_name: string | null;
+    birth_date: string | null;
+    death_date: string | null;
+    profile_photo_url: string | null;
+    user_id: string;
+    step1: any;
+}
+
+// ─── Helper: format a date string as readable year or full date ───────────────
+function formatDate(dateStr: string | null): string | null {
+    if (!dateStr) return null;
+    try {
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    } catch {
+        return null;
+    }
+}
+
+// ─── Main inner component (needs Suspense wrapper for useSearchParams) ────────
 function PaymentSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const memorialId = searchParams.get('id');
     const planParam = searchParams.get('plan') || 'personal';
 
-    const [phase, setPhase] = useState<'finalizing' | 'sealed' | 'redirecting'>('finalizing');
+    // Phases: finalizing → threshold → doors → redirecting
+    const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting'>('finalizing');
+    const [memorial, setMemorial] = useState<ThresholdMemorial | null>(null);
+    const [buttonVisible, setButtonVisible] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const finalizePayment = async () => {
+        const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
                 return;
             }
 
             try {
+                // 1. Finalize payment in the backend
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memorialId }),
                 });
-
                 const result = await response.json();
+                if (result.error) throw new Error(result.error);
 
-                if (result.error) {
-                    throw new Error(result.error);
+                // 2. Fetch memorial data for the Threshold Page
+                const { data, error: fetchError } = await supabase
+                    .from('memorials')
+                    .select('full_name, birth_date, death_date, profile_photo_url, user_id, step1')
+                    .eq('id', memorialId)
+                    .single();
+
+                if (!fetchError && data) {
+                    setMemorial(data as ThresholdMemorial);
+                    // Also persist userId for later redirects
+                    if (data.user_id) {
+                        localStorage.setItem('user-id', data.user_id);
+                    }
                 }
 
-                // Phase 2: Show the "sealed" message
-                setPhase('sealed');
+                // 3. Transition to the Threshold Page
+                setPhase('threshold');
 
-                // After 4 seconds, begin redirect
+                // 4. After 9 seconds, reveal the button (1s fade-in handled by CSS)
                 setTimeout(() => {
-                    setPhase('redirecting');
-                    const userId = localStorage.getItem('user-id');
-                    const mode = planParam === 'family' ? 'family' : 'personal';
-                    localStorage.setItem('legacy-vault-mode', mode);
-
-                    setTimeout(() => {
-                        if (userId) {
-                            router.push(`/dashboard/${mode}/${userId}`);
-                        } else {
-                            router.push(`/create?id=${memorialId}`);
-                        }
-                    }, 2000);
-                }, 4000);
+                    setButtonVisible(true);
+                }, 9000);
 
             } catch (err: any) {
                 console.error('Finalization failed:', err);
-                setError(`Payment successful, but finalization encountered an issue: ${err.message}. Your archive is safe. Please contact support.`);
+                setError(
+                    `Payment successful, but finalization encountered an issue: ${err.message}. ` +
+                    `Your archive is safe. Please contact support.`
+                );
             }
         };
 
-        finalizePayment();
-    }, [memorialId, planParam, router]);
+        run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [memorialId]);
 
+    // ── Derived data ──────────────────────────────────────────────────────────
+    const isSelfArchive = memorial?.step1?.isSelfArchive === true;
+    const name = memorial?.full_name || 'this person';
+    const birthFormatted = formatDate(memorial?.birth_date ?? null);
+    const deathFormatted = formatDate(memorial?.death_date ?? null);
+    const dateRange = birthFormatted
+        ? deathFormatted
+            ? `${birthFormatted} — ${deathFormatted}`
+            : birthFormatted
+        : null;
+    const mode = planParam === 'family' ? 'family' : 'personal';
+
+    // ── Door action handler ───────────────────────────────────────────────────
+    const handleDoor = (door: 'photograph' | 'story' | 'silence') => {
+        const userId = localStorage.getItem('user-id');
+        localStorage.setItem('legacy-vault-mode', mode);
+        // Store the first-door choice for future personalization of reminders
+        if (memorialId) {
+            localStorage.setItem(`first-door-${memorialId}`, door);
+        }
+
+        setPhase('redirecting');
+
+        setTimeout(() => {
+            if (door === 'silence') {
+                const dashPath = userId
+                    ? `/dashboard/${mode}/${userId}?welcome=true`
+                    : `/dashboard/${mode}`;
+                router.push(dashPath);
+            } else if (door === 'photograph') {
+                router.push(`/create?id=${memorialId}&mode=${mode}&step=8`);
+            } else {
+                // story
+                router.push(`/create?id=${memorialId}&mode=${mode}&step=6`);
+            }
+        }, 600);
+    };
+
+    // ── Error state ───────────────────────────────────────────────────────────
     if (error) {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
@@ -79,55 +152,262 @@ function PaymentSuccessContent() {
         );
     }
 
+    // ── Phase: finalizing ─────────────────────────────────────────────────────
+    if (phase === 'finalizing') {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+                <div className="text-center max-w-md animate-fadeIn">
+                    <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
+                    <p className="text-charcoal/40 text-sm">Sealing the archive...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Phase: redirecting ────────────────────────────────────────────────────
+    if (phase === 'redirecting') {
+        return (
+            <div
+                className="min-h-screen flex items-center justify-center"
+                style={{ backgroundColor: '#1a2332' }}
+            >
+                <div className="w-8 h-8 border-2 border-white/10 border-t-white/30 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // ── Phase: threshold ──────────────────────────────────────────────────────
+    if (phase === 'threshold') {
+        const thresholdMessage = isSelfArchive
+            ? 'You have chosen to shape your own memory. What you create here will outlive you.'
+            : `You have chosen to preserve the memory of ${name}. This archive will endure.`;
+        const buttonLabel = isSelfArchive ? 'Begin writing' : 'Enter the archive';
+
+        return (
+            <div
+                className="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden"
+                style={{ backgroundColor: '#1a2332' }}
+            >
+                {/* Organic light — digital candle glow */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(253,246,240,0.06) 0%, transparent 70%)',
+                    }}
+                >
+                    <div
+                        className="absolute inset-0 animate-organic-light"
+                        style={{
+                            background: 'radial-gradient(ellipse 40% 35% at 50% 38%, rgba(253,246,240,0.12) 0%, transparent 65%)',
+                        }}
+                    />
+                </div>
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto animate-fadeIn">
+
+                    {/* Portrait photo */}
+                    {memorial?.profile_photo_url && (
+                        <div
+                            className="mb-10 overflow-hidden flex-shrink-0"
+                            style={{
+                                width: 180,
+                                height: 180,
+                                borderRadius: '50%',
+                                border: '2px solid rgba(253,246,240,0.15)',
+                                boxShadow: '0 0 60px rgba(253,246,240,0.07)',
+                            }}
+                        >
+                            <img
+                                src={memorial.profile_photo_url}
+                                alt={name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                        </div>
+                    )}
+
+                    {/* Main message */}
+                    <h1
+                        className="font-serif leading-snug mb-6"
+                        style={{
+                            fontSize: 'clamp(1.6rem, 4vw, 2.6rem)',
+                            color: '#fdf6f0',
+                            letterSpacing: '0.01em',
+                        }}
+                    >
+                        {thresholdMessage}
+                    </h1>
+
+                    {/* Date range */}
+                    {dateRange && (
+                        <p
+                            className="mb-16"
+                            style={{
+                                color: 'rgba(253,246,240,0.45)',
+                                fontSize: '1rem',
+                                letterSpacing: '0.04em',
+                            }}
+                        >
+                            {dateRange}
+                        </p>
+                    )}
+
+                    {/* Button — appears after 9s with 1s fade-in */}
+                    {buttonVisible ? (
+                        <button
+                            onClick={() => setPhase('doors')}
+                            className="animate-fade-in-gentle"
+                            style={{
+                                padding: '14px 40px',
+                                borderRadius: 4,
+                                border: '1px solid rgba(253,246,240,0.25)',
+                                background: 'transparent',
+                                color: 'rgba(253,246,240,0.85)',
+                                fontSize: '0.85rem',
+                                letterSpacing: '0.12em',
+                                textTransform: 'uppercase',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(253,246,240,0.08)';
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(253,246,240,0.45)';
+                            }}
+                            onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(253,246,240,0.25)';
+                            }}
+                        >
+                            {buttonLabel}
+                        </button>
+                    ) : (
+                        // Invisible placeholder so layout doesn't shift
+                        <div style={{ height: 50 }} />
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // ── Phase: doors — The Three Doors ───────────────────────────────────────
     return (
-        <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
-            <div className="text-center max-w-md">
-                {phase === 'finalizing' && (
-                    <div className="animate-fadeIn">
-                        <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
-                        <p className="text-charcoal/40 text-sm">
-                            Sealing the archive...
-                        </p>
-                    </div>
-                )}
+        <div
+            className="min-h-screen flex flex-col items-center justify-center p-8"
+            style={{ backgroundColor: '#1e2d3d' }}
+        >
+            <div className="w-full max-w-4xl animate-fadeIn">
+                <p
+                    className="text-center mb-12"
+                    style={{
+                        color: 'rgba(253,246,240,0.5)',
+                        fontSize: '0.8rem',
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                    }}
+                >
+                    How would you like to begin?
+                </p>
 
-                {phase === 'sealed' && (
-                    <div className="animate-fadeIn">
-                        <div className="w-20 h-20 bg-charcoal/5 rounded-full flex items-center justify-center mx-auto mb-8">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/50">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
-                        </div>
-                        <h1 className="font-serif text-4xl text-charcoal mb-4">
-                            The archive is sealed.
-                        </h1>
-                        <p className="text-charcoal/40 leading-relaxed text-sm">
-                            What you have built is now permanent.
-                            It will endure, be shared, and be passed on.
-                        </p>
-                    </div>
-                )}
-
-                {phase === 'redirecting' && (
-                    <div className="animate-fadeIn">
-                        <div className="flex items-center justify-center gap-2 text-charcoal/25 text-xs">
-                            <Loader2 size={14} className="animate-spin" />
-                            <span>Taking you to your archive...</span>
-                        </div>
-                    </div>
-                )}
+                {/* Three door cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <DoorCard
+                        icon={<Camera size={28} strokeWidth={1.2} />}
+                        title="Start with a photograph"
+                        subtext={`Choose the image that defines ${isSelfArchive ? 'you' : name} for you.`}
+                        onClick={() => handleDoor('photograph')}
+                    />
+                    <DoorCard
+                        icon={<BookOpen size={28} strokeWidth={1.2} />}
+                        title="Start with a story"
+                        subtext={`Tell a moment that captures who ${isSelfArchive ? 'you are' : `${name} was`}.`}
+                        onClick={() => handleDoor('story')}
+                    />
+                    <DoorCard
+                        icon={<Circle size={28} strokeWidth={1} />}
+                        title="Start with silence"
+                        subtext="Take a moment. The archive is waiting."
+                        onClick={() => handleDoor('silence')}
+                        muted
+                    />
+                </div>
             </div>
         </div>
     );
 }
 
+// ── Door card component ───────────────────────────────────────────────────────
+function DoorCard({
+    icon,
+    title,
+    subtext,
+    onClick,
+    muted = false,
+}: {
+    icon: React.ReactNode;
+    title: string;
+    subtext: string;
+    onClick: () => void;
+    muted?: boolean;
+}) {
+    const [hovered, setHovered] = useState(false);
+
+    return (
+        <button
+            onClick={onClick}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="text-left w-full"
+            style={{
+                padding: '36px 28px',
+                borderRadius: 8,
+                border: `1px solid ${hovered ? 'rgba(253,246,240,0.25)' : 'rgba(253,246,240,0.10)'}`,
+                background: hovered
+                    ? 'rgba(253,246,240,0.05)'
+                    : 'rgba(253,246,240,0.02)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+            }}
+        >
+            <div style={{ color: muted ? 'rgba(253,246,240,0.30)' : 'rgba(253,246,240,0.60)' }}>
+                {icon}
+            </div>
+            <div>
+                <p
+                    className="font-serif mb-2"
+                    style={{
+                        fontSize: '1.25rem',
+                        color: muted ? 'rgba(253,246,240,0.50)' : 'rgba(253,246,240,0.85)',
+                    }}
+                >
+                    {title}
+                </p>
+                <p
+                    style={{
+                        fontSize: '0.82rem',
+                        color: 'rgba(253,246,240,0.35)',
+                        lineHeight: 1.6,
+                    }}
+                >
+                    {subtext}
+                </p>
+            </div>
+        </button>
+    );
+}
+
+// ── Page export with Suspense boundary ───────────────────────────────────────
 export default function PaymentSuccessPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
-            </div>
-        }>
+        <Suspense
+            fallback={
+                <div className="min-h-screen bg-ivory flex items-center justify-center">
+                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+                </div>
+            }
+        >
             <PaymentSuccessContent />
         </Suspense>
     );

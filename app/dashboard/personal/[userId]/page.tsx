@@ -4,7 +4,8 @@ import Link from 'next/link';
 import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
     AlertTriangle, CheckCircle, Share2, Image, Video, BookOpen, Heart,
-    ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter
+    ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter,
+    Archive, Download, Users
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
@@ -50,6 +51,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [deletedArchives, setDeletedArchives] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(false);
     const [copied, setCopied] = useState(false);
     const [searchDrafts, setSearchDrafts] = useState('');
     const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
@@ -66,6 +68,11 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
             setTimeout(() => setShowCheckinSuccess(false), 5000);
         }
+        if (searchParams.get('welcome') === 'true') {
+            setShowWelcome(true);
+            window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
+            setTimeout(() => setShowWelcome(false), 5000);
+        }
         loadMemorials();
     }, [userId, searchParams]);
 
@@ -73,7 +80,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         setLoading(true);
         const { data, error } = await supabase
             .from('memorials')
-            .select('*')
+            .select('*, payment_confirmed_at')
             .eq('user_id', userId)
             .eq('mode', 'personal')
             .order('updated_at', { ascending: false });
@@ -151,6 +158,15 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     </div>
                 </div>
             )}
+            {showWelcome && (
+                <div className="animate-fadeIn" style={{ backgroundColor: '#1a2332' }}>
+                    <div className="max-w-6xl mx-auto px-6 py-4 text-center">
+                        <p className="text-sm" style={{ color: 'rgba(253,246,240,0.60)', letterSpacing: '0.04em' }}>
+                            When you are ready, everything is here.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Header — styled like Family */}
             <div className="bg-white border-b border-sand/30 shadow-sm">
@@ -191,6 +207,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         onCopyLink={copyShareLink}
                         copied={copied}
                         userId={userId}
+                        paymentConfirmedAt={paidArchive.payment_confirmed_at ?? null}
                     />
                 ) : (
                     <div className="text-center py-20">
@@ -403,18 +420,23 @@ function ActiveArchive({
     onCopyLink,
     copied,
     userId,
+    paymentConfirmedAt,
 }: {
     archive: Memorial;
     onDelete: (id: string) => void;
     onCopyLink: (id: string) => void;
     copied: boolean;
     userId: string;
+    paymentConfirmedAt: string | null;
 }) {
     const stats = computeStats(archive);
     const birthYear = archive.birth_date ? new Date(archive.birth_date).getFullYear() : null;
     const deathYear = archive.death_date ? new Date(archive.death_date).getFullYear() : null;
     const dates = birthYear
         ? deathYear ? `${birthYear} – ${deathYear}` : `Born ${birthYear}`
+        : null;
+    const sealedDate = paymentConfirmedAt
+        ? new Date(paymentConfirmedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : null;
 
     return (
@@ -443,10 +465,17 @@ function ActiveArchive({
                                 <h2 className="font-serif text-3xl text-charcoal leading-tight">
                                     {archive.full_name || 'Unnamed Archive'}
                                 </h2>
-                                <span className="flex-shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border-2 bg-sage/5 text-sage border-sage/20 font-medium">
-                                    <Unlock size={12} />
-                                    Active
-                                </span>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border-2 bg-sage/5 text-sage border-sage/20 font-medium">
+                                        <Unlock size={12} />
+                                        Active
+                                    </span>
+                                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-charcoal/15 text-charcoal/50 bg-sand/10 font-medium">
+                                        <Archive size={11} />
+                                        Sealed Archive
+                                        {sealedDate && <span className="text-charcoal/35 ml-1">· {sealedDate}</span>}
+                                    </span>
+                                </div>
                             </div>
                             {dates && <p className="text-charcoal/50 text-base mb-1">{dates}</p>}
                             <p className="text-sm text-charcoal/35 flex items-center gap-1.5">
@@ -497,6 +526,62 @@ function ActiveArchive({
                     <StatCard icon={Video} count={stats.videos} label="Videos" color="from-mist/10 to-mist/5" />
                     <StatCard icon={Heart} count={stats.memories} label="Memories" color="from-terracotta/10 to-terracotta/5" />
                     <StatCard icon={BookOpen} count={stats.chapters} label="Chapters" color="from-sage/10 to-sage/5" />
+                </div>
+            </div>
+
+            {/* Archive Health — always visible, fact-based, no score */}
+            <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
+                <h3 className="text-xs uppercase tracking-widest text-charcoal/40 mb-5 font-medium">
+                    Status of your archive
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                    <HealthRow
+                        label="Publication status"
+                        value="Sealed"
+                        icon={<Archive size={14} />}
+                    />
+                    <HealthRow
+                        label="Sealed on"
+                        value={sealedDate || 'Unknown'}
+                        icon={<Clock size={14} />}
+                    />
+                    <HealthRow
+                        label="Last modification"
+                        value={timeAgo(archive.updated_at)}
+                        icon={<Edit size={14} />}
+                    />
+                    <HealthRow
+                        label="Successor designated"
+                        value="Not set"
+                        icon={<Shield size={14} />}
+                        action={
+                            <Link
+                                href="/succession/request"
+                                className="text-xs text-mist underline hover:text-mist/80 transition-colors"
+                            >
+                                Set up
+                            </Link>
+                        }
+                    />
+                    <HealthRow
+                        label="Witnesses invited"
+                        value={`${stats.memories} contributor${stats.memories !== 1 ? 's' : ''}`}
+                        icon={<Users size={14} />}
+                    />
+                    <HealthRow
+                        label="Ark export"
+                        value="Generate a portable copy"
+                        icon={<Download size={14} />}
+                        action={
+                            <Link
+                                href={`/api/arche/generate?id=${archive.id}`}
+                                className="text-xs text-mist underline hover:text-mist/80 transition-colors"
+                                target="_blank"
+                            >
+                                Download
+                            </Link>
+                        }
+                    />
                 </div>
             </div>
 
@@ -556,6 +641,31 @@ function StatCard({ icon: Icon, count, label, color }: { icon: any; count: numbe
             <Icon size={22} className="text-charcoal/30 mb-3" />
             <div className="font-serif text-3xl text-charcoal leading-none mb-1">{count}</div>
             <div className="text-xs text-charcoal/45 font-medium">{label}</div>
+        </div>
+    );
+}
+
+function HealthRow({
+    label,
+    value,
+    icon,
+    action,
+}: {
+    label: string;
+    value: string;
+    icon: React.ReactNode;
+    action?: React.ReactNode;
+}) {
+    return (
+        <div className="flex items-start gap-3">
+            <div className="mt-0.5 text-charcoal/30 flex-shrink-0">{icon}</div>
+            <div className="flex-1 min-w-0">
+                <p className="text-xs text-charcoal/40 mb-0.5">{label}</p>
+                <div className="flex items-center gap-2">
+                    <p className="text-sm text-charcoal font-medium truncate">{value}</p>
+                    {action && action}
+                </div>
+            </div>
         </div>
     );
 }

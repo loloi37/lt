@@ -34,10 +34,11 @@ export interface Memorial {
     cover_photo_url: string | null;
     completed_steps: number[];
 
-    // NEW: Soft Delete Fields
+    // Soft Delete Fields
     deleted?: boolean;
     deleted_at?: string | null;
-    paid?: boolean; // Ensuring this is typed too
+    paid?: boolean;
+    payment_confirmed_at?: string | null;
 }
 
 

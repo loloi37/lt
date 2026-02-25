@@ -31,6 +31,36 @@
   animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
+/* Threshold page — organic light pulse (digital candle effect) */
+@keyframes organicLight {
+  0%, 100% {
+    opacity: 0.12;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 0.28;
+    transform: scale(1.06);
+  }
+  70% {
+    opacity: 0.18;
+    transform: scale(1.03);
+  }
+}
+
+.animate-organic-light {
+  animation: organicLight 7s ease-in-out infinite;
+}
+
+/* Threshold button — fades in gently over 1 second */
+@keyframes fadeInGentle {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in-gentle {
+  animation: fadeInGentle 1s ease-in-out forwards;
+}
+
 @keyframes tutorialGlow {
 
   0%,
