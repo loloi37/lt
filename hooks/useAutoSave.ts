@@ -1,12 +1,14 @@
 // hooks/useAutoSave.ts
+// Step 1.1.3: Silent auto-save with offline support
 // Auto-saves memorial data to Supabase every 30 seconds
 // Also saves on any change after a 3-second debounce (so rapid typing doesn't spam)
+// NEVER asks "Would you like to save?" — saves silently, always
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { MemorialData } from '@/types/memorial';
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline' | 'reconnected';
 
 interface UseAutoSaveOptions {
     memorialId: string | null;
@@ -46,14 +48,9 @@ export function useAutoSave({
         dataRef.current = data;
     }, [data]);
 
-    // Core save function
-    const performSave = useCallback(async () => {
-        if (!memorialId || !enabled || isSavingRef.current) return;
-
-        const currentData = dataRef.current;
-
-        // Serialize to compare — skip save if nothing changed
-        const serialized = JSON.stringify({
+    // Step 1.1.3: Serialize data for save (shared between save and offline cache)
+    const serializeForSave = useCallback((currentData: MemorialData) => {
+        return {
             step1: currentData.step1,
             step2: currentData.step2,
             step3: currentData.step3,
@@ -62,7 +59,6 @@ export function useAutoSave({
             step6: currentData.step6,
             step7: currentData.step7,
             step8: {
-                // Exclude File objects (can't serialize), keep previews
                 coverPhotoPreview: currentData.step8.coverPhotoPreview,
                 gallery: currentData.step8.gallery.map(g => ({
                     id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
@@ -76,10 +72,29 @@ export function useAutoSave({
                 legacyStatement: currentData.step8.legacyStatement,
             },
             step9: currentData.step9,
-        });
+        };
+    }, []);
+
+    // Core save function
+    const performSave = useCallback(async () => {
+        if (!memorialId || !enabled || isSavingRef.current) return;
+
+        const currentData = dataRef.current;
+        const serializable = serializeForSave(currentData);
+        const serialized = JSON.stringify(serializable);
 
         if (serialized === lastSavedDataRef.current) {
-            // Nothing changed, skip
+            return; // Nothing changed, skip
+        }
+
+        // Step 1.1.3: Check if offline — cache locally
+        if (!navigator.onLine) {
+            try {
+                localStorage.setItem(`offline-save-${memorialId}`, serialized);
+                setSaveStatus('offline');
+            } catch {
+                // localStorage full or unavailable — silent fail
+            }
             return;
         }
 
@@ -91,27 +106,7 @@ export function useAutoSave({
             const { error: saveError } = await supabase
                 .from('memorials')
                 .update({
-                    step1: currentData.step1,
-                    step2: currentData.step2,
-                    step3: currentData.step3,
-                    step4: currentData.step4,
-                    step5: currentData.step5,
-                    step6: currentData.step6,
-                    step7: currentData.step7,
-                    step8: {
-                        coverPhotoPreview: currentData.step8.coverPhotoPreview,
-                        gallery: currentData.step8.gallery.map(g => ({
-                            id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
-                        })),
-                        interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
-                            id: ig.id, preview: ig.preview, description: ig.description
-                        })),
-                        voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
-                            id: v.id, title: v.title
-                        })),
-                        legacyStatement: currentData.step8.legacyStatement,
-                    },
-                    step9: currentData.step9,
+                    ...serializable,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', memorialId);
@@ -122,19 +117,26 @@ export function useAutoSave({
             setLastSavedAt(new Date());
             setSaveStatus('saved');
 
-            // Reset to idle after 3 seconds
+            // Clear any offline cache on success
+            localStorage.removeItem(`offline-save-${memorialId}`);
+
+            // Reset to idle after 2 seconds (brief "Saved" then disappear)
             setTimeout(() => {
                 setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
-            }, 3000);
+            }, 2000);
 
         } catch (err: any) {
             console.error('Auto-save failed:', err);
+            // Fall back to offline cache
+            try {
+                localStorage.setItem(`offline-save-${memorialId}`, serialized);
+            } catch { /* silent */ }
             setError(err.message || 'Failed to save');
             setSaveStatus('error');
         } finally {
             isSavingRef.current = false;
         }
-    }, [memorialId, enabled]);
+    }, [memorialId, enabled, serializeForSave]);
 
     // Public "save now" function
     const saveNow = useCallback(async () => {
@@ -175,36 +177,34 @@ export function useAutoSave({
         };
     }, [memorialId, enabled, intervalMs, performSave]);
 
+    // Step 1.1.3: Sync offline cache when connection returns
+    useEffect(() => {
+        if (!memorialId || !enabled) return;
+
+        const handleOnline = async () => {
+            const cached = localStorage.getItem(`offline-save-${memorialId}`);
+            if (cached) {
+                setSaveStatus('reconnected');
+                // Wait a beat then save
+                setTimeout(async () => {
+                    await performSave();
+                }, 1000);
+            }
+        };
+
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [memorialId, enabled, performSave]);
+
     // Save on page unload (best effort)
     useEffect(() => {
         if (!memorialId || !enabled) return;
 
         const handleBeforeUnload = () => {
-            // Use sendBeacon for reliability on page close
             const currentData = dataRef.current;
             const payload = JSON.stringify({
                 memorialId,
-                step1: currentData.step1,
-                step2: currentData.step2,
-                step3: currentData.step3,
-                step4: currentData.step4,
-                step5: currentData.step5,
-                step6: currentData.step6,
-                step7: currentData.step7,
-                step8: {
-                    coverPhotoPreview: currentData.step8.coverPhotoPreview,
-                    gallery: currentData.step8.gallery.map(g => ({
-                        id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
-                    })),
-                    interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
-                        id: ig.id, preview: ig.preview, description: ig.description
-                    })),
-                    voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
-                        id: v.id, title: v.title
-                    })),
-                    legacyStatement: currentData.step8.legacyStatement,
-                },
-                step9: currentData.step9,
+                ...serializeForSave(currentData),
             });
 
             navigator.sendBeacon('/api/autosave', payload);
@@ -212,7 +212,7 @@ export function useAutoSave({
 
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [memorialId, enabled]);
+    }, [memorialId, enabled, serializeForSave]);
 
     return { saveStatus, lastSavedAt, saveNow, error };
 }

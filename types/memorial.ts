@@ -198,6 +198,7 @@ export interface MemorialData {
 
 export const TOTAL_STEPS = 10; // UPDATED from 9 to 10
 
+// Step 1.3.2: Exploration vocabulary
 export const STEP_NAMES = [
   'Basic Information',
   'Early Life & Childhood',
@@ -205,10 +206,10 @@ export const STEP_NAMES = [
   'Relationships & Family',
   'Personality, Values & Passions',
   'Full Life Story',
-  'Memories & Stories',
-  'Photos & Legacy', // UPDATED - removed "Videos"
-  'Videos', // NEW - Step 9
-  'Review & Publish' // UPDATED - now step 10
+  'Memories & Witnesses',
+  'Photos & Legacy',
+  'Videos',
+  'Review & Seal'
 ];
 
 // ==========================================

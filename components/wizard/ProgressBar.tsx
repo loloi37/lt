@@ -1,6 +1,8 @@
 // components/wizard/ProgressBar.tsx
+// Step 1.3.1: Remove numerical progress, use qualitative indicators
+// No percentages, no colored bars. Simple path names with filled/empty circles.
 'use client';
-import { TOTAL_STEPS, STEP_NAMES } from '@/types/memorial';
+import { STEP_NAMES } from '@/types/memorial';
 
 interface ProgressBarProps {
     currentStep: number;
@@ -9,35 +11,19 @@ interface ProgressBarProps {
 }
 
 export default function ProgressBar({ currentStep, completedSteps, onStepClick }: ProgressBarProps) {
-    const completionPercentage = Math.round((completedSteps.length / (TOTAL_STEPS - 1)) * 100);
-
     return (
         <div className="py-4">
             <div className="max-w-4xl mx-auto px-6">
+                {/* Step 1.3.1: Current path name instead of "Step X of Y" */}
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-charcoal">
-                            Step {currentStep} of {TOTAL_STEPS}
-                        </span>
-                        <span className="text-xs text-charcoal/40">•</span>
-                        <span className="text-sm text-charcoal/60">
-                            {STEP_NAMES[currentStep - 1]}
-                        </span>
-                    </div>
-                    <div className="text-xs text-charcoal/40">
-                        {completionPercentage}% complete
-                    </div>
+                    <span className="text-sm text-charcoal/50">
+                        {STEP_NAMES[currentStep - 1]}
+                    </span>
                 </div>
 
-                <div className="relative h-2 bg-sand/30 rounded-full overflow-hidden">
-                    <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-mist to-stone rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${completionPercentage}%` }}
-                    />
-                </div>
-
-                <div className="flex items-center justify-between mt-4">
-                    {Array.from({ length: TOTAL_STEPS }).map((_, idx) => {
+                {/* Step 1.3.1: Simple dots — filled for visited, empty for not */}
+                <div className="flex items-center gap-3">
+                    {STEP_NAMES.map((name, idx) => {
                         const stepNumber = idx + 1;
                         const isCompleted = completedSteps.includes(stepNumber);
                         const isCurrent = stepNumber === currentStep;
@@ -46,25 +32,18 @@ export default function ProgressBar({ currentStep, completedSteps, onStepClick }
                             <button
                                 key={stepNumber}
                                 onClick={() => onStepClick?.(stepNumber)}
-                                className="flex flex-col items-center gap-1 group cursor-pointer hover:scale-110 transition-transform"
-                                title={`${isCompleted ? 'Completed: ' : ''}${STEP_NAMES[idx]}`}
+                                className="group cursor-pointer"
+                                title={name}
                             >
                                 <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${isCompleted
-                                        ? 'bg-mist text-ivory group-hover:bg-mist/80'
-                                        : isCurrent
-                                            ? 'bg-stone text-ivory ring-4 ring-stone/20 group-hover:ring-stone/30'
-                                            : 'bg-sand/40 text-charcoal/40 group-hover:bg-sand/60'
-                                        }`}
-                                >
-                                    {isCompleted ? '✓' : stepNumber}
-                                </div>
-                                <div
-                                    className={`hidden md:block text-[10px] text-center max-w-[60px] leading-tight ${isCurrent ? 'text-charcoal font-medium' : 'text-charcoal/40'
-                                        }`}
-                                >
-                                    {STEP_NAMES[idx].split(' ')[0]}
-                                </div>
+                                    className={`w-2 h-2 rounded-full transition-all ${
+                                        isCompleted
+                                            ? 'bg-charcoal/40'
+                                            : isCurrent
+                                                ? 'bg-charcoal/25 ring-4 ring-charcoal/5'
+                                                : 'bg-sand/40 group-hover:bg-sand/60'
+                                    }`}
+                                />
                             </button>
                         );
                     })}

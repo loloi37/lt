@@ -72,30 +72,27 @@ export default function MemorialRenderer({
         <div className={`relative bg-ivory ${compact ? 'rounded-2xl shadow-inner border border-sand/30 overflow-hidden' : 'min-h-screen'} ${className}`}>
 
             {/* ========================================= */}
-            {/* WATERMARK OVERLAY (Preview only)          */}
-            {/* Step 1.2.2                                */}
+            {/* WATERMARK — Step 1.2.2: Elegant badge     */}
+            {/* No large diagonal text. Subtle corner     */}
+            {/* badge that doesn't ruin the preview.      */}
             {/* ========================================= */}
             {isPreview && (
                 <>
-                    {/* Top badge */}
-                    <div className="absolute top-3 right-3 z-30 px-3 py-1.5 bg-charcoal/70 backdrop-blur-sm rounded-lg">
-                        <p className="text-ivory text-[10px] font-medium tracking-wide">
-                            Preview — Archive not finalized
+                    {/* Step 1.2.2: Small fixed badge, bottom-right, semi-transparent */}
+                    <div className="fixed bottom-4 right-4 z-30 px-3 py-1.5 bg-charcoal/40 backdrop-blur-sm rounded-lg pointer-events-none">
+                        <p className="text-ivory/70 text-[10px] tracking-wide">
+                            Preview — Draft
                         </p>
                     </div>
 
-                    {/* Center diagonal watermark */}
-                    <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden">
-                        <p
-                            className="text-charcoal/[0.06] font-serif font-bold tracking-[0.3em] whitespace-nowrap select-none"
-                            style={{
-                                fontSize: compact ? '3rem' : '6rem',
-                                transform: 'rotate(-30deg)',
-                            }}
-                        >
-                            PREVIEW
-                        </p>
-                    </div>
+                    {/* Step 1.2.2 alternative: Thin top banner (30px) */}
+                    {!compact && (
+                        <div className="absolute top-0 left-0 right-0 z-30 bg-charcoal/30 backdrop-blur-sm py-1.5 text-center pointer-events-none">
+                            <p className="text-ivory/60 text-[10px] tracking-wide">
+                                This is a preview. The final archive will be identical, without this notice.
+                            </p>
+                        </div>
+                    )}
                 </>
             )}
 

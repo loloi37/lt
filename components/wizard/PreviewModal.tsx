@@ -1,4 +1,6 @@
 // components/wizard/PreviewModal.tsx
+// Step 1.2.1: Full-fidelity preview — identical to published version
+// Step 1.2.2: Elegant watermark, not intrusive
 'use client';
 
 import { X } from 'lucide-react';
@@ -18,8 +20,8 @@ export default function PreviewModal({ data, onClose }: PreviewModalProps) {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6 px-4">
                         <div>
-                            <h2 className="text-2xl font-semibold text-ivory mb-1">Memorial Preview</h2>
-                            <p className="text-ivory/60 text-sm">This is how your memorial will look to visitors</p>
+                            <h2 className="text-2xl font-semibold text-ivory mb-1">Archive Preview</h2>
+                            <p className="text-ivory/50 text-sm">This is how your archive will appear to visitors. The final version will be identical.</p>
                         </div>
                         <button
                             onClick={onClose}
@@ -29,7 +31,7 @@ export default function PreviewModal({ data, onClose }: PreviewModalProps) {
                         </button>
                     </div>
 
-                    {/* Preview Container */}
+                    {/* Step 1.2.1: Preview Container — uses SAME renderer as published page */}
                     <div className="rounded-2xl shadow-2xl overflow-hidden">
                         <MemorialRenderer
                             data={data}

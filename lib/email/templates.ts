@@ -124,6 +124,37 @@ export function getProofOfLifeEmail(userName: string, checkInLink: string): stri
   `;
 }
 
+// Step 1.1.4: Gentle reminder email — no urgency, no guilt
+export function getGentleReminderEmail(
+  archiveName: string,
+  continueLink: string
+): string {
+  return `
+    <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #fdfbf7; padding: 60px; border: 1px solid #e8d8cc; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+
+        <p style="font-size: 16px; margin-bottom: 25px;">
+          Your archive of <strong style="color: #5a6b78;">${archiveName}</strong> is waiting for you.
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 25px; color: #888;">
+          There is no urgency. Return when you are ready.
+        </p>
+
+        <div style="text-align: center; margin-top: 40px;">
+          <a href="${continueLink}" style="background-color: #5a6b78; color: #fdf6f0; padding: 16px 30px; text-decoration: none; border-radius: 2px; font-size: 14px; letter-spacing: 0.05em; display: inline-block;">
+            Continue the archive
+          </a>
+        </div>
+
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #bbb;">
+          <p>Legacy Vault. What deserves to be passed on must not be lost.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function getSuccessorAlertEmail(
   successorName: string,
   ownerName: string,

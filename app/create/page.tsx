@@ -174,12 +174,12 @@ function CreateMemorialPageContent() {
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
 
-  // 2. HELPER FOR BADGE UI
+  // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
       ? 'bg-stone/10 text-stone border-stone/20'
       : mode === 'draft'
-        ? 'bg-charcoal/10 text-charcoal/60 border-charcoal/20'
+        ? 'bg-sand/10 text-charcoal/60 border-sand/30'
         : 'bg-mist/10 text-mist border-mist/20'
       }`}>
       {mode === 'family' ? <Users size={12} /> : <User size={12} />}
@@ -188,6 +188,57 @@ function CreateMemorialPageContent() {
       </span>
     </div>
   );
+
+  // Step 1.1.1: Draft banner — warm, reassuring, no urgency
+  const DraftBanner = () => {
+    if (memorialData.paid) return null;
+    return (
+      <div className="bg-sand/15 border border-sand/25 rounded-xl px-5 py-3 flex items-start gap-3 max-w-2xl mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40 mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        <p className="text-xs text-charcoal/50 leading-relaxed">
+          This is a draft. The archive will remain private and incomplete until you choose to finalize it. Take all the time you need.
+        </p>
+      </div>
+    );
+  };
+
+  // Step 1.1.2: Contextual supportive messages by path
+  const PATH_MESSAGES: Record<PathId, string> = {
+    facts: 'Facts are the skeleton of memory. Fill in what you know, leave blank what you don\u2019t. You can always return.',
+    body: 'Images are proof of existence. Even a blurry photo is a treasure.',
+    soul: 'This is where the person comes back to life. Write as you would speak to someone who never knew them.',
+    presence: 'This is what the world will see. Take a moment to look.',
+    witnesses: 'Every witness carries a fragment. Together, they restore the whole.',
+  };
+
+  // Step 1.1.4: Pause and come back later state
+  const [showPauseModal, setShowPauseModal] = useState(false);
+
+  const handlePauseAndLeave = async (sendReminder: boolean) => {
+    // Save current state
+    await saveToSupabase();
+
+    if (sendReminder && currentMemorialId) {
+      const userId = localStorage.getItem('user-id');
+      try {
+        await fetch('/api/reminder/schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memorialId: currentMemorialId,
+            userId,
+            fullName: memorialData.step1.fullName || 'your archive',
+            delayDays: 7,
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to schedule reminder:', err);
+      }
+    }
+
+    setShowPauseModal(false);
+    router.push('/dashboard');
+  };
 
   // Mobile Detection State
   const [isMobile, setIsMobile] = useState(true); // Default to true (mobile-first) prevents flicker
@@ -679,11 +730,22 @@ function CreateMemorialPageContent() {
     }
   };
 
+  // Step 1.3.3: Determine if all paths traveled — center space fills with name
+  const allPathsTraveled = (['facts', 'body', 'soul', 'witnesses', 'presence'] as PathId[]).every(
+    id => getPathStatus(memorialData, id) === 'completed'
+  );
+  const somePathsTraveled = (['facts', 'body', 'soul'] as PathId[]).some(
+    id => getPathStatus(memorialData, id) !== 'empty'
+  );
+
   return (
     <div className="min-h-screen bg-ivory relative">
       {viewMode === 'hub' ? (
-        /* --- THE HUB VIEW (The Crossroads) --- */
+        /* --- THE HUB VIEW (The Crossroads) — Step 1.3.3: Contemplation Space --- */
         <div className="max-w-6xl mx-auto px-6 py-20">
+          {/* Step 1.1.1: Draft Banner */}
+          <DraftBanner />
+
           <div className="text-center mb-16">
             {/* Badge */}
             <div className="flex justify-center mb-4">
@@ -771,23 +833,22 @@ function CreateMemorialPageContent() {
 
             {/*   // ... rest of the top bar ... */}
 
+            {/* Step 1.3.1: Qualitative indicator instead of numerical */}
             {(() => {
               const isPresenceUnlocked = completedPathsCount >= 2;
 
               return (
                 <>
-                  <div className="inline-flex items-center gap-3 px-4 py-2 bg-sand/10 border border-sand/20 rounded-full mb-6">
-                    <div className="flex gap-1">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className={`w-2 h-2 rounded-full ${i <= completedPathsCount ? 'bg-mist' : 'bg-sand/30'}`} />
-                      ))}
-                    </div>
-                    <span className="text-xs font-medium text-charcoal/60 uppercase tracking-widest">
-                      {isPresenceUnlocked
-                        ? "The Presence is Unlocked"
-                        : `${completedPathsCount} of 2 chapters finished to unlock The Presence`}
-                    </span>
-                  </div>
+                  {!isPresenceUnlocked && (
+                    <p className="text-xs text-charcoal/40 tracking-wide mb-6">
+                      The Presence awaits. Explore two other paths to reveal it.
+                    </p>
+                  )}
+                  {isPresenceUnlocked && !allPathsTraveled && (
+                    <p className="text-xs text-mist/70 tracking-wide mb-6">
+                      The Presence is open. Continue when you are ready.
+                    </p>
+                  )}
 
                   <p className="text-lg text-charcoal/60 max-w-xl mx-auto">
                     {texts.subHeader}
@@ -813,38 +874,68 @@ function CreateMemorialPageContent() {
             })()}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          {/* Step 1.3.3: Organic path layout with poetic descriptions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Row 1: Facts + Body */}
             <PathCard
               id="facts"
-              title={isSelf ? "The Facts (You)" : "The Facts"}
+              title={isSelf ? "The Facts" : "The Facts"}
+              subtitle="The dates that anchor"
               description={texts.cards.facts}
               status={getPathStatus(memorialData, 'facts')}
               onClick={handlePathClick}
             />
             <PathCard
               id="body"
-              title={isSelf ? "Your Journey" : "The Body"}
+              title={isSelf ? "The Journey" : "The Body"}
+              subtitle="The life that was lived"
               description={texts.cards.body}
               status={getPathStatus(memorialData, 'body')}
               onClick={handlePathClick}
             />
             <PathCard
               id="soul"
-              title={isSelf ? "Your Essence" : "The Soul"}
+              title={isSelf ? "The Essence" : "The Soul"}
+              subtitle="The person behind the name"
               description={texts.cards.soul}
               status={getPathStatus(memorialData, 'soul')}
               onClick={handlePathClick}
             />
+
+            {/* Step 1.3.3: The center space — what has not yet been said */}
+            <div className="hidden lg:flex items-center justify-center">
+              {allPathsTraveled && memorialData.step1.fullName ? (
+                <div className="text-center animate-fadeIn">
+                  <p className="font-serif text-3xl text-charcoal/70 italic">
+                    {memorialData.step1.fullName}
+                  </p>
+                  <p className="text-xs text-charcoal/30 mt-2 tracking-wide">is taking shape.</p>
+                </div>
+              ) : somePathsTraveled ? (
+                <div className="text-center">
+                  <div className="w-px h-12 bg-sand/40 mx-auto mb-3" />
+                  <p className="text-xs text-charcoal/25 italic max-w-[140px]">
+                    What has not yet been said
+                  </p>
+                  <div className="w-px h-12 bg-sand/40 mx-auto mt-3" />
+                </div>
+              ) : (
+                <div className="w-px h-16 bg-sand/20 mx-auto" />
+              )}
+            </div>
+
             <PathCard
               id="witnesses"
-              title={mode === 'family' && !isSelf ? "Family Contributors" : (isSelf ? "Your Witnesses" : "Witnesses & Tributes")}
+              title={mode === 'family' && !isSelf ? "The Contributors" : "The Witnesses"}
+              subtitle="Those who carry a fragment"
               description={texts.cards.witnesses}
               status={getPathStatus(memorialData, 'witnesses')}
               onClick={handlePathClick}
             />
             <PathCard
               id="presence"
-              title={isSelf ? "Your Presence" : "The Presence"}
+              title={isSelf ? "The Presence" : "The Presence"}
+              subtitle="What remains to be seen"
               description={texts.cards.presence}
               status={memorialData.paid ? getPathStatus(memorialData, 'presence') : (completedPathsCount >= 2 ? 'in_progress' : 'locked')}
               onClick={handlePathClick}
@@ -929,10 +1020,19 @@ function CreateMemorialPageContent() {
             )
           )}
 
-          <div className="mt-20 text-center">
-            <Link href="/dashboard" className="text-sm text-charcoal/40 hover:text-charcoal transition-colors">
-              ← Save progress and exit to Dashboard
-            </Link>
+          {/* Step 1.1.4: Pause and come back later */}
+          <div className="mt-16 text-center space-y-4">
+            <button
+              onClick={() => setShowPauseModal(true)}
+              className="text-sm text-charcoal/40 hover:text-charcoal transition-colors border border-sand/30 rounded-xl px-6 py-3 hover:bg-sand/5"
+            >
+              Pause and come back later
+            </button>
+            <div>
+              <Link href="/dashboard" className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
+                or return to Dashboard
+              </Link>
+            </div>
           </div>
         </div>
       ) : (
@@ -940,54 +1040,78 @@ function CreateMemorialPageContent() {
         <div className="animate-fadeIn h-screen flex flex-col bg-ivory overflow-hidden">
 
           {/* Top Bar - Fixed at top */}
-          <div className="flex-none bg-white border-b border-sand/20 z-50 px-8 py-4 flex justify-between items-center">
+          <div className="flex-none bg-white border-b border-sand/20 z-50 px-4 sm:px-8 py-3 flex justify-between items-center">
             <button
               onClick={() => setViewMode('hub')}
               className="flex items-center gap-2 text-sm text-charcoal/60 hover:text-charcoal transition-all"
             >
               ← Back to Crossroads
             </button>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
 
-              {/* 4. INSERT BADGE IN EDITOR HEADER */}
-              <ModeBadge />
-
-              <div className="h-4 w-px bg-sand/40" /> {/* Separator */}
-
-              {/* Save Status */}
-              <div className="flex items-center gap-3">
+              {/* Save Status — Step 1.1.3: Minimal, no anxiety */}
+              <div className="flex items-center gap-2">
                 {saveStatus === 'saving' && (
-                  <div className="flex items-center gap-2 text-sm text-charcoal/60">
-                    <div className="w-4 h-4 border-2 border-charcoal/20 border-t-charcoal rounded-full animate-spin" />
-                    <span className="hidden sm:inline">Saving...</span>
+                  <div className="flex items-center gap-1.5 text-xs text-charcoal/30">
+                    <div className="w-3 h-3 border-1.5 border-charcoal/15 border-t-charcoal/40 rounded-full animate-spin" />
                   </div>
                 )}
                 {saveStatus === 'saved' && (
-                  <div className="flex items-center gap-2 text-sm text-mist">
-                    <Save size={16} />
-                    <span className="hidden sm:inline">Saved</span>
+                  <div className="flex items-center gap-1.5 text-xs text-charcoal/30 animate-fadeIn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Saved</span>
                   </div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="text-sm text-red-600">Failed to save</div>
+                  <div className="text-xs text-stone">Save failed</div>
                 )}
               </div>
-              <span className="text-xs text-mist font-medium bg-mist/5 px-3 py-1 rounded-full border border-mist/20">
-                Path: {activePath?.toUpperCase() || 'WIZARD'}
-              </span>
+
+              {/* Step 1.2.4: View as a visitor button */}
+              {currentMemorialId && (
+                <button
+                  onClick={() => {
+                    // Opens a full preview in a new tab, no editing UI
+                    const previewUrl = `/api/arche/preview-html?id=${currentMemorialId}`;
+                    window.open(previewUrl, '_blank');
+                  }}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/50"
+                  title="View as a visitor will see this archive"
+                >
+                  <Eye size={13} />
+                  <span>View as visitor</span>
+                </button>
+              )}
+
+              {/* Step 1.1.4: Pause button in editor bar */}
+              <button
+                onClick={() => setShowPauseModal(true)}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/40"
+              >
+                Pause
+              </button>
 
               {/* Version History Button */}
               {currentMemorialId && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 btn-paper border border-sand/40 rounded-lg hover:bg-sand/10 transition-all text-xs text-charcoal/60"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/40"
                 >
-                  <History size={14} />
+                  <History size={13} />
                   <span className="hidden sm:inline">History</span>
                 </button>
               )}
             </div>
           </div>
+
+          {/* Step 1.1.2: Contextual emotional message for active path */}
+          {activePath && PATH_MESSAGES[activePath] && (
+            <div className="flex-none bg-sand/8 border-b border-sand/15 px-8 py-2.5">
+              <p className="text-xs text-charcoal/35 italic text-center max-w-2xl mx-auto">
+                {PATH_MESSAGES[activePath]}
+              </p>
+            </div>
+          )}
 
           {/* THE RESIZABLE SPLIT VIEW - Takes remaining height */}
           <div className="flex-1 min-h-0 relative">
@@ -1205,6 +1329,40 @@ function CreateMemorialPageContent() {
           }}
           onClose={() => setShowHistory(false)}
         />
+      )}
+
+      {/* Step 1.1.4: Pause and come back later modal */}
+      {showPauseModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm">
+          <div className="bg-ivory rounded-2xl w-full max-w-md p-8 shadow-2xl border border-sand/30">
+            <h3 className="font-serif text-2xl text-charcoal mb-3 text-center">
+              Your archive is safe
+            </h3>
+            <p className="text-sm text-charcoal/50 text-center leading-relaxed mb-8">
+              Your archive is saved exactly where you left it. We can send you a gentle reminder in 7 days, unless you&apos;d prefer we don&apos;t.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handlePauseAndLeave(true)}
+                className="w-full py-3 px-6 bg-white border border-sand/30 rounded-xl text-sm text-charcoal hover:bg-sand/5 transition-all"
+              >
+                Send a reminder in 7 days
+              </button>
+              <button
+                onClick={() => handlePauseAndLeave(false)}
+                className="w-full py-3 px-6 bg-white border border-sand/30 rounded-xl text-sm text-charcoal/50 hover:bg-sand/5 transition-all"
+              >
+                Do not send a reminder
+              </button>
+              <button
+                onClick={() => setShowPauseModal(false)}
+                className="w-full py-2 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+              >
+                Continue working
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div >
   );
