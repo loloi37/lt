@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { ArrowLeft, Check, ExternalLink, ArrowUpCircle, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -15,12 +15,21 @@ function PersonalConfirmationContent() {
     const [isOpeningAuth, setIsOpeningAuth] = useState(false);
     const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
     const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(null);
+    const [authUserId, setAuthUserId] = useState<string | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const upgradeMemorialId = searchParams.get('memorialId');
     const isDraftUpgrade = !!upgradeMemorialId;
+
+    // Get authenticated user
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) setAuthUserId(user.id);
+        });
+    }, []);
 
     // On mount: restore memorialId from URL/localStorage and check if auth was already completed
     useEffect(() => {
@@ -53,7 +62,7 @@ function PersonalConfirmationContent() {
                 setAuthorizationCompleted(true);
                 return;
             }
-            const { data } = await supabase
+            const { data } = await createClient()
                 .from('memorial_authorizations')
                 .select('id')
                 .eq('memorial_id', currentMemorialId)
@@ -81,14 +90,14 @@ function PersonalConfirmationContent() {
             let memorialId = upgradeMemorialId || currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
-                const { data: existing } = await supabase
+                const { data: existing } = await createClient()
                     .from('memorials').select('id').eq('id', memorialId).maybeSingle();
                 if (!existing) { memorialId = null; localStorage.removeItem('current-memorial-id'); }
             }
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = localStorage.getItem('user-id');
-                const { data, error: insertError } = await supabase
+                const userId = authUserId;
+                const { data, error: insertError } = await createClient()
                     .from('memorials')
                     .insert({ user_id: userId, slug: `memorial-${Date.now()}`, mode: 'personal', paid: false })
                     .select().single();
@@ -114,8 +123,8 @@ function PersonalConfirmationContent() {
             let memorialId = upgradeMemorialId || currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = localStorage.getItem('user-id');
-                const { data, error: insertError } = await supabase
+                const userId = authUserId;
+                const { data, error: insertError } = await createClient()
                     .from('memorials')
                     .insert({ user_id: userId, slug: `memorial-${Date.now()}`, mode: 'personal', paid: false })
                     .select().single();

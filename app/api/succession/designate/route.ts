@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import { getSuccessorInvitationEmail } from '@/lib/email/templates';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabaseAdmin = createClient(
@@ -11,9 +12,15 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, ownerName, successorName, successorEmail, relationship } = await request.json();
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = user.id;
 
-        if (!userId || !successorEmail || !successorName) {
+        const { ownerName, successorName, successorEmail, relationship } = await request.json();
+
+        if (!successorEmail || !successorName) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
         }
 

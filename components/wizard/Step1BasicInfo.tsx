@@ -104,7 +104,10 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
     };
 
     const handleRequestCollab = async (duplicate: any) => {
-        const requesterId = localStorage.getItem('user-id');
+        const { createClient } = await import('@/utils/supabase/client');
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const requesterId = user?.id;
 
         try {
             const res = await fetch('/api/memorials/request-collaboration', {

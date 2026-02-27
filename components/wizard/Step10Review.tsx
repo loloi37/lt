@@ -21,6 +21,7 @@ interface Step10Props {
   onJumpToStep: (step: number) => void;
   isSelfArchive?: boolean;
   hasSuccessor?: boolean;
+  userId?: string;
 }
 
 const STEP_ICONS: Record<number, any> = {
@@ -34,7 +35,8 @@ export default function Step10Review({
   onBack,
   onJumpToStep,
   isSelfArchive = false,
-  hasSuccessor = false
+  hasSuccessor = false,
+  userId = ''
 }: Step10Props) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -48,11 +50,13 @@ export default function Step10Review({
     setIsPublishing(true);
 
     if (memorialId) {
-      const userId = localStorage.getItem('user-id');
+      const { createClient } = await import('@/utils/supabase/client');
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
       await createFullSnapshot({
         memorialId,
         data,
-        userId: userId || undefined,
+        userId: user?.id || undefined,
         userName: 'Owner',
         changeSummary: 'Archive sealed',
         changeType: 'manual',
@@ -323,7 +327,7 @@ export default function Step10Review({
               <X size={20} className="text-charcoal/60" />
             </button>
             <div className="max-h-[90vh] overflow-y-auto">
-              <SuccessorSettings userId={localStorage.getItem('user-id') || ''} />
+              <SuccessorSettings userId={userId} />
             </div>
           </div>
         </div>

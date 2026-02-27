@@ -52,8 +52,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     };
 
     const handleCreate = () => {
-        localStorage.setItem('user-id', userId);
-        localStorage.setItem('legacy-vault-mode', 'family');
         window.location.href = '/create?mode=family';
     };
 

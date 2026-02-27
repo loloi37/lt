@@ -4,98 +4,44 @@ import { useEffect, useState } from 'react';
 import { FileEdit, User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export default function ChoicePricingPage() {
     const router = useRouter();
     const [userId, setUserId] = useState<string | null>(null);
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        initUser();
+        checkAuth();
     }, []);
 
-    const initUser = async () => {
-        let savedUserId = localStorage.getItem('user-id');
-
-        if (savedUserId && !savedUserId.startsWith('user-')) {
-            setUserId(savedUserId);
-            return;
+    const checkAuth = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            setUserId(user.id);
         }
-
-        console.log("Pricing: Initializing real user session...");
-        try {
-            const { data, error } = await supabase
-                .from('users')
-                .insert([{ email: `user-pricing-${Date.now()}@legacyvault.temp` }])
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            if (data) {
-                localStorage.setItem('user-id', data.id);
-                setUserId(data.id);
-                console.log("Pricing: Real user initialized:", data.id);
-            }
-        } catch (err) {
-            console.error("Pricing: Failed to auto-init user:", err);
-            setUserId(null);
-        }
+        setReady(true);
     };
 
-    const ensureUser = async (): Promise<string | null> => {
-        let currentUserId = userId || localStorage.getItem('user-id');
-
-        if (!currentUserId || currentUserId.startsWith('user-')) {
-            try {
-                const { data } = await supabase
-                    .from('users')
-                    .insert([{ email: `user-pricing-onclick-${Date.now()}@legacyvault.temp` }])
-                    .select()
-                    .single();
-
-                if (data) {
-                    currentUserId = data.id;
-                    localStorage.setItem('user-id', data.id);
-                    setUserId(data.id);
-                }
-            } catch (err) {
-                console.error("Pricing: Failed to create user on click:", err);
-            }
-        }
-
-        return currentUserId || null;
+    // Redirect to signup/login if not authenticated, with ?next to come back
+    const requireAuth = (nextPath: string): boolean => {
+        if (userId) return true;
+        router.push(`/signup?next=${encodeURIComponent(nextPath)}`);
+        return false;
     };
 
     // Draft: free start → dashboard/draft
-    const handleDraftStart = async () => {
-        const currentUserId = await ensureUser();
-
-        if (!currentUserId) {
-            alert('We are having trouble setting up your session. Please try again.');
-            return;
-        }
-
-        localStorage.setItem('legacy-vault-mode', 'draft');
-        router.push(`/dashboard/draft/${currentUserId}`);
+    const handleDraftStart = () => {
+        if (!requireAuth('/choice-pricing')) return;
+        router.push(`/dashboard/draft/${userId}`);
     };
 
     // Personal or Family: paid → confirmation page
-    const handleModeSelection = async (mode: 'personal' | 'family') => {
-        const currentUserId = await ensureUser();
-
-        if (!currentUserId) {
-            alert('We are having trouble setting up your session. Please try again.');
-            return;
-        }
-
-        localStorage.setItem('legacy-vault-mode', mode);
-
-        if (mode === 'personal') {
-            router.push('/personal-confirmation');
-        } else if (mode === 'family') {
-            router.push('/family-confirmation');
-        }
+    const handleModeSelection = (mode: 'personal' | 'family') => {
+        const confirmPath = mode === 'personal' ? '/personal-confirmation' : '/family-confirmation';
+        if (!requireAuth(confirmPath)) return;
+        router.push(confirmPath);
     };
 
     const handleConciergeSelection = () => {
@@ -131,7 +77,7 @@ export default function ChoicePricingPage() {
                     {/* Draft — free, independent plan */}
                     <button
                         onClick={handleDraftStart}
-                        disabled={!userId}
+                        disabled={!ready}
                         className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-charcoal/30 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-charcoal/80 to-charcoal/60 rounded-2xl flex items-center justify-center mb-6">
@@ -176,7 +122,7 @@ export default function ChoicePricingPage() {
                     {/* Personal */}
                     <button
                         onClick={() => handleModeSelection('personal')}
-                        disabled={!userId}
+                        disabled={!ready}
                         className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-mist to-mist/80 rounded-2xl flex items-center justify-center mb-6">
@@ -227,7 +173,7 @@ export default function ChoicePricingPage() {
                     {/* Family */}
                     <button
                         onClick={() => handleModeSelection('family')}
-                        disabled={!userId}
+                        disabled={!ready}
                         className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-stone to-stone/80 rounded-2xl flex items-center justify-center mb-6">

@@ -5,7 +5,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, BookOpen, Circle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 // ─── Memorial data we need for the Threshold Page ────────────────────────────
 interface ThresholdMemorial {
@@ -62,6 +62,7 @@ function PaymentSuccessContent() {
                 if (result.error) throw new Error(result.error);
 
                 // 2. Fetch memorial data for the Threshold Page
+                const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
                     .select('full_name, birth_date, death_date, profile_photo_url, user_id, step1')
@@ -70,10 +71,6 @@ function PaymentSuccessContent() {
 
                 if (!fetchError && data) {
                     setMemorial(data as ThresholdMemorial);
-                    // Also persist userId for later redirects
-                    if (data.user_id) {
-                        localStorage.setItem('user-id', data.user_id);
-                    }
                 }
 
                 // 3. Transition to the Threshold Page
@@ -110,13 +107,10 @@ function PaymentSuccessContent() {
     const mode = planParam === 'family' ? 'family' : 'personal';
 
     // ── Door action handler ───────────────────────────────────────────────────
-    const handleDoor = (door: 'photograph' | 'story' | 'silence') => {
-        const userId = localStorage.getItem('user-id');
-        localStorage.setItem('legacy-vault-mode', mode);
-        // Store the first-door choice for future personalization of reminders
-        if (memorialId) {
-            localStorage.setItem(`first-door-${memorialId}`, door);
-        }
+    const handleDoor = async (door: 'photograph' | 'story' | 'silence') => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id || memorial?.user_id;
 
         setPhase('redirecting');
 

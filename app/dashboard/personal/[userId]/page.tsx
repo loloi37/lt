@@ -101,8 +101,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             alert('You already have an active Personal Archive. Each account supports one personal archive.');
             return;
         }
-        localStorage.setItem('user-id', userId);
-        localStorage.setItem('legacy-vault-mode', 'personal');
         window.location.href = '/create?mode=personal';
     };
 

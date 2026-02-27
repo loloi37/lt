@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
@@ -28,10 +29,16 @@ const UPGRADE_PATHS: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, targetPlan } = await request.json();
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = user.id;
 
-        if (!userId || !targetPlan) {
-            return NextResponse.json({ error: 'Missing userId or targetPlan' }, { status: 400 });
+        const { targetPlan } = await request.json();
+
+        if (!targetPlan) {
+            return NextResponse.json({ error: 'Missing targetPlan' }, { status: 400 });
         }
 
         if (!PLAN_PRICES[targetPlan]) {
@@ -159,12 +166,11 @@ export async function POST(request: NextRequest) {
 // GET: Calculate upgrade info without creating a payment session
 export async function GET(request: NextRequest) {
     try {
-        const { searchParams } = new URL(request.url);
-        const userId = searchParams.get('userId');
-
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const userId = user.id;
 
         const { data: memorials } = await supabaseAdmin
             .from('memorials')

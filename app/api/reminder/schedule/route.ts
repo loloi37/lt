@@ -1,39 +1,45 @@
 // app/api/reminder/schedule/route.ts
 // Step 1.1.4: Schedule a gentle reminder email for paused archives
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: Request) {
     try {
-        const { memorialId, userId, fullName, delayDays } = await request.json();
+        const { user: authUser } = await createAuthenticatedClient();
+        if (!authUser) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const userId = authUser.id;
 
-        if (!memorialId || !userId) {
+        const { memorialId, fullName, delayDays } = await request.json();
+
+        if (!memorialId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Get user email
-        const { data: user } = await supabase
-            .from('users')
-            .select('email')
-            .eq('id', userId)
-            .single();
+        // User email comes from the auth session
+        const userEmail = authUser.email;
 
-        if (!user?.email || user.email.includes('@legacyvault.temp')) {
-            // No real email — silently skip (no error to user)
+        if (!userEmail) {
             return NextResponse.json({ success: true, skipped: true });
         }
 
         // Store reminder in the database for a cron job to pick up
-        // For now, we store the reminder request. A cron job would process these.
         const reminderDate = new Date();
         reminderDate.setDate(reminderDate.getDate() + (delayDays || 7));
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('memorial_reminders')
             .insert({
                 memorial_id: memorialId,
                 user_id: userId,
-                user_email: user.email,
+                user_email: userEmail,
                 memorial_name: fullName || 'your archive',
                 remind_at: reminderDate.toISOString(),
                 status: 'pending',

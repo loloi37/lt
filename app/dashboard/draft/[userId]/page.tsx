@@ -4,7 +4,8 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, FileEdit, Loader2, ArrowLeft, RefreshCcw, AlertTriangle, ArrowUpCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { supabase, Memorial } from '@/lib/supabase';
+import { Memorial } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export default function DraftDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -20,6 +21,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
 
     const loadMemorials = async () => {
         setLoading(true);
+        const supabase = createClient();
         const { data, error } = await supabase
             .from('memorials')
             .select('*')
@@ -37,21 +39,18 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     const handleCreate = () => {
-        localStorage.setItem('user-id', userId);
-        localStorage.setItem('legacy-vault-mode', 'draft');
         window.location.href = '/create?mode=draft';
     };
 
     // Upgrade a specific draft memorial to Personal
     const handleUpgrade = (memorialId: string) => {
-        localStorage.setItem('user-id', userId);
-        localStorage.setItem('legacy-vault-mode', 'personal');
         router.push(`/personal-confirmation?memorialId=${memorialId}`);
     };
 
     const softDeleteMemorial = async (id: string) => {
         if (!confirm('Are you sure you want to delete this draft? It will be moved to the trash for 30 days.')) return;
 
+        const supabase = createClient();
         const { error } = await supabase
             .from('memorials')
             .update({ deleted: true, deleted_at: new Date().toISOString() })
@@ -66,6 +65,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     const restoreMemorial = async (id: string) => {
+        const supabase = createClient();
         const { error } = await supabase
             .from('memorials')
             .update({ deleted: false, deleted_at: null })

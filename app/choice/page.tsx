@@ -2,44 +2,38 @@
 import { useState, useEffect } from 'react';
 import { User, Users, Sparkles, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export default function ChoicePage() {
     const router = useRouter();
     const [userId, setUserId] = useState<string | null>(null);
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        initUser();
+        checkAuth();
     }, []);
 
-    const initUser = async () => {
-        let savedUserId = localStorage.getItem('user-id');
-        if (!savedUserId) {
-            const { data, error } = await supabase
-                .from('users')
-                .insert([{ email: `user-${Date.now()}@legacyvault.temp` }])
-                .select()
-                .single();
-
-            if (data) {
-                savedUserId = data.id;
-                localStorage.setItem('user-id', data.id);
-            }
+    const checkAuth = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            setUserId(user.id);
         }
-        setUserId(savedUserId);
+        setReady(true);
+    };
+
+    const requireAuth = (nextPath: string): boolean => {
+        if (userId) return true;
+        router.push(`/signup?next=${encodeURIComponent(nextPath)}`);
+        return false;
     };
 
     const handleModeSelection = (mode: 'personal' | 'family') => {
-        if (!userId) {
-            alert('Setting up your account...');
-            return;
-        }
-        localStorage.setItem('legacy-vault-mode', mode);
+        if (!requireAuth(`/dashboard/${mode}/${userId}`)) return;
         router.push(`/dashboard/${mode}/${userId}`);
     };
 
     const handleConciergeSelection = () => {
-        // Go directly to request page - no userId needed yet
         router.push('/concierge/request');
     };
 
@@ -55,7 +49,7 @@ export default function ChoicePage() {
                     {/* Personal Mode */}
                     <button
                         onClick={() => handleModeSelection('personal')}
-                        disabled={!userId}
+                        disabled={!ready}
                         className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-sage to-sage/80 rounded-2xl flex items-center justify-center mb-6">
@@ -71,7 +65,7 @@ export default function ChoicePage() {
                     {/* Family Mode */}
                     <button
                         onClick={() => handleModeSelection('family')}
-                        disabled={!userId}
+                        disabled={!ready}
                         className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
                     >
                         <div className="w-16 h-16 bg-gradient-to-br from-terracotta to-terracotta/80 rounded-2xl flex items-center justify-center mb-6">

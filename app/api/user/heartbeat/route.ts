@@ -1,6 +1,7 @@
 // app/api/user/heartbeat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,11 +10,11 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId } = await request.json();
-
-        if (!userId) {
-            return NextResponse.json({ error: 'Missing User ID' }, { status: 400 });
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const userId = user.id;
 
         const { error } = await supabaseAdmin
             .from('users')

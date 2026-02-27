@@ -3,7 +3,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Check, Mail, ArrowRight, FileText, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 function RequestedContent() {
     const searchParams = useSearchParams();
@@ -19,7 +19,7 @@ function RequestedContent() {
 
             // Fetch the project to get contact preference
             const fetchProject = async () => {
-                const { data, error } = await supabase
+                const { data, error } = await createClient()
                     .from('concierge_projects')
                     .select('contact_preference')
                     .eq('id', projectId)

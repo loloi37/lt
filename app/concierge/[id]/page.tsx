@@ -16,7 +16,7 @@ import {
     Loader2,
     X
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import type {
     ConciergeProject,
     ConciergeFile,
@@ -32,6 +32,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
     const unwrappedParams = use(params);
     const projectId = unwrappedParams.id;
     const router = useRouter();
+    const supabase = createClient();
 
     const [project, setProject] = useState<ConciergeProject | null>(null);
     const [files, setFiles] = useState<ConciergeFile[]>([]);

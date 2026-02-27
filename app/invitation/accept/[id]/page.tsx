@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { Shield, Check, Loader2, AlertCircle } from 'lucide-react';
 
 export default function WitnessAcceptancePage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,12 +16,27 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
     const [error, setError] = useState<string | null>(null);
     const [accepted, setAccepted] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [authUserId, setAuthUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchInvitationDetails();
+        checkAuthAndFetch();
     }, [invitationId]);
 
-    const fetchInvitationDetails = async () => {
+    const checkAuthAndFetch = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            // Redirect to login, then come back here after sign-in
+            router.push(`/login?next=${encodeURIComponent(`/invitation/accept/${invitationId}`)}`);
+            return;
+        }
+
+        setAuthUserId(user.id);
+        await fetchInvitationDetails(supabase);
+    };
+
+    const fetchInvitationDetails = async (supabase: ReturnType<typeof createClient>) => {
         try {
             // 1. Fetch Invitation
             const { data: inv, error: invError } = await supabase
@@ -53,24 +68,24 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
     };
 
     const handleAcceptance = async () => {
-        if (!accepted) return;
+        if (!accepted || !authUserId) return;
         setProcessing(true);
 
         try {
-            // 1. Update invitation status
+            const supabase = createClient();
+
+            // 1. Update invitation status and link to authenticated user
             const { error: updateError } = await supabase
                 .from('witness_invitations')
-                .update({ status: 'accepted' })
+                .update({
+                    status: 'accepted',
+                    accepted_by_user_id: authUserId,
+                })
                 .eq('id', invitationId);
 
             if (updateError) throw updateError;
 
-            // 2. Store the invitation ID in localStorage 
-            // This allows us to link the user to the memorial in the next step
-            localStorage.setItem('pending-invitation-id', invitationId);
-
-            // 3. Redirect to the main ritual/create page
-            // The creation page will detect this localStorage item and grant access
+            // 2. Redirect to the memorial archive view
             router.push(`/create?id=${invitation.memorial_id}&role=witness`);
 
         } catch (err: any) {
@@ -90,7 +105,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
     if (error) {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
-                <div className="max-w-md">
+                <div className="max-md">
                     <AlertCircle className="mx-auto text-stone mb-4" size={48} />
                     <h1 className="font-serif text-2xl mb-2 text-charcoal">Invitation Unavailable</h1>
                     <p className="text-charcoal/60 mb-6">{error}</p>
@@ -122,7 +137,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
                         </p>
 
                         <p className="italic bg-sand/5 p-4 rounded-xl border border-sand/20 mt-6">
-                            "To bear witness is to preserve the truth of a life. It is an act of love that defies time. By entering this space, you agree to handle these memories with the dignity and respect they deserve."
+                            &ldquo;To bear witness is to preserve the truth of a life. It is an act of love that defies time. By entering this space, you agree to handle these memories with the dignity and respect they deserve.&rdquo;
                         </p>
                     </div>
 
@@ -161,7 +176,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
 
                 <div className="bg-sand/10 p-4 text-center border-t border-sand/20">
                     <p className="text-[10px] uppercase tracking-widest text-charcoal/40 font-medium">
-                        Authorized Historical Access • Legacy Vault
+                        Authorized Historical Access &bull; Legacy Vault
                     </p>
                 </div>
             </div>

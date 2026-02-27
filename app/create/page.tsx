@@ -36,10 +36,8 @@ import {
   WitnessRole
 } from '@/types/memorial';
 import { PathId } from '@/types/paths';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { createVersion } from '@/lib/versionService';
-import { GoTrueAdminApi } from '@supabase/supabase-js';
-import { table } from 'node:console';
 
 const PATH_CONFIG: Record<PathId, { steps: number[]; labels: string[] }> = {
   facts: {
@@ -159,16 +157,22 @@ function CreateMemorialPageContent() {
   // Ref to track data when entering a step (for version diffing)
   const stepEntryDataRef = useRef<MemorialData>(getInitialData());
 
+  // Track the authenticated user ID
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
+
   useEffect(() => {
-    // Send heartbeat when user enters the wizard
-    const userId = localStorage.getItem('user-id');
-    if (userId && !userId.startsWith('user-')) {
-      fetch('/api/user/heartbeat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      }).catch(console.error); // Fire and forget
-    }
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setAuthUserId(user.id);
+        // Send heartbeat
+        fetch('/api/user/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        }).catch(console.error);
+      }
+    });
   }, []);
 
   // 1. CAPTURE THE MODE
@@ -219,14 +223,12 @@ function CreateMemorialPageContent() {
     await saveToSupabase();
 
     if (sendReminder && currentMemorialId) {
-      const userId = localStorage.getItem('user-id');
       try {
         await fetch('/api/reminder/schedule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             memorialId: currentMemorialId,
-            userId,
             fullName: memorialData.step1.fullName || 'your archive',
             delayDays: 7,
           }),
@@ -287,49 +289,22 @@ function CreateMemorialPageContent() {
     }
   }, [memorialId, searchParams]);
 
+  // Auth is now handled by middleware — no temp user creation needed
+
+  // Check for successor on mount
   useEffect(() => {
-    const ensureUserExists = async () => {
-      let savedUserId = localStorage.getItem('user-id');
-
-      if (!savedUserId || savedUserId.startsWith('user-')) {
-        console.log("No valid user found, creating temporary session...");
-        try {
-          const { data, error } = await supabase
-            .from('users')
-            .insert([{ email: `user-create-${Date.now()}@legacyvault.temp` }])
-            .select()
-            .single();
-
-          if (error) throw error;
-
-          if (data) {
-            localStorage.setItem('user-id', data.id);
-            console.log("Temporary user created:", data.id);
-          }
-        } catch (err) {
-          console.error("Failed to initialize user session:", err);
-        }
-      }
-    };
-
-    ensureUserExists();
-  }, []);
-
-  // NEW: Check for successor on mount
-  useEffect(() => {
+    if (!authUserId) return;
     const checkSuccessor = async () => {
-      const userId = localStorage.getItem('user-id');
-      if (!userId || userId.startsWith('user-')) return; // Skip for temp users
-
+      const supabase = createClient();
       const { count } = await supabase
         .from('user_successors')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        .eq('user_id', authUserId);
 
       setHasSuccessor(!!count && count > 0);
     };
     checkSuccessor();
-  }, []);
+  }, [authUserId]);
 
   useEffect(() => {
     const hasSeenTutorial = localStorage.getItem('legacy-vault-tutorial-completed');
@@ -389,6 +364,7 @@ function CreateMemorialPageContent() {
   const loadMemorial = async (id: string) => {
     setIsLoading(true);
     try {
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('memorials')
         .select('*')
@@ -464,21 +440,20 @@ function CreateMemorialPageContent() {
     }
     // ----------------------------
 
-    const userId = localStorage.getItem('user-id');
-
-    if (!userId || userId.startsWith('user-')) {
-      console.log("Waiting for a valid Database UUID...");
+    if (!authUserId) {
+      console.log("Waiting for authenticated user...");
       return;
     }
 
     setSaveStatus('saving');
     try {
+      const supabase = createClient();
       const slug = generateSlug(memorialData.step1.fullName);
-      const rawMode = searchParams.get('mode') || localStorage.getItem('legacy-vault-mode') || 'personal';
-      const currentMode = ['personal', 'family'].includes(rawMode) ? rawMode : 'personal';
+      const rawMode = searchParams.get('mode') || 'personal';
+      const currentMode = ['personal', 'family', 'draft'].includes(rawMode) ? rawMode : 'personal';
 
       const memorialRecord = {
-        id: currentMemorialId || undefined, // ⬅ CRITICAL: Include ID if exists
+        id: currentMemorialId || undefined,
         step1: memorialData.step1,
         step2: memorialData.step2,
         step3: memorialData.step3,
@@ -489,7 +464,7 @@ function CreateMemorialPageContent() {
         step8: memorialData.step8,
         step9: memorialData.step9,
         status: 'draft',
-        slug: slug || currentMemorialId, // Fallback to ID if no name
+        slug: slug || currentMemorialId,
         full_name: memorialData.step1.fullName,
         birth_date: memorialData.step1.birthDate || null,
         death_date: memorialData.step1.deathDate || null,
@@ -497,27 +472,24 @@ function CreateMemorialPageContent() {
         cover_photo_url: memorialData.step8.coverPhotoPreview || null,
         completed_steps: memorialData.completedSteps,
         mode: currentMode,
-        user_id: userId,
+        user_id: authUserId,
         paid: memorialData.paid,
         updated_at: new Date().toISOString(),
       };
 
-      // ✅ USE UPSERT instead of INSERT/UPDATE separately
       const { data, error } = await supabase
         .from('memorials')
         .upsert(memorialRecord, {
-          onConflict: 'id', // ⬅ Use ID as conflict key
-          ignoreDuplicates: false // ⬅ Always UPDATE if exists
+          onConflict: 'id',
+          ignoreDuplicates: false
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // If this was a new memorial, update the ID
       if (data && !currentMemorialId) {
         setCurrentMemorialId(data.id);
-        localStorage.setItem('current-memorial-id', data.id);
         window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
       }
 
@@ -531,12 +503,11 @@ function CreateMemorialPageContent() {
   const goToNextStepAndComplete = async () => {
     // Only create versions if the user is the owner
     if (currentMemorialId && userRole === 'owner') {
-      const userId = localStorage.getItem('user-id');
       await createVersion({
         memorialId: currentMemorialId,
         oldData: stepEntryDataRef.current,
         newData: memorialData,
-        userId: userId || undefined,
+        userId: authUserId || undefined,
         userName: 'Owner',
         changeType: 'manual',
       });
@@ -696,14 +667,13 @@ function CreateMemorialPageContent() {
     // Security check
     if (userRole !== 'witness' || !currentMemorialId) return;
 
-    const userId = localStorage.getItem('user-id');
-
     try {
+      const supabase = createClient();
       const { error } = await supabase
         .from('memorial_contributions')
         .insert([{
           memorial_id: currentMemorialId,
-          user_id: userId,
+          user_id: authUserId,
           witness_name: "A Witness", // We will improve the name retrieval later
           type: type,
           content: content,
@@ -1280,6 +1250,7 @@ function CreateMemorialPageContent() {
                           onJumpToStep={goToStep}
                           isSelfArchive={memorialData.step1.isSelfArchive}
                           hasSuccessor={hasSuccessor}
+                          userId={authUserId || ''}
                         />
                       )}
                     </div>
@@ -1355,7 +1326,7 @@ function CreateMemorialPageContent() {
         <VersionHistory
           memorialId={currentMemorialId}
           currentData={memorialData}
-          userId={localStorage.getItem('user-id') || undefined}
+          userId={authUserId || undefined}
           userName="Owner"
           onRestore={(restoredData) => {
             setMemorialData(restoredData);

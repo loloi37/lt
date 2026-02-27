@@ -1,10 +1,12 @@
-// lib/supabase.ts - UPDATED
-import { createClient } from '@supabase/supabase-js';
+// lib/supabase.ts - UPDATED to use auth-aware SSR client
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// This client is now cookie-aware and will use the authenticated session
+// when available. All existing imports continue to work.
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
 // EXISTING MEMORIAL INTERFACE

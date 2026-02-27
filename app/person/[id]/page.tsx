@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { Loader2, Lock } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import MemorialRenderer from '@/components/MemorialRenderer';
 
 export default function PersonMemorialPage({ params }: {
@@ -25,6 +25,7 @@ export default function PersonMemorialPage({ params }: {
         setLoading(true);
         setError(null);
         try {
+            const supabase = createClient();
             const { data, error } = await supabase
                 .from('memorials')
                 .select('*')
@@ -41,10 +42,8 @@ export default function PersonMemorialPage({ params }: {
             // ── ACCESS CONTROL ──────────────────────────────────────────────
             // An archive is publicly readable only if it has been paid for.
             // Unpaid / draft archives are private to the owner.
-            const currentUserId = typeof window !== 'undefined'
-                ? localStorage.getItem('user-id')
-                : null;
-            const isOwner = currentUserId && currentUserId === data.user_id;
+            const { data: { user } } = await supabase.auth.getUser();
+            const isOwner = user && user.id === data.user_id;
 
             if (!data.paid && !isOwner) {
                 setAccessDenied(true);

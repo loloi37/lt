@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Check, ExternalLink, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 
 export default function FamilyConfirmationPage() {
@@ -11,7 +11,16 @@ export default function FamilyConfirmationPage() {
     const [isOpeningAuth, setIsOpeningAuth] = useState(false);
     const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
     const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(null);
+    const [authUserId, setAuthUserId] = useState<string | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Get authenticated user
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) setAuthUserId(user.id);
+        });
+    }, []);
 
     // On mount: restore memorialId and check if auth was already completed
     useEffect(() => {
@@ -43,7 +52,7 @@ export default function FamilyConfirmationPage() {
                 setAuthorizationCompleted(true);
                 return;
             }
-            const { data } = await supabase
+            const { data } = await createClient()
                 .from('memorial_authorizations')
                 .select('id')
                 .eq('memorial_id', currentMemorialId)
@@ -68,14 +77,14 @@ export default function FamilyConfirmationPage() {
             let memorialId = currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
-                const { data: existing } = await supabase
+                const { data: existing } = await createClient()
                     .from('memorials').select('id').eq('id', memorialId).maybeSingle();
                 if (!existing) { memorialId = null; localStorage.removeItem('current-memorial-id'); }
             }
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = localStorage.getItem('user-id');
-                const { data, error: insertError } = await supabase
+                const userId = authUserId;
+                const { data, error: insertError } = await createClient()
                     .from('memorials')
                     .insert({ user_id: userId, slug: `family-memorial-${Date.now()}`, paid: false, mode: 'family' })
                     .select().single();
@@ -117,8 +126,8 @@ export default function FamilyConfirmationPage() {
             let memorialId = currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = localStorage.getItem('user-id');
-                const { data, error: insertError } = await supabase
+                const userId = authUserId;
+                const { data, error: insertError } = await createClient()
                     .from('memorials')
                     .insert({ user_id: userId, slug: `family-memorial-${Date.now()}`, mode: 'family', paid: false })
                     .select().single();

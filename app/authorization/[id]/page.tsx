@@ -3,7 +3,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { Shield, Check, AlertTriangle, ArrowLeft, PenTool, Type, Clock, Loader2, Users, User } from 'lucide-react';
 import SignaturePad from '@/components/SignaturePad';
 import fp from '@fingerprintjs/fingerprintjs';
@@ -67,7 +67,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 return;
             }
 
-            const { data, error } = await supabase
+            const { data, error } = await createClient()
                 .from('memorials')
                 .select('step1, mode') // Added mode
                 .eq('id', memorialId)
@@ -146,7 +146,9 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
             const agent = await fp.load();
             const fpResult = await agent.get();
             const fingerprint = fpResult.visitorId;
-            const userId = localStorage.getItem('user-id');
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id;
 
             // 2. Prepare Video Data (if recorded)
             let videoData = null;
