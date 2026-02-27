@@ -1271,5 +1271,14 @@ $$ language plpgsql;
 create trigger trigger_update_activity
 after update on memorials
 for each row execute function update_user_last_activity();
-=======
->>>>>>> 6e47b7d38ce64044195a772a63b906bad2a16675
+
+--------------------------------------------------------
+
+49 :
+
+-- See command_sql_supabase/49_monetization_upgrade.sql
+-- Adds: plan_type, amount_paid, stripe_payment_id, refund_eligible,
+-- upgraded_from, upgraded_at to memorials table.
+-- Adds: total_amount, amount_paid_so_far, payment_phase, upgraded_from,
+-- differential_amount to concierge_projects table.
+-- Creates trigger: auto_disable_refund_on_publish (sets refund_eligible=false on publish)

@@ -122,11 +122,11 @@ function PaymentForm({ memorialId, amount, fullName }: {
                 </div>
             )}
 
-            {/* Step 2.2.2: Trust elements */}
+            {/* Trust elements */}
             <div className="mb-6 space-y-2">
                 <div className="flex items-center gap-2 text-xs text-charcoal/25">
                     <div className="w-1 h-1 rounded-full bg-charcoal/15" />
-                    One-time payment — No subscription — No hidden fees
+                    A single payment for a permanent archive — No subscription — No hidden fees
                 </div>
                 <div className="flex items-center gap-2 text-xs text-charcoal/25">
                     <div className="w-1 h-1 rounded-full bg-charcoal/15" />
@@ -134,12 +134,15 @@ function PaymentForm({ memorialId, amount, fullName }: {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-charcoal/25">
                     <div className="w-1 h-1 rounded-full bg-charcoal/15" />
-                    Full refund available as long as the archive has not been published
-                </div>
-                <div className="flex items-center gap-2 text-xs text-charcoal/25">
-                    <div className="w-1 h-1 rounded-full bg-charcoal/15" />
                     Permanent archive + Independent export + Lifetime access + Dedicated support
                 </div>
+            </div>
+
+            {/* Refund policy reminder */}
+            <div className="mb-6 p-4 bg-sand/5 border border-sand/15 rounded-xl">
+                <p className="text-xs text-charcoal/40 leading-relaxed">
+                    Your archive is in &ldquo;Sealed&rdquo; status. You may request a full refund as long as it has not been published. Once published, the archive is no longer eligible for refund.
+                </p>
             </div>
 
             {/* Submit button */}
@@ -177,7 +180,7 @@ function PaymentPageContent() {
     const memorialId = searchParams.get('memorialId');
 
     const [clientSecret, setClientSecret] = useState<string | null>(null);
-    const [amount, setAmount] = useState(1500);
+    const [amount, setAmount] = useState(1470);
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -194,7 +197,7 @@ function PaymentPageContent() {
                 const res = await fetch('/api/create-payment-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId, amount: 1500 }),
+                    body: JSON.stringify({ memorialId, amount: 1470 }),
                 });
 
                 const data = await res.json();

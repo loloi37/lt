@@ -638,7 +638,7 @@ function CreateMemorialPageContent() {
         body: JSON.stringify({
           memorialId: currentMemorialId,
           plan: 'Personal',
-          amount: 1500,
+          amount: 1470,
         }),
       });
 
@@ -1025,7 +1025,7 @@ function CreateMemorialPageContent() {
                   </button>
                   {/* Step 2.1.1: Subtext below — price context without commercialism */}
                   <p className="text-xs text-charcoal/25 mt-4">
-                    One-time payment of $1,500. No subscription. Lifetime access.
+                    $1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.
                   </p>
                 </div>
               </div>

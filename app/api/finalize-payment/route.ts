@@ -43,7 +43,18 @@ export async function POST(request: NextRequest) {
         const updatePayload: Record<string, any> = {
             paid: true,
             payment_confirmed_at: new Date().toISOString(),
+            // Refund eligibility: true by default, becomes false when status = 'published'
+            refund_eligible: true,
         };
+
+        // Store plan-specific pricing info
+        if (currentMemorial.mode === 'draft' || currentMemorial.mode === 'personal') {
+            updatePayload.plan_type = 'personal';
+            updatePayload.amount_paid = 1470;
+        } else if (currentMemorial.mode === 'family') {
+            updatePayload.plan_type = 'family';
+            updatePayload.amount_paid = 2940;
+        }
 
         if (currentMemorial.mode === 'draft') {
             updatePayload.mode = 'personal';

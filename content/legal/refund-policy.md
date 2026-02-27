@@ -34,7 +34,7 @@ We recognize that memorialization can trigger family conflicts. We provide a **F
 
 ---
 
-## 3. Personal Plan Refunds ($300)
+## 3. Personal Plan Refunds ($1,470)
 
 ### 3.1 Before Publication (Draft Status)
 - **Full refund** available within 30 days of purchase if memorial has not been published
@@ -53,7 +53,7 @@ If you request significant customization beyond standard templates before public
 
 ---
 
-## 4. Family Plan Refunds ($3,000)
+## 4. Family Plan Refunds ($2,940)
 
 ### 4.1 Before Curation Begins
 - **Full refund** available if curation team has not started work

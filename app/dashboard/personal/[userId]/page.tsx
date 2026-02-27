@@ -228,6 +228,40 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     </div>
                 )}
 
+                {/* Upgrade to Family prompt — shown after completing at least 2 paths */}
+                {paidArchive && (
+                    <div className="mt-10 bg-gradient-to-r from-stone/5 to-mist/5 border border-stone/15 rounded-2xl p-6">
+                        <div className="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <p className="font-serif text-lg text-charcoal mb-1">Would you like to create an archive for another family member?</p>
+                                <p className="text-sm text-charcoal/50">
+                                    Upgrade to the Family plan. You only pay the difference: <strong>$1,470</strong> (Family $2,940 &minus; Personal $1,470 already paid).
+                                </p>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch('/api/upgrade-plan', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ userId, targetPlan: 'family' }),
+                                        });
+                                        const data = await res.json();
+                                        if (data.url) window.location.href = data.url;
+                                        else alert(data.error || 'Could not start upgrade');
+                                    } catch {
+                                        alert('Upgrade failed. Please try again.');
+                                    }
+                                }}
+                                className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-stone hover:bg-stone/90 text-ivory rounded-lg font-semibold transition-all"
+                            >
+                                <Users size={18} />
+                                Discover the Family plan
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Unpaid drafts — card grid like Family */}
                 {draftArchives.length > 0 && (
                     <div className="mt-16 pt-10 border-t border-sand/30">

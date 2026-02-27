@@ -134,7 +134,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                     <div>
                         <p className="font-semibold text-charcoal mb-1">Ready to publish your memorial?</p>
                         <p className="text-sm text-charcoal/60">
-                            Upgrade to the <strong>Personal</strong> plan ($1,500) to remove watermarks, unlock HD media, and get lifetime hosting.
+                            Upgrade to the <strong>Personal</strong> plan ($1,470) to remove watermarks, unlock HD media, and get lifetime hosting.
                         </p>
                     </div>
                     <button
@@ -142,7 +142,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                         className="btn-paper ml-6 flex-shrink-0 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold transition-all flex items-center gap-2"
                     >
                         <ArrowUpCircle size={18} />
-                        Upgrade Now ($1,500)
+                        Upgrade Now ($1,470)
                     </button>
                 </div>
             </div>
@@ -217,7 +217,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                         className="btn-paper w-full py-2.5 px-3 bg-gradient-to-r from-sage to-sage/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
                                     >
                                         <ArrowUpCircle size={16} />
-                                        Upgrade to Personal ($1,500)
+                                        Upgrade to Personal ($1,470)
                                     </button>
                                 </div>
                             </div>

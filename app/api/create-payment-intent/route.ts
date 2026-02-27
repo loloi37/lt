@@ -16,7 +16,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1500 } = await request.json();
+        const { memorialId, amount = 1470 } = await request.json();
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });

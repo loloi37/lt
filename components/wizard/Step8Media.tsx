@@ -731,7 +731,7 @@ What did they stand for? How did they make the world better? What will their mem
                 onClick={onBackToHub}
                 className="w-full py-4 bg-stone text-ivory rounded-xl font-bold hover:shadow-xl transition-all shadow-lg"
               >
-                Become a Permanent Guardian ($1,500)
+                Become a Permanent Guardian ($1,470)
               </button>
               <button
                 onClick={() => setShowPaywall(false)}

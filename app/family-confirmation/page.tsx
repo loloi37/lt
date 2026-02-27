@@ -88,7 +88,7 @@ export default function FamilyConfirmationPage() {
             const response = await fetch('/api/create-checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ memorialId, plan: 'Family', amount: 3000 }),
+                body: JSON.stringify({ memorialId, plan: 'Family', amount: 2940 }),
             });
             const data = await response.json();
 
@@ -153,7 +153,7 @@ export default function FamilyConfirmationPage() {
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="text-center mb-12">
                     <h1 className="font-serif text-4xl text-charcoal mb-4">Confirm Your Order</h1>
-                    <p className="text-lg text-charcoal/70">Family Plan - $3,000</p>
+                    <p className="text-lg text-charcoal/70">Family Plan — $2,940. A single payment. No subscription. No surprises.</p>
                 </div>
 
                 {/* Order Summary */}
@@ -161,19 +161,19 @@ export default function FamilyConfirmationPage() {
                     <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
                     <div className="prose max-w-none mb-8">
                         <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                            Multiple archives with family links. Ideal for preserving several members of one family.
                         </p>
                         <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                            Includes: everything in Personal + unlimited archives, bidirectional links between archives, visual family tree, family steward designation, centralized search and management.
                         </p>
-                        <p className="text-charcoal/70 leading-relaxed">
-                            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                        <p className="text-sm text-charcoal/50 leading-relaxed">
+                            Full refund available as long as the archive has not been published. 30-day satisfaction guarantee.
                         </p>
                     </div>
                     <div className="border-t border-sand/30 pt-6">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-charcoal/70">Family Plan</span>
-                            <span className="text-charcoal font-medium">$3,000.00</span>
+                            <span className="text-charcoal font-medium">$2,940.00</span>
                         </div>
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-charcoal/70">Tax</span>
@@ -181,7 +181,7 @@ export default function FamilyConfirmationPage() {
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
                             <span className="text-charcoal">Total</span>
-                            <span className="text-stone">$3,000.00</span>
+                            <span className="text-stone">$2,940.00</span>
                         </div>
                     </div>
                 </div>
@@ -278,7 +278,7 @@ export default function FamilyConfirmationPage() {
                             Processing…
                         </>
                     ) : (
-                        'Proceed to Payment ($3,000)'
+                        'Proceed to Payment ($2,940)'
                     )}
                 </button>
 

@@ -23,7 +23,7 @@ export default function ConciergeConfirmationPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     plan: 'Conciergerie',
-                    amount: 6500, // $6,500
+                    amount: 6300, // $6,300
                 }),
             });
 
@@ -73,7 +73,7 @@ export default function ConciergeConfirmationPage() {
                         </h1>
                     </div>
                     <p className="text-lg text-charcoal/70">
-                        Conciergerie Service - $6,500
+                        Conciergerie Service — $6,300. A single payment. Delivery within 60 days.
                     </p>
                     <div className="inline-block px-4 py-1.5 bg-mist/20 text-mist text-sm font-semibold rounded-full border border-mist/30 mt-3">
                         Premium White-Glove Service
@@ -84,19 +84,15 @@ export default function ConciergeConfirmationPage() {
                 <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
                     <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
 
-                    {/* Lorem Ipsum Content */}
                     <div className="prose max-w-none mb-8">
                         <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                            Full curation by our team. We interview, digitize, write, and structure your archive from start to finish. Delivery within 60 days.
                         </p>
                         <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                            Includes: everything in Family + phone/video interview, professional document digitization, biographical writing by an author, 2 revision cycles, physical preservation certificate.
                         </p>
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed">
-                            Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.
+                        <p className="text-sm text-charcoal/50 leading-relaxed">
+                            After payment, our team will contact you within 24 hours to begin the process.
                         </p>
                     </div>
 
@@ -109,23 +105,23 @@ export default function ConciergeConfirmationPage() {
                         <ul className="space-y-2 text-sm text-charcoal/70">
                             <li className="flex items-start gap-2">
                                 <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Dedicated concierge service</span>
+                                <span>Phone/video interview with our team</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Personal consultation calls</span>
+                                <span>Professional document digitization</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>We handle all content creation</span>
+                                <span>Biographical writing by an author</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Professional photo and video editing</span>
+                                <span>2 revision cycles included</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Unlimited revisions</span>
+                                <span>Physical preservation certificate</span>
                             </li>
                         </ul>
                     </div>
@@ -134,7 +130,7 @@ export default function ConciergeConfirmationPage() {
                     <div className="border-t border-sand/30 pt-6">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-charcoal/70">Conciergerie Service</span>
-                            <span className="text-charcoal font-medium">$6,500.00</span>
+                            <span className="text-charcoal font-medium">$6,300.00</span>
                         </div>
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-charcoal/70">Tax</span>
@@ -142,7 +138,7 @@ export default function ConciergeConfirmationPage() {
                         </div>
                         <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
                             <span className="text-charcoal">Total</span>
-                            <span className="text-mist">$6,500.00</span>
+                            <span className="text-mist">$6,300.00</span>
                         </div>
                     </div>
                 </div>

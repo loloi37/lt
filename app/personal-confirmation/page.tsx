@@ -161,12 +161,12 @@ function PersonalConfirmationContent() {
                                 Upgrading from Draft to Personal
                             </div>
                             <h1 className="font-serif text-4xl text-charcoal mb-4">Seal Your Archive</h1>
-                            <p className="text-lg text-charcoal/50">Your draft is ready. One-time payment of $1,500 — no subscription.</p>
+                            <p className="text-lg text-charcoal/50">Your draft is ready. $1,470 — A single payment for a permanent archive. No monthly fees. No renewals.</p>
                         </>
                     ) : (
                         <>
                             <h1 className="font-serif text-4xl text-charcoal mb-4">Seal the Archive</h1>
-                            <p className="text-lg text-charcoal/50">One-time payment of $1,500. No subscription. Lifetime access.</p>
+                            <p className="text-lg text-charcoal/50">$1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.</p>
                         </>
                     )}
                 </div>
