@@ -261,7 +261,29 @@ function CreateMemorialPageContent() {
     }
 
     if (memorialId) {
-      loadMemorial(memorialId);
+      loadMemorial(memorialId).then(() => {
+        // Handle step param from Three Doors or direct links
+        const stepParam = searchParams.get('step');
+        if (stepParam) {
+          const stepNum = parseInt(stepParam, 10);
+          if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= 10) {
+            // Map step number to path
+            const stepToPathMap: Record<number, PathId> = {
+              1: 'facts',
+              2: 'body', 3: 'body', 4: 'body',
+              5: 'soul', 6: 'soul',
+              7: 'witnesses',
+              8: 'presence', 9: 'presence',
+            };
+            const targetPath = stepToPathMap[stepNum];
+            if (targetPath) {
+              setActivePath(targetPath);
+              setMemorialData(prev => ({ ...prev, currentStep: stepNum }));
+              setViewMode('path');
+            }
+          }
+        }
+      });
     }
   }, [memorialId, searchParams]);
 
@@ -835,7 +857,7 @@ function CreateMemorialPageContent() {
 
             {/* Step 1.3.1: Qualitative indicator instead of numerical */}
             {(() => {
-              const isPresenceUnlocked = completedPathsCount >= 2;
+              const isPresenceUnlocked = memorialData.paid || completedPathsCount >= 2;
 
               return (
                 <>
