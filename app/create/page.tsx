@@ -857,7 +857,8 @@ function CreateMemorialPageContent() {
 
             {/* Step 1.3.1: Qualitative indicator instead of numerical */}
             {(() => {
-              const isPresenceUnlocked = memorialData.paid || completedPathsCount >= 2;
+              const isPaidMode = mode === 'personal' || mode === 'family';
+              const isPresenceUnlocked = isPaidMode || memorialData.paid || completedPathsCount >= 2;
 
               return (
                 <>
@@ -959,7 +960,7 @@ function CreateMemorialPageContent() {
               title={isSelf ? "The Presence" : "The Presence"}
               subtitle="What remains to be seen"
               description={texts.cards.presence}
-              status={memorialData.paid ? getPathStatus(memorialData, 'presence') : (completedPathsCount >= 2 ? 'in_progress' : 'locked')}
+              status={(mode === 'personal' || mode === 'family' || memorialData.paid) ? getPathStatus(memorialData, 'presence') : (completedPathsCount >= 2 ? 'in_progress' : 'locked')}
               onClick={handlePathClick}
             />
           </div>
