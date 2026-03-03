@@ -198,7 +198,7 @@ function CreateMemorialPageContent() {
     if (memorialData.paid) return null;
     return (
       <div className="bg-sand/15 border border-sand/25 rounded-xl px-5 py-3 flex items-start gap-3 max-w-2xl mx-auto mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40 mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40 mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
         <p className="text-xs text-charcoal/50 leading-relaxed">
           This is a draft. The archive will remain private and incomplete until you choose to finalize it. Take all the time you need.
         </p>
@@ -257,37 +257,78 @@ function CreateMemorialPageContent() {
   const [activePath, setActivePath] = useState<PathId | null>(null);
 
   useEffect(() => {
-    const roleParam = searchParams.get('role');
-    if (roleParam === 'witness') {
-      setUserRole('witness');
-    }
+    const checkPermissions = async () => {
+      if (!memorialId) return;
 
-    if (memorialId) {
-      loadMemorial(memorialId).then(() => {
-        // Handle step param from Three Doors or direct links
-        const stepParam = searchParams.get('step');
-        if (stepParam) {
-          const stepNum = parseInt(stepParam, 10);
-          if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= 10) {
-            // Map step number to path
-            const stepToPathMap: Record<number, PathId> = {
-              1: 'facts',
-              2: 'body', 3: 'body', 4: 'body',
-              5: 'soul', 6: 'soul',
-              7: 'witnesses',
-              8: 'presence', 9: 'presence',
-            };
-            const targetPath = stepToPathMap[stepNum];
-            if (targetPath) {
-              setActivePath(targetPath);
-              setMemorialData(prev => ({ ...prev, currentStep: stepNum }));
-              setViewMode('path');
-            }
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Not logged in? Middleware might catch this, but safe to redirect
+        return;
+      }
+
+      // 1. Fetch the memorial to see who owns it
+      const { data: memorial } = await supabase
+        .from('memorials')
+        .select('user_id')
+        .eq('id', memorialId)
+        .single();
+
+      if (memorial) {
+        if (memorial.user_id === user.id) {
+          // user IS the owner
+          setUserRole('owner');
+        } else {
+          // user is NOT the owner. Check if they are a valid witness.
+          const { data: invitation } = await supabase
+            .from('witness_invitations')
+            .select('id')
+            .eq('memorial_id', memorialId)
+            .eq('accepted_by_user_id', user.id) // This link was made in the accept page
+            .eq('status', 'accepted')
+            .single();
+
+          if (invitation) {
+            setUserRole('witness');
+          } else {
+            // Neither owner nor witness? They shouldn't be here.
+            // You could also check for 'co_guardian' here later
+            alert("You do not have permission to view this archive.");
+            router.push('/dashboard');
+            return;
           }
         }
-      });
-    }
-  }, [memorialId, searchParams]);
+
+        // Handle loading the memorial and step param
+        loadMemorial(memorialId).then(() => {
+          // Handle step param from Three Doors or direct links
+          const stepParam = searchParams.get('step');
+          if (stepParam) {
+            const stepNum = parseInt(stepParam, 10);
+            if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= 10) {
+              // Map step number to path
+              const stepToPathMap: Record<number, PathId> = {
+                1: 'facts',
+                2: 'body', 3: 'body', 4: 'body',
+                5: 'soul', 6: 'soul',
+                7: 'witnesses',
+                8: 'presence', 9: 'presence',
+              };
+              const targetPath = stepToPathMap[stepNum];
+              if (targetPath) {
+                setActivePath(targetPath);
+                setMemorialData(prev => ({ ...prev, currentStep: stepNum }));
+                setViewMode('path');
+              }
+            }
+          }
+        });
+      }
+    };
+
+    checkPermissions();
+  }, [memorialId, searchParams, router]);
 
   // Auth is now handled by middleware — no temp user creation needed
 
@@ -724,7 +765,7 @@ function CreateMemorialPageContent() {
 
   // Step 1.3.3: Determine if all paths traveled — center space fills with name
   const allPathsTraveled = (['facts', 'body', 'soul', 'witnesses', 'presence'] as PathId[]).every(
-    id => getPathStatus(memorialData, id) === 'completed'
+    id => getPathStatus(memorialData, id, mode) === 'completed'
   );
   const somePathsTraveled = (['facts', 'body', 'soul'] as PathId[]).some(
     id => getPathStatus(memorialData, id) !== 'empty'
@@ -930,7 +971,7 @@ function CreateMemorialPageContent() {
               title={isSelf ? "The Presence" : "The Presence"}
               subtitle="What remains to be seen"
               description={texts.cards.presence}
-              status={(mode === 'personal' || mode === 'family' || memorialData.paid) ? getPathStatus(memorialData, 'presence') : (completedPathsCount >= 2 ? 'in_progress' : 'locked')}
+              status={getPathStatus(memorialData, 'presence', mode)}
               onClick={handlePathClick}
             />
           </div>
@@ -1063,7 +1104,7 @@ function CreateMemorialPageContent() {
                 )}
                 {saveStatus === 'saved' && (
                   <div className="flex items-center gap-1.5 text-xs text-charcoal/30 animate-fadeIn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                     <span>Saved</span>
                   </div>
                 )}

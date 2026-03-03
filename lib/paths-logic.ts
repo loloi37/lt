@@ -2,7 +2,7 @@
 import { MemorialData } from '@/types/memorial';
 import { PathId, PathStatus } from '@/types/paths';
 
-export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus => {
+export const getPathStatus = (data: MemorialData, pathId: PathId, mode?: string): PathStatus => {
     if (!data) return 'empty';
 
     switch (pathId) {
@@ -42,12 +42,14 @@ export const getPathStatus = (data: MemorialData, pathId: PathId): PathStatus =>
 
         case 'presence':
             // Path 4: The Presence (Steps 8, 9)
-            // MASTERSTROKE LOGIC: Check if at least 2 other paths are completed
+            // Personal/Family modes: The Presence is always unlocked
+            // Draft mode: Must complete 2 other paths first
+            const isPaidMode = mode === 'personal' || mode === 'family';
             const completedPaths = ['facts', 'body', 'soul'].filter(
                 id => getPathStatus(data, id as PathId) === 'completed'
             ).length;
 
-            if (completedPaths < 2) return 'locked';
+            if (!isPaidMode && completedPaths < 2) return 'locked';
 
             const s8 = data.step8;
             const s9 = data.step9;

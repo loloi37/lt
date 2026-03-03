@@ -74,21 +74,23 @@ export default function FamilyConfirmationPage() {
     const handlePayment = async () => {
         setIsProcessing(true);
         try {
+            const supabase = createClient();
             let memorialId = currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
-                const { data: existing } = await createClient()
+                const { data: existing } = await supabase
                     .from('memorials').select('id').eq('id', memorialId).maybeSingle();
                 if (!existing) { memorialId = null; localStorage.removeItem('current-memorial-id'); }
             }
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = authUserId;
-                const { data, error: insertError } = await createClient()
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Please sign in to continue.');
+                const { data, error: insertError } = await supabase
                     .from('memorials')
-                    .insert({ user_id: userId, slug: `family-memorial-${Date.now()}`, paid: false, mode: 'family' })
+                    .insert({ user_id: user.id, slug: `family-memorial-${Date.now()}`, paid: false, mode: 'family' })
                     .select().single();
-                if (insertError) throw insertError;
+                if (insertError) { console.error('Memorial insert error:', insertError); throw insertError; }
                 memorialId = data.id;
                 localStorage.setItem('current-memorial-id', memorialId!);
                 setCurrentMemorialId(memorialId);
@@ -123,15 +125,20 @@ export default function FamilyConfirmationPage() {
     const handleOpenAuthorization = async () => {
         setIsOpeningAuth(true);
         try {
+            const supabase = createClient();
             let memorialId = currentMemorialId || localStorage.getItem('current-memorial-id');
 
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const userId = authUserId;
-                const { data, error: insertError } = await createClient()
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Please sign in to continue.');
+                const { data, error: insertError } = await supabase
                     .from('memorials')
-                    .insert({ user_id: userId, slug: `family-memorial-${Date.now()}`, mode: 'family', paid: false })
+                    .insert({ user_id: user.id, slug: `family-memorial-${Date.now()}`, mode: 'family', paid: false })
                     .select().single();
-                if (insertError || !data) throw new Error('Could not initialize your archive');
+                if (insertError || !data) {
+                    console.error('Memorial insert error:', insertError);
+                    throw new Error(insertError?.message || 'Could not initialize your archive');
+                }
                 memorialId = data.id;
                 localStorage.setItem('current-memorial-id', memorialId!);
             }
@@ -277,8 +284,8 @@ export default function FamilyConfirmationPage() {
                     onClick={handlePayment}
                     disabled={!canPay}
                     className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${canPay
-                            ? 'bg-gradient-to-r from-terracotta to-terracotta/90 hover:shadow-lg text-ivory'
-                            : 'bg-sand/30 text-charcoal/30 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-terracotta to-terracotta/90 hover:shadow-lg text-ivory'
+                        : 'bg-sand/30 text-charcoal/30 cursor-not-allowed'
                         }`}
                 >
                     {isProcessing ? (

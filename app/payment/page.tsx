@@ -149,11 +149,10 @@ function PaymentForm({ memorialId, amount, fullName }: {
             <button
                 type="submit"
                 disabled={!stripe || isProcessing}
-                className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                    isProcessing || !stripe
+                className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${isProcessing || !stripe
                         ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
                         : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
-                }`}
+                    }`}
             >
                 {isProcessing ? (
                     <>
@@ -308,10 +307,25 @@ function PaymentPageContent() {
                                 '.Tab': {
                                     border: '1px solid #e8d8cc',
                                     borderRadius: '8px',
+                                    color: '#5a6b78',
+                                },
+                                '.Tab:hover': {
+                                    color: '#3d4a54',
+                                    border: '1px solid #c5b5a8',
                                 },
                                 '.Tab--selected': {
                                     backgroundColor: '#fdf6f0',
                                     border: '1px solid #5a6b78',
+                                    color: '#3d4a54',
+                                },
+                                '.Tab--selected:hover': {
+                                    color: '#3d4a54',
+                                },
+                                '.TabLabel': {
+                                    color: '#5a6b78',
+                                },
+                                '.TabIcon': {
+                                    fill: '#5a6b78',
                                 },
                             },
                         },
