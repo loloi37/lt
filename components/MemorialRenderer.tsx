@@ -12,7 +12,7 @@ import { useState } from 'react';
 import {
     Calendar, MapPin, Heart, Briefcase, GraduationCap, Quote, Star, Home,
     Sparkles, MessageCircle, Share2, Mail, Users, BookOpen, Lightbulb, Award,
-    MousePointer, Play
+    MousePointer, Play, Mic
 } from 'lucide-react';
 import ImageViewer from '@/components/ImageViewer';
 import IntegrityBadge from '@/components/IntegrityBadge';
@@ -426,6 +426,60 @@ export default function MemorialRenderer({
                         </section>
                     )}
 
+                    {/* Interactive Photo Stories */}
+                    {data.step8?.interactiveGallery?.length > 0 && (
+                        <section>
+                            <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
+                                    <MousePointer size={compact ? 16 : 24} className="text-mist" />
+                                </div>
+                                Interactive Photo Stories
+                            </h2>
+                            <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'}`}>
+                                {data.step8.interactiveGallery.map((item: any) => (
+                                    <div
+                                        key={item.id}
+                                        className={`relative ${compact ? 'aspect-video' : 'aspect-video'} rounded-xl overflow-hidden border-2 border-sand/30 group`}
+                                        onMouseMove={(e) => handleInteractiveMouseMove(e, item.id)}
+                                        onMouseLeave={() => setHoveredInteractive(null)}
+                                        style={{ cursor: 'none' }}
+                                    >
+                                        {/* Hidden text layer (visible by default) */}
+                                        <div className="absolute inset-0 flex items-center justify-center p-8 z-10">
+                                            <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                                                <p className={`font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm ${compact ? 'text-sm' : 'text-xl md:text-2xl'}`}>
+                                                    {item.description || 'Move your cursor to reveal the photo'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Photo layer with spotlight mask */}
+                                        <div
+                                            className="absolute inset-0 z-20 transition-opacity duration-300"
+                                            style={{
+                                                maskImage: hoveredInteractive === item.id
+                                                    ? `radial-gradient(circle 110px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)`
+                                                    : 'none',
+                                                WebkitMaskImage: hoveredInteractive === item.id
+                                                    ? `radial-gradient(circle 110px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)`
+                                                    : 'none',
+                                            }}
+                                        >
+                                            <img
+                                                src={item.preview}
+                                                alt="Interactive photo"
+                                                className="w-full h-full object-cover"
+                                                draggable={false}
+                                            />
+                                        </div>
+
+                                        <IntegrityBadge hash={item.sha256_hash} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Photo Gallery */}
                     {data.step8?.gallery?.length > 0 && (
                         <section>
@@ -472,6 +526,31 @@ export default function MemorialRenderer({
                                             </video>
                                         </div>
                                         {video.title && <h3 className={`font-semibold text-charcoal ${compact ? 'text-xs' : ''}`}>{video.title}</h3>}
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Voice Recordings */}
+                    {data.step8?.voiceRecordings?.length > 0 && (
+                        <section>
+                            <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
+                                    <Mic size={compact ? 16 : 24} className="text-stone" />
+                                </div>
+                                Voice Recordings
+                            </h2>
+                            <div className={`space-y-${compact ? '2' : '4'}`}>
+                                {data.step8.voiceRecordings.map((recording: any) => (
+                                    <div key={recording.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4 md:p-6'} shadow-sm border border-sand/30 flex items-center gap-4`}>
+                                        <div className={`${compact ? 'w-10 h-10' : 'w-14 h-14'} bg-stone/10 rounded-full flex items-center justify-center flex-shrink-0`}>
+                                            <Mic size={compact ? 16 : 24} className="text-stone" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className={`font-semibold text-charcoal ${compact ? 'text-xs' : 'text-base'}`}>{recording.title || 'Untitled Recording'}</h4>
+                                        </div>
+                                        <IntegrityBadge hash={recording.sha256_hash} />
                                     </div>
                                 ))}
                             </div>

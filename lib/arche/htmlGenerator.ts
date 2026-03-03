@@ -170,6 +170,184 @@ function renderGallery(data: MemorialData, map?: ResourceMap): string {
     </div>`;
 }
 
+// --- HELPER: Render Interactive Photo Stories ---
+function renderInteractiveGallery(data: MemorialData, map?: ResourceMap): string {
+    const items = data.step8.interactiveGallery || [];
+    if (items.length === 0) return '';
+
+    const cards = items.map(item => `
+        <div class="interactive-item">
+            <div class="interactive-card">
+                <div class="interactive-text">
+                    <p>${item.description || 'Move your cursor to reveal the photo'}</p>
+                </div>
+                <img src="${processMedia(item.preview, map)}" alt="Interactive photo" class="interactive-img" loading="lazy">
+            </div>
+        </div>
+    `).join('');
+
+    return `
+    <style>
+        .interactive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+        .interactive-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; border: 2px solid #ddd; cursor: none; }
+        .interactive-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 30px; z-index: 1; }
+        .interactive-text p { background: linear-gradient(135deg, rgba(138,171,180,0.2), rgba(253,246,240,0.9), rgba(90,107,120,0.2)); border-radius: 16px; padding: 20px; font-family: var(--font-serif); font-size: 1.2rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .interactive-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; transition: opacity 0.3s ease; }
+        .interactive-card:hover .interactive-img { opacity: 1; }
+        @media (max-width: 600px) { .interactive-grid { grid-template-columns: 1fr; } }
+    </style>
+    <div class="section">
+        <h2 class="section-title">Interactive Photo Stories</h2>
+        <p style="color: #888; margin-bottom: 20px; font-size: 0.9rem;">Hover over each card to reveal the photo behind the story.</p>
+        <div class="interactive-grid">
+            ${cards}
+        </div>
+    </div>`;
+}
+
+// --- HELPER: Render Voice Recordings ---
+function renderVoiceRecordings(data: MemorialData): string {
+    const recordings = data.step8.voiceRecordings || [];
+    if (recordings.length === 0) return '';
+
+    const items = recordings.map(rec => `
+        <div class="voice-item">
+            <div class="voice-icon">&#127908;</div>
+            <div class="voice-title">${rec.title || 'Untitled Recording'}</div>
+        </div>
+    `).join('');
+
+    return `
+    <style>
+        .voice-list { display: flex; flex-direction: column; gap: 12px; }
+        .voice-item { display: flex; align-items: center; gap: 15px; background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #eee; }
+        .voice-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .voice-title { font-weight: 600; color: var(--color-charcoal); }
+    </style>
+    <div class="section">
+        <h2 class="section-title">Voice Recordings</h2>
+        <div class="voice-list">
+            ${items}
+        </div>
+    </div>`;
+}
+
+// --- HELPER: Render Early Life & Childhood ---
+function renderEarlyLife(data: MemorialData): string {
+    if (!data.step2.childhoodHome && !data.step2.familyBackground) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Early Life & Childhood</h2>`;
+
+    if (data.step2.childhoodHome) {
+        html += `<div style="margin-bottom: 20px;"><h3 style="margin-bottom: 8px; color: var(--color-charcoal);">Childhood Home</h3><p>${data.step2.childhoodHome}</p></div>`;
+    }
+    if (data.step2.familyBackground) {
+        html += `<div style="margin-bottom: 20px;"><h3 style="margin-bottom: 8px; color: var(--color-charcoal);">Family Background</h3><p>${data.step2.familyBackground}</p></div>`;
+    }
+    if (data.step2.childhoodPersonality && data.step2.childhoodPersonality.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">${data.step2.childhoodPersonality.map((trait: string) => `<span class="badge">${trait}</span>`).join('')}</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Career & Achievements ---
+function renderCareer(data: MemorialData): string {
+    const jobs = data.step3.occupations || [];
+    if (jobs.length === 0) return '';
+
+    const items = jobs.map(job => `
+        <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px;">
+            <h3 style="margin-bottom: 5px;">${job.title}</h3>
+            <p style="color: #888; font-size: 0.9rem; margin-bottom: 8px;">${job.company || ''}</p>
+            <span class="badge">${job.yearsFrom} - ${job.yearsTo}</span>
+            ${job.description ? `<p style="margin-top: 10px; color: #555;">${job.description}</p>` : ''}
+        </div>
+    `).join('');
+
+    return `
+    <div class="section">
+        <h2 class="section-title">Career & Achievements</h2>
+        ${items}
+    </div>`;
+}
+
+// --- HELPER: Render Family & Relationships ---
+function renderFamily(data: MemorialData): string {
+    const partners = data.step4.partners || [];
+    const children = data.step4.children || [];
+    if (partners.length === 0 && children.length === 0) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Family & Relationships</h2>`;
+
+    if (partners.length > 0) {
+        html += `<div class="grid-2" style="margin-bottom: 20px;">`;
+        partners.forEach(p => {
+            html += `<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                <h4 style="margin-bottom: 4px;">${p.name}</h4>
+                <p style="color: #888; font-size: 0.85rem;">${p.relationshipType}</p>
+                <p style="color: #888; font-size: 0.85rem;">${p.yearsFrom} - ${p.yearsTo}</p>
+                ${p.description ? `<p style="color: #555; margin-top: 8px; font-size: 0.9rem;">${p.description}</p>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (children.length > 0) {
+        html += `<div class="grid-2">`;
+        children.forEach(c => {
+            html += `<div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                <h4 style="margin-bottom: 4px;">${c.name}</h4>
+                <p style="color: #888; font-size: 0.85rem;">Born ${c.birthYear}</p>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Personality & Values ---
+function renderPersonality(data: MemorialData): string {
+    const traits = data.step5.personalityTraits || [];
+    const values = data.step5.coreValues || [];
+    const philosophy = data.step5.lifePhilosophy;
+    if (traits.length === 0 && !philosophy) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Personality, Values & Passions</h2>`;
+
+    if (traits.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">${traits.map((t: string) => `<span class="badge">${t}</span>`).join('')}</div>`;
+    }
+    if (values.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">${values.map((v: string) => `<span class="badge" style="background: rgba(90,107,120,0.1); color: var(--color-charcoal);">${v}</span>`).join('')}</div>`;
+    }
+    if (philosophy) {
+        html += `<div style="background: linear-gradient(135deg, rgba(138,171,180,0.05), rgba(90,107,120,0.05)); border-radius: 12px; padding: 25px; border: 1px solid #eee; font-style: italic; color: #555;">${philosophy}</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Legacy Statement ---
+function renderLegacy(data: MemorialData): string {
+    if (!data.step8.legacyStatement) return '';
+
+    return `
+    <style>
+        .legacy-section { background: linear-gradient(135deg, rgba(138,171,180,0.2), var(--color-ivory), rgba(90,107,120,0.2)); border: 2px solid var(--color-sand); border-radius: 16px; padding: 60px 40px; text-align: center; margin-bottom: 40px; }
+        .legacy-section h2 { font-size: 2rem; margin-bottom: 20px; }
+        .legacy-section p { font-size: 1.3rem; font-family: var(--font-serif); color: #555; max-width: 700px; margin: 0 auto; line-height: 1.8; }
+    </style>
+    <div class="legacy-section">
+        <h2>Legacy</h2>
+        <p>${data.step8.legacyStatement}</p>
+    </div>`;
+}
+
 // --- HELPER: Render Videos ---
 function renderVideos(data: MemorialData, map?: ResourceMap): string {
     const videos = data.step9.videos || [];
@@ -296,17 +474,38 @@ export function generateStandaloneHTML(data: MemorialData, resourceMap?: Resourc
         <!-- 2. LIFE STORY -->
         ${renderBiography(data)}
 
-        <!-- 3. TIMELINE -->
+        <!-- 3. EARLY LIFE & CHILDHOOD -->
+        ${renderEarlyLife(data)}
+
+        <!-- 4. CAREER & ACHIEVEMENTS -->
+        ${renderCareer(data)}
+
+        <!-- 5. FAMILY & RELATIONSHIPS -->
+        ${renderFamily(data)}
+
+        <!-- 6. PERSONALITY & VALUES -->
+        ${renderPersonality(data)}
+
+        <!-- 7. TIMELINE -->
         ${renderTimeline(data)}
 
-        <!-- 4. GALLERY -->
+        <!-- 8. TRIBUTES & MEMORIES -->
+        ${renderTributes(data)}
+
+        <!-- 9. INTERACTIVE PHOTO STORIES -->
+        ${renderInteractiveGallery(data, resourceMap)}
+
+        <!-- 10. GALLERY -->
         ${renderGallery(data, resourceMap)}
 
-        <!-- 5. VIDEOS -->
+        <!-- 11. VIDEOS -->
         ${renderVideos(data, resourceMap)}
 
-        <!-- 6. TRIBUTES -->
-        ${renderTributes(data)}
+        <!-- 12. VOICE RECORDINGS -->
+        ${renderVoiceRecordings(data)}
+
+        <!-- 13. LEGACY STATEMENT -->
+        ${renderLegacy(data)}
 
     </main>
 

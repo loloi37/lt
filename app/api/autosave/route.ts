@@ -24,7 +24,28 @@ export async function POST(request: NextRequest) {
         const { memorialId, step1, step2, step3, step4, step5, step6, step7, step8, step9 } = body;
 
         if (!memorialId) {
-            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+            // Fallback: create a new memorial if no ID provided
+            const mode = body.mode || 'personal';
+            const { data: newMemorial, error: insertError } = await supabase
+                .from('memorials')
+                .insert({
+                    user_id: user.id,
+                    status: 'draft',
+                    mode,
+                    slug: `draft-${Date.now()}`,
+                    paid: false,
+                    step1, step2, step3, step4, step5, step6, step7, step8, step9,
+                    updated_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (insertError) {
+                console.error('Autosave API insert error:', insertError);
+                return NextResponse.json({ error: insertError.message }, { status: 500 });
+            }
+
+            return NextResponse.json({ success: true, memorialId: newMemorial.id });
         }
 
         // 3. Update using the SECURE client (This will respect your SQL RLS Rules)

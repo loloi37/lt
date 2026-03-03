@@ -107,53 +107,60 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       alert(`You tried to upload ${files.length} photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
     }
 
-    // Process uploads
-    for (const file of filesToUpload) {
-      // 1. Local Preview setup
-      const tempId = `photo-${Date.now()}-${Math.random()}`;
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        // Add optimistic item
-        const tempItem = {
-          id: tempId,
-          file,
-          preview: reader.result as string,
-          caption: '',
-          year: '',
-          type: 'photo' as const
+    // Process all uploads concurrently
+    // First: add all optimistic previews immediately
+    const previewPromises = filesToUpload.map(file => {
+      return new Promise<{ file: File; tempId: string; preview: string }>((resolve) => {
+        const tempId = `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({ file, tempId, preview: reader.result as string });
         };
+        reader.readAsDataURL(file);
+      });
+    });
 
-        // Add to state immediately
-        const currentData = dataRef.current;
-        onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), tempItem] });
+    const previews = await Promise.all(previewPromises);
 
-        // 2. Perform Upload
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${tempId}.${fileExt}`;
-        const pathBase = memorialId || 'temp';
-        const path = `${pathBase}/gallery/${fileName}`;
+    // Add all optimistic items to state at once
+    const tempItems = previews.map(({ tempId, file, preview }) => ({
+      id: tempId,
+      file,
+      preview,
+      caption: '',
+      year: '',
+      type: 'photo' as const
+    }));
 
-        try {
-          const result = await secureUpload(file, 'memorial-media', path);
+    const currentData = dataRef.current;
+    onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), ...tempItems] });
 
-          if (result.success) {
-            const freshData = dataRef.current;
-            onUpdate({
-              ...freshData,
-              gallery: (freshData.gallery || []).map(item =>
-                item.id === tempId
-                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
-                  : item
-              )
-            });
-          }
-        } catch (err) {
-          console.error("Gallery upload failed for file:", file.name, err);
+    // Then: upload all files concurrently
+    const uploadPromises = previews.map(async ({ file, tempId }) => {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${tempId}.${fileExt}`;
+      const pathBase = memorialId || 'temp';
+      const path = `${pathBase}/gallery/${fileName}`;
+
+      try {
+        const result = await secureUpload(file, 'memorial-media', path);
+        if (result.success) {
+          const freshData = dataRef.current;
+          onUpdate({
+            ...freshData,
+            gallery: (freshData.gallery || []).map(item =>
+              item.id === tempId
+                ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                : item
+            )
+          });
         }
-      };
-      reader.readAsDataURL(file);
-    }
+      } catch (err) {
+        console.error("Gallery upload failed for file:", file.name, err);
+      }
+    });
+
+    await Promise.all(uploadPromises);
   };
 
   // ... rest of logic remains similar ...
@@ -188,50 +195,57 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       alert(`You tried to upload ${files.length} interactive photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
     }
 
-    // Process uploads
-    for (const file of filesToUpload) {
-      const tempId = `interactive-${Date.now()}-${Math.random()}`;
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        // Optimistic UI update
-        const tempItem = {
-          id: tempId,
-          file,
-          preview: reader.result as string,
-          description: ''
+    // Process all uploads concurrently
+    const previewPromises = filesToUpload.map(file => {
+      return new Promise<{ file: File; tempId: string; preview: string }>((resolve) => {
+        const tempId = `interactive-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({ file, tempId, preview: reader.result as string });
         };
+        reader.readAsDataURL(file);
+      });
+    });
 
-        // Add to state immediately
-        const currentData = dataRef.current;
-        onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), tempItem] });
+    const previews = await Promise.all(previewPromises);
 
-        // Secure Upload
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${tempId}.${fileExt}`;
-        const pathBase = memorialId || 'temp';
-        const path = `${pathBase}/interactive/${fileName}`;
+    // Add all optimistic items to state at once
+    const tempItems = previews.map(({ tempId, file, preview }) => ({
+      id: tempId,
+      file,
+      preview,
+      description: ''
+    }));
 
-        try {
-          const result = await secureUpload(file, 'memorial-media', path);
+    const currentData = dataRef.current;
+    onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), ...tempItems] });
 
-          if (result.success) {
-            const freshData = dataRef.current;
-            onUpdate({
-              ...freshData,
-              interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
-                item.id === tempId
-                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
-                  : item
-              ),
-            });
-          }
-        } catch (err) {
-          console.error("Interactive upload failed:", err);
+    // Upload all files concurrently
+    const uploadPromises = previews.map(async ({ file, tempId }) => {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${tempId}.${fileExt}`;
+      const pathBase = memorialId || 'temp';
+      const path = `${pathBase}/interactive/${fileName}`;
+
+      try {
+        const result = await secureUpload(file, 'memorial-media', path);
+        if (result.success) {
+          const freshData = dataRef.current;
+          onUpdate({
+            ...freshData,
+            interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
+              item.id === tempId
+                ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                : item
+            ),
+          });
         }
-      };
-      reader.readAsDataURL(file);
-    }
+      } catch (err) {
+        console.error("Interactive upload failed:", err);
+      }
+    });
+
+    await Promise.all(uploadPromises);
   };
 
   const removeInteractiveItem = (id: string) => {

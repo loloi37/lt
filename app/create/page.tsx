@@ -175,6 +175,53 @@ function CreateMemorialPageContent() {
     });
   }, []);
 
+  // FIX: Create an empty memorial immediately on page load when no ID exists.
+  // This ensures memorialId is always available for autosave and media uploads.
+  useEffect(() => {
+    if (currentMemorialId || !authUserId) return;
+
+    const createEmptyMemorial = async () => {
+      try {
+        const supabase = createClient();
+        const rawMode = searchParams.get('mode') || 'personal';
+        const currentMode = ['personal', 'family', 'draft'].includes(rawMode) ? rawMode : 'personal';
+
+        const { data, error } = await supabase
+          .from('memorials')
+          .insert({
+            user_id: authUserId,
+            status: 'draft',
+            mode: currentMode,
+            slug: `draft-${Date.now()}`,
+            paid: false,
+            step1: memorialData.step1,
+            step2: memorialData.step2,
+            step3: memorialData.step3,
+            step4: memorialData.step4,
+            step5: memorialData.step5,
+            step6: memorialData.step6,
+            step7: memorialData.step7,
+            step8: memorialData.step8,
+            step9: memorialData.step9,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setCurrentMemorialId(data.id);
+          window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
+          console.log('Draft memorial created with ID:', data.id);
+        }
+      } catch (err) {
+        console.error('Failed to create empty memorial:', err);
+      }
+    };
+
+    createEmptyMemorial();
+  }, [authUserId, currentMemorialId]);
+
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
 
