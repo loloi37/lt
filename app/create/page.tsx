@@ -184,7 +184,8 @@ function CreateMemorialPageContent() {
       try {
         const supabase = createClient();
         const rawMode = searchParams.get('mode') || 'personal';
-        const currentMode = ['personal', 'family', 'draft'].includes(rawMode) ? rawMode : 'personal';
+        // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
+        const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
         const { data, error } = await supabase
           .from('memorials')
@@ -538,7 +539,8 @@ function CreateMemorialPageContent() {
       const supabase = createClient();
       const slug = generateSlug(memorialData.step1.fullName);
       const rawMode = searchParams.get('mode') || 'personal';
-      const currentMode = ['personal', 'family', 'draft'].includes(rawMode) ? rawMode : 'personal';
+      // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
+      const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
       const memorialRecord = {
         id: currentMemorialId || undefined,

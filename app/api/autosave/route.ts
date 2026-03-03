@@ -25,7 +25,9 @@ export async function POST(request: NextRequest) {
 
         if (!memorialId) {
             // Fallback: create a new memorial if no ID provided
-            const mode = body.mode || 'personal';
+            // DB constraint only allows 'personal' or 'family'
+            const rawMode = body.mode || 'personal';
+            const mode = rawMode === 'family' ? 'family' : 'personal';
             const { data: newMemorial, error: insertError } = await supabase
                 .from('memorials')
                 .insert({
