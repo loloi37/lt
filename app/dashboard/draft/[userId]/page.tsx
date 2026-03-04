@@ -77,8 +77,11 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     // Upgrade a specific draft memorial to Personal
+    // Opens target dashboard in a NEW window (clean history, no back-button),
+    // then navigates current window to confirmation → payment flow
     const handleUpgrade = (memorialId: string) => {
-        router.push(`/personal-confirmation?memorialId=${memorialId}`);
+        window.open(`/dashboard/personal/${userId}?upgrading=true`, '_blank');
+        window.location.href = `/personal-confirmation?memorialId=${memorialId}&popup=true`;
     };
 
     const softDeleteMemorial = async (id: string) => {

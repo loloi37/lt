@@ -41,6 +41,7 @@ function PaymentSuccessContent() {
     const memorialId = searchParams.get('id');
     const planParam = searchParams.get('plan') || 'personal';
     const isUpgrade = searchParams.get('upgrade') === 'true';
+    const isPopup = searchParams.get('popup') === 'true';
     const hasFinalized = useRef(false);
 
     // Phases: finalizing → threshold → doors → redirecting
@@ -86,6 +87,32 @@ function PaymentSuccessContent() {
 
                 // Revalidate auth state so the entire app reflects the new payment status
                 await revalidate();
+
+                // Broadcast upgrade completion to other windows (dashboard waiting for upgrade)
+                try {
+                    const bc = new BroadcastChannel('lv-upgrade');
+                    bc.postMessage({ type: 'upgrade-complete', plan: planParam, memorialId });
+                    bc.close();
+                } catch (e) {
+                    // BroadcastChannel not supported in some browsers — dashboard will pick up via visibilitychange
+                }
+
+                // If this is a popup/upgrade window, auto-close after broadcasting
+                if (isPopup || isUpgrade) {
+                    // Give the broadcast a moment to deliver, then close
+                    setTimeout(() => {
+                        window.close();
+                        // Fallback: if window.close() is blocked (not opened via script),
+                        // redirect to the target dashboard instead
+                        const supabase = createClient();
+                        supabase.auth.getUser().then(({ data: { user } }) => {
+                            const uid = user?.id || '';
+                            const dashPath = `/dashboard/${planParam}/${uid}`;
+                            window.location.replace(dashPath);
+                        });
+                    }, 1500);
+                    return;
+                }
 
                 // Fetch memorial data for the Threshold Page
                 const supabase = createClient();

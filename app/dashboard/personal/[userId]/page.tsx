@@ -58,6 +58,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [copied, setCopied] = useState(false);
     const [searchDrafts, setSearchDrafts] = useState('');
     const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
+    const [upgrading, setUpgrading] = useState(false);
     const searchParams = useSearchParams();
 
     // Auth guard: verify the URL userId matches the authenticated user
@@ -73,11 +74,12 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             return;
         }
         // If user's actual plan is family (upgraded), redirect to family dashboard
-        if (auth.plan === 'family' && auth.user) {
+        // Skip this redirect if we're in upgrading mode (waiting for payment to complete)
+        if (!upgrading && auth.plan === 'family' && auth.user) {
             router.replace(`/dashboard/family/${auth.user.id}`);
             return;
         }
-    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router]);
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router, upgrading]);
 
     useEffect(() => {
         fetch('/api/user/heartbeat', {
@@ -95,8 +97,29 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
             setTimeout(() => setShowWelcome(false), 5000);
         }
+        if (searchParams.get('upgrading') === 'true') {
+            setUpgrading(true);
+            window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
+        }
         loadMemorials();
     }, [userId, searchParams]);
+
+    // Listen for upgrade completion from the payment window via BroadcastChannel
+    useEffect(() => {
+        try {
+            const bc = new BroadcastChannel('lv-upgrade');
+            bc.onmessage = (event) => {
+                if (event.data?.type === 'upgrade-complete') {
+                    setUpgrading(false);
+                    loadMemorials();
+                    auth.revalidate();
+                }
+            };
+            return () => bc.close();
+        } catch (e) {
+            // BroadcastChannel not supported — fallback to visibilitychange (already handled)
+        }
+    }, []);
 
     // Refetch when user navigates back via browser back button or tab switch
     useEffect(() => {
@@ -230,6 +253,17 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             </div>
 
             <div className="max-w-6xl mx-auto px-6 py-12">
+                {/* Upgrading banner — shown when payment is in progress in another window */}
+                {upgrading && (
+                    <div className="mb-8 bg-gradient-to-r from-sand/10 to-mist/10 border border-sand/20 rounded-2xl p-8 text-center animate-fadeIn">
+                        <div className="w-12 h-12 border-2 border-charcoal/20 border-t-charcoal/60 rounded-full animate-spin mx-auto mb-4" />
+                        <h2 className="font-serif text-2xl text-charcoal mb-2">Upgrading to Personal Plan</h2>
+                        <p className="text-sm text-charcoal/50">
+                            Complete your payment in the other window. This page will update automatically.
+                        </p>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="text-center py-20">
                         <Loader2 size={48} className="text-charcoal/30 animate-spin mx-auto mb-4" />
@@ -281,8 +315,14 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                             body: JSON.stringify({ userId, targetPlan: 'family' }),
                                         });
                                         const data = await res.json();
-                                        if (data.url) window.location.href = data.url;
-                                        else alert(data.error || 'Could not start upgrade');
+                                        if (data.url) {
+                                            // Open target dashboard in a NEW window (clean history)
+                                            window.open(`/dashboard/family/${userId}?upgrading=true`, '_blank');
+                                            // Navigate current window to Stripe checkout
+                                            window.location.href = data.url;
+                                        } else {
+                                            alert(data.error || 'Could not start upgrade');
+                                        }
                                     } catch {
                                         alert('Upgrade failed. Please try again.');
                                     }

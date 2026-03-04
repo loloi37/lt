@@ -16,11 +16,12 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 // ============================================
 // PAYMENT FORM COMPONENT (inside Elements)
 // ============================================
-function PaymentForm({ memorialId, amount, fullName, plan }: {
+function PaymentForm({ memorialId, amount, fullName, plan, isPopup }: {
     memorialId: string;
     amount: number;
     fullName: string;
     plan: string;
+    isPopup: boolean;
 }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -41,7 +42,7 @@ function PaymentForm({ memorialId, amount, fullName, plan }: {
             const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
-                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=${plan}`,
+                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=${plan}${isPopup ? '&popup=true' : ''}`,
                 },
                 redirect: 'if_required',
             });
@@ -75,7 +76,7 @@ function PaymentForm({ memorialId, amount, fullName, plan }: {
                     body: JSON.stringify({ memorialId }),
                 });
                 // replace: prevent back-button from returning to payment form
-                router.replace(`/payment-success?id=${memorialId}&plan=${plan}`);
+                router.replace(`/payment-success?id=${memorialId}&plan=${plan}${isPopup ? '&popup=true' : ''}`);
             }
         } catch (err: any) {
             setPaymentError('An unexpected error occurred. Your draft is saved, and you can return at any time.');
@@ -181,6 +182,7 @@ function PaymentPageContent() {
     const auth = useAuth();
     const memorialId = searchParams.get('memorialId');
     const planParam = searchParams.get('plan') || 'personal';
+    const popupParam = searchParams.get('popup') === 'true';
     const amountParam = parseInt(searchParams.get('amount') || '1470', 10);
     const hasInitialized = useRef(false);
 
@@ -395,6 +397,7 @@ function PaymentPageContent() {
                         amount={amount}
                         fullName={fullName}
                         plan={planParam}
+                        isPopup={popupParam}
                     />
                 </Elements>
             </div>

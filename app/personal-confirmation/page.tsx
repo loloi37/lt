@@ -22,6 +22,7 @@ function PersonalConfirmationContent() {
     const auth = useAuth();
 
     const upgradeMemorialId = searchParams.get('memorialId');
+    const isPopup = searchParams.get('popup') === 'true';
     const isDraftUpgrade = !!upgradeMemorialId;
 
     // Auth guard: if user already has a personal paid plan, redirect to dashboard
@@ -125,7 +126,8 @@ function PersonalConfirmationContent() {
             }
 
             // replace: prevent back-button from returning to confirmation after going to payment
-            router.replace(`/payment?memorialId=${memorialId}`);
+            const popupParam = isPopup ? '&popup=true' : '';
+            router.replace(`/payment?memorialId=${memorialId}${popupParam}`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');
