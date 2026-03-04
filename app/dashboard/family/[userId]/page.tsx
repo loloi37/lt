@@ -105,7 +105,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     };
 
     const handleCreate = () => {
-        window.location.href = '/create?mode=family';
+        window.location.href = '/create?mode=personal';
     };
 
     // UPDATED: Soft Delete with Contributor Check (Step 5.2.4)
