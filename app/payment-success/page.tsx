@@ -42,10 +42,13 @@ function PaymentSuccessContent() {
     const planParam = searchParams.get('plan') || 'personal';
     const isUpgrade = searchParams.get('upgrade') === 'true';
     const isPopup = searchParams.get('popup') === 'true';
+    const startAtThreshold = searchParams.get('phase') === 'threshold';
     const hasFinalized = useRef(false);
 
-    // Phases: finalizing → threshold → doors → redirecting
-    const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting'>('finalizing');
+    // Phases: finalizing → threshold → doors → redirecting → close-me (for upgrade payment window)
+    const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting' | 'close-me'>(
+        startAtThreshold ? 'finalizing' : 'finalizing'
+    );
     const [memorial, setMemorial] = useState<ThresholdMemorial | null>(null);
     const [buttonVisible, setButtonVisible] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -57,6 +60,30 @@ function PaymentSuccessContent() {
 
         // Replace current history entry so the back button goes to dashboard, not back here
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
+        // THRESHOLD-ONLY MODE: This window was opened by the upgrade payment flow
+        // to show the threshold experience with clean history (no back button to Stripe)
+        if (startAtThreshold) {
+            const loadThreshold = async () => {
+                if (!memorialId) return;
+                try {
+                    await revalidate();
+                    const supabase = createClient();
+                    const { data, error: fetchError } = await supabase
+                        .from('memorials')
+                        .select('full_name, birth_date, death_date, profile_photo_url, user_id, step1')
+                        .eq('id', memorialId)
+                        .single();
+                    if (!fetchError && data) setMemorial(data as ThresholdMemorial);
+                    setPhase('threshold');
+                    setTimeout(() => setButtonVisible(true), 9000);
+                } catch (err: any) {
+                    setError(`Could not load archive data: ${err.message}. Please contact support.`);
+                }
+            };
+            loadThreshold();
+            return;
+        }
 
         const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
@@ -98,7 +125,7 @@ function PaymentSuccessContent() {
                 }
 
                 // If this is a popup window (opened via window.open), try to close it
-                if (isPopup && !isUpgrade) {
+                if (isPopup) {
                     setTimeout(() => {
                         window.close();
                         // Fallback: if window.close() is blocked, redirect to dashboard
@@ -112,7 +139,21 @@ function PaymentSuccessContent() {
                     return;
                 }
 
-                // Fetch memorial data for the Threshold Page
+                // UPGRADE FLOW: Open threshold in a new window, then close/show message on this one
+                if (isUpgrade) {
+                    const thresholdUrl = `/payment-success?id=${memorialId}&plan=${planParam}&phase=threshold`;
+                    window.open(thresholdUrl, '_blank');
+
+                    // Try to close this payment window
+                    setTimeout(() => {
+                        window.close();
+                        // If window.close() is blocked (not opened by script), show "close me" message
+                        setPhase('close-me');
+                    }, 500);
+                    return;
+                }
+
+                // STANDARD (non-upgrade) FLOW: Show threshold in this same window
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
@@ -205,6 +246,42 @@ function PaymentSuccessContent() {
                 <div className="text-center max-w-md animate-fadeIn">
                     <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
                     <p className="text-charcoal/40 text-sm">Sealing the archive...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Phase: close-me — shown when upgrade payment window can't auto-close ──
+    if (phase === 'close-me') {
+        return (
+            <div
+                className="min-h-screen flex flex-col items-center justify-center p-8"
+                style={{ backgroundColor: '#1a2332' }}
+            >
+                <div className="text-center max-w-md animate-fadeIn">
+                    <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-8"
+                        style={{ backgroundColor: 'rgba(253,246,240,0.06)', border: '1px solid rgba(253,246,240,0.12)' }}
+                    >
+                        <span style={{ color: 'rgba(253,246,240,0.6)', fontSize: '1.5rem' }}>&#10003;</span>
+                    </div>
+                    <h2
+                        className="font-serif mb-4"
+                        style={{ fontSize: '1.6rem', color: '#fdf6f0', letterSpacing: '0.01em' }}
+                    >
+                        Payment confirmed
+                    </h2>
+                    <p
+                        className="mb-2"
+                        style={{ color: 'rgba(253,246,240,0.50)', fontSize: '0.95rem', lineHeight: 1.7 }}
+                    >
+                        Your upgrade is complete. Your new archive is ready in the other window.
+                    </p>
+                    <p
+                        style={{ color: 'rgba(253,246,240,0.35)', fontSize: '0.85rem', letterSpacing: '0.02em' }}
+                    >
+                        You can close this tab.
+                    </p>
                 </div>
             </div>
         );
