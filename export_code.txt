@@ -578,21 +578,19 @@ export async function POST(request: NextRequest) {
 }
 ===== FICHIER: ./app/api/autosave/route.ts =====
 
-// app/api/autosave/route.ts
-// Handles sendBeacon calls when user closes the page
-// This is a best-effort save — data might arrive as text/plain from sendBeacon
-
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role for server-side
-);
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 export async function POST(request: NextRequest) {
     try {
-        // sendBeacon sends as text/plain, regular fetch sends as application/json
+        // 1. Authenticate the user making the request
+        const { supabase, user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // 2. Parse the body
         const contentType = request.headers.get('content-type') || '';
         let body: any;
 
@@ -606,24 +604,42 @@ export async function POST(request: NextRequest) {
         const { memorialId, step1, step2, step3, step4, step5, step6, step7, step8, step9 } = body;
 
         if (!memorialId) {
-            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+            // Fallback: create a new memorial if no ID provided
+            // DB constraint only allows 'personal' or 'family'
+            const rawMode = body.mode || 'personal';
+            const mode = rawMode === 'family' ? 'family' : 'personal';
+            const { data: newMemorial, error: insertError } = await supabase
+                .from('memorials')
+                .insert({
+                    user_id: user.id,
+                    status: 'draft',
+                    mode,
+                    slug: `draft-${Date.now()}`,
+                    paid: false,
+                    step1, step2, step3, step4, step5, step6, step7, step8, step9,
+                    updated_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (insertError) {
+                console.error('Autosave API insert error:', insertError);
+                return NextResponse.json({ error: insertError.message }, { status: 500 });
+            }
+
+            return NextResponse.json({ success: true, memorialId: newMemorial.id });
         }
 
-        const { error } = await supabaseAdmin
+        // 3. Update using the SECURE client (This will respect your SQL RLS Rules)
+        // We also add `.eq('user_id', user.id)` as an extra layer of absolute security
+        const { error } = await supabase
             .from('memorials')
             .update({
-                step1,
-                step2,
-                step3,
-                step4,
-                step5,
-                step6,
-                step7,
-                step8,
-                step9,
+                step1, step2, step3, step4, step5, step6, step7, step8, step9,
                 updated_at: new Date().toISOString(),
             })
-            .eq('id', memorialId);
+            .eq('id', memorialId)
+            .eq('user_id', user.id); // ONLY update if the logged-in user is the owner
 
         if (error) {
             console.error('Autosave API error:', error);
@@ -631,6 +647,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ success: true });
+
     } catch (err: any) {
         console.error('Autosave API exception:', err);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -2418,6 +2435,184 @@ function renderGallery(data: MemorialData, map?: ResourceMap): string {
     </div>`;
 }
 
+// --- HELPER: Render Interactive Photo Stories ---
+function renderInteractiveGallery(data: MemorialData, map?: ResourceMap): string {
+    const items = data.step8.interactiveGallery || [];
+    if (items.length === 0) return '';
+
+    const cards = items.map(item => `
+        <div class="interactive-item">
+            <div class="interactive-card">
+                <div class="interactive-text">
+                    <p>${item.description || 'Move your cursor to reveal the photo'}</p>
+                </div>
+                <img src="${processMedia(item.preview, map)}" alt="Interactive photo" class="interactive-img" loading="lazy">
+            </div>
+        </div>
+    `).join('');
+
+    return `
+    <style>
+        .interactive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .interactive-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; border: 2px solid #ddd; cursor: none; }
+        .interactive-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 1; }
+        .interactive-text p { background: linear-gradient(135deg, rgba(138,171,180,0.2), rgba(253,246,240,0.9), rgba(90,107,120,0.2)); border-radius: 16px; padding: 15px; font-family: var(--font-serif); font-size: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .interactive-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; transition: opacity 0.3s ease; }
+        .interactive-card:hover .interactive-img { opacity: 1; }
+        @media (max-width: 600px) { .interactive-grid { grid-template-columns: 1fr; } }
+    </style>
+    <div class="section">
+        <h2 class="section-title">Interactive Photo Stories</h2>
+        <p style="color: #888; margin-bottom: 20px; font-size: 0.9rem;">Hover over each card to reveal the photo behind the story.</p>
+        <div class="interactive-grid">
+            ${cards}
+        </div>
+    </div>`;
+}
+
+// --- HELPER: Render Voice Recordings ---
+function renderVoiceRecordings(data: MemorialData): string {
+    const recordings = data.step8.voiceRecordings || [];
+    if (recordings.length === 0) return '';
+
+    const items = recordings.map(rec => `
+        <div class="voice-item">
+            <div class="voice-icon">&#127908;</div>
+            <div class="voice-title">${rec.title || 'Untitled Recording'}</div>
+        </div>
+    `).join('');
+
+    return `
+    <style>
+        .voice-list { display: flex; flex-direction: column; gap: 12px; }
+        .voice-item { display: flex; align-items: center; gap: 15px; background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #eee; }
+        .voice-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .voice-title { font-weight: 600; color: var(--color-charcoal); }
+    </style>
+    <div class="section">
+        <h2 class="section-title">Voice Recordings</h2>
+        <div class="voice-list">
+            ${items}
+        </div>
+    </div>`;
+}
+
+// --- HELPER: Render Early Life & Childhood ---
+function renderEarlyLife(data: MemorialData): string {
+    if (!data.step2.childhoodHome && !data.step2.familyBackground) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Early Life & Childhood</h2>`;
+
+    if (data.step2.childhoodHome) {
+        html += `<div style="margin-bottom: 20px;"><h3 style="margin-bottom: 8px; color: var(--color-charcoal);">Childhood Home</h3><p>${data.step2.childhoodHome}</p></div>`;
+    }
+    if (data.step2.familyBackground) {
+        html += `<div style="margin-bottom: 20px;"><h3 style="margin-bottom: 8px; color: var(--color-charcoal);">Family Background</h3><p>${data.step2.familyBackground}</p></div>`;
+    }
+    if (data.step2.childhoodPersonality && data.step2.childhoodPersonality.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px;">${data.step2.childhoodPersonality.map((trait: string) => `<span class="badge">${trait}</span>`).join('')}</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Career & Achievements ---
+function renderCareer(data: MemorialData): string {
+    const jobs = data.step3.occupations || [];
+    if (jobs.length === 0) return '';
+
+    const items = jobs.map(job => `
+        <div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px;">
+            <h3 style="margin-bottom: 5px;">${job.title}</h3>
+            <p style="color: #888; font-size: 0.9rem; margin-bottom: 8px;">${job.company || ''}</p>
+            <span class="badge">${job.yearsFrom} - ${job.yearsTo}</span>
+            ${job.description ? `<p style="margin-top: 10px; color: #555;">${job.description}</p>` : ''}
+        </div>
+    `).join('');
+
+    return `
+    <div class="section">
+        <h2 class="section-title">Career & Achievements</h2>
+        ${items}
+    </div>`;
+}
+
+// --- HELPER: Render Family & Relationships ---
+function renderFamily(data: MemorialData): string {
+    const partners = data.step4.partners || [];
+    const children = data.step4.children || [];
+    if (partners.length === 0 && children.length === 0) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Family & Relationships</h2>`;
+
+    if (partners.length > 0) {
+        html += `<div class="grid-2" style="margin-bottom: 20px;">`;
+        partners.forEach(p => {
+            html += `<div style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                <h4 style="margin-bottom: 4px;">${p.name}</h4>
+                <p style="color: #888; font-size: 0.85rem;">${p.relationshipType}</p>
+                <p style="color: #888; font-size: 0.85rem;">${p.yearsFrom} - ${p.yearsTo}</p>
+                ${p.description ? `<p style="color: #555; margin-top: 8px; font-size: 0.9rem;">${p.description}</p>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    if (children.length > 0) {
+        html += `<div class="grid-2">`;
+        children.forEach(c => {
+            html += `<div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                <h4 style="margin-bottom: 4px;">${c.name}</h4>
+                <p style="color: #888; font-size: 0.85rem;">Born ${c.birthYear}</p>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Personality & Values ---
+function renderPersonality(data: MemorialData): string {
+    const traits = data.step5.personalityTraits || [];
+    const values = data.step5.coreValues || [];
+    const philosophy = data.step5.lifePhilosophy;
+    if (traits.length === 0 && !philosophy) return '';
+
+    let html = `<div class="section"><h2 class="section-title">Personality, Values & Passions</h2>`;
+
+    if (traits.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">${traits.map((t: string) => `<span class="badge">${t}</span>`).join('')}</div>`;
+    }
+    if (values.length > 0) {
+        html += `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">${values.map((v: string) => `<span class="badge" style="background: rgba(90,107,120,0.1); color: var(--color-charcoal);">${v}</span>`).join('')}</div>`;
+    }
+    if (philosophy) {
+        html += `<div style="background: linear-gradient(135deg, rgba(138,171,180,0.05), rgba(90,107,120,0.05)); border-radius: 12px; padding: 25px; border: 1px solid #eee; font-style: italic; color: #555;">${philosophy}</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+// --- HELPER: Render Legacy Statement ---
+function renderLegacy(data: MemorialData): string {
+    if (!data.step8.legacyStatement) return '';
+
+    return `
+    <style>
+        .legacy-section { background: linear-gradient(135deg, rgba(138,171,180,0.2), var(--color-ivory), rgba(90,107,120,0.2)); border: 2px solid var(--color-sand); border-radius: 16px; padding: 60px 40px; text-align: center; margin-bottom: 40px; }
+        .legacy-section h2 { font-size: 2rem; margin-bottom: 20px; }
+        .legacy-section p { font-size: 1.3rem; font-family: var(--font-serif); color: #555; max-width: 700px; margin: 0 auto; line-height: 1.8; }
+    </style>
+    <div class="legacy-section">
+        <h2>Legacy</h2>
+        <p>${data.step8.legacyStatement}</p>
+    </div>`;
+}
+
 // --- HELPER: Render Videos ---
 function renderVideos(data: MemorialData, map?: ResourceMap): string {
     const videos = data.step9.videos || [];
@@ -2544,17 +2739,38 @@ export function generateStandaloneHTML(data: MemorialData, resourceMap?: Resourc
         <!-- 2. LIFE STORY -->
         ${renderBiography(data)}
 
-        <!-- 3. TIMELINE -->
+        <!-- 3. EARLY LIFE & CHILDHOOD -->
+        ${renderEarlyLife(data)}
+
+        <!-- 4. CAREER & ACHIEVEMENTS -->
+        ${renderCareer(data)}
+
+        <!-- 5. FAMILY & RELATIONSHIPS -->
+        ${renderFamily(data)}
+
+        <!-- 6. PERSONALITY & VALUES -->
+        ${renderPersonality(data)}
+
+        <!-- 7. TIMELINE -->
         ${renderTimeline(data)}
 
-        <!-- 4. GALLERY -->
+        <!-- 8. TRIBUTES & MEMORIES -->
+        ${renderTributes(data)}
+
+        <!-- 9. INTERACTIVE PHOTO STORIES -->
+        ${renderInteractiveGallery(data, resourceMap)}
+
+        <!-- 10. GALLERY -->
         ${renderGallery(data, resourceMap)}
 
-        <!-- 5. VIDEOS -->
+        <!-- 11. VIDEOS -->
         ${renderVideos(data, resourceMap)}
 
-        <!-- 6. TRIBUTES -->
-        ${renderTributes(data)}
+        <!-- 12. VOICE RECORDINGS -->
+        ${renderVoiceRecordings(data)}
+
+        <!-- 13. LEGACY STATEMENT -->
+        ${renderLegacy(data)}
 
     </main>
 
@@ -7740,6 +7956,54 @@ function CreateMemorialPageContent() {
     });
   }, []);
 
+  // FIX: Create an empty memorial immediately on page load when no ID exists.
+  // This ensures memorialId is always available for autosave and media uploads.
+  useEffect(() => {
+    if (currentMemorialId || !authUserId) return;
+
+    const createEmptyMemorial = async () => {
+      try {
+        const supabase = createClient();
+        const rawMode = searchParams.get('mode') || 'personal';
+        // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
+        const currentMode = rawMode === 'family' ? 'family' : 'personal';
+
+        const { data, error } = await supabase
+          .from('memorials')
+          .insert({
+            user_id: authUserId,
+            status: 'draft',
+            mode: currentMode,
+            slug: `draft-${Date.now()}`,
+            paid: false,
+            step1: memorialData.step1,
+            step2: memorialData.step2,
+            step3: memorialData.step3,
+            step4: memorialData.step4,
+            step5: memorialData.step5,
+            step6: memorialData.step6,
+            step7: memorialData.step7,
+            step8: memorialData.step8,
+            step9: memorialData.step9,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setCurrentMemorialId(data.id);
+          window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
+          console.log('Draft memorial created with ID:', data.id);
+        }
+      } catch (err) {
+        console.error('Failed to create empty memorial:', err);
+      }
+    };
+
+    createEmptyMemorial();
+  }, [authUserId, currentMemorialId]);
+
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
 
@@ -7822,37 +8086,78 @@ function CreateMemorialPageContent() {
   const [activePath, setActivePath] = useState<PathId | null>(null);
 
   useEffect(() => {
-    const roleParam = searchParams.get('role');
-    if (roleParam === 'witness') {
-      setUserRole('witness');
-    }
+    const checkPermissions = async () => {
+      if (!memorialId) return;
 
-    if (memorialId) {
-      loadMemorial(memorialId).then(() => {
-        // Handle step param from Three Doors or direct links
-        const stepParam = searchParams.get('step');
-        if (stepParam) {
-          const stepNum = parseInt(stepParam, 10);
-          if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= 10) {
-            // Map step number to path
-            const stepToPathMap: Record<number, PathId> = {
-              1: 'facts',
-              2: 'body', 3: 'body', 4: 'body',
-              5: 'soul', 6: 'soul',
-              7: 'witnesses',
-              8: 'presence', 9: 'presence',
-            };
-            const targetPath = stepToPathMap[stepNum];
-            if (targetPath) {
-              setActivePath(targetPath);
-              setMemorialData(prev => ({ ...prev, currentStep: stepNum }));
-              setViewMode('path');
-            }
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Not logged in? Middleware might catch this, but safe to redirect
+        return;
+      }
+
+      // 1. Fetch the memorial to see who owns it
+      const { data: memorial } = await supabase
+        .from('memorials')
+        .select('user_id')
+        .eq('id', memorialId)
+        .single();
+
+      if (memorial) {
+        if (memorial.user_id === user.id) {
+          // user IS the owner
+          setUserRole('owner');
+        } else {
+          // user is NOT the owner. Check if they are a valid witness.
+          const { data: invitation } = await supabase
+            .from('witness_invitations')
+            .select('id')
+            .eq('memorial_id', memorialId)
+            .eq('accepted_by_user_id', user.id) // This link was made in the accept page
+            .eq('status', 'accepted')
+            .single();
+
+          if (invitation) {
+            setUserRole('witness');
+          } else {
+            // Neither owner nor witness? They shouldn't be here.
+            // You could also check for 'co_guardian' here later
+            alert("You do not have permission to view this archive.");
+            router.push('/dashboard');
+            return;
           }
         }
-      });
-    }
-  }, [memorialId, searchParams]);
+
+        // Handle loading the memorial and step param
+        loadMemorial(memorialId).then(() => {
+          // Handle step param from Three Doors or direct links
+          const stepParam = searchParams.get('step');
+          if (stepParam) {
+            const stepNum = parseInt(stepParam, 10);
+            if (!isNaN(stepNum) && stepNum >= 1 && stepNum <= 10) {
+              // Map step number to path
+              const stepToPathMap: Record<number, PathId> = {
+                1: 'facts',
+                2: 'body', 3: 'body', 4: 'body',
+                5: 'soul', 6: 'soul',
+                7: 'witnesses',
+                8: 'presence', 9: 'presence',
+              };
+              const targetPath = stepToPathMap[stepNum];
+              if (targetPath) {
+                setActivePath(targetPath);
+                setMemorialData(prev => ({ ...prev, currentStep: stepNum }));
+                setViewMode('path');
+              }
+            }
+          }
+        });
+      }
+    };
+
+    checkPermissions();
+  }, [memorialId, searchParams, router]);
 
   // Auth is now handled by middleware — no temp user creation needed
 
@@ -8015,7 +8320,8 @@ function CreateMemorialPageContent() {
       const supabase = createClient();
       const slug = generateSlug(memorialData.step1.fullName);
       const rawMode = searchParams.get('mode') || 'personal';
-      const currentMode = ['personal', 'family', 'draft'].includes(rawMode) ? rawMode : 'personal';
+      // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
+      const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
       const memorialRecord = {
         id: currentMemorialId || undefined,
@@ -15145,6 +15451,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
 
 'use client';
 
+import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 
 interface IntegrityBadgeProps {
@@ -15153,29 +15460,35 @@ interface IntegrityBadgeProps {
 }
 
 export default function IntegrityBadge({ hash, className = '' }: IntegrityBadgeProps) {
+    const [showTooltip, setShowTooltip] = useState(false);
+
     if (!hash) return null;
 
-    const shortHash = hash.substring(0, 8) + '...';
-
     return (
-        <div className={`absolute top-2 left-2 z-20 group ${className}`}>
-            {/* The Badge Icon */}
-            <div className="bg-white/90 backdrop-blur-sm text-mist p-1.5 rounded-full shadow-sm border border-mist/20 cursor-help transition-transform hover:scale-110">
+        <div className={`absolute top-2 left-2 z-20 ${className}`}>
+            {/* The Badge Icon — click to toggle */}
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowTooltip(!showTooltip); }}
+                className="bg-white/90 backdrop-blur-sm text-mist p-1.5 rounded-full shadow-sm border border-mist/20 cursor-pointer transition-transform hover:scale-110"
+            >
                 <ShieldCheck size={14} />
-            </div>
+            </button>
 
-            {/* The Tooltip (appears on hover) */}
-            <div className="absolute top-0 left-8 w-64 bg-charcoal text-ivory text-xs p-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none translate-x-2 group-hover:translate-x-0 duration-200">
-                <p className="font-semibold mb-1 flex items-center gap-1">
-                    <ShieldCheck size={12} /> Authenticity Verified
-                </p>
-                <p className="opacity-80 leading-relaxed">
-                    This media is cryptographically signed.
-                </p>
-                <div className="mt-2 pt-2 border-t border-white/10 font-mono text-[10px] opacity-60 break-all">
-                    SHA-256: {hash}
+            {/* The Tooltip (appears on click) */}
+            {showTooltip && (
+                <div className="absolute top-0 left-8 w-64 bg-charcoal text-ivory text-xs p-3 rounded-lg shadow-xl animate-fadeIn">
+                    <p className="font-semibold mb-1 flex items-center gap-1">
+                        <ShieldCheck size={12} /> Authenticity Verified
+                    </p>
+                    <p className="opacity-80 leading-relaxed">
+                        This media is cryptographically signed.
+                    </p>
+                    <div className="mt-2 pt-2 border-t border-white/10 font-mono text-[10px] opacity-60 break-all">
+                        SHA-256: {hash}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
@@ -15195,7 +15508,7 @@ import { useState } from 'react';
 import {
     Calendar, MapPin, Heart, Briefcase, GraduationCap, Quote, Star, Home,
     Sparkles, MessageCircle, Share2, Mail, Users, BookOpen, Lightbulb, Award,
-    MousePointer, Play
+    MousePointer, Play, Mic
 } from 'lucide-react';
 import ImageViewer from '@/components/ImageViewer';
 import IntegrityBadge from '@/components/IntegrityBadge';
@@ -15609,6 +15922,60 @@ export default function MemorialRenderer({
                         </section>
                     )}
 
+                    {/* Interactive Photo Stories */}
+                    {data.step8?.interactiveGallery?.length > 0 && (
+                        <section>
+                            <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
+                                    <MousePointer size={compact ? 16 : 24} className="text-mist" />
+                                </div>
+                                Interactive Photo Stories
+                            </h2>
+                            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-${compact ? '3' : '6'}`}>
+                                {data.step8.interactiveGallery.map((item: any) => (
+                                    <div
+                                        key={item.id}
+                                        className={`relative aspect-video rounded-xl overflow-hidden border-2 border-sand/30 group`}
+                                        onMouseMove={(e) => handleInteractiveMouseMove(e, item.id)}
+                                        onMouseLeave={() => setHoveredInteractive(null)}
+                                        style={{ cursor: 'none' }}
+                                    >
+                                        {/* Hidden text layer (visible by default) */}
+                                        <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
+                                            <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-4 shadow-lg backdrop-blur-sm">
+                                                <p className={`font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm ${compact ? 'text-base' : 'text-2xl md:text-3xl'}`}>
+                                                    {item.description || 'Move your cursor to reveal the photo'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Photo layer with spotlight mask */}
+                                        <div
+                                            className="absolute inset-0 z-20 transition-opacity duration-300"
+                                            style={{
+                                                maskImage: hoveredInteractive === item.id
+                                                    ? `radial-gradient(circle 110px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)`
+                                                    : 'none',
+                                                WebkitMaskImage: hoveredInteractive === item.id
+                                                    ? `radial-gradient(circle 110px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)`
+                                                    : 'none',
+                                            }}
+                                        >
+                                            <img
+                                                src={item.preview}
+                                                alt="Interactive photo"
+                                                className="w-full h-full object-cover"
+                                                draggable={false}
+                                            />
+                                        </div>
+
+                                        <IntegrityBadge hash={item.sha256_hash} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* Photo Gallery */}
                     {data.step8?.gallery?.length > 0 && (
                         <section>
@@ -15655,6 +16022,31 @@ export default function MemorialRenderer({
                                             </video>
                                         </div>
                                         {video.title && <h3 className={`font-semibold text-charcoal ${compact ? 'text-xs' : ''}`}>{video.title}</h3>}
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
+                    {/* Voice Recordings */}
+                    {data.step8?.voiceRecordings?.length > 0 && (
+                        <section>
+                            <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
+                                <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
+                                    <Mic size={compact ? 16 : 24} className="text-stone" />
+                                </div>
+                                Voice Recordings
+                            </h2>
+                            <div className={`space-y-${compact ? '2' : '4'}`}>
+                                {data.step8.voiceRecordings.map((recording: any) => (
+                                    <div key={recording.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4 md:p-6'} shadow-sm border border-sand/30 flex items-center gap-4`}>
+                                        <div className={`${compact ? 'w-10 h-10' : 'w-14 h-14'} bg-stone/10 rounded-full flex items-center justify-center flex-shrink-0`}>
+                                            <Mic size={compact ? 16 : 24} className="text-stone" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className={`font-semibold text-charcoal ${compact ? 'text-xs' : 'text-base'}`}>{recording.title || 'Untitled Recording'}</h4>
+                                        </div>
+                                        <IntegrityBadge hash={recording.sha256_hash} />
                                     </div>
                                 ))}
                             </div>
@@ -21021,53 +21413,60 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       alert(`You tried to upload ${files.length} photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
     }
 
-    // Process uploads
-    for (const file of filesToUpload) {
-      // 1. Local Preview setup
-      const tempId = `photo-${Date.now()}-${Math.random()}`;
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        // Add optimistic item
-        const tempItem = {
-          id: tempId,
-          file,
-          preview: reader.result as string,
-          caption: '',
-          year: '',
-          type: 'photo' as const
+    // Process all uploads concurrently
+    // First: add all optimistic previews immediately
+    const previewPromises = filesToUpload.map(file => {
+      return new Promise<{ file: File; tempId: string; preview: string }>((resolve) => {
+        const tempId = `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({ file, tempId, preview: reader.result as string });
         };
+        reader.readAsDataURL(file);
+      });
+    });
 
-        // Add to state immediately
-        const currentData = dataRef.current;
-        onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), tempItem] });
+    const previews = await Promise.all(previewPromises);
 
-        // 2. Perform Upload
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${tempId}.${fileExt}`;
-        const pathBase = memorialId || 'temp';
-        const path = `${pathBase}/gallery/${fileName}`;
+    // Add all optimistic items to state at once
+    const tempItems = previews.map(({ tempId, file, preview }) => ({
+      id: tempId,
+      file,
+      preview,
+      caption: '',
+      year: '',
+      type: 'photo' as const
+    }));
 
-        try {
-          const result = await secureUpload(file, 'memorial-media', path);
+    const currentData = dataRef.current;
+    onUpdate({ ...currentData, gallery: [...(currentData.gallery || []), ...tempItems] });
 
-          if (result.success) {
-            const freshData = dataRef.current;
-            onUpdate({
-              ...freshData,
-              gallery: (freshData.gallery || []).map(item =>
-                item.id === tempId
-                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
-                  : item
-              )
-            });
-          }
-        } catch (err) {
-          console.error("Gallery upload failed for file:", file.name, err);
+    // Then: upload all files concurrently
+    const uploadPromises = previews.map(async ({ file, tempId }) => {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${tempId}.${fileExt}`;
+      const pathBase = memorialId || 'temp';
+      const path = `${pathBase}/gallery/${fileName}`;
+
+      try {
+        const result = await secureUpload(file, 'memorial-media', path);
+        if (result.success) {
+          const freshData = dataRef.current;
+          onUpdate({
+            ...freshData,
+            gallery: (freshData.gallery || []).map(item =>
+              item.id === tempId
+                ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                : item
+            )
+          });
         }
-      };
-      reader.readAsDataURL(file);
-    }
+      } catch (err) {
+        console.error("Gallery upload failed for file:", file.name, err);
+      }
+    });
+
+    await Promise.all(uploadPromises);
   };
 
   // ... rest of logic remains similar ...
@@ -21102,50 +21501,57 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       alert(`You tried to upload ${files.length} interactive photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
     }
 
-    // Process uploads
-    for (const file of filesToUpload) {
-      const tempId = `interactive-${Date.now()}-${Math.random()}`;
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        // Optimistic UI update
-        const tempItem = {
-          id: tempId,
-          file,
-          preview: reader.result as string,
-          description: ''
+    // Process all uploads concurrently
+    const previewPromises = filesToUpload.map(file => {
+      return new Promise<{ file: File; tempId: string; preview: string }>((resolve) => {
+        const tempId = `interactive-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({ file, tempId, preview: reader.result as string });
         };
+        reader.readAsDataURL(file);
+      });
+    });
 
-        // Add to state immediately
-        const currentData = dataRef.current;
-        onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), tempItem] });
+    const previews = await Promise.all(previewPromises);
 
-        // Secure Upload
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${tempId}.${fileExt}`;
-        const pathBase = memorialId || 'temp';
-        const path = `${pathBase}/interactive/${fileName}`;
+    // Add all optimistic items to state at once
+    const tempItems = previews.map(({ tempId, file, preview }) => ({
+      id: tempId,
+      file,
+      preview,
+      description: ''
+    }));
 
-        try {
-          const result = await secureUpload(file, 'memorial-media', path);
+    const currentData = dataRef.current;
+    onUpdate({ ...currentData, interactiveGallery: [...(currentData.interactiveGallery || []), ...tempItems] });
 
-          if (result.success) {
-            const freshData = dataRef.current;
-            onUpdate({
-              ...freshData,
-              interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
-                item.id === tempId
-                  ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
-                  : item
-              ),
-            });
-          }
-        } catch (err) {
-          console.error("Interactive upload failed:", err);
+    // Upload all files concurrently
+    const uploadPromises = previews.map(async ({ file, tempId }) => {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${tempId}.${fileExt}`;
+      const pathBase = memorialId || 'temp';
+      const path = `${pathBase}/interactive/${fileName}`;
+
+      try {
+        const result = await secureUpload(file, 'memorial-media', path);
+        if (result.success) {
+          const freshData = dataRef.current;
+          onUpdate({
+            ...freshData,
+            interactiveGallery: (freshData.interactiveGallery || []).map((item) =>
+              item.id === tempId
+                ? { ...item, preview: result.url || item.preview, sha256_hash: result.hash }
+                : item
+            ),
+          });
         }
-      };
-      reader.readAsDataURL(file);
-    }
+      } catch (err) {
+        console.error("Interactive upload failed:", err);
+      }
+    });
+
+    await Promise.all(uploadPromises);
   };
 
   const removeInteractiveItem = (id: string) => {
@@ -21414,7 +21820,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           </p>
           {(data.interactiveGallery && data.interactiveGallery.length > 0) ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
                 {data.interactiveGallery.map((item) => (
                   <div key={item.id} className="space-y-3">
                     <div
@@ -21423,9 +21829,9 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                       onMouseLeave={handleMouseLeave}
                       style={{ cursor: 'none' }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                          <p className="text-xl md:text-2xl font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm">
+                      <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-4 shadow-lg backdrop-blur-sm">
+                          <p className="text-2xl md:text-3xl font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm">
                             {item.description || 'Add your story below and hover to see the magic! ✨'}
                           </p>
                         </div>

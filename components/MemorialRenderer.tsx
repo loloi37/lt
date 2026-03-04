@@ -435,19 +435,19 @@ export default function MemorialRenderer({
                                 </div>
                                 Interactive Photo Stories
                             </h2>
-                            <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'}`}>
+                            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-${compact ? '3' : '6'}`}>
                                 {data.step8.interactiveGallery.map((item: any) => (
                                     <div
                                         key={item.id}
-                                        className={`relative ${compact ? 'aspect-video' : 'aspect-video'} rounded-xl overflow-hidden border-2 border-sand/30 group`}
+                                        className={`relative aspect-video rounded-xl overflow-hidden border-2 border-sand/30 group`}
                                         onMouseMove={(e) => handleInteractiveMouseMove(e, item.id)}
                                         onMouseLeave={() => setHoveredInteractive(null)}
                                         style={{ cursor: 'none' }}
                                     >
                                         {/* Hidden text layer (visible by default) */}
-                                        <div className="absolute inset-0 flex items-center justify-center p-8 z-10">
-                                            <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                                                <p className={`font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm ${compact ? 'text-sm' : 'text-xl md:text-2xl'}`}>
+                                        <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
+                                            <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-4 shadow-lg backdrop-blur-sm">
+                                                <p className={`font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm ${compact ? 'text-base' : 'text-2xl md:text-3xl'}`}>
                                                     {item.description || 'Move your cursor to reveal the photo'}
                                                 </p>
                                             </div>

@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         // 3. Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
             .from(bucket)
-            .upload(path, file, {
+            .upload(path, buffer, { // ✅ FIX: Use the buffer you already created above!
                 contentType: file.type,
                 upsert: false,
             });

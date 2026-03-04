@@ -1649,3 +1649,243 @@ CREATE POLICY "Users can delete own successors"
 -- API routes using supabase service role key bypass RLS.
 -- Client-side queries and middleware queries respect RLS.
 -- ────────────────────────────────────────────────────────────
+
+
+
+
+--------------------------------------------------------
+
+52 :
+
+-- Check if old permissive policy still exists
+SELECT policyname, cmd, qual, with_check
+FROM pg_policies
+WHERE tablename = 'memorials';
+
+-- Check if your auth user has a matching public.users row
+SELECT au.id, au.email, pu.id as public_id
+FROM auth.users au
+LEFT JOIN public.users pu ON pu.id = au.id
+WHERE au.id = auth.uid();
+
+--------------------------------------------------------
+
+53 : 
+
+-- Backfill: create public.users rows for any auth users that don't have one
+INSERT INTO public.users (id, email)
+SELECT id, email FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
+
+--------------------------------------------------------
+
+54 : 
+
+-- ============================================================
+-- FIX: Break RLS infinite recursion between memorials ↔ witness_invitations
+-- Uses SECURITY DEFINER functions to bypass RLS on the cross-referenced table
+-- ============================================================
+
+-- 1. Helper function: check if user is a witness for a memorial (bypasses witness_invitations RLS)
+CREATE OR REPLACE FUNCTION public.is_witness_for_memorial(p_memorial_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.witness_invitations
+    WHERE memorial_id = p_memorial_id
+      AND invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+      AND status = 'accepted'
+  );
+$$;
+
+-- 2. Helper function: check if user owns a memorial (bypasses memorials RLS)
+CREATE OR REPLACE FUNCTION public.is_memorial_owner(p_memorial_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.memorials WHERE id = p_memorial_id AND user_id = auth.uid()
+  );
+$$;
+
+-- 3. Replace the problematic policy on memorials
+DROP POLICY IF EXISTS "Witnesses can view invited memorials" ON public.memorials;
+CREATE POLICY "Witnesses can view invited memorials"
+  ON public.memorials FOR SELECT
+  USING (public.is_witness_for_memorial(id));
+
+-- 4. Replace the problematic policy on witness_invitations
+DROP POLICY IF EXISTS "Owners can view invitations for own memorials" ON public.witness_invitations;
+CREATE POLICY "Owners can view invitations for own memorials"
+  ON public.witness_invitations FOR SELECT
+  USING (public.is_memorial_owner(memorial_id));
+
+
+--------------------------------------------------------
+
+55 : 
+
+ALTER TABLE witness_invitations 
+ADD COLUMN accepted_by_user_id UUID;
+
+--------------------------------------------------------
+
+56 : 
+
+-- 1. Enable security on the table
+ALTER TABLE memorials ENABLE ROW LEVEL SECURITY;
+
+-- 2. Allow Owners to do EVERYTHING (View, Edit, Delete) on their own memorials
+CREATE POLICY "Owners can manage their own memorials"
+ON memorials
+FOR ALL
+USING (auth.uid() = user_id);
+
+-- 3. Allow Witnesses to ONLY VIEW (Select) memorials they are invited to
+CREATE POLICY "Witnesses can view linked memorials"
+ON memorials
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM witness_invitations
+    WHERE witness_invitations.memorial_id = memorials.id
+    AND witness_invitations.accepted_by_user_id = auth.uid()
+    AND witness_invitations.status = 'accepted'
+  )
+);
+
+--------------------------------------------------------
+
+57 : 
+
+-- 1. Enable security
+ALTER TABLE memorial_contributions ENABLE ROW LEVEL SECURITY;
+
+-- 2. Allow anyone logged in to SUBMIT (Insert) a memory
+CREATE POLICY "Anyone logged in can submit a memory"
+ON memorial_contributions
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+-- 3. Only the Memorial Owner can VIEW or EDIT the contributions
+CREATE POLICY "Owners can manage contributions"
+ON memorial_contributions
+FOR ALL
+USING (
+  EXISTS (
+    SELECT 1 FROM memorials
+    WHERE memorials.id = memorial_contributions.memorial_id
+    AND memorials.user_id = auth.uid()
+  )
+);
+
+--------------------------------------------------------
+
+58 : 
+
+-- 1. Enable RLS on the table (just in case it isn't already)
+ALTER TABLE witness_invitations ENABLE ROW LEVEL SECURITY;
+
+-- 2. Allow anyone who is logged in to read invitations (needed to load the page)
+CREATE POLICY "Anyone can view invitations"
+ON witness_invitations
+FOR SELECT
+TO authenticated
+USING (true);
+
+-- 3. Allow logged-in users to update the invitation (to accept it)
+CREATE POLICY "Users can accept invitations"
+ON witness_invitations
+FOR UPDATE
+TO authenticated
+USING (status = 'pending')
+WITH CHECK (true);
+
+--------------------------------------------------------
+
+59 : 
+
+-- 1. Fix the "table users" permission error
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow users to read users table" ON users;
+CREATE POLICY "Allow users to read users table"
+ON users FOR SELECT
+TO authenticated
+USING (true);
+
+-- 2. Allow witnesses to read and accept invitations
+ALTER TABLE witness_invitations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow users to read invitations" ON witness_invitations;
+CREATE POLICY "Allow users to read invitations"
+ON witness_invitations FOR SELECT
+TO authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow users to update invitations" ON witness_invitations;
+CREATE POLICY "Allow users to update invitations"
+ON witness_invitations FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+--------------------------------------------------------
+
+60 : 
+
+-- 1. Drop the problematic and conflicting policies
+DROP POLICY IF EXISTS "Only paid users can upload multiple videos" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload videos" ON storage.objects;
+DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
+
+-- 2. Create a safe policy: Only the owner of the memorial can upload videos
+CREATE POLICY "Owners can upload videos to their memorial"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'videos' AND (
+    SELECT user_id 
+    FROM public.memorials -- ALWAYS use public. inside storage policies!
+    WHERE id::text = (storage.foldername(name))[1]
+  ) = auth.uid()
+);
+
+--------------------------------------------------------
+
+61 : 
+
+-- 1. Allow authenticated users to upload to memorial-media
+CREATE POLICY "Users can upload media"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'memorial-media');
+
+-- 2. Allow everyone to view memorial-media
+CREATE POLICY "Anyone can view media"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'memorial-media');
+
+-- 3. Allow authenticated users to upload to videos
+CREATE POLICY "Users can upload videos"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'videos');
+
+-- 4. Allow everyone to view videos
+CREATE POLICY "Anyone can view videos"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'videos');
+
+--------------------------------------------------------
+
+62 : 
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_sent_at TIMESTAMP WITH TIME ZONE;
+
+

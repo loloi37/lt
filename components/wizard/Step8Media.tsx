@@ -514,7 +514,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           </p>
           {(data.interactiveGallery && data.interactiveGallery.length > 0) ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
                 {data.interactiveGallery.map((item) => (
                   <div key={item.id} className="space-y-3">
                     <div
@@ -523,9 +523,9 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                       onMouseLeave={handleMouseLeave}
                       style={{ cursor: 'none' }}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                          <p className="text-xl md:text-2xl font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm">
+                      <div className="absolute inset-0 flex items-center justify-center p-4">
+                        <div className="bg-gradient-to-br from-mist/20 via-ivory/90 to-stone/20 rounded-2xl p-4 shadow-lg backdrop-blur-sm">
+                          <p className="text-2xl md:text-3xl font-serif text-charcoal leading-relaxed text-center font-medium drop-shadow-sm">
                             {item.description || 'Add your story below and hover to see the magic! ✨'}
                           </p>
                         </div>

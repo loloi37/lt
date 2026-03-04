@@ -16,21 +16,24 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1470 } = await request.json();
+        const { memorialId, amount = 1470, plan = 'personal' } = await request.json();
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
         }
 
+        // Determine expected authorization type based on plan
+        const expectedAuthType = plan === 'family' ? 'account' : 'individual';
+
         // Verify authorization exists
         const { data: auth } = await supabaseAdmin
             .from('memorial_authorizations')
-            .select('id')
+            .select('id, authorization_type')
             .eq('memorial_id', memorialId)
             .in('status', ['pending', 'approved'])
             .maybeSingle();
 
-        if (!auth) {
+        if (!auth || auth.authorization_type !== expectedAuthType) {
             return NextResponse.json({
                 error: 'Authorization required before payment',
                 code: 'LEGAL_AUTH_REQUIRED',
@@ -47,19 +50,22 @@ export async function POST(request: NextRequest) {
         const fullName = memorial?.full_name || 'Memorial Archive';
         const isDraft = memorial?.mode === 'draft';
 
+        const planLabel = plan === 'family' ? 'Family' : (isDraft ? 'Personal (Draft Upgrade)' : 'Personal');
+
         // Create PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount * 100, // Stripe expects cents
             currency: 'usd',
-            description: isDraft
-                ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
-                : `Legacy Vault — Permanent Archive for ${fullName}`,
+            description: plan === 'family'
+                ? `Legacy Vault — Family Plan for ${fullName}`
+                : isDraft
+                    ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
+                    : `Legacy Vault — Permanent Archive for ${fullName}`,
             metadata: {
                 memorialId,
-                plan: 'Personal',
+                plan: planLabel,
                 isDraftUpgrade: isDraft ? 'true' : 'false',
             },
-            // Automatic payment methods for 3DS support
             automatic_payment_methods: {
                 enabled: true,
             },

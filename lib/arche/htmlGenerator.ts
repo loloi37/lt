@@ -188,10 +188,10 @@ function renderInteractiveGallery(data: MemorialData, map?: ResourceMap): string
 
     return `
     <style>
-        .interactive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+        .interactive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .interactive-card { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; border: 2px solid #ddd; cursor: none; }
-        .interactive-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 30px; z-index: 1; }
-        .interactive-text p { background: linear-gradient(135deg, rgba(138,171,180,0.2), rgba(253,246,240,0.9), rgba(90,107,120,0.2)); border-radius: 16px; padding: 20px; font-family: var(--font-serif); font-size: 1.2rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .interactive-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 15px; z-index: 1; }
+        .interactive-text p { background: linear-gradient(135deg, rgba(138,171,180,0.2), rgba(253,246,240,0.9), rgba(90,107,120,0.2)); border-radius: 16px; padding: 15px; font-family: var(--font-serif); font-size: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .interactive-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; opacity: 0; transition: opacity 0.3s ease; }
         .interactive-card:hover .interactive-img { opacity: 1; }
         @media (max-width: 600px) { .interactive-grid { grid-template-columns: 1fr; } }

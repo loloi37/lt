@@ -16,10 +16,11 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 // ============================================
 // PAYMENT FORM COMPONENT (inside Elements)
 // ============================================
-function PaymentForm({ memorialId, amount, fullName }: {
+function PaymentForm({ memorialId, amount, fullName, plan }: {
     memorialId: string;
     amount: number;
     fullName: string;
+    plan: string;
 }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -40,7 +41,7 @@ function PaymentForm({ memorialId, amount, fullName }: {
             const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
-                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=personal`,
+                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=${plan}`,
                 },
                 redirect: 'if_required',
             });
@@ -73,7 +74,7 @@ function PaymentForm({ memorialId, amount, fullName }: {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memorialId }),
                 });
-                router.push(`/payment-success?id=${memorialId}&plan=personal`);
+                router.push(`/payment-success?id=${memorialId}&plan=${plan}`);
             }
         } catch (err: any) {
             setPaymentError('An unexpected error occurred. Your draft is saved, and you can return at any time.');
@@ -150,8 +151,8 @@ function PaymentForm({ memorialId, amount, fullName }: {
                 type="submit"
                 disabled={!stripe || isProcessing}
                 className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${isProcessing || !stripe
-                        ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                        : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                    ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
+                    : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
                     }`}
             >
                 {isProcessing ? (
@@ -177,9 +178,11 @@ function PaymentPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const memorialId = searchParams.get('memorialId');
+    const planParam = searchParams.get('plan') || 'personal';
+    const amountParam = parseInt(searchParams.get('amount') || '1470', 10);
 
     const [clientSecret, setClientSecret] = useState<string | null>(null);
-    const [amount, setAmount] = useState(1470);
+    const [amount, setAmount] = useState(amountParam);
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -196,7 +199,7 @@ function PaymentPageContent() {
                 const res = await fetch('/api/create-payment-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId, amount: 1470 }),
+                    body: JSON.stringify({ memorialId, amount: amountParam, plan: planParam }),
                 });
 
                 const data = await res.json();
@@ -220,7 +223,7 @@ function PaymentPageContent() {
         };
 
         createIntent();
-    }, [memorialId, router]);
+    }, [memorialId, router, amountParam, planParam]);
 
     if (loading) {
         return (
@@ -335,6 +338,7 @@ function PaymentPageContent() {
                         memorialId={memorialId!}
                         amount={amount}
                         fullName={fullName}
+                        plan={planParam}
                     />
                 </Elements>
             </div>
