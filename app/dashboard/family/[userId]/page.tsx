@@ -48,6 +48,21 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         }
     }, [userId, searchParams]);
 
+    // Refetch when user navigates back via browser back button or tab switch
+    // Without this, bfcache can show stale data after editing a memorial
+    useEffect(() => {
+        const handlePopState = () => loadMemorials();
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') loadMemorials();
+        };
+        window.addEventListener('popstate', handlePopState);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [userId]);
+
     const loadMemorials = async () => {
         setLoading(true);
         const { data, error } = await supabase
@@ -258,7 +273,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                         <Link href={`/person/${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
                                             <Eye size={16} /> View
                                         </Link>
-                                        <Link href={`/create?id=${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
+                                        <Link href={`/create?id=${memorial.id}&mode=family`} className="btn-paper flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
                                             <Edit size={16} /> Edit
                                         </Link>
                                         <button

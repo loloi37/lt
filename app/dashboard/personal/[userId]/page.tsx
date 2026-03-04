@@ -98,6 +98,20 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         loadMemorials();
     }, [userId, searchParams]);
 
+    // Refetch when user navigates back via browser back button or tab switch
+    useEffect(() => {
+        const handlePopState = () => loadMemorials();
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') loadMemorials();
+        };
+        window.addEventListener('popstate', handlePopState);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [userId]);
+
     const loadMemorials = async () => {
         setLoading(true);
         const { data, error } = await supabase

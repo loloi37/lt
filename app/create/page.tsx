@@ -147,6 +147,8 @@ function CreateMemorialPageContent() {
   const [memorialData, setMemorialData] = useState<MemorialData>(getInitialData());
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(memorialId);
+  // Track the memorial's actual mode from the database, so auto-save never overwrites it
+  const [dbMode, setDbMode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!memorialId);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -212,8 +214,8 @@ function CreateMemorialPageContent() {
 
         if (data) {
           setCurrentMemorialId(data.id);
+          setDbMode(currentMode);
           window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
-          console.log('Draft memorial created with ID:', data.id);
         }
       } catch (err) {
         console.error('Failed to create empty memorial:', err);
@@ -486,8 +488,10 @@ function CreateMemorialPageContent() {
         };
         setMemorialData(loadedData);
         setCurrentMemorialId(id);
-        console.log('MeMoRiAl ID:', id);
-        console.log('MeMoRiAl ID Stringified:', JSON.stringify(id));
+        // Store the DB mode so auto-save never overwrites it from URL params
+        if (data.mode) {
+          setDbMode(data.mode);
+        }
         // Initialize step entry ref with loaded data
         stepEntryDataRef.current = structuredClone(loadedData);
       }
@@ -538,7 +542,9 @@ function CreateMemorialPageContent() {
     try {
       const supabase = createClient();
       const slug = generateSlug(memorialData.step1.fullName);
-      const rawMode = searchParams.get('mode') || 'personal';
+      // Use the DB mode if we loaded from an existing memorial (prevents overwriting family→personal)
+      // Only fall back to URL param for brand new memorials
+      const rawMode = dbMode || searchParams.get('mode') || 'personal';
       // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
       const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
@@ -820,11 +826,27 @@ function CreateMemorialPageContent() {
     id => getPathStatus(memorialData, id) !== 'empty'
   );
 
+  // Determine the correct dashboard path based on the memorial's actual mode
+  const dashboardPath = authUserId
+    ? `/dashboard/${dbMode === 'family' ? 'family' : dbMode === 'draft' ? 'draft' : 'personal'}/${authUserId}`
+    : '/dashboard';
+
   return (
     <div className="min-h-screen bg-ivory relative">
       {viewMode === 'hub' ? (
         /* --- THE HUB VIEW (The Crossroads) — Step 1.3.3: Contemplation Space --- */
         <div className="max-w-6xl mx-auto px-6 py-20">
+          {/* Back to Dashboard — proper navigation instead of browser back */}
+          <div className="mb-6">
+            <button
+              onClick={() => router.replace(dashboardPath)}
+              className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm"
+            >
+              <ArrowLeft size={16} />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+
           {/* Step 1.1.1: Draft Banner */}
           <DraftBanner />
 
@@ -1124,9 +1146,9 @@ function CreateMemorialPageContent() {
               Pause and come back later
             </button>
             <div>
-              <Link href="/dashboard" className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
+              <button onClick={() => router.replace(dashboardPath)} className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
                 or return to Dashboard
-              </Link>
+              </button>
             </div>
           </div>
         </div>

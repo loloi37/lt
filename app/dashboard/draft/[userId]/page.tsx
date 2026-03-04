@@ -58,6 +58,20 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
         setLoading(false);
     };
 
+    // Refetch when user navigates back via browser back button or tab switch
+    useEffect(() => {
+        const handlePopState = () => loadMemorials();
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') loadMemorials();
+        };
+        window.addEventListener('popstate', handlePopState);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [userId]);
+
     const handleCreate = () => {
         window.location.href = '/create?mode=draft';
     };
