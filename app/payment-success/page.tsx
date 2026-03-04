@@ -97,13 +97,11 @@ function PaymentSuccessContent() {
                     // BroadcastChannel not supported in some browsers — dashboard will pick up via visibilitychange
                 }
 
-                // If this is a popup/upgrade window, auto-close after broadcasting
-                if (isPopup || isUpgrade) {
-                    // Give the broadcast a moment to deliver, then close
+                // If this is a popup window (opened via window.open), try to close it
+                if (isPopup && !isUpgrade) {
                     setTimeout(() => {
                         window.close();
-                        // Fallback: if window.close() is blocked (not opened via script),
-                        // redirect to the target dashboard instead
+                        // Fallback: if window.close() is blocked, redirect to dashboard
                         const supabase = createClient();
                         supabase.auth.getUser().then(({ data: { user } }) => {
                             const uid = user?.id || '';

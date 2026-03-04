@@ -316,9 +316,8 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                         });
                                         const data = await res.json();
                                         if (data.url) {
-                                            // Open target dashboard in a NEW window (clean history)
-                                            window.open(`/dashboard/family/${userId}?upgrading=true`, '_blank');
-                                            // Navigate current window to Stripe checkout
+                                            // Redirect to Stripe checkout — after payment, user lands on payment-success
+                                            // which handles finalization and redirects to family dashboard
                                             window.location.href = data.url;
                                         } else {
                                             alert(data.error || 'Could not start upgrade');

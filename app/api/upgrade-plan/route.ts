@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
                     totalDifferential: differentialAmount.toString(),
                     paymentPhase: 'deposit_30',
                 },
-                success_url: `${origin}/payment-success?id=${currentMemorial.id}&plan=${targetPlan}&upgrade=true&popup=true`,
+                success_url: `${origin}/payment-success?id=${currentMemorial.id}&plan=${targetPlan}&upgrade=true`,
                 cancel_url: `${origin}/dashboard/${currentPlan}/${userId}`,
             });
 
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
                 upgradeTo: targetPlan,
                 differentialAmount: differentialAmount.toString(),
             },
-            success_url: `${origin}/payment-success?id=${currentMemorial.id}&plan=${targetPlan}&upgrade=true&popup=true`,
+            success_url: `${origin}/payment-success?id=${currentMemorial.id}&plan=${targetPlan}&upgrade=true`,
             cancel_url: `${origin}/dashboard/${currentPlan}/${userId}`,
         });
 
