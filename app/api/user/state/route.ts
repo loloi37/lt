@@ -1,0 +1,94 @@
+// app/api/user/state/route.ts
+// Single source of truth: returns the authenticated user's full state
+// This endpoint is the authoritative server-side state that the UI must reflect.
+import { NextResponse } from 'next/server';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function GET() {
+    try {
+        const { user, error } = await createAuthenticatedClient();
+
+        if (error || !user) {
+            return NextResponse.json({
+                authenticated: false,
+                user: null,
+                plan: null,
+                archives: [],
+            });
+        }
+
+        // Fetch ALL user's memorials in one query
+        const { data: memorials, error: memError } = await supabaseAdmin
+            .from('memorials')
+            .select('id, mode, paid, payment_confirmed_at, status, full_name, profile_photo_url, deleted, deleted_at, updated_at, created_at')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+
+        if (memError) {
+            console.error('[UserState] Memorial fetch error:', memError);
+        }
+
+        const allMemorials = memorials || [];
+        const activeMemorials = allMemorials.filter(m => !m.deleted);
+        const paidMemorials = activeMemorials.filter(m => m.paid);
+
+        // Determine the user's current plan from their paid memorials
+        // Priority: concierge > family > personal > draft (free)
+        let currentPlan: 'none' | 'draft' | 'personal' | 'family' | 'concierge' = 'none';
+        if (paidMemorials.some(m => m.mode === 'concierge')) {
+            currentPlan = 'concierge';
+        } else if (paidMemorials.some(m => m.mode === 'family')) {
+            currentPlan = 'family';
+        } else if (paidMemorials.some(m => m.mode === 'personal')) {
+            currentPlan = 'personal';
+        } else if (activeMemorials.length > 0) {
+            currentPlan = 'draft';
+        }
+
+        return NextResponse.json({
+            authenticated: true,
+            user: {
+                id: user.id,
+                email: user.email,
+            },
+            plan: currentPlan,
+            hasPaid: paidMemorials.length > 0,
+            archives: activeMemorials.map(m => ({
+                id: m.id,
+                mode: m.mode,
+                paid: m.paid,
+                status: m.status,
+                fullName: m.full_name,
+                profilePhotoUrl: m.profile_photo_url,
+                updatedAt: m.updated_at,
+                paymentConfirmedAt: m.payment_confirmed_at,
+            })),
+            deletedArchives: allMemorials.filter(m => m.deleted).map(m => ({
+                id: m.id,
+                fullName: m.full_name,
+                deletedAt: m.deleted_at,
+            })),
+        }, {
+            headers: {
+                // Prevent caching of user state
+                'Cache-Control': 'no-store, no-cache, must-revalidate',
+                'Pragma': 'no-cache',
+            },
+        });
+    } catch (err: any) {
+        console.error('[UserState] Error:', err);
+        return NextResponse.json({
+            authenticated: false,
+            user: null,
+            plan: null,
+            archives: [],
+            error: 'Internal error',
+        }, { status: 500 });
+    }
+}

@@ -4,25 +4,16 @@ import { useEffect, useState } from 'react';
 import { FileEdit, User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function ChoicePricingPage() {
     const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [ready, setReady] = useState(false);
+    const auth = useAuth();
+    const userId = auth.user?.id || null;
+    const ready = !auth.loading;
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            setUserId(user.id);
-        }
-        setReady(true);
-    };
+    // If user already has a paid plan, show a banner and redirect options
+    const hasPaidPlan = auth.hasPaid;
 
     // Redirect to signup/login if not authenticated, with ?next to come back
     const requireAuth = (nextPath: string): boolean => {
@@ -39,6 +30,11 @@ export default function ChoicePricingPage() {
 
     // Personal or Family: paid → confirmation page
     const handleModeSelection = (mode: 'personal' | 'family') => {
+        // If user already has a paid plan at or above this level, redirect to dashboard
+        if (hasPaidPlan && auth.plan === mode) {
+            router.push(`/dashboard/${mode}/${userId}`);
+            return;
+        }
         const confirmPath = mode === 'personal' ? '/personal-confirmation' : '/family-confirmation';
         if (!requireAuth(confirmPath)) return;
         router.push(confirmPath);
@@ -61,6 +57,30 @@ export default function ChoicePricingPage() {
                         <span>Back</span>
                     </Link>
                 </div>
+
+                {/* Active plan banner — reminds user of their current state */}
+                {hasPaidPlan && auth.plan !== 'none' && (
+                    <div className="mb-8 bg-white border border-sage/30 rounded-xl p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-charcoal">
+                                You have an active <strong className="capitalize">{auth.plan}</strong> plan
+                            </p>
+                            <p className="text-xs text-charcoal/50 mt-0.5">
+                                {auth.plan === 'personal'
+                                    ? 'You can upgrade to Family to create additional archives.'
+                                    : auth.plan === 'family'
+                                        ? 'You can upgrade to Concierge for a fully managed experience.'
+                                        : 'You are on the highest plan.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push(`/dashboard/${auth.plan}/${userId}`)}
+                            className="px-4 py-2 bg-charcoal text-ivory text-sm rounded-lg font-medium hover:bg-charcoal/90 transition-colors"
+                        >
+                            Go to Dashboard
+                        </button>
+                    </div>
+                )}
 
                 <div className="text-center mb-12">
                     <h1 className="font-serif text-5xl text-charcoal mb-4">

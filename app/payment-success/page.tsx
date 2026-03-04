@@ -1,11 +1,13 @@
 // app/payment-success/page.tsx
 // Phase 1: The Post-Payment Ritual — Threshold Page + Three Doors
+// ARCHITECTURAL: Revalidates auth state after payment, prevents back-button issues
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, BookOpen, Circle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 // ─── Memorial data we need for the Threshold Page ────────────────────────────
 interface ThresholdMemorial {
@@ -35,8 +37,11 @@ function formatDate(dateStr: string | null): string | null {
 function PaymentSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { revalidate } = useAuth();
     const memorialId = searchParams.get('id');
     const planParam = searchParams.get('plan') || 'personal';
+    const isUpgrade = searchParams.get('upgrade') === 'true';
+    const hasFinalized = useRef(false);
 
     // Phases: finalizing → threshold → doors → redirecting
     const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting'>('finalizing');
@@ -45,6 +50,13 @@ function PaymentSuccessContent() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Prevent double-finalization (e.g., from StrictMode or re-renders)
+        if (hasFinalized.current) return;
+        hasFinalized.current = true;
+
+        // Replace current history entry so the back button goes to dashboard, not back here
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
         const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
@@ -52,16 +64,30 @@ function PaymentSuccessContent() {
             }
 
             try {
-                // 1. Finalize payment in the backend
-                const response = await fetch('/api/finalize-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId }),
-                });
-                const result = await response.json();
-                if (result.error) throw new Error(result.error);
+                if (isUpgrade) {
+                    // UPGRADE FLOW: Use finalize-upgrade to preserve data
+                    const response = await fetch('/api/finalize-upgrade', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ memorialId, targetPlan: planParam }),
+                    });
+                    const result = await response.json();
+                    if (result.error) throw new Error(result.error);
+                } else {
+                    // NEW PAYMENT FLOW: Standard finalization
+                    const response = await fetch('/api/finalize-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ memorialId }),
+                    });
+                    const result = await response.json();
+                    if (result.error) throw new Error(result.error);
+                }
 
-                // 2. Fetch memorial data for the Threshold Page
+                // Revalidate auth state so the entire app reflects the new payment status
+                await revalidate();
+
+                // Fetch memorial data for the Threshold Page
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
@@ -73,10 +99,10 @@ function PaymentSuccessContent() {
                     setMemorial(data as ThresholdMemorial);
                 }
 
-                // 3. Transition to the Threshold Page
+                // Transition to the Threshold Page
                 setPhase('threshold');
 
-                // 4. After 9 seconds, reveal the button (1s fade-in handled by CSS)
+                // After 9 seconds, reveal the button (1s fade-in handled by CSS)
                 setTimeout(() => {
                     setButtonVisible(true);
                 }, 9000);
@@ -107,6 +133,7 @@ function PaymentSuccessContent() {
     const mode = planParam === 'family' ? 'family' : 'personal';
 
     // ── Door action handler ───────────────────────────────────────────────────
+    // Uses router.replace to prevent the back button from returning to payment-success
     const handleDoor = async (door: 'photograph' | 'story' | 'silence') => {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -119,12 +146,12 @@ function PaymentSuccessContent() {
                 const dashPath = userId
                     ? `/dashboard/${mode}/${userId}?welcome=true`
                     : `/dashboard/${mode}`;
-                router.push(dashPath);
+                router.replace(dashPath);
             } else if (door === 'photograph') {
-                router.push(`/create?id=${memorialId}&mode=${mode}&step=8`);
+                router.replace(`/create?id=${memorialId}&mode=${mode}&step=8`);
             } else {
                 // story
-                router.push(`/create?id=${memorialId}&mode=${mode}&step=6`);
+                router.replace(`/create?id=${memorialId}&mode=${mode}&step=6`);
             }
         }, 600);
     };

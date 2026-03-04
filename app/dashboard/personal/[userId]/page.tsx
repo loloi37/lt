@@ -7,8 +7,9 @@ import {
     ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter,
     Archive, Download, Users
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -45,6 +46,8 @@ async function apiSoftDelete(id: string, action: 'delete' | 'restore') {
 export default function PersonalDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
+    const auth = useAuth();
+    const router = useRouter();
 
     const [paidArchive, setPaidArchive] = useState<Memorial | null>(null);
     const [draftArchives, setDraftArchives] = useState<Memorial[]>([]);
@@ -56,6 +59,25 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [searchDrafts, setSearchDrafts] = useState('');
     const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
     const searchParams = useSearchParams();
+
+    // Auth guard: verify the URL userId matches the authenticated user
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        // If the URL userId doesn't match the authenticated user, redirect to their own dashboard
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/personal/${auth.user.id}`);
+            return;
+        }
+        // If user's actual plan is family (upgraded), redirect to family dashboard
+        if (auth.plan === 'family' && auth.user) {
+            router.replace(`/dashboard/family/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router]);
 
     useEffect(() => {
         fetch('/api/user/heartbeat', {

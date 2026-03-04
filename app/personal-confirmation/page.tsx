@@ -1,6 +1,5 @@
 // app/personal-confirmation/page.tsx
-// Legacy page — redirects to the new seal-confirmation flow
-// Kept for backward compatibility with existing links
+// Seal confirmation page — handles authorization + payment flow
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
@@ -8,6 +7,7 @@ import { ArrowLeft, Check, ExternalLink, ArrowUpCircle, Loader2 } from 'lucide-r
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function PersonalConfirmationContent() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -19,9 +19,24 @@ function PersonalConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const auth = useAuth();
 
     const upgradeMemorialId = searchParams.get('memorialId');
     const isDraftUpgrade = !!upgradeMemorialId;
+
+    // Auth guard: if user already has a personal paid plan, redirect to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/personal-confirmation');
+            return;
+        }
+        // If user already has a paid personal or higher plan (not draft upgrade), redirect
+        if (!isDraftUpgrade && auth.hasPaid && (auth.plan === 'personal' || auth.plan === 'family' || auth.plan === 'concierge')) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user!.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.hasPaid, auth.plan, auth.user, isDraftUpgrade, router]);
 
     // Get authenticated user
     useEffect(() => {

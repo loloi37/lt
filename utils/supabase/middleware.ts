@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes: if the user is not logged in, redirect to login
-  const protectedPaths = ['/dashboard', '/create', '/payment'];
+  const protectedPaths = ['/dashboard', '/create', '/payment', '/personal-confirmation', '/family-confirmation'];
   const isProtectedRoute = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -59,6 +59,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
+  }
+
+  // Prevent browser caching of state-critical pages
+  // This forces the browser to always fetch fresh content after state changes
+  const noCachePaths = ['/dashboard', '/payment-success', '/choice-pricing', '/personal-confirmation', '/family-confirmation'];
+  const shouldNoCache = noCachePaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  if (shouldNoCache) {
+    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    supabaseResponse.headers.set('Pragma', 'no-cache');
+    supabaseResponse.headers.set('Expires', '0');
   }
 
   return supabaseResponse;

@@ -5,6 +5,7 @@ import { ArrowLeft, Check, ExternalLink, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function FamilyConfirmationPage() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -15,6 +16,20 @@ export default function FamilyConfirmationPage() {
     const [authUserId, setAuthUserId] = useState<string | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const router = useRouter();
+    const auth = useAuth();
+
+    // Auth guard: if user already has a family or higher plan, redirect to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/family-confirmation');
+            return;
+        }
+        if (auth.hasPaid && (auth.plan === 'family' || auth.plan === 'concierge')) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user!.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.hasPaid, auth.plan, auth.user, router]);
 
     // Get authenticated user
     useEffect(() => {

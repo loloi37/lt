@@ -7,11 +7,14 @@ import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, 
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
+    const auth = useAuth();
+    const router = useRouter();
     const [memorials, setMemorials] = useState<Memorial[]>([]);
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]); // NEW: Deleted state
     const [loading, setLoading] = useState(true);
@@ -22,6 +25,19 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
 
     const searchParams = useSearchParams();
+
+    // Auth guard: verify the URL userId matches the authenticated user
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/family/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, userId, router]);
 
     useEffect(() => {
         loadMemorials();

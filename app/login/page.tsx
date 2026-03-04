@@ -38,7 +38,8 @@ function LoginForm() {
       return;
     }
 
-    router.push(next);
+    // Use replace to prevent back-button going to login after successful auth
+    router.replace(next);
     router.refresh();
   };
 

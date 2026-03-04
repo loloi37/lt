@@ -1,42 +1,37 @@
 'use client';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function DashboardRedirectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState(false);
+  const auth = useAuth();
 
   useEffect(() => {
-    redirectToDashboard();
-  }, []);
+    // Wait for auth to finish loading
+    if (auth.loading) return;
 
-  const redirectToDashboard = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push('/login?next=/dashboard');
+    if (!auth.authenticated) {
+      router.replace('/login?next=/dashboard');
       return;
     }
 
     const checkin = searchParams.get('checkin');
 
-    // Determine the mode from the user's most recent memorial
-    const { data: memorial } = await supabase
-      .from('memorials')
-      .select('mode')
-      .eq('user_id', user.id)
-      .eq('deleted', false)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Use server-validated state to determine the correct dashboard
+    // This is the single source of truth — no stale browser cache
+    const paidArchive = auth.archives.find(a => a.paid);
+    let mode = 'personal';
+    if (paidArchive) {
+      mode = paidArchive.mode;
+    } else if (auth.archives.length > 0) {
+      mode = auth.archives[0].mode || 'draft';
+    }
 
-    const mode = memorial?.mode || 'personal';
-    const url = `/dashboard/${mode}/${user.id}${checkin ? '?checkin=true' : ''}`;
-    router.push(url);
-  };
+    const url = `/dashboard/${mode}/${auth.user!.id}${checkin ? '?checkin=true' : ''}`;
+    router.replace(url);
+  }, [auth.loading, auth.authenticated, auth.archives, auth.user, searchParams, router]);
 
   return (
     <div className="min-h-screen bg-ivory flex items-center justify-center">
