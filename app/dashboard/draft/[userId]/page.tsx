@@ -6,14 +6,34 @@ import { Plus, Eye, Edit, Trash2, FileEdit, Loader2, ArrowLeft, RefreshCcw, Aler
 import { useRouter } from 'next/navigation';
 import { Memorial } from '@/lib/supabase';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function DraftDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
     const router = useRouter();
+    const auth = useAuth();
     const [memorials, setMemorials] = useState<Memorial[]>([]);
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Auth guard: verify user identity and redirect if they have a paid plan
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/draft/${auth.user.id}`);
+            return;
+        }
+        // If user has upgraded to a paid plan, redirect to the correct dashboard
+        if (auth.hasPaid && auth.user) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.hasPaid, auth.plan, userId, router]);
 
     useEffect(() => {
         loadMemorials();

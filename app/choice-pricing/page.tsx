@@ -23,21 +23,22 @@ export default function ChoicePricingPage() {
     };
 
     // Draft: free start → dashboard/draft
+    // replace: this is a state transition, back-button should not return here
     const handleDraftStart = () => {
         if (!requireAuth('/choice-pricing')) return;
-        router.push(`/dashboard/draft/${userId}`);
+        router.replace(`/dashboard/draft/${userId}`);
     };
 
     // Personal or Family: paid → confirmation page
+    // replace: prevents back-button from returning to pricing after choosing a plan
     const handleModeSelection = (mode: 'personal' | 'family') => {
-        // If user already has a paid plan at or above this level, redirect to dashboard
         if (hasPaidPlan && auth.plan === mode) {
-            router.push(`/dashboard/${mode}/${userId}`);
+            router.replace(`/dashboard/${mode}/${userId}`);
             return;
         }
         const confirmPath = mode === 'personal' ? '/personal-confirmation' : '/family-confirmation';
         if (!requireAuth(confirmPath)) return;
-        router.push(confirmPath);
+        router.replace(confirmPath);
     };
 
     const handleConciergeSelection = () => {
@@ -74,7 +75,7 @@ export default function ChoicePricingPage() {
                             </p>
                         </div>
                         <button
-                            onClick={() => router.push(`/dashboard/${auth.plan}/${userId}`)}
+                            onClick={() => router.replace(`/dashboard/${auth.plan}/${userId}`)}
                             className="px-4 py-2 bg-charcoal text-ivory text-sm rounded-lg font-medium hover:bg-charcoal/90 transition-colors"
                         >
                             Go to Dashboard

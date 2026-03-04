@@ -287,7 +287,7 @@ function CreateMemorialPageContent() {
     }
 
     setShowPauseModal(false);
-    router.push('/dashboard');
+    router.replace('/dashboard');
   };
 
   // Mobile Detection State
@@ -343,7 +343,7 @@ function CreateMemorialPageContent() {
             // Neither owner nor witness? They shouldn't be here.
             // You could also check for 'co_guardian' here later
             alert("You do not have permission to view this archive.");
-            router.push('/dashboard');
+            router.replace('/dashboard');
             return;
           }
         }

@@ -60,10 +60,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isFetchingRef = useRef(false);
 
     const fetchState = useCallback(async (force = false) => {
-        // Debounce: don't re-fetch within 2 seconds unless forced
+        // Debounce non-forced calls to avoid spam
         const now = Date.now();
         if (!force && now - lastFetchRef.current < 2000) return;
-        if (isFetchingRef.current) return;
+        // Never block forced calls (back-button, payment completion, etc.)
+        // Only skip if a non-forced call and already fetching
+        if (!force && isFetchingRef.current) return;
 
         isFetchingRef.current = true;
         try {
@@ -105,6 +107,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [pathname, fetchState]);
 
+    // Listen for browser back/forward button (popstate event)
+    // This is the KEY fix: when the user hits back, the browser fires popstate
+    // BEFORE React re-renders, so we force a revalidation immediately
+    useEffect(() => {
+        const handlePopState = () => {
+            fetchState(true);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [fetchState]);
+
     // Listen for Supabase auth state changes (login/logout)
     useEffect(() => {
         const supabase = createClient();
@@ -116,11 +129,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => subscription.unsubscribe();
     }, [fetchState]);
 
-    // Listen for visibility change — revalidate when tab becomes visible
+    // Listen for visibility change — force revalidate when tab becomes visible
     useEffect(() => {
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
-                fetchState(false);
+                fetchState(true);
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);

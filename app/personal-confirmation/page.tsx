@@ -124,8 +124,8 @@ function PersonalConfirmationContent() {
                 setCurrentMemorialId(memorialId);
             }
 
-            // Redirect to the new Stripe Elements payment page
-            router.push(`/payment?memorialId=${memorialId}`);
+            // replace: prevent back-button from returning to confirmation after going to payment
+            router.replace(`/payment?memorialId=${memorialId}`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');

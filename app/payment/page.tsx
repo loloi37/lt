@@ -1,14 +1,14 @@
 // app/payment/page.tsx
-// Step 2.2.1: Stripe Elements payment page (on-site, no redirect)
-// Step 2.2.2: Trust elements
-// Step 2.2.3: Graceful error handling
+// Stripe Elements payment page (on-site, no redirect)
+// ARCHITECTURAL: Auth-guarded, prevents re-submission on back-button
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { ArrowLeft, Shield, Lock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, RefreshCw, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 // Load Stripe outside of component to avoid re-creating on every render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -74,7 +74,8 @@ function PaymentForm({ memorialId, amount, fullName, plan }: {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memorialId }),
                 });
-                router.push(`/payment-success?id=${memorialId}&plan=${plan}`);
+                // replace: prevent back-button from returning to payment form
+                router.replace(`/payment-success?id=${memorialId}&plan=${plan}`);
             }
         } catch (err: any) {
             setPaymentError('An unexpected error occurred. Your draft is saved, and you can return at any time.');
@@ -177,22 +178,47 @@ function PaymentForm({ memorialId, amount, fullName, plan }: {
 function PaymentPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const auth = useAuth();
     const memorialId = searchParams.get('memorialId');
     const planParam = searchParams.get('plan') || 'personal';
     const amountParam = parseInt(searchParams.get('amount') || '1470', 10);
+    const hasInitialized = useRef(false);
 
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [amount, setAmount] = useState(amountParam);
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [alreadyPaid, setAlreadyPaid] = useState(false);
 
+    // Auth guard
     useEffect(() => {
-        if (!memorialId) {
-            setError('No memorial specified.');
-            setLoading(false);
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/choice-pricing');
             return;
         }
+    }, [auth.loading, auth.authenticated, router]);
+
+    // Check if this memorial is already paid (back-button scenario)
+    useEffect(() => {
+        if (auth.loading || !memorialId) return;
+        const archive = auth.archives.find(a => a.id === memorialId);
+        if (archive?.paid) {
+            setAlreadyPaid(true);
+            setLoading(false);
+        }
+    }, [auth.loading, auth.archives, memorialId]);
+
+    useEffect(() => {
+        if (!memorialId || alreadyPaid || hasInitialized.current) {
+            if (!memorialId) {
+                setError('No memorial specified.');
+                setLoading(false);
+            }
+            return;
+        }
+        hasInitialized.current = true;
 
         const createIntent = async () => {
             try {
@@ -206,7 +232,13 @@ function PaymentPageContent() {
 
                 if (!res.ok) {
                     if (data.code === 'LEGAL_AUTH_REQUIRED') {
-                        router.push(`/authorization/${memorialId}?type=individual&redirect=payment`);
+                        router.replace(`/authorization/${memorialId}?type=individual&redirect=payment`);
+                        return;
+                    }
+                    // If the API says it's already paid, show the already-paid screen
+                    if (data.code === 'ALREADY_PAID') {
+                        setAlreadyPaid(true);
+                        setLoading(false);
                         return;
                     }
                     throw new Error(data.error || 'Failed to initialize payment');
@@ -223,7 +255,31 @@ function PaymentPageContent() {
         };
 
         createIntent();
-    }, [memorialId, router, amountParam, planParam]);
+    }, [memorialId, router, amountParam, planParam, alreadyPaid]);
+
+    // If user navigated back to this page but the memorial is already paid,
+    // show a confirmation screen instead of the payment form
+    if (alreadyPaid) {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+                <div className="max-w-md text-center">
+                    <div className="w-16 h-16 bg-charcoal/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle size={32} className="text-charcoal/60" />
+                    </div>
+                    <h2 className="font-serif text-2xl text-charcoal mb-3">Payment already completed</h2>
+                    <p className="text-sm text-charcoal/50 mb-8">
+                        This archive has already been sealed. You can access it from your dashboard.
+                    </p>
+                    <button
+                        onClick={() => router.replace('/dashboard')}
+                        className="px-6 py-3 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-colors"
+                    >
+                        Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (

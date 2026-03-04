@@ -113,8 +113,8 @@ export default function FamilyConfirmationPage() {
                 setCurrentMemorialId(memorialId);
             }
 
-            // Use the same embedded Stripe Elements page as Personal
-            router.push(`/payment?memorialId=${memorialId}&plan=family&amount=2940`);
+            // replace: prevent back-button from returning to confirmation after going to payment
+            router.replace(`/payment?memorialId=${memorialId}&plan=family&amount=2940`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');
