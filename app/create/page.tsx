@@ -247,6 +247,12 @@ function CreateMemorialPageContent() {
   const isPaidMode = mode === 'personal' || mode === 'family';
   const hasFullAccess = isPaidMode || memorialData.paid;
 
+  // Determine the correct dashboard path based on the memorial's actual mode
+  const effectiveMode = dbMode || mode;
+  const dashboardPath = authUserId
+    ? `/dashboard/${effectiveMode === 'family' ? 'family' : effectiveMode === 'draft' ? 'draft' : 'personal'}/${authUserId}`
+    : '/dashboard';
+
   // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
@@ -308,8 +314,18 @@ function CreateMemorialPageContent() {
     }
 
     setShowPauseModal(false);
-    router.replace('/dashboard');
+    router.replace(dashboardPath);
   };
+
+  // Browser back button: redirect to correct dashboard based on mode
+  useEffect(() => {
+    const handlePopState = () => {
+      // Replace current history entry with correct dashboard so user lands in the right place
+      window.location.replace(dashboardPath);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [dashboardPath]);
 
   // Mobile Detection State
   const [isMobile, setIsMobile] = useState(true); // Default to true (mobile-first) prevents flicker
@@ -844,11 +860,6 @@ function CreateMemorialPageContent() {
   const somePathsTraveled = (['facts', 'body', 'soul'] as PathId[]).some(
     id => getPathStatus(memorialData, id) !== 'empty'
   );
-
-  // Determine the correct dashboard path based on the memorial's actual mode
-  const dashboardPath = authUserId
-    ? `/dashboard/${dbMode === 'family' ? 'family' : dbMode === 'draft' ? 'draft' : 'personal'}/${authUserId}`
-    : '/dashboard';
 
   return (
     <div className="min-h-screen bg-ivory relative">
