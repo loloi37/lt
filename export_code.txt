@@ -759,21 +759,24 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1470 } = await request.json();
+        const { memorialId, amount = 1470, plan = 'personal' } = await request.json();
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
         }
 
+        // Determine expected authorization type based on plan
+        const expectedAuthType = plan === 'family' ? 'account' : 'individual';
+
         // Verify authorization exists
         const { data: auth } = await supabaseAdmin
             .from('memorial_authorizations')
-            .select('id')
+            .select('id, authorization_type')
             .eq('memorial_id', memorialId)
             .in('status', ['pending', 'approved'])
             .maybeSingle();
 
-        if (!auth) {
+        if (!auth || auth.authorization_type !== expectedAuthType) {
             return NextResponse.json({
                 error: 'Authorization required before payment',
                 code: 'LEGAL_AUTH_REQUIRED',
@@ -790,19 +793,22 @@ export async function POST(request: NextRequest) {
         const fullName = memorial?.full_name || 'Memorial Archive';
         const isDraft = memorial?.mode === 'draft';
 
+        const planLabel = plan === 'family' ? 'Family' : (isDraft ? 'Personal (Draft Upgrade)' : 'Personal');
+
         // Create PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount * 100, // Stripe expects cents
             currency: 'usd',
-            description: isDraft
-                ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
-                : `Legacy Vault — Permanent Archive for ${fullName}`,
+            description: plan === 'family'
+                ? `Legacy Vault — Family Plan for ${fullName}`
+                : isDraft
+                    ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
+                    : `Legacy Vault — Permanent Archive for ${fullName}`,
             metadata: {
                 memorialId,
-                plan: 'Personal',
+                plan: planLabel,
                 isDraftUpgrade: isDraft ? 'true' : 'false',
             },
-            // Automatic payment methods for 3DS support
             automatic_payment_methods: {
                 enabled: true,
             },
@@ -1117,6 +1123,117 @@ export async function POST(request: NextRequest) {
     }
 }
 
+===== FICHIER: ./app/api/finalize-upgrade/route.ts =====
+
+// app/api/finalize-upgrade/route.ts
+// Handles plan upgrade finalization: updates mode on EXISTING memorial
+// CRITICAL: This must NEVER create a new memorial entity.
+// It only changes the mode field to preserve all existing data.
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    }
+);
+
+const PLAN_PRICES: Record<string, number> = {
+    personal: 1470,
+    family: 2940,
+    concierge: 6300,
+};
+
+export async function POST(request: NextRequest) {
+    try {
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { memorialId, targetPlan } = await request.json();
+
+        if (!memorialId || !targetPlan) {
+            return NextResponse.json({ error: 'Missing memorialId or targetPlan' }, { status: 400 });
+        }
+
+        // Verify the memorial belongs to this user
+        const { data: memorial, error: fetchError } = await supabaseAdmin
+            .from('memorials')
+            .select('id, mode, user_id, paid, step1, step2, step3, step4, step5, step6, step7, step8, step9')
+            .eq('id', memorialId)
+            .single();
+
+        if (fetchError || !memorial) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (memorial.user_id !== user.id) {
+            return NextResponse.json({ error: 'Not authorized to upgrade this memorial' }, { status: 403 });
+        }
+
+        // Only update the mode and payment fields — PRESERVE ALL DATA
+        const updatePayload: Record<string, any> = {
+            mode: targetPlan,
+            plan_type: targetPlan,
+            amount_paid: PLAN_PRICES[targetPlan] || 0,
+            // Keep paid=true, keep payment_confirmed_at
+            // DO NOT touch step1-step9, full_name, profile_photo_url, etc.
+        };
+
+        const { error: updateError } = await supabaseAdmin
+            .from('memorials')
+            .update(updatePayload)
+            .eq('id', memorialId);
+
+        if (updateError) {
+            console.error('[FinalizeUpgrade] Update error:', updateError);
+            return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+
+        // Create a version snapshot recording the upgrade
+        const { error: snapshotError } = await supabaseAdmin
+            .from('memorial_versions')
+            .insert({
+                memorial_id: memorialId,
+                version_number: 0, // will be auto-incremented if the table supports it
+                snapshot_data: { ...memorial, mode: targetPlan },
+                is_full_snapshot: true,
+                steps_modified: [],
+                change_type: 'manual',
+                change_summary: `Plan upgraded from ${memorial.mode} to ${targetPlan} — all existing data preserved`,
+                change_reason: 'plan_upgrade',
+                created_by: user.id,
+                created_by_name: 'Owner',
+                created_at: new Date().toISOString(),
+            });
+
+        if (snapshotError) {
+            console.error('[FinalizeUpgrade] Snapshot error:', snapshotError);
+            // Non-blocking — don't fail the upgrade for a snapshot issue
+        }
+
+        console.log(`[FinalizeUpgrade] Memorial ${memorialId} upgraded: ${memorial.mode} → ${targetPlan}. All data preserved.`);
+
+        return NextResponse.json({
+            success: true,
+            message: `Upgrade complete: ${memorial.mode} → ${targetPlan}`,
+            previousMode: memorial.mode,
+            newMode: targetPlan,
+            dataPreserved: true,
+        });
+    } catch (error: any) {
+        console.error('[FinalizeUpgrade] Error:', error);
+        return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 });
+    }
+}
+
 ===== FICHIER: ./app/api/media/upload/route.ts =====
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -1155,7 +1272,7 @@ export async function POST(request: NextRequest) {
         // 3. Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
             .from(bucket)
-            .upload(path, file, {
+            .upload(path, buffer, { // ✅ FIX: Use the buffer you already created above!
                 contentType: file.type,
                 upsert: false,
             });
@@ -1775,6 +1892,103 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+===== FICHIER: ./app/api/user/state/route.ts =====
+
+// app/api/user/state/route.ts
+// Single source of truth: returns the authenticated user's full state
+// This endpoint is the authoritative server-side state that the UI must reflect.
+import { NextResponse } from 'next/server';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function GET() {
+    try {
+        const { user, error } = await createAuthenticatedClient();
+
+        if (error || !user) {
+            return NextResponse.json({
+                authenticated: false,
+                user: null,
+                plan: null,
+                archives: [],
+            });
+        }
+
+        // Fetch ALL user's memorials in one query
+        const { data: memorials, error: memError } = await supabaseAdmin
+            .from('memorials')
+            .select('id, mode, paid, payment_confirmed_at, status, full_name, profile_photo_url, deleted, deleted_at, updated_at, created_at')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+
+        if (memError) {
+            console.error('[UserState] Memorial fetch error:', memError);
+        }
+
+        const allMemorials = memorials || [];
+        const activeMemorials = allMemorials.filter(m => !m.deleted);
+        const paidMemorials = activeMemorials.filter(m => m.paid);
+
+        // Determine the user's current plan from their paid memorials
+        // Priority: concierge > family > personal > draft (free)
+        let currentPlan: 'none' | 'draft' | 'personal' | 'family' | 'concierge' = 'none';
+        if (paidMemorials.some(m => m.mode === 'concierge')) {
+            currentPlan = 'concierge';
+        } else if (paidMemorials.some(m => m.mode === 'family')) {
+            currentPlan = 'family';
+        } else if (paidMemorials.some(m => m.mode === 'personal')) {
+            currentPlan = 'personal';
+        } else if (activeMemorials.length > 0) {
+            currentPlan = 'draft';
+        }
+
+        return NextResponse.json({
+            authenticated: true,
+            user: {
+                id: user.id,
+                email: user.email,
+            },
+            plan: currentPlan,
+            hasPaid: paidMemorials.length > 0,
+            archives: activeMemorials.map(m => ({
+                id: m.id,
+                mode: m.mode,
+                paid: m.paid,
+                status: m.status,
+                fullName: m.full_name,
+                profilePhotoUrl: m.profile_photo_url,
+                updatedAt: m.updated_at,
+                paymentConfirmedAt: m.payment_confirmed_at,
+            })),
+            deletedArchives: allMemorials.filter(m => m.deleted).map(m => ({
+                id: m.id,
+                fullName: m.full_name,
+                deletedAt: m.deleted_at,
+            })),
+        }, {
+            headers: {
+                // Prevent caching of user state
+                'Cache-Control': 'no-store, no-cache, must-revalidate',
+                'Pragma': 'no-cache',
+            },
+        });
+    } catch (err: any) {
+        console.error('[UserState] Error:', err);
+        return NextResponse.json({
+            authenticated: false,
+            user: null,
+            plan: null,
+            archives: [],
+            error: 'Internal error',
+        }, { status: 500 });
+    }
+}
+
 ===== FICHIER: ./app/auth/callback/route.ts =====
 
 import { NextResponse } from 'next/server';
@@ -3557,48 +3771,56 @@ export interface MemorialAuthorization {
 ===== FICHIER: ./lib/uploadService.ts =====
 
 // lib/uploadService.ts
+import { createClient } from '@/utils/supabase/client';
 
 export interface UploadResult {
     success: boolean;
     url?: string;
-    hash?: string; // The SHA-256 hash returned by the server
+    hash?: string;
     path?: string;
     error?: string;
 }
 
 /**
- * Uploads a file securely via the server-side API.
- * The server calculates the SHA-256 hash for integrity verification.
+ * Uploads a file securely DIRECTLY to Supabase from the browser.
+ * Bypasses Next.js API size limits.
  */
 export async function secureUpload(
     file: File,
     bucket: string,
     path: string
 ): Promise<UploadResult> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('bucket', bucket);
-    formData.append('path', path);
-
     try {
-        const response = await fetch('/api/media/upload', {
-            method: 'POST',
-            body: formData,
-        });
+        // 1. Calculate SHA-256 hash directly in the browser
+        const arrayBuffer = await file.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Upload failed');
+        // 2. Upload directly to Supabase Storage
+        const supabase = createClient();
+        const { data, error } = await supabase.storage
+            .from(bucket)
+            .upload(path, file, {
+                contentType: file.type,
+                upsert: false,
+            });
+
+        if (error) {
+            throw new Error(error.message);
         }
 
-        const data = await response.json();
+        // 3. Get Public URL
+        const { data: publicUrlData } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(path);
+
         return {
             success: true,
-            url: data.url,
-            hash: data.hash, // Capture the hash
-            path: data.path
+            url: publicUrlData.publicUrl,
+            hash: hashHex,
+            path: path
         };
-
     } catch (error: any) {
         console.error('Secure Upload Utility Error:', error);
         return { success: false, error: error.message };
@@ -4699,7 +4921,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes: if the user is not logged in, redirect to login
-  const protectedPaths = ['/dashboard', '/create', '/payment'];
+  const protectedPaths = ['/dashboard', '/create', '/payment', '/personal-confirmation', '/family-confirmation'];
   const isProtectedRoute = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );
@@ -4721,6 +4943,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
+  }
+
+  // Prevent browser caching of state-critical pages
+  // This forces the browser to always fetch fresh content after state changes
+  const noCachePaths = ['/dashboard', '/payment-success', '/choice-pricing', '/personal-confirmation', '/family-confirmation'];
+  const shouldNoCache = noCachePaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  if (shouldNoCache) {
+    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    supabaseResponse.headers.set('Pragma', 'no-cache');
+    supabaseResponse.headers.set('Expires', '0');
   }
 
   return supabaseResponse;
@@ -6208,136 +6443,6 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
         </div>
     );
 }
-===== FICHIER: ./app/choice/page.tsx =====
-
-'use client';
-import { useState, useEffect } from 'react';
-import { User, Users, Sparkles, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
-
-export default function ChoicePage() {
-    const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [ready, setReady] = useState(false);
-
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            setUserId(user.id);
-        }
-        setReady(true);
-    };
-
-    const requireAuth = (nextPath: string): boolean => {
-        if (userId) return true;
-        router.push(`/signup?next=${encodeURIComponent(nextPath)}`);
-        return false;
-    };
-
-    const handleModeSelection = (mode: 'personal' | 'family') => {
-        if (!requireAuth(`/dashboard/${mode}/${userId}`)) return;
-        router.push(`/dashboard/${mode}/${userId}`);
-    };
-
-    const handleConciergeSelection = () => {
-        router.push('/concierge/request');
-    };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-stone/10 flex items-center justify-center p-6">
-            <div className="max-w-6xl w-full">
-                <div className="text-center mb-12">
-                    <h1 className="font-serif text-5xl text-charcoal mb-4">Choose Your Experience</h1>
-                    <p className="text-lg text-charcoal/70">Each path offers a different way to preserve your legacy</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Personal Mode */}
-                    <button
-                        onClick={() => handleModeSelection('personal')}
-                        disabled={!ready}
-                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
-                    >
-                        <div className="w-16 h-16 bg-gradient-to-br from-sage to-sage/80 rounded-2xl flex items-center justify-center mb-6">
-                            <User size={32} className="text-ivory" />
-                        </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Personal</h2>
-                        <p className="text-charcoal/70 mb-6">Create one memorial yourself</p>
-                        <div className="inline-flex items-center gap-2 text-sage font-medium">
-                            Choose Personal <ArrowRight size={18} />
-                        </div>
-                    </button>
-
-                    {/* Family Mode */}
-                    <button
-                        onClick={() => handleModeSelection('family')}
-                        disabled={!ready}
-                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50"
-                    >
-                        <div className="w-16 h-16 bg-gradient-to-br from-terracotta to-terracotta/80 rounded-2xl flex items-center justify-center mb-6">
-                            <Users size={32} className="text-ivory" />
-                        </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Family</h2>
-                        <p className="text-charcoal/70 mb-6">Create unlimited memorials</p>
-                        <div className="inline-flex items-center gap-2 text-terracotta font-medium">
-                            Choose Family <ArrowRight size={18} />
-                        </div>
-                    </button>
-
-                    {/* NEW: Concierge Mode */}
-                    <button
-                        onClick={handleConciergeSelection}
-                        className="btn-paper p-8 rounded-xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
-                    >
-                        {/* Premium badge */}
-                        <div className="absolute top-4 right-4 px-3 py-1 bg-sage/20 text-mist text-xs font-semibold rounded-full border border-sage/30">
-                            Premium
-                        </div>
-
-                        <div className="w-16 h-16 bg-gradient-to-br from-sage via-terracotta to-sage/80 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <Sparkles size={32} className="text-ivory" />
-                        </div>
-
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Conciergerie</h2>
-                        <p className="text-charcoal/70 mb-6">We create everything for you</p>
-
-                        <div className="space-y-2 mb-6 text-sm text-charcoal/60">
-                            <p className="flex items-start gap-2">
-                                <span className="text-mist mt-0.5">✓</span>
-                                <span>Personal dedicated service</span>
-                            </p>
-                            <p className="flex items-start gap-2">
-                                <span className="text-mist mt-0.5">✓</span>
-                                <span>We handle everything</span>
-                            </p>
-                            <p className="flex items-start gap-2">
-                                <span className="text-mist mt-0.5">✓</span>
-                                <span>You just share materials</span>
-                            </p>
-                        </div>
-
-                        <div className="inline-flex items-center gap-2 text-mist font-medium group-hover:gap-3 transition-all">
-                            Request First Call <ArrowRight size={18} />
-                        </div>
-                    </button>
-                </div>
-
-                {/* Comparison note */}
-                <div className="mt-12 text-center">
-                    <p className="text-sm text-charcoal/50">
-                        Not sure which to choose? Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
-}
 ===== FICHIER: ./app/choice-pricing/page.tsx =====
 
 'use client';
@@ -6346,25 +6451,16 @@ import { useEffect, useState } from 'react';
 import { FileEdit, User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function ChoicePricingPage() {
     const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
-    const [ready, setReady] = useState(false);
+    const auth = useAuth();
+    const userId = auth.user?.id || null;
+    const ready = !auth.loading;
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            setUserId(user.id);
-        }
-        setReady(true);
-    };
+    // If user already has a paid plan, show a banner and redirect options
+    const hasPaidPlan = auth.hasPaid;
 
     // Redirect to signup/login if not authenticated, with ?next to come back
     const requireAuth = (nextPath: string): boolean => {
@@ -6374,16 +6470,22 @@ export default function ChoicePricingPage() {
     };
 
     // Draft: free start → dashboard/draft
+    // replace: this is a state transition, back-button should not return here
     const handleDraftStart = () => {
         if (!requireAuth('/choice-pricing')) return;
-        router.push(`/dashboard/draft/${userId}`);
+        router.replace(`/dashboard/draft/${userId}`);
     };
 
     // Personal or Family: paid → confirmation page
+    // replace: prevents back-button from returning to pricing after choosing a plan
     const handleModeSelection = (mode: 'personal' | 'family') => {
+        if (hasPaidPlan && auth.plan === mode) {
+            router.replace(`/dashboard/${mode}/${userId}`);
+            return;
+        }
         const confirmPath = mode === 'personal' ? '/personal-confirmation' : '/family-confirmation';
         if (!requireAuth(confirmPath)) return;
-        router.push(confirmPath);
+        router.replace(confirmPath);
     };
 
     const handleConciergeSelection = () => {
@@ -6403,6 +6505,30 @@ export default function ChoicePricingPage() {
                         <span>Back</span>
                     </Link>
                 </div>
+
+                {/* Active plan banner — reminds user of their current state */}
+                {hasPaidPlan && auth.plan !== 'none' && (
+                    <div className="mb-8 bg-white border border-sage/30 rounded-xl p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-medium text-charcoal">
+                                You have an active <strong className="capitalize">{auth.plan}</strong> plan
+                            </p>
+                            <p className="text-xs text-charcoal/50 mt-0.5">
+                                {auth.plan === 'personal'
+                                    ? 'You can upgrade to Family to create additional archives.'
+                                    : auth.plan === 'family'
+                                        ? 'You can upgrade to Concierge for a fully managed experience.'
+                                        : 'You are on the highest plan.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.replace(`/dashboard/${auth.plan}/${userId}`)}
+                            className="px-4 py-2 bg-charcoal text-ivory text-sm rounded-lg font-medium hover:bg-charcoal/90 transition-colors"
+                        >
+                            Go to Dashboard
+                        </button>
+                    </div>
+                )}
 
                 <div className="text-center mb-12">
                     <h1 className="font-serif text-5xl text-charcoal mb-4">
@@ -8068,7 +8194,7 @@ function CreateMemorialPageContent() {
     }
 
     setShowPauseModal(false);
-    router.push('/dashboard');
+    router.replace('/dashboard');
   };
 
   // Mobile Detection State
@@ -8124,7 +8250,7 @@ function CreateMemorialPageContent() {
             // Neither owner nor witness? They shouldn't be here.
             // You could also check for 'co_guardian' here later
             alert("You do not have permission to view this archive.");
-            router.push('/dashboard');
+            router.replace('/dashboard');
             return;
           }
         }
@@ -9267,14 +9393,34 @@ import { Plus, Eye, Edit, Trash2, FileEdit, Loader2, ArrowLeft, RefreshCcw, Aler
 import { useRouter } from 'next/navigation';
 import { Memorial } from '@/lib/supabase';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function DraftDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
     const router = useRouter();
+    const auth = useAuth();
     const [memorials, setMemorials] = useState<Memorial[]>([]);
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Auth guard: verify user identity and redirect if they have a paid plan
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/draft/${auth.user.id}`);
+            return;
+        }
+        // If user has upgraded to a paid plan, redirect to the correct dashboard
+        if (auth.hasPaid && auth.user) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.hasPaid, auth.plan, userId, router]);
 
     useEffect(() => {
         loadMemorials();
@@ -9531,11 +9677,14 @@ import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, 
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
+    const auth = useAuth();
+    const router = useRouter();
     const [memorials, setMemorials] = useState<Memorial[]>([]);
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]); // NEW: Deleted state
     const [loading, setLoading] = useState(true);
@@ -9546,6 +9695,19 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
 
     const searchParams = useSearchParams();
+
+    // Auth guard: verify the URL userId matches the authenticated user
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/family/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, userId, router]);
 
     useEffect(() => {
         loadMemorials();
@@ -10046,44 +10208,39 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
 ===== FICHIER: ./app/dashboard/page.tsx =====
 
 'use client';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function DashboardRedirectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState(false);
+  const auth = useAuth();
 
   useEffect(() => {
-    redirectToDashboard();
-  }, []);
+    // Wait for auth to finish loading
+    if (auth.loading) return;
 
-  const redirectToDashboard = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.push('/login?next=/dashboard');
+    if (!auth.authenticated) {
+      router.replace('/login?next=/dashboard');
       return;
     }
 
     const checkin = searchParams.get('checkin');
 
-    // Determine the mode from the user's most recent memorial
-    const { data: memorial } = await supabase
-      .from('memorials')
-      .select('mode')
-      .eq('user_id', user.id)
-      .eq('deleted', false)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Use server-validated state to determine the correct dashboard
+    // This is the single source of truth — no stale browser cache
+    const paidArchive = auth.archives.find(a => a.paid);
+    let mode = 'personal';
+    if (paidArchive) {
+      mode = paidArchive.mode;
+    } else if (auth.archives.length > 0) {
+      mode = auth.archives[0].mode || 'draft';
+    }
 
-    const mode = memorial?.mode || 'personal';
-    const url = `/dashboard/${mode}/${user.id}${checkin ? '?checkin=true' : ''}`;
-    router.push(url);
-  };
+    const url = `/dashboard/${mode}/${auth.user!.id}${checkin ? '?checkin=true' : ''}`;
+    router.replace(url);
+  }, [auth.loading, auth.authenticated, auth.archives, auth.user, searchParams, router]);
 
   return (
     <div className="min-h-screen bg-ivory flex items-center justify-center">
@@ -10118,8 +10275,9 @@ import {
     ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter,
     Archive, Download, Users
 } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -10156,6 +10314,8 @@ async function apiSoftDelete(id: string, action: 'delete' | 'restore') {
 export default function PersonalDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
     const userId = unwrappedParams.userId;
+    const auth = useAuth();
+    const router = useRouter();
 
     const [paidArchive, setPaidArchive] = useState<Memorial | null>(null);
     const [draftArchives, setDraftArchives] = useState<Memorial[]>([]);
@@ -10167,6 +10327,25 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [searchDrafts, setSearchDrafts] = useState('');
     const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
     const searchParams = useSearchParams();
+
+    // Auth guard: verify the URL userId matches the authenticated user
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        // If the URL userId doesn't match the authenticated user, redirect to their own dashboard
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/personal/${auth.user.id}`);
+            return;
+        }
+        // If user's actual plan is family (upgraded), redirect to family dashboard
+        if (auth.plan === 'family' && auth.user) {
+            router.replace(`/dashboard/family/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router]);
 
     useEffect(() => {
         fetch('/api/user/heartbeat', {
@@ -10821,6 +11000,8 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Check, ExternalLink, Loader2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function FamilyConfirmationPage() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -10830,6 +11011,21 @@ export default function FamilyConfirmationPage() {
     const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(null);
     const [authUserId, setAuthUserId] = useState<string | null>(null);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const router = useRouter();
+    const auth = useAuth();
+
+    // Auth guard: if user already has a family or higher plan, redirect to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/family-confirmation');
+            return;
+        }
+        if (auth.hasPaid && (auth.plan === 'family' || auth.plan === 'concierge')) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user!.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.hasPaid, auth.plan, auth.user, router]);
 
     // Get authenticated user
     useEffect(() => {
@@ -10913,24 +11109,8 @@ export default function FamilyConfirmationPage() {
                 setCurrentMemorialId(memorialId);
             }
 
-            const response = await fetch('/api/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ memorialId, plan: 'Family', amount: 2940 }),
-            });
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.code === 'LEGAL_AUTH_REQUIRED') {
-                    setAuthorizationCompleted(false);
-                    alert('Please complete the Memorial Authorization Form first.');
-                    return;
-                }
-                throw new Error(data.error || 'Payment initialization failed');
-            }
-
-            if (data.url) window.location.href = data.url;
-            else throw new Error('No checkout URL returned');
+            // replace: prevent back-button from returning to confirmation after going to payment
+            router.replace(`/payment?memorialId=${memorialId}&plan=family&amount=2940`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');
@@ -10973,11 +11153,11 @@ export default function FamilyConfirmationPage() {
     const canPay = acceptedTerms && authorizationCompleted && !isProcessing;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-stone/10 via-ivory to-mist/10">
-            <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
+        <div className="min-h-screen bg-ivory">
+            <div className="border-b border-sand/20 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
-                    <Link href="/choice-pricing" className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors">
-                        <ArrowLeft size={20} />
+                    <Link href="/choice-pricing" className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm">
+                        <ArrowLeft size={16} />
                         <span>Back to plans</span>
                     </Link>
                 </div>
@@ -10985,110 +11165,78 @@ export default function FamilyConfirmationPage() {
 
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="text-center mb-12">
-                    <h1 className="font-serif text-4xl text-charcoal mb-4">Confirm Your Order</h1>
-                    <p className="text-lg text-charcoal/70">Family Plan — $2,940. A single payment. No subscription. No surprises.</p>
-                </div>
-
-                {/* Order Summary */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
-                    <div className="prose max-w-none mb-8">
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Multiple archives with family links. Ideal for preserving several members of one family.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Includes: everything in Personal + unlimited archives, bidirectional links between archives, visual family tree, family steward designation, centralized search and management.
-                        </p>
-                        <p className="text-sm text-charcoal/50 leading-relaxed">
-                            Full refund available as long as the archive has not been published. 30-day satisfaction guarantee.
-                        </p>
-                    </div>
-                    <div className="border-t border-sand/30 pt-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Family Plan</span>
-                            <span className="text-charcoal font-medium">$2,940.00</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Tax</span>
-                            <span className="text-charcoal font-medium">$0.00</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
-                            <span className="text-charcoal">Total</span>
-                            <span className="text-stone">$2,940.00</span>
-                        </div>
-                    </div>
+                    <h1 className="font-serif text-4xl text-charcoal mb-4">Seal the Archive</h1>
+                    <p className="text-lg text-charcoal/50">$2,940 — A single payment for a permanent family archive. No monthly fees. No renewals. No surprises.</p>
                 </div>
 
                 {/* Steps before payment */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h3 className="text-lg font-semibold text-charcoal mb-6">Before Payment</h3>
+                <div className="bg-white rounded-2xl border border-sand/25 p-8 mb-8 max-w-2xl mx-auto">
+                    <h3 className="text-sm font-medium text-charcoal/40 uppercase tracking-wider mb-6">Before Payment</h3>
 
                     {/* Step 1 — Accept terms */}
                     <label className="flex items-start gap-4 cursor-pointer group mb-6">
-                        <div className="flex-shrink-0 mt-1">
+                        <div className="relative flex-shrink-0 mt-1">
                             <input
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-6 h-6 border-2 border-sand/40 rounded cursor-pointer accent-charcoal"
+                                className="w-5 h-5 border-2 border-sand/40 rounded cursor-pointer accent-charcoal"
                             />
                         </div>
                         <div className="flex-1">
-                            <p className="text-charcoal group-hover:text-charcoal/80 transition-colors">
+                            <p className="text-sm text-charcoal/60 group-hover:text-charcoal/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-stone hover:text-stone/80 underline font-medium" target="_blank">General Conditions</Link>
+                                <Link href="/legal/terms" className="text-charcoal underline font-medium" target="_blank">General Conditions</Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-stone hover:text-stone/80 underline font-medium" target="_blank">Privacy Policy</Link>
+                                <Link href="/legal/privacy" className="text-charcoal underline font-medium" target="_blank">Privacy Policy</Link>
                             </p>
                         </div>
                     </label>
 
                     {/* Step 2 — Authorization form */}
-                    <div className={`p-6 rounded-xl border-2 transition-all ${acceptedTerms ? 'border-sand/40 bg-parchment/40' : 'border-sand/20 bg-sand/10 opacity-50 pointer-events-none'}`}>
+                    <div className={`p-6 rounded-xl border transition-all ${acceptedTerms ? 'border-sand/30 bg-sand/5' : 'border-sand/15 bg-sand/5 opacity-40 pointer-events-none'}`}>
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-0.5">
                                 {authorizationCompleted ? (
-                                    <div className="w-8 h-8 bg-charcoal rounded-full flex items-center justify-center">
-                                        <Check size={16} className="text-ivory" strokeWidth={2.5} />
+                                    <div className="w-7 h-7 bg-charcoal rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-ivory" strokeWidth={2.5} />
                                     </div>
                                 ) : (
-                                    <div className="w-8 h-8 bg-stone/20 rounded-full flex items-center justify-center">
-                                        <ExternalLink size={16} className="text-stone" />
+                                    <div className="w-7 h-7 bg-sand/20 rounded-full flex items-center justify-center">
+                                        <ExternalLink size={14} className="text-charcoal/30" />
                                     </div>
                                 )}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-semibold text-charcoal mb-1">Memorial Authorization</h4>
+                                <h4 className="font-medium text-charcoal text-sm mb-1">Memorial Authorization</h4>
                                 {authorizationCompleted ? (
-                                    <p className="text-sm text-charcoal/60 mb-4">
+                                    <p className="text-xs text-charcoal/40">
                                         Authorization completed. You may now proceed to payment.
                                     </p>
                                 ) : (
-                                    <p className="text-sm text-charcoal/60 mb-4">
-                                        Complete the authorization form to confirm your legal authority to manage this Family archive.
-                                        The form opens in a new window — return here when done.
-                                    </p>
-                                )}
-
-                                {!authorizationCompleted && (
-                                    <button
-                                        onClick={handleOpenAuthorization}
-                                        disabled={isOpeningAuth || !acceptedTerms}
-                                        className="inline-flex items-center gap-2 px-4 py-2 bg-terracotta hover:bg-terracotta/90 text-ivory rounded-lg btn-paper text-sm font-medium transition-all disabled:opacity-50"
-                                    >
-                                        {isOpeningAuth ? (
-                                            <div className="w-4 h-4 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
-                                        ) : (
-                                            <ExternalLink size={15} />
-                                        )}
-                                        Open Memorial Authorization Form
-                                    </button>
+                                    <>
+                                        <p className="text-xs text-charcoal/40 mb-4">
+                                            Confirm your legal authority to create this family archive. The form opens in a new window.
+                                        </p>
+                                        <button
+                                            onClick={handleOpenAuthorization}
+                                            disabled={isOpeningAuth || !acceptedTerms}
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal hover:bg-charcoal/90 text-ivory rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                                        >
+                                            {isOpeningAuth ? (
+                                                <div className="w-3.5 h-3.5 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
+                                            ) : (
+                                                <ExternalLink size={13} />
+                                            )}
+                                            Open Authorization Form
+                                        </button>
+                                    </>
                                 )}
 
                                 {currentMemorialId && !authorizationCompleted && !isOpeningAuth && (
-                                    <p className="text-xs text-charcoal/40 mt-3 flex items-center gap-1.5">
-                                        <Loader2 size={11} className="animate-spin" />
-                                        Waiting for authorization to be completed…
+                                    <p className="text-[11px] text-charcoal/25 mt-3 flex items-center gap-1.5">
+                                        <Loader2 size={10} className="animate-spin" />
+                                        Waiting for authorization…
                                     </p>
                                 )}
                             </div>
@@ -11097,33 +11245,33 @@ export default function FamilyConfirmationPage() {
                 </div>
 
                 {/* Payment Button */}
-                <button
-                    onClick={handlePayment}
-                    disabled={!canPay}
-                    className={`w-full py-5 rounded-lg btn-paper font-semibold text-lg transition-all flex items-center justify-center gap-2 ${canPay
-                        ? 'bg-gradient-to-r from-terracotta to-terracotta/90 hover:shadow-lg text-ivory'
-                        : 'bg-sand/30 text-charcoal/30 cursor-not-allowed'
-                        }`}
-                >
-                    {isProcessing ? (
-                        <>
-                            <div className="w-5 h-5 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
-                            Processing…
-                        </>
-                    ) : (
-                        'Proceed to Payment ($2,940)'
+                <div className="max-w-2xl mx-auto">
+                    <button
+                        onClick={handlePayment}
+                        disabled={!canPay}
+                        className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${canPay
+                            ? 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                            : 'bg-sand/20 text-charcoal/25 cursor-not-allowed'
+                            }`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
+                                Preparing payment...
+                            </>
+                        ) : (
+                            'Proceed to payment ($2,940)'
+                        )}
+                    </button>
+
+                    {!authorizationCompleted && acceptedTerms && (
+                        <p className="text-center text-[11px] text-charcoal/25 mt-3">
+                            Complete the authorization form above to enable payment.
+                        </p>
                     )}
-                </button>
 
-                {!authorizationCompleted && acceptedTerms && (
-                    <p className="text-center text-xs text-charcoal/40 mt-3">
-                        Complete the authorization form above to enable payment.
-                    </p>
-                )}
-
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-charcoal/40">
-                        Secure payment powered by Stripe. Your information is encrypted and protected.
+                    <p className="text-center text-[11px] text-charcoal/20 mt-6">
+                        Secure payment powered by Stripe. Your information is encrypted.
                     </p>
                 </div>
             </div>
@@ -11325,6 +11473,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
 import type { Metadata } from 'next';
 import { Inter, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -11355,8 +11504,10 @@ export default function RootLayout({
       className={`${inter.variable} ${cormorant.variable}`}
     >
       <body className="bg-ivory text-charcoal">
-        {children}
-        <Footer />
+        <AuthProvider>
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
@@ -12437,7 +12588,8 @@ function LoginForm() {
       return;
     }
 
-    router.push(next);
+    // Use replace to prevent back-button going to login after successful auth
+    router.replace(next);
     router.refresh();
   };
 
@@ -12854,16 +13006,16 @@ export default function App() {
 ===== FICHIER: ./app/payment/page.tsx =====
 
 // app/payment/page.tsx
-// Step 2.2.1: Stripe Elements payment page (on-site, no redirect)
-// Step 2.2.2: Trust elements
-// Step 2.2.3: Graceful error handling
+// Stripe Elements payment page (on-site, no redirect)
+// ARCHITECTURAL: Auth-guarded, prevents re-submission on back-button
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { ArrowLeft, Shield, Lock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, RefreshCw, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 // Load Stripe outside of component to avoid re-creating on every render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -12871,10 +13023,11 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 // ============================================
 // PAYMENT FORM COMPONENT (inside Elements)
 // ============================================
-function PaymentForm({ memorialId, amount, fullName }: {
+function PaymentForm({ memorialId, amount, fullName, plan }: {
     memorialId: string;
     amount: number;
     fullName: string;
+    plan: string;
 }) {
     const stripe = useStripe();
     const elements = useElements();
@@ -12895,7 +13048,7 @@ function PaymentForm({ memorialId, amount, fullName }: {
             const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
-                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=personal`,
+                    return_url: `${window.location.origin}/payment-success?id=${memorialId}&plan=${plan}`,
                 },
                 redirect: 'if_required',
             });
@@ -12928,7 +13081,8 @@ function PaymentForm({ memorialId, amount, fullName }: {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memorialId }),
                 });
-                router.push(`/payment-success?id=${memorialId}&plan=personal`);
+                // replace: prevent back-button from returning to payment form
+                router.replace(`/payment-success?id=${memorialId}&plan=${plan}`);
             }
         } catch (err: any) {
             setPaymentError('An unexpected error occurred. Your draft is saved, and you can return at any time.');
@@ -13005,8 +13159,8 @@ function PaymentForm({ memorialId, amount, fullName }: {
                 type="submit"
                 disabled={!stripe || isProcessing}
                 className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${isProcessing || !stripe
-                        ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                        : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                    ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
+                    : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
                     }`}
             >
                 {isProcessing ? (
@@ -13031,34 +13185,67 @@ function PaymentForm({ memorialId, amount, fullName }: {
 function PaymentPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const auth = useAuth();
     const memorialId = searchParams.get('memorialId');
+    const planParam = searchParams.get('plan') || 'personal';
+    const amountParam = parseInt(searchParams.get('amount') || '1470', 10);
+    const hasInitialized = useRef(false);
 
     const [clientSecret, setClientSecret] = useState<string | null>(null);
-    const [amount, setAmount] = useState(1470);
+    const [amount, setAmount] = useState(amountParam);
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [alreadyPaid, setAlreadyPaid] = useState(false);
 
+    // Auth guard
     useEffect(() => {
-        if (!memorialId) {
-            setError('No memorial specified.');
-            setLoading(false);
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/choice-pricing');
             return;
         }
+    }, [auth.loading, auth.authenticated, router]);
+
+    // Check if this memorial is already paid (back-button scenario)
+    useEffect(() => {
+        if (auth.loading || !memorialId) return;
+        const archive = auth.archives.find(a => a.id === memorialId);
+        if (archive?.paid) {
+            setAlreadyPaid(true);
+            setLoading(false);
+        }
+    }, [auth.loading, auth.archives, memorialId]);
+
+    useEffect(() => {
+        if (!memorialId || alreadyPaid || hasInitialized.current) {
+            if (!memorialId) {
+                setError('No memorial specified.');
+                setLoading(false);
+            }
+            return;
+        }
+        hasInitialized.current = true;
 
         const createIntent = async () => {
             try {
                 const res = await fetch('/api/create-payment-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId, amount: 1470 }),
+                    body: JSON.stringify({ memorialId, amount: amountParam, plan: planParam }),
                 });
 
                 const data = await res.json();
 
                 if (!res.ok) {
                     if (data.code === 'LEGAL_AUTH_REQUIRED') {
-                        router.push(`/authorization/${memorialId}?type=individual&redirect=payment`);
+                        router.replace(`/authorization/${memorialId}?type=individual&redirect=payment`);
+                        return;
+                    }
+                    // If the API says it's already paid, show the already-paid screen
+                    if (data.code === 'ALREADY_PAID') {
+                        setAlreadyPaid(true);
+                        setLoading(false);
                         return;
                     }
                     throw new Error(data.error || 'Failed to initialize payment');
@@ -13075,7 +13262,31 @@ function PaymentPageContent() {
         };
 
         createIntent();
-    }, [memorialId, router]);
+    }, [memorialId, router, amountParam, planParam, alreadyPaid]);
+
+    // If user navigated back to this page but the memorial is already paid,
+    // show a confirmation screen instead of the payment form
+    if (alreadyPaid) {
+        return (
+            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+                <div className="max-w-md text-center">
+                    <div className="w-16 h-16 bg-charcoal/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle size={32} className="text-charcoal/60" />
+                    </div>
+                    <h2 className="font-serif text-2xl text-charcoal mb-3">Payment already completed</h2>
+                    <p className="text-sm text-charcoal/50 mb-8">
+                        This archive has already been sealed. You can access it from your dashboard.
+                    </p>
+                    <button
+                        onClick={() => router.replace('/dashboard')}
+                        className="px-6 py-3 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-colors"
+                    >
+                        Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -13190,6 +13401,7 @@ function PaymentPageContent() {
                         memorialId={memorialId!}
                         amount={amount}
                         fullName={fullName}
+                        plan={planParam}
                     />
                 </Elements>
             </div>
@@ -13213,12 +13425,14 @@ export default function PaymentPage() {
 
 // app/payment-success/page.tsx
 // Phase 1: The Post-Payment Ritual — Threshold Page + Three Doors
+// ARCHITECTURAL: Revalidates auth state after payment, prevents back-button issues
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, BookOpen, Circle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 // ─── Memorial data we need for the Threshold Page ────────────────────────────
 interface ThresholdMemorial {
@@ -13248,8 +13462,11 @@ function formatDate(dateStr: string | null): string | null {
 function PaymentSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { revalidate } = useAuth();
     const memorialId = searchParams.get('id');
     const planParam = searchParams.get('plan') || 'personal';
+    const isUpgrade = searchParams.get('upgrade') === 'true';
+    const hasFinalized = useRef(false);
 
     // Phases: finalizing → threshold → doors → redirecting
     const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting'>('finalizing');
@@ -13258,6 +13475,13 @@ function PaymentSuccessContent() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Prevent double-finalization (e.g., from StrictMode or re-renders)
+        if (hasFinalized.current) return;
+        hasFinalized.current = true;
+
+        // Replace current history entry so the back button goes to dashboard, not back here
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+
         const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
@@ -13265,16 +13489,30 @@ function PaymentSuccessContent() {
             }
 
             try {
-                // 1. Finalize payment in the backend
-                const response = await fetch('/api/finalize-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId }),
-                });
-                const result = await response.json();
-                if (result.error) throw new Error(result.error);
+                if (isUpgrade) {
+                    // UPGRADE FLOW: Use finalize-upgrade to preserve data
+                    const response = await fetch('/api/finalize-upgrade', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ memorialId, targetPlan: planParam }),
+                    });
+                    const result = await response.json();
+                    if (result.error) throw new Error(result.error);
+                } else {
+                    // NEW PAYMENT FLOW: Standard finalization
+                    const response = await fetch('/api/finalize-payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ memorialId }),
+                    });
+                    const result = await response.json();
+                    if (result.error) throw new Error(result.error);
+                }
 
-                // 2. Fetch memorial data for the Threshold Page
+                // Revalidate auth state so the entire app reflects the new payment status
+                await revalidate();
+
+                // Fetch memorial data for the Threshold Page
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
@@ -13286,10 +13524,10 @@ function PaymentSuccessContent() {
                     setMemorial(data as ThresholdMemorial);
                 }
 
-                // 3. Transition to the Threshold Page
+                // Transition to the Threshold Page
                 setPhase('threshold');
 
-                // 4. After 9 seconds, reveal the button (1s fade-in handled by CSS)
+                // After 9 seconds, reveal the button (1s fade-in handled by CSS)
                 setTimeout(() => {
                     setButtonVisible(true);
                 }, 9000);
@@ -13320,6 +13558,7 @@ function PaymentSuccessContent() {
     const mode = planParam === 'family' ? 'family' : 'personal';
 
     // ── Door action handler ───────────────────────────────────────────────────
+    // Uses router.replace to prevent the back button from returning to payment-success
     const handleDoor = async (door: 'photograph' | 'story' | 'silence') => {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -13332,12 +13571,12 @@ function PaymentSuccessContent() {
                 const dashPath = userId
                     ? `/dashboard/${mode}/${userId}?welcome=true`
                     : `/dashboard/${mode}`;
-                router.push(dashPath);
+                router.replace(dashPath);
             } else if (door === 'photograph') {
-                router.push(`/create?id=${memorialId}&mode=${mode}&step=8`);
+                router.replace(`/create?id=${memorialId}&mode=${mode}&step=8`);
             } else {
                 // story
-                router.push(`/create?id=${memorialId}&mode=${mode}&step=6`);
+                router.replace(`/create?id=${memorialId}&mode=${mode}&step=6`);
             }
         }, 600);
     };
@@ -13780,8 +14019,7 @@ export default function PersonMemorialPage({ params }: {
 ===== FICHIER: ./app/personal-confirmation/page.tsx =====
 
 // app/personal-confirmation/page.tsx
-// Legacy page — redirects to the new seal-confirmation flow
-// Kept for backward compatibility with existing links
+// Seal confirmation page — handles authorization + payment flow
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
@@ -13789,6 +14027,7 @@ import { ArrowLeft, Check, ExternalLink, ArrowUpCircle, Loader2 } from 'lucide-r
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function PersonalConfirmationContent() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -13800,9 +14039,24 @@ function PersonalConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const auth = useAuth();
 
     const upgradeMemorialId = searchParams.get('memorialId');
     const isDraftUpgrade = !!upgradeMemorialId;
+
+    // Auth guard: if user already has a personal paid plan, redirect to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/personal-confirmation');
+            return;
+        }
+        // If user already has a paid personal or higher plan (not draft upgrade), redirect
+        if (!isDraftUpgrade && auth.hasPaid && (auth.plan === 'personal' || auth.plan === 'family' || auth.plan === 'concierge')) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user!.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.hasPaid, auth.plan, auth.user, isDraftUpgrade, router]);
 
     // Get authenticated user
     useEffect(() => {
@@ -13890,8 +14144,8 @@ function PersonalConfirmationContent() {
                 setCurrentMemorialId(memorialId);
             }
 
-            // Redirect to the new Stripe Elements payment page
-            router.push(`/payment?memorialId=${memorialId}`);
+            // replace: prevent back-button from returning to confirmation after going to payment
+            router.replace(`/payment?memorialId=${memorialId}`);
         } catch (error: any) {
             console.error('Payment error:', error);
             alert(error.message || 'Payment failed. Please try again.');
@@ -16078,6 +16332,184 @@ export default function MemorialRenderer({
         </div>
     );
 }
+===== FICHIER: ./components/providers/AuthProvider.tsx =====
+
+'use client';
+
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { usePathname } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+export interface UserArchive {
+    id: string;
+    mode: 'draft' | 'personal' | 'family' | 'concierge';
+    paid: boolean;
+    status: 'draft' | 'published';
+    fullName: string | null;
+    profilePhotoUrl: string | null;
+    updatedAt: string;
+    paymentConfirmedAt: string | null;
+}
+
+export type UserPlan = 'none' | 'draft' | 'personal' | 'family' | 'concierge';
+
+export interface AuthState {
+    // Core auth
+    authenticated: boolean;
+    loading: boolean;
+    user: { id: string; email: string } | null;
+
+    // Plan & archives (server-validated)
+    plan: UserPlan;
+    hasPaid: boolean;
+    archives: UserArchive[];
+
+    // Actions
+    revalidate: () => Promise<void>;
+}
+
+const defaultState: AuthState = {
+    authenticated: false,
+    loading: true,
+    user: null,
+    plan: 'none',
+    hasPaid: false,
+    archives: [],
+    revalidate: async () => {},
+};
+
+const AuthContext = createContext<AuthState>(defaultState);
+
+// ─── Provider ────────────────────────────────────────────────────────────────
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const [state, setState] = useState<Omit<AuthState, 'revalidate'>>({
+        authenticated: false,
+        loading: true,
+        user: null,
+        plan: 'none',
+        hasPaid: false,
+        archives: [],
+    });
+    const pathname = usePathname();
+    const lastFetchRef = useRef<number>(0);
+    const isFetchingRef = useRef(false);
+
+    const fetchState = useCallback(async (force = false) => {
+        // Debounce non-forced calls to avoid spam
+        const now = Date.now();
+        if (!force && now - lastFetchRef.current < 2000) return;
+        // Never block forced calls (back-button, payment completion, etc.)
+        // Only skip if a non-forced call and already fetching
+        if (!force && isFetchingRef.current) return;
+
+        isFetchingRef.current = true;
+        try {
+            const res = await fetch('/api/user/state', {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' },
+            });
+            if (!res.ok) throw new Error('State fetch failed');
+            const data = await res.json();
+
+            setState({
+                authenticated: data.authenticated,
+                loading: false,
+                user: data.user,
+                plan: data.plan || 'none',
+                hasPaid: data.hasPaid || false,
+                archives: data.archives || [],
+            });
+            lastFetchRef.current = Date.now();
+        } catch (err) {
+            console.error('[AuthProvider] State fetch error:', err);
+            setState(prev => ({ ...prev, loading: false }));
+        } finally {
+            isFetchingRef.current = false;
+        }
+    }, []);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchState(true);
+    }, [fetchState]);
+
+    // Re-fetch when navigating to critical pages
+    useEffect(() => {
+        const criticalPaths = ['/dashboard', '/payment', '/choice-pricing', '/personal-confirmation', '/family-confirmation', '/payment-success'];
+        const isCritical = criticalPaths.some(p => pathname.startsWith(p));
+        if (isCritical) {
+            fetchState(true);
+        }
+    }, [pathname, fetchState]);
+
+    // Listen for browser back/forward button (popstate event)
+    // This is the KEY fix: when the user hits back, the browser fires popstate
+    // BEFORE React re-renders, so we force a revalidation immediately
+    useEffect(() => {
+        const handlePopState = () => {
+            fetchState(true);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [fetchState]);
+
+    // Listen for Supabase auth state changes (login/logout)
+    useEffect(() => {
+        const supabase = createClient();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+                fetchState(true);
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [fetchState]);
+
+    // Listen for visibility change — force revalidate when tab becomes visible
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchState(true);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }, [fetchState]);
+
+    const contextValue: AuthState = {
+        ...state,
+        revalidate: () => fetchState(true),
+    };
+
+    return (
+        <AuthContext.Provider value={contextValue}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
+export function useAuth(): AuthState {
+    return useContext(AuthContext);
+}
+
+// ─── Utility: Get the dashboard path for a user based on their real state ────
+export function getDashboardPath(state: AuthState): string {
+    if (!state.authenticated || !state.user) return '/login';
+
+    const paidArchive = state.archives.find(a => a.paid);
+    if (paidArchive) {
+        return `/dashboard/${paidArchive.mode}/${state.user.id}`;
+    }
+
+    const draftArchive = state.archives.find(a => !a.paid);
+    if (draftArchive) {
+        return `/dashboard/draft/${state.user.id}`;
+    }
+
+    return '/choice-pricing';
+}
+
 ===== FICHIER: ./components/SaveIndicator.tsx =====
 
 // components/SaveIndicator.tsx

@@ -40,7 +40,7 @@ const defaultState: AuthState = {
     plan: 'none',
     hasPaid: false,
     archives: [],
-    revalidate: async () => {},
+    revalidate: async () => { },
 };
 
 const AuthContext = createContext<AuthState>(defaultState);
