@@ -243,6 +243,9 @@ function CreateMemorialPageContent() {
 
   // 1. CAPTURE THE MODE
   const mode = searchParams.get('mode') || 'personal';
+  // Personal & Family modes = user already paid for the plan → full access
+  const isPaidMode = mode === 'personal' || mode === 'family';
+  const hasFullAccess = isPaidMode || memorialData.paid;
 
   // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
@@ -261,7 +264,7 @@ function CreateMemorialPageContent() {
 
   // Step 1.1.1: Draft banner — warm, reassuring, no urgency
   const DraftBanner = () => {
-    if (memorialData.paid) return null;
+    if (hasFullAccess) return null;
     return (
       <div className="bg-sand/15 border border-sand/25 rounded-xl px-5 py-3 flex items-start gap-3 max-w-2xl mx-auto mb-6">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40 mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
@@ -1063,7 +1066,7 @@ function CreateMemorialPageContent() {
             />
           </div>
 
-          {memorialData.paid && (
+          {hasFullAccess && (
             <div className="col-span-full mt-8">
               <button
                 onClick={() => {
@@ -1089,7 +1092,7 @@ function CreateMemorialPageContent() {
             </div>
           )}
 
-          {memorialData.paid ? (
+          {hasFullAccess ? (
             <div className="mt-12 p-10 bg-mist/5 border-2 border-mist/20 rounded-3xl text-center animate-fadeIn">
               <div className="w-16 h-16 bg-mist text-ivory rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <CheckCircle size={32} />
@@ -1340,7 +1343,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep7}
                           onNext={() => setViewMode('hub')}
                           onBack={() => setViewMode('hub')}
-                          isPaid={memorialData.paid}
+                          isPaid={hasFullAccess}
                           readOnly={!canEditStep(7)}
                           userRole={userRole}
                           onSubmitContribution={submitContribution}
@@ -1353,7 +1356,7 @@ function CreateMemorialPageContent() {
                           onUpdate={updateStep8}
                           onNext={() => setMemorialData(p => ({ ...p, currentStep: 9 }))}
                           onBack={() => setViewMode('hub')}
-                          isPaid={memorialData.paid}
+                          isPaid={hasFullAccess}
                           completedPathsCount={completedPathsCount}
                           onBackToHub={() => setViewMode('hub')}
                           memorialId={currentMemorialId}
@@ -1367,6 +1370,7 @@ function CreateMemorialPageContent() {
                           onNext={() => setViewMode('hub')}
                           onBack={() => setMemorialData(p => ({ ...p, currentStep: 8 }))}
                           memorialId={currentMemorialId}
+                          isPaid={hasFullAccess}
                           readOnly={!canEditStep(9)}
                         />
                       )}
@@ -1399,7 +1403,7 @@ function CreateMemorialPageContent() {
                     <div className="h-full w-full overflow-hidden p-4 bg-ivory">
                       <MemorialRenderer
                         data={memorialData}
-                        isPreview={!memorialData.paid}
+                        isPreview={!hasFullAccess}
                         compact={true}
                         className="h-full"
                       />

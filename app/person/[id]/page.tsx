@@ -40,12 +40,14 @@ export default function PersonMemorialPage({ params }: {
             }
 
             // ── ACCESS CONTROL ──────────────────────────────────────────────
-            // An archive is publicly readable only if it has been paid for.
-            // Unpaid / draft archives are private to the owner.
+            // An archive is publicly readable if it has been paid for OR
+            // if it belongs to a personal/family plan (user already paid).
+            // Only draft archives are private to the owner.
             const { data: { user } } = await supabase.auth.getUser();
             const isOwner = user && user.id === data.user_id;
+            const isPaidMode = data.mode === 'personal' || data.mode === 'family';
 
-            if (!data.paid && !isOwner) {
+            if (!data.paid && !isPaidMode && !isOwner) {
                 setAccessDenied(true);
                 setLoading(false);
                 return;
