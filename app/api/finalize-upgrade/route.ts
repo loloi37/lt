@@ -51,11 +51,27 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Not authorized to upgrade this memorial' }, { status: 403 });
         }
 
+        // IDEMPOTENCY: If already upgraded to this plan, return success without re-processing
+        if (memorial.mode === targetPlan) {
+            console.log(`[FinalizeUpgrade] Memorial ${memorialId} already at ${targetPlan} — idempotent no-op.`);
+            return NextResponse.json({
+                success: true,
+                message: `Already at ${targetPlan}`,
+                previousMode: targetPlan,
+                newMode: targetPlan,
+                dataPreserved: true,
+            });
+        }
+
+        const previousMode = memorial.mode;
+
         // Only update the mode and payment fields — PRESERVE ALL DATA
         const updatePayload: Record<string, any> = {
             mode: targetPlan,
             plan_type: targetPlan,
             amount_paid: PLAN_PRICES[targetPlan] || 0,
+            upgraded_from: previousMode,
+            upgraded_at: new Date().toISOString(),
             // Keep paid=true, keep payment_confirmed_at
             // DO NOT touch step1-step9, full_name, profile_photo_url, etc.
         };

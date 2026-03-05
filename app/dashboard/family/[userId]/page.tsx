@@ -20,7 +20,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [loading, setLoading] = useState(true);
     const [managingId, setManagingId] = useState<string | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
-    const [upgrading, setUpgrading] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
@@ -47,28 +46,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             window.history.replaceState({}, '', `/dashboard/family/${userId}`);
             setTimeout(() => setShowWelcome(false), 5000);
         }
-        if (searchParams.get('upgrading') === 'true') {
-            setUpgrading(true);
-            window.history.replaceState({}, '', `/dashboard/family/${userId}`);
-        }
     }, [userId, searchParams]);
-
-    // Listen for upgrade completion from the payment window via BroadcastChannel
-    useEffect(() => {
-        try {
-            const bc = new BroadcastChannel('lv-upgrade');
-            bc.onmessage = (event) => {
-                if (event.data?.type === 'upgrade-complete') {
-                    setUpgrading(false);
-                    loadMemorials();
-                    auth.revalidate();
-                }
-            };
-            return () => bc.close();
-        } catch (e) {
-            // BroadcastChannel not supported — fallback to visibilitychange (already handled)
-        }
-    }, []);
 
     // Refetch when user navigates back via browser back button or tab switch
     // Without this, bfcache can show stale data after editing a memorial
@@ -225,17 +203,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12">
-                {/* Upgrading banner — shown when payment is in progress in another window */}
-                {upgrading && (
-                    <div className="mb-8 bg-gradient-to-r from-mist/10 to-sage/10 border border-mist/20 rounded-2xl p-8 text-center animate-fadeIn">
-                        <div className="w-12 h-12 border-2 border-sage/30 border-t-sage rounded-full animate-spin mx-auto mb-4" />
-                        <h2 className="font-serif text-2xl text-charcoal mb-2">Upgrading to Family Plan</h2>
-                        <p className="text-sm text-charcoal/50">
-                            Complete your payment in the other window. This page will update automatically.
-                        </p>
-                    </div>
-                )}
-
                 {/* SEARCH & FILTER TOOLBAR */}
                 {!loading && memorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">

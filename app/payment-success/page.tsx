@@ -41,14 +41,10 @@ function PaymentSuccessContent() {
     const memorialId = searchParams.get('id');
     const planParam = searchParams.get('plan') || 'personal';
     const isUpgrade = searchParams.get('upgrade') === 'true';
-    const isPopup = searchParams.get('popup') === 'true';
-    const startAtThreshold = searchParams.get('phase') === 'threshold';
     const hasFinalized = useRef(false);
 
-    // Phases: finalizing → threshold → doors → redirecting → close-me (for upgrade payment window)
-    const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting' | 'close-me'>(
-        startAtThreshold ? 'finalizing' : 'finalizing'
-    );
+    // Phases: finalizing → threshold → doors → redirecting
+    const [phase, setPhase] = useState<'finalizing' | 'threshold' | 'doors' | 'redirecting'>('finalizing');
     const [memorial, setMemorial] = useState<ThresholdMemorial | null>(null);
     const [buttonVisible, setButtonVisible] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -61,30 +57,6 @@ function PaymentSuccessContent() {
         // Replace current history entry so the back button goes to dashboard, not back here
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
-        // THRESHOLD-ONLY MODE: This window was opened by the upgrade payment flow
-        // to show the threshold experience with clean history (no back button to Stripe)
-        if (startAtThreshold) {
-            const loadThreshold = async () => {
-                if (!memorialId) return;
-                try {
-                    await revalidate();
-                    const supabase = createClient();
-                    const { data, error: fetchError } = await supabase
-                        .from('memorials')
-                        .select('full_name, birth_date, death_date, profile_photo_url, user_id, step1')
-                        .eq('id', memorialId)
-                        .single();
-                    if (!fetchError && data) setMemorial(data as ThresholdMemorial);
-                    setPhase('threshold');
-                    setTimeout(() => setButtonVisible(true), 9000);
-                } catch (err: any) {
-                    setError(`Could not load archive data: ${err.message}. Please contact support.`);
-                }
-            };
-            loadThreshold();
-            return;
-        }
-
         const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
                 setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
@@ -93,7 +65,7 @@ function PaymentSuccessContent() {
 
             try {
                 if (isUpgrade) {
-                    // UPGRADE FLOW: Use finalize-upgrade to preserve data
+                    // UPGRADE FLOW: Use finalize-upgrade to preserve data (idempotent)
                     const response = await fetch('/api/finalize-upgrade', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -115,45 +87,19 @@ function PaymentSuccessContent() {
                 // Revalidate auth state so the entire app reflects the new payment status
                 await revalidate();
 
-                // Broadcast upgrade completion to other windows (dashboard waiting for upgrade)
-                try {
-                    const bc = new BroadcastChannel('lv-upgrade');
-                    bc.postMessage({ type: 'upgrade-complete', plan: planParam, memorialId });
-                    bc.close();
-                } catch (e) {
-                    // BroadcastChannel not supported in some browsers — dashboard will pick up via visibilitychange
-                }
-
-                // If this is a popup window (opened via window.open), try to close it
-                if (isPopup) {
-                    setTimeout(() => {
-                        window.close();
-                        // Fallback: if window.close() is blocked, redirect to dashboard
-                        const supabase = createClient();
-                        supabase.auth.getUser().then(({ data: { user } }) => {
-                            const uid = user?.id || '';
-                            const dashPath = `/dashboard/${planParam}/${uid}`;
-                            window.location.replace(dashPath);
-                        });
-                    }, 1500);
-                    return;
-                }
-
-                // UPGRADE FLOW: Open threshold in a new window, then close/show message on this one
+                // UPGRADE FLOW: Go straight to family dashboard with welcome message.
+                // Uses replace() so payment-success is removed from browser history —
+                // back button from family dashboard will land on personal dashboard,
+                // which already redirects to family if plan is 'family'.
                 if (isUpgrade) {
-                    const thresholdUrl = `/payment-success?id=${memorialId}&plan=${planParam}&phase=threshold`;
-                    window.open(thresholdUrl, '_blank');
-
-                    // Try to close this payment window
-                    setTimeout(() => {
-                        window.close();
-                        // If window.close() is blocked (not opened by script), show "close me" message
-                        setPhase('close-me');
-                    }, 500);
+                    const supabase = createClient();
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const uid = user?.id || '';
+                    window.location.replace(`/dashboard/${planParam}/${uid}?welcome=true`);
                     return;
                 }
 
-                // STANDARD (non-upgrade) FLOW: Show threshold in this same window
+                // STANDARD (non-upgrade) FLOW: Show threshold experience in this window
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
@@ -246,42 +192,6 @@ function PaymentSuccessContent() {
                 <div className="text-center max-w-md animate-fadeIn">
                     <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
                     <p className="text-charcoal/40 text-sm">Sealing the archive...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // ── Phase: close-me — shown when upgrade payment window can't auto-close ──
-    if (phase === 'close-me') {
-        return (
-            <div
-                className="min-h-screen flex flex-col items-center justify-center p-8"
-                style={{ backgroundColor: '#1a2332' }}
-            >
-                <div className="text-center max-w-md animate-fadeIn">
-                    <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-8"
-                        style={{ backgroundColor: 'rgba(253,246,240,0.06)', border: '1px solid rgba(253,246,240,0.12)' }}
-                    >
-                        <span style={{ color: 'rgba(253,246,240,0.6)', fontSize: '1.5rem' }}>&#10003;</span>
-                    </div>
-                    <h2
-                        className="font-serif mb-4"
-                        style={{ fontSize: '1.6rem', color: '#fdf6f0', letterSpacing: '0.01em' }}
-                    >
-                        Payment confirmed
-                    </h2>
-                    <p
-                        className="mb-2"
-                        style={{ color: 'rgba(253,246,240,0.50)', fontSize: '0.95rem', lineHeight: 1.7 }}
-                    >
-                        Your upgrade is complete. Your new archive is ready in the other window.
-                    </p>
-                    <p
-                        style={{ color: 'rgba(253,246,240,0.35)', fontSize: '0.85rem', letterSpacing: '0.02em' }}
-                    >
-                        You can close this tab.
-                    </p>
                 </div>
             </div>
         );
