@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
 import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
@@ -60,9 +60,21 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
     const searchParams = useSearchParams();
 
+    // SECURITY: Force a fresh auth check on mount to prevent bfcache from showing stale state.
+    // Without this, a user who upgraded to family can hit back and see the personal dashboard
+    // with working "Create Archive" buttons for ~200ms before the popstate revalidation completes.
+    const [planVerified, setPlanVerified] = useState(false);
+    const verifyRef = useRef(false);
+
+    useEffect(() => {
+        if (verifyRef.current) return;
+        verifyRef.current = true;
+        auth.revalidate().then(() => setPlanVerified(true));
+    }, []);
+
     // Auth guard: verify the URL userId matches the authenticated user
     useEffect(() => {
-        if (auth.loading) return;
+        if (auth.loading || !planVerified) return;
         if (!auth.authenticated) {
             router.replace('/login?next=/dashboard');
             return;
@@ -77,7 +89,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             router.replace(`/dashboard/family/${auth.user.id}`);
             return;
         }
-    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router]);
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router, planVerified]);
 
     useEffect(() => {
         fetch('/api/user/heartbeat', {
@@ -133,6 +145,11 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     };
 
     const handleCreate = () => {
+        // Double-check: block if user has already upgraded to family
+        if (auth.plan === 'family') {
+            router.replace(`/dashboard/family/${userId}`);
+            return;
+        }
         if (paidArchive) {
             alert('You already have an active Personal Archive. Each account supports one personal archive.');
             return;
@@ -180,6 +197,16 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         if (filterDrafts === 'oldest') return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
         return 0;
     });
+
+    // SECURITY: Don't render any interactive content until auth is freshly verified.
+    // This prevents bfcache from showing stale personal dashboard to upgraded family users.
+    if (!planVerified || auth.loading || auth.plan === 'family') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-sand/5 via-ivory to-sand/10 flex items-center justify-center">
+                <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-sand/5 via-ivory to-sand/10">

@@ -189,6 +189,22 @@ function CreateMemorialPageContent() {
         // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
         const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
+        // SECURITY: If user's plan is already family, don't allow creating personal memorials.
+        // This prevents exploitation via browser back button after upgrade.
+        if (currentMode === 'personal') {
+          const { data: existingFamily } = await supabase
+            .from('memorials')
+            .select('id')
+            .eq('user_id', authUserId)
+            .eq('mode', 'family')
+            .eq('paid', true)
+            .limit(1);
+          if (existingFamily && existingFamily.length > 0) {
+            router.replace(`/dashboard/family/${authUserId}`);
+            return;
+          }
+        }
+
         const { data, error } = await supabase
           .from('memorials')
           .insert({

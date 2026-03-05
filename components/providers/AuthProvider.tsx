@@ -140,21 +140,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => document.removeEventListener('visibilitychange', handleVisibility);
     }, [fetchState]);
 
-    // Listen for cross-window upgrade completion via BroadcastChannel
-    useEffect(() => {
-        try {
-            const bc = new BroadcastChannel('lv-upgrade');
-            bc.onmessage = (event) => {
-                if (event.data?.type === 'upgrade-complete') {
-                    fetchState(true);
-                }
-            };
-            return () => bc.close();
-        } catch (e) {
-            // BroadcastChannel not supported in some browsers
-        }
-    }, [fetchState]);
-
     const contextValue: AuthState = {
         ...state,
         revalidate: () => fetchState(true),
