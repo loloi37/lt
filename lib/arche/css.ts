@@ -252,10 +252,7 @@ export const ARCHE_CSS = `
     height: 100%;
     object-fit: cover;
     z-index: 2;
-    opacity: 0;
-    transition: opacity 0.3s;
   }
-  .interactive-card:hover .interactive-img { opacity: 1; }
 
   /* Videos */
   .video-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }

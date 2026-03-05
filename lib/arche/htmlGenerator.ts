@@ -270,11 +270,11 @@ function renderInteractiveGallery(data: MemorialData, map?: ResourceMap): string
             <div class="interactive-grid">
                 ${items.map(item => `
                     <div class="interactive-card">
-                        <div class="interactive-text">
+                        <div class="interactive-text z-10">
                             <p>${item.description || 'Hover/Touch to reveal photo'}</p>
                         </div>
-                        <img src="${processMedia(item.preview, map)}" class="interactive-img" alt="Interactive photo">
-                        ${item.sha256_hash ? `<div class="integrity-badge">Verified ✓</div>` : ''}
+                        <img src="${processMedia(item.preview, map)}" class="interactive-img z-20" alt="Interactive photo">
+                        ${item.sha256_hash ? `<div class="integrity-badge z-30">Verified ✓</div>` : ''}
                     </div>
                 `).join('')}
             </div>
@@ -286,16 +286,63 @@ function renderGallery(data: MemorialData, map?: ResourceMap): string {
     const photos = data.step8.gallery || [];
     if (photos.length === 0) return '';
 
+    const lightboxPhotos = photos.map(photo => {
+        return {
+            src: processMedia(photo.preview, map) || '',
+            caption: photo.caption || '',
+            year: photo.year || ''
+        };
+    });
+
     return `
+        <style>
+            .lightbox { display: none; position: fixed; z-index: 9999; inset: 0; background: rgba(90, 107, 120, 0.95); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); justify-content: center; align-items: center; }
+            .lightbox.active { display: flex; }
+            
+            .lightbox-close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); border: none; color: #fdf6f0; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; z-index: 10000; cursor: pointer; }
+            .lightbox-close:hover { background: rgba(255,255,255,0.2); }
+            
+            .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fdf6f0; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; z-index: 10000; cursor: pointer; }
+            .lightbox-prev { left: 16px; }
+            .lightbox-next { right: 16px; }
+            .lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+            
+            .lightbox-main-container { position: relative; max-width: 1280px; max-height: 90vh; margin: 0 auto; padding: 0 80px; text-align: center; }
+            
+            .lightbox-content { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); vertical-align: bottom; }
+            
+            .lightbox-caption-box { position: absolute; bottom: 0; left: 80px; right: 80px; background: linear-gradient(to top, rgba(90,107,120,0.9), transparent); padding: 24px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; text-align: left; pointer-events: none; }
+            .lightbox-caption-text { color: #fdf6f0; font-size: 1.125rem; margin-bottom: 4px; }
+            .lightbox-caption-year { color: rgba(253,246,240,0.7); font-size: 0.875rem; }
+            
+            .lightbox-counter { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(90,107,120,0.8); padding: 8px 16px; border-radius: 9999px; color: #fdf6f0; font-size: 0.875rem; z-index: 10; pointer-events: none; }
+            
+            .lightbox-carousel-wrapper { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 896px; width: 100%; overflow-x: auto; z-index: 10000; scrollbar-width: none; }
+            .lightbox-carousel-wrapper::-webkit-scrollbar { display: none; }
+            
+            .lightbox-carousel { display: flex; gap: 8px; padding: 0 16px; justify-content: center; }
+            
+            .carousel-btn { flex-shrink: 0; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; border: 2px solid transparent; opacity: 0.6; cursor: pointer; transition: all 0.2s; background: none; padding: 0; }
+            .carousel-btn img { width: 100%; height: 100%; object-fit: cover; }
+            .carousel-btn:hover { opacity: 1; }
+            .carousel-btn.active { border-color: #8AABB4; opacity: 1; transform: scale(1.1); margin: 0 4px; }
+            
+            @media (max-width: 768px) {
+                .lightbox-nav { display: none; }
+                .lightbox-main-container { padding: 0 16px; }
+                .lightbox-caption-box { left: 16px; right: 16px; }
+                .lightbox-carousel { justify-content: flex-start; }
+            }
+        </style>
         <div class="section-gap">
             <h2 class="section-title">Photo Gallery</h2>
             <div class="gallery-grid">
-                ${photos.map(photo => `
-                    <div class="gallery-item">
+                ${photos.map((photo, index) => `
+                    <div class="gallery-item" style="cursor: pointer;" onclick="openLightbox(${index})">
                         <img src="${processMedia(photo.preview, map)}" alt="${photo.caption || 'Photo'}">
                         ${photo.sha256_hash ? `<div class="integrity-badge">Verified ✓</div>` : ''}
                         ${(photo.caption || photo.year) ? `
-                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 12px; color: white; transition: opacity 0.3s;">
+                            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); padding: 12px; color: white; transition: opacity 0.3s; pointer-events: none;">
                                 ${photo.caption ? `<div style="font-size: 12px;">${photo.caption}</div>` : ''}
                                 ${photo.year ? `<div style="font-size: 10px; opacity: 0.7;">${photo.year}</div>` : ''}
                             </div>
@@ -304,6 +351,112 @@ function renderGallery(data: MemorialData, map?: ResourceMap): string {
                 `).join('')}
             </div>
         </div>
+        
+        <!-- Lightbox Modal -->
+        <div id="gallery-lightbox" class="lightbox" onclick="if(event.target === this) closeLightbox()">
+            <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close viewer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            
+            ${lightboxPhotos.length > 1 ? `
+            <button class="lightbox-nav lightbox-prev" onclick="changeLightboxItem(-1, event)" aria-label="Previous image">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            ` : ''}
+            
+            <div class="lightbox-main-container" onclick="if(event.target === this) closeLightbox()">
+                <img id="lightbox-img" class="lightbox-content" src="" alt="Lightbox image">
+                
+                <div id="lightbox-caption-box" class="lightbox-caption-box"></div>
+                <div class="lightbox-counter" id="lightbox-counter">1 / ${lightboxPhotos.length}</div>
+            </div>
+            
+            ${lightboxPhotos.length > 1 ? `
+            <button class="lightbox-nav lightbox-next" onclick="changeLightboxItem(1, event)" aria-label="Next image">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            ` : ''}
+            
+            ${lightboxPhotos.length > 1 ? `
+            <div class="lightbox-carousel-wrapper">
+                <div class="lightbox-carousel" id="lightbox-carousel">
+                    ${lightboxPhotos.map((photo, index) => `
+                        <button class="carousel-btn" id="carousel-btn-${index}" onclick="openLightbox(${index}, event)">
+                            <img src="${photo.src}" alt="">
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+        
+        <script>
+            const lightboxPhotos = ${JSON.stringify(lightboxPhotos)};
+            let currentPhotoIndex = 0;
+            
+            function openLightbox(index, event) {
+                if (event) event.stopPropagation();
+                currentPhotoIndex = index;
+                updateLightbox();
+                document.getElementById('gallery-lightbox').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeLightbox() {
+                document.getElementById('gallery-lightbox').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            function updateLightbox() {
+                const photo = lightboxPhotos[currentPhotoIndex];
+                document.getElementById('lightbox-img').src = photo.src;
+                
+                const captionBox = document.getElementById('lightbox-caption-box');
+                if (photo.caption || photo.year) {
+                    let text = '';
+                    if(photo.caption) text += '<p class="lightbox-caption-text">' + photo.caption + '</p>';
+                    if(photo.year) text += '<p class="lightbox-caption-year">' + photo.year + '</p>';
+                    captionBox.innerHTML = text;
+                    captionBox.style.display = 'block';
+                } else {
+                    captionBox.style.display = 'none';
+                }
+
+                const counter = document.getElementById('lightbox-counter');
+                if (counter) {
+                    counter.innerText = (currentPhotoIndex + 1) + ' / ' + lightboxPhotos.length;
+                }
+
+                if (lightboxPhotos.length > 1) {
+                    for(let i=0; i<lightboxPhotos.length; i++) {
+                        const btn = document.getElementById('carousel-btn-' + i);
+                        if (btn) {
+                            if (i === currentPhotoIndex) {
+                                btn.classList.add('active');
+                                btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        }
+                    }
+                }
+            }
+            
+            function changeLightboxItem(delta, event) {
+                if (event) event.stopPropagation();
+                currentPhotoIndex = (currentPhotoIndex + delta + lightboxPhotos.length) % lightboxPhotos.length;
+                updateLightbox();
+            }
+            
+            document.addEventListener('keydown', function(event) {
+                const lightbox = document.getElementById('gallery-lightbox');
+                if (lightbox && lightbox.classList.contains('active')) {
+                    if (event.key === 'Escape') closeLightbox();
+                    if (event.key === 'ArrowLeft') changeLightboxItem(-1);
+                    if (event.key === 'ArrowRight') changeLightboxItem(1);
+                }
+            });
+        </script>
     `;
 }
 
@@ -443,16 +596,19 @@ export function generateStandaloneHTML(data: MemorialData, resourceMap?: Resourc
     <script>
         document.querySelectorAll('.interactive-card').forEach(card => {
             const img = card.querySelector('.interactive-img');
+            
             card.addEventListener('mousemove', e => {
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
-                img.style.opacity = '1';
+                
+                // Keep image fully opaque, but punch a hole through it
                 img.style.webkitMaskImage = \`radial-gradient(circle 120px at \${x}px \${y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)\`;
                 img.style.maskImage = \`radial-gradient(circle 120px at \${x}px \${y}px, transparent 0%, transparent 40%, rgba(0,0,0,0.3) 70%, black 100%)\`;
             });
+            
             card.addEventListener('mouseleave', () => {
-                img.style.opacity = '0';
+                // Remove the hole when not hovering
                 img.style.webkitMaskImage = 'none';
                 img.style.maskImage = 'none';
             });
