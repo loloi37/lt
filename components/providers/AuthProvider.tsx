@@ -161,9 +161,15 @@ export function useAuth(): AuthState {
 export function getDashboardPath(state: AuthState): string {
     if (!state.authenticated || !state.user) return '/login';
 
-    const paidArchive = state.archives.find(a => a.paid);
-    if (paidArchive) {
-        return `/dashboard/${paidArchive.mode}/${state.user.id}`;
+    // Prioritize the highest plan level from the server-validated plan field
+    if (state.plan === 'concierge') {
+        return `/dashboard/concierge/${state.user.id}`;
+    }
+    if (state.plan === 'family') {
+        return `/dashboard/family/${state.user.id}`;
+    }
+    if (state.plan === 'personal') {
+        return `/dashboard/personal/${state.user.id}`;
     }
 
     const draftArchive = state.archives.find(a => !a.paid);

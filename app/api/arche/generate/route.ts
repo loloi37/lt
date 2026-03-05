@@ -1,12 +1,13 @@
 // app/api/arche/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { generateStandaloneHTML } from '@/lib/arche/htmlGenerator';
 import { ArcheArchiver } from '@/lib/arche/archiver';
 import { processMemorialMedia } from '@/lib/arche/mediaProcessor';
 import { generateManifest, generateReadme } from '@/lib/arche/metadataGenerator';
 
-export const maxDuration = 60; 
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
         }
 
+        // 1. AUTHENTICATE USER
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         console.log(`[Arche] Starting export for ${memorialId}...`);
 
         // Initialize Admin Client
@@ -25,7 +32,7 @@ export async function POST(request: NextRequest) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        // 1. Fetch Full Data
+        // 2. Fetch Full Data
         const { data: memorial, error } = await supabaseAdmin
             .from('memorials')
             .select('*')
@@ -35,6 +42,28 @@ export async function POST(request: NextRequest) {
         if (error || !memorial) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
+
+        // 3. VERIFY OWNERSHIP
+        if (memorial.user_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
+        }
+
+        // 4. RATE LIMIT: 10-minute cooldown between exports
+        if (memorial.last_exported_at) {
+            const diffMinutes = (Date.now() - new Date(memorial.last_exported_at).getTime()) / 60000;
+            if (diffMinutes < 10) {
+                const waitTime = Math.ceil(10 - diffMinutes);
+                return NextResponse.json({
+                    error: `Please wait ${waitTime} minute(s) before generating another ZIP archive.`
+                }, { status: 429 });
+            }
+        }
+
+        // 5. Record the export time (starts the cooldown)
+        await supabaseAdmin
+            .from('memorials')
+            .update({ last_exported_at: new Date().toISOString() })
+            .eq('id', memorialId);
 
         const fullData = {
             step1: memorial.step1,
@@ -52,38 +81,37 @@ export async function POST(request: NextRequest) {
             completedSteps: memorial.completed_steps || []
         };
 
-        // 2. Initialize Archiver
+        // 6. Initialize Archiver
         const archiver = new ArcheArchiver(fullData as any);
 
-        // 3. Process Media
+        // 7. Process Media
         await processMemorialMedia(archiver, fullData as any);
 
-        // --- NEW: Add Verification Report to ZIP ---
+        // --- Add Verification Report to ZIP ---
         const integrityReport = archiver.getVerificationReport();
         archiver.addTextFile('INTEGRITY_REPORT.txt', integrityReport);
         // -------------------------------------------
 
-        // 4. Generate Metadata
+        // 8. Generate Metadata
         const manifest = generateManifest(fullData as any, memorialId);
         const readme = generateReadme(fullData as any);
-        
+
         archiver.addTextFile('manifest.json', manifest);
         archiver.addTextFile('README.txt', readme);
 
-        // 5. Generate HTML
+        // 9. Generate HTML
         const resourceMap = archiver.getResourceMap();
         const html = generateStandaloneHTML(fullData as any, resourceMap);
         archiver.addTextFile('index.html', html);
 
-        // 6. Generate ZIP Buffer (FIXED: Now returns Buffer directly)
+        // 10. Generate ZIP Buffer
         console.log('[Arche] Finalizing ZIP file...');
         const zipBuffer = await archiver.generateZip();
 
-        // 7. Upload to Supabase
+        // 11. Upload to Supabase
         const filename = `archive_${fullData.step1.fullName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.zip`;
         const filePath = `${memorialId}/${filename}`;
 
-        // Direct buffer upload - robust and correct
         const { error: uploadError } = await supabaseAdmin.storage
             .from('exports')
             .upload(filePath, zipBuffer, {
@@ -107,8 +135,8 @@ export async function POST(request: NextRequest) {
 
         console.log('[Arche] Export complete:', urlData.signedUrl);
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             downloadUrl: urlData.signedUrl,
             filename: filename
         });

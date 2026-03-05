@@ -25,9 +25,9 @@ export async function POST(request: NextRequest) {
 
         if (!memorialId) {
             // Fallback: create a new memorial if no ID provided
-            // DB constraint only allows 'personal' or 'family'
-            const rawMode = body.mode || 'personal';
-            const mode = rawMode === 'family' ? 'family' : 'personal';
+            // SECURITY: Force draft mode on creation. Only a successful payment can change mode.
+            // Never trust body.mode — a malicious user could set 'family' for free.
+            const mode = 'draft';
             const { data: newMemorial, error: insertError } = await supabase
                 .from('memorials')
                 .insert({

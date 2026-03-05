@@ -26,7 +26,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     const searchParams = useSearchParams();
 
-    // Auth guard: verify the URL userId matches the authenticated user
+    // Auth guard: verify the URL userId matches the authenticated user + plan enforcement
     useEffect(() => {
         if (auth.loading) return;
         if (!auth.authenticated) {
@@ -37,7 +37,18 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             router.replace(`/dashboard/family/${auth.user.id}`);
             return;
         }
-    }, [auth.loading, auth.authenticated, auth.user, userId, router]);
+        // PLAN ENFORCEMENT: Personal-only users cannot access family dashboard
+        if (auth.plan === 'personal') {
+            console.log('[Plan Guard] User attempted Family access with Personal plan. Redirecting.');
+            router.replace(`/dashboard/personal/${userId}`);
+            return;
+        }
+        // Draft users go to draft dashboard
+        if (auth.plan === 'draft' || auth.plan === 'none') {
+            router.replace(`/dashboard/draft/${userId}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router]);
 
     useEffect(() => {
         loadMemorials();
@@ -156,6 +167,19 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                 : m.status === 'draft';
         return matchesSearch && matchesFilter;
     });
+
+    // BLOCK RENDERING until auth checks pass
+    const hasAccess = auth.plan === 'family' || auth.plan === 'concierge';
+    if (auth.loading || !auth.authenticated || !hasAccess) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-mist/10 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-2 border-sage/30 border-t-sage rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-mist/10">
