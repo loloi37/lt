@@ -583,8 +583,7 @@ function CreateMemorialPageContent() {
       // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
       const currentMode = rawMode === 'family' ? 'family' : 'personal';
 
-      const memorialRecord = {
-        id: currentMemorialId || undefined,
+      const memorialRecord: Record<string, any> = {
         step1: memorialData.step1,
         step2: memorialData.step2,
         step3: memorialData.step3,
@@ -595,27 +594,45 @@ function CreateMemorialPageContent() {
         step8: memorialData.step8,
         step9: memorialData.step9,
         status: 'draft',
-        slug: slug || currentMemorialId,
+        slug: slug || currentMemorialId || 'untitled',
         full_name: memorialData.step1.fullName,
-        birth_date: memorialData.step1.birthDate || null,
-        death_date: memorialData.step1.deathDate || null,
+        birth_date: memorialData.step1.birthDate ? memorialData.step1.birthDate : null,
+        death_date: memorialData.step1.deathDate ? memorialData.step1.deathDate : null,
         profile_photo_url: memorialData.step1.profilePhotoPreview || null,
-        cover_photo_url: memorialData.step8.coverPhotoPreview || null,
-        completed_steps: memorialData.completedSteps,
+        cover_photo_url: memorialData.step8?.coverPhotoPreview || null,
+        completed_steps: memorialData.completedSteps || [],
         mode: currentMode,
         user_id: authUserId,
-        paid: memorialData.paid,
+        paid: memorialData.paid ?? false,
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
-        .from('memorials')
-        .upsert(memorialRecord, {
-          onConflict: 'id',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
+      // Only include id if we already have one (for updates)
+      if (currentMemorialId) {
+        memorialRecord.id = currentMemorialId;
+      }
+
+      let data, error;
+      if (currentMemorialId) {
+        // Update existing memorial
+        const result = await supabase
+          .from('memorials')
+          .update(memorialRecord)
+          .eq('id', currentMemorialId)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      } else {
+        // Insert new memorial
+        const result = await supabase
+          .from('memorials')
+          .insert(memorialRecord)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
 
@@ -626,7 +643,7 @@ function CreateMemorialPageContent() {
 
       setSaveStatus('saved');
     } catch (error: any) {
-      console.error('Full Error Object:', error);
+      console.error('Save error:', error?.message || error?.code || JSON.stringify(error));
       setSaveStatus('error');
     }
   };
