@@ -76,14 +76,6 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
         window.location.href = '/create?mode=draft';
     };
 
-    // Upgrade a specific draft memorial to Personal
-    // Opens target dashboard in a NEW window (clean history, no back-button),
-    // then navigates current window to confirmation → payment flow
-    const handleUpgrade = (memorialId: string) => {
-        window.open(`/dashboard/personal/${userId}?upgrading=true`, '_blank');
-        window.location.href = `/personal-confirmation?memorialId=${memorialId}&popup=true`;
-    };
-
     const softDeleteMemorial = async (id: string) => {
         if (!confirm('Are you sure you want to delete this draft? It will be moved to the trash for 30 days.')) return;
 
@@ -144,9 +136,15 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {/* Upgrade CTA */}
+                            {/* Upgrade CTA — follows Seal flow: confirmation → authorization → payment */}
                             <button
-                                onClick={() => router.push('/choice-pricing')}
+                                onClick={() => {
+                                    const targetId = memorials.length > 0 ? memorials[0].id : null;
+                                    const sealUrl = targetId
+                                        ? `/seal-confirmation?memorialId=${targetId}`
+                                        : '/seal-confirmation';
+                                    router.push(sealUrl);
+                                }}
                                 className="btn-paper px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage text-sage hover:bg-sage/10 transition-all text-sm"
                             >
                                 <ArrowUpCircle size={18} />
@@ -162,25 +160,6 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* Upgrade Banner */}
-            <div className="max-w-7xl mx-auto px-6 pt-8">
-                <div className="bg-gradient-to-r from-mist/10 to-stone/10 border border-mist/20 rounded-2xl p-6 flex items-center justify-between">
-                    <div>
-                        <p className="font-semibold text-charcoal mb-1">Ready to publish your memorial?</p>
-                        <p className="text-sm text-charcoal/60">
-                            Upgrade to the <strong>Personal</strong> plan ($1,470) to remove watermarks, unlock HD media, and get lifetime hosting.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => memorials.length > 0 ? handleUpgrade(memorials[0].id) : router.push('/personal-confirmation')}
-                        className="btn-paper ml-6 flex-shrink-0 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold transition-all flex items-center gap-2"
-                    >
-                        <ArrowUpCircle size={18} />
-                        Upgrade Now ($1,470)
-                    </button>
                 </div>
             </div>
 
@@ -233,7 +212,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                     <p className="text-xs text-charcoal/40 mb-4">
                                         Last edited: {new Date(memorial.updated_at).toLocaleDateString()}
                                     </p>
-                                    <div className="flex gap-2 mb-3">
+                                    <div className="flex gap-2">
                                         <Link
                                             href={`/create?id=${memorial.id}&mode=draft`}
                                             className="btn-paper flex-1 py-2 px-3 bg-charcoal/10 hover:bg-charcoal/20 text-charcoal rounded-lg font-medium text-center text-sm"
@@ -248,14 +227,6 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
-                                    {/* Per-memorial upgrade button */}
-                                    <button
-                                        onClick={() => handleUpgrade(memorial.id)}
-                                        className="btn-paper w-full py-2.5 px-3 bg-gradient-to-r from-sage to-sage/90 hover:shadow-md text-ivory rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all"
-                                    >
-                                        <ArrowUpCircle size={16} />
-                                        Upgrade to Personal ($1,470)
-                                    </button>
                                 </div>
                             </div>
                         ))}
