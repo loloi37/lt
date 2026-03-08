@@ -1887,5 +1887,87 @@ USING (bucket_id = 'videos');
 62 : 
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_sent_at TIMESTAMP WITH TIME ZONE;
+--------------------------------------------------------
+
+63 : 
+
+ALTER TABLE memorials ADD COLUMN IF NOT EXISTS last_exported_at TIMESTAMP WITH TIME ZONE;
 
 
+
+--------------------------------------------------------
+
+64 : 
+
+CREATE OR REPLACE FUNCTION enforce_personal_plan_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+    active_paid_count INT;
+    user_plan_mode TEXT;
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        SELECT COUNT(*), MAX(mode) INTO active_paid_count, user_plan_mode
+        FROM memorials
+        WHERE user_id = NEW.user_id AND paid = true AND deleted = false;
+
+        IF active_paid_count >= 1 AND user_plan_mode = 'personal' THEN
+            RAISE EXCEPTION 'Personal plan is limited to 1 archive. Please upgrade to Family.';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_enforce_personal_limit
+BEFORE INSERT ON memorials
+FOR EACH ROW
+EXECUTE FUNCTION enforce_personal_plan_limit();
+
+--------------------------------------------------------
+
+65 : 
+
+-- Step 1: Add missing columns
+ALTER TABLE memorials ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT false;
+ALTER TABLE memorials ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE memorials ADD COLUMN IF NOT EXISTS last_exported_at TIMESTAMP WITH TIME ZONE;
+
+-- Step 2: Verify it worked
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'memorials' 
+AND column_name IN ('deleted', 'deleted_at', 'last_exported_at');
+
+--------------------------------------------------------
+
+66 : 
+
+DROP TRIGGER IF EXISTS enforce_personal_plan_limit ON memorials;
+DROP FUNCTION IF EXISTS check_personal_plan_limit();
+
+--------------------------------------------------------
+
+67 : 
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_sent_at TIMESTAMP WITH TIME ZONE;
+
+
+
+--------------------------------------------------------
+
+68:
+
+DROP TRIGGER IF EXISTS enforce_personal_plan_limit ON memorials;
+DROP FUNCTION IF EXISTS check_personal_plan_limit();
+
+
+--------------------------------------------------------
+
+
+69 : 
+
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'memorials' 
+ORDER BY ordinal_position;
