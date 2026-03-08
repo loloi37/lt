@@ -1971,3 +1971,10 @@ SELECT column_name, data_type
 FROM information_schema.columns 
 WHERE table_name = 'memorials' 
 ORDER BY ordinal_position;
+
+--------------------------------------------------------
+
+70 : 
+
+ALTER TABLE memorials DROP CONSTRAINT IF EXISTS check_mode_values;
+ALTER TABLE memorials ADD CONSTRAINT check_mode_values CHECK (mode IN ('personal', 'family', 'draft'));
