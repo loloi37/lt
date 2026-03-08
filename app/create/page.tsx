@@ -1147,7 +1147,7 @@ function CreateMemorialPageContent() {
               </div>
             </div>
           ) : (
-            completedPathsCount >= 2 && (
+            getPathStatus(memorialData, 'facts') === 'completed' && (
               /* Step 2.1.1 + 2.1.2: CTA appears as a revealed path, not a popup */
               <div className="mt-12 max-w-2xl mx-auto animate-fadeIn">
                 <p className="text-xs text-charcoal/25 text-center mb-4 tracking-wide">
