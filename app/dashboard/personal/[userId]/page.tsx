@@ -84,6 +84,11 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             router.replace(`/dashboard/personal/${auth.user.id}`);
             return;
         }
+        // Draft/free users cannot access personal dashboard
+        if ((auth.plan === 'draft' || auth.plan === 'none') && auth.user) {
+            router.replace(`/dashboard/draft/${auth.user.id}`);
+            return;
+        }
         // If user's actual plan is family (upgraded), redirect to family dashboard
         if (auth.plan === 'family' && auth.user) {
             router.replace(`/dashboard/family/${auth.user.id}`);
