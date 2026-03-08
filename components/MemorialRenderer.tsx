@@ -105,7 +105,7 @@ export default function MemorialRenderer({
                 <div className={`relative ${s.heroH} bg-gradient-to-br from-mist/30 to-stone/30`}>
                     {data.step8?.coverPhotoPreview ? (
                         <>
-                            <img src={data.step8.coverPhotoPreview} alt="Cover" className={`w-full h-full object-cover ${isPreview ? 'blur-sm' : ''}`} />
+                            <img src={data.step8.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#6b7f8e] via-[#6b7f8e]/20 to-[#6b7f8e]/10" />
                             <IntegrityBadge hash={data.step8.coverPhotoHash} className="top-4 left-4" />
                         </>
@@ -118,7 +118,7 @@ export default function MemorialRenderer({
                             <div className={`flex ${compact ? 'flex-col items-center text-center gap-3' : 'flex-col md:flex-row items-center md:items-end gap-6'}`}>
                                 {data.step1?.profilePhotoPreview && (
                                     <div className={`${s.profileSize} rounded-2xl border-4 border-ivory shadow-2xl overflow-hidden flex-shrink-0 bg-white`}>
-                                        <img src={data.step1.profilePhotoPreview} alt={data.step1.fullName} className={`w-full h-full object-cover ${isPreview ? 'blur-sm' : ''}`} />
+                                        <img src={data.step1.profilePhotoPreview} alt={data.step1.fullName} className="w-full h-full object-cover" />
                                     </div>
                                 )}
                                 <div className={compact ? '' : 'text-center md:text-left pb-4'}>
@@ -436,10 +436,10 @@ export default function MemorialRenderer({
                                 Interactive Photo Stories
                             </h2>
                             <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-${compact ? '3' : '6'}`}>
-                                {data.step8.interactiveGallery.map((item: any) => (
+                                {data.step8.interactiveGallery.map((item: any, index: number) => (
                                     <div
                                         key={item.id}
-                                        className={`relative aspect-video rounded-xl overflow-hidden border-2 border-sand/30 group`}
+                                        className={`relative aspect-video rounded-xl overflow-hidden border-2 border-sand/30 group ${isPreview && index > 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                         onMouseMove={(e) => handleInteractiveMouseMove(e, item.id)}
                                         onMouseLeave={() => setHoveredInteractive(null)}
                                         style={{ cursor: 'none' }}
@@ -468,7 +468,7 @@ export default function MemorialRenderer({
                                             <img
                                                 src={item.preview}
                                                 alt="Interactive photo"
-                                                className={`w-full h-full object-cover ${isPreview ? 'blur-sm' : ''}`}
+                                                        className="w-full h-full object-cover"
                                                 draggable={false}
                                             />
                                         </div>
@@ -489,9 +489,9 @@ export default function MemorialRenderer({
                                     <button
                                         key={photo.id}
                                         onClick={() => { setViewerStartIndex(index); setViewerOpen(true); }}
-                                        className="group relative aspect-square rounded-xl overflow-hidden bg-sand/20 shadow-sm cursor-pointer hover:shadow-lg transition-all"
+                                        className={`group relative aspect-square rounded-xl overflow-hidden bg-sand/20 shadow-sm cursor-pointer hover:shadow-lg transition-all ${isPreview && index > 0 ? 'opacity-50 pointer-events-none' : ''}`}
                                     >
-                                        <img src={photo.preview} alt={photo.caption} className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 ${isPreview ? 'blur-sm' : ''}`} />
+                                        <img src={photo.preview} alt={photo.caption} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
 
                                         <IntegrityBadge hash={photo.sha256_hash} />
 
