@@ -359,7 +359,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
 
 
         {/* Cover Photo */}
-        <div className={!isPaid && data.coverPhotoPreview ? "opacity-50 pointer-events-none" : ""}>
+        <div>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
             <ImageIcon size={18} className="text-stone" />
             Cover Photo
@@ -423,7 +423,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                   {data.gallery.map((item, index) => (
                     <div
                       key={item.id}
-                      className={`relative group ${!isPaid && index > 0 ? 'opacity-50 pointer-events-none' : ''}`}
+                      className="relative group"
                     >
                       <div className="aspect-square rounded-xl overflow-hidden bg-sand/20 border border-sand/30">
                         <img
@@ -504,7 +504,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         </div>
 
         {/* Interactive Photo Stories */}
-        <div className={!isPaid && (data.interactiveGallery?.length || 0) >= 1 ? "opacity-50 pointer-events-none" : ""}>
+        <div>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
             <MousePointer size={18} className="text-mist" />
             Interactive Photo Stories (Optional)
@@ -617,7 +617,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
         </div>
 
         {/* Voice Recordings */}
-        <div className={!isPaid && data.voiceRecordings.length >= 1 ? "opacity-50 pointer-events-none" : ""}>
+        <div>
           <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
             <Mic size={18} className="text-mist" />
             Voice Recordings (Optional)
