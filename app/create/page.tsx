@@ -186,8 +186,8 @@ function CreateMemorialPageContent() {
       try {
         const supabase = createClient();
         const rawMode = searchParams.get('mode') || 'personal';
-        // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
-        const currentMode = rawMode === 'family' ? 'family' : 'personal';
+        // DB constraint allows 'personal', 'family', or 'draft'
+        const currentMode = rawMode === 'family' ? 'family' : rawMode === 'draft' ? 'draft' : 'personal';
 
         // SECURITY: If user's plan is already family, don't allow creating personal memorials.
         // This prevents exploitation via browser back button after upgrade.
@@ -580,8 +580,8 @@ function CreateMemorialPageContent() {
       // Use the DB mode if we loaded from an existing memorial (prevents overwriting family→personal)
       // Only fall back to URL param for brand new memorials
       const rawMode = dbMode || searchParams.get('mode') || 'personal';
-      // DB constraint only allows 'personal' or 'family'. Map 'draft' to 'personal'.
-      const currentMode = rawMode === 'family' ? 'family' : 'personal';
+      // DB constraint allows 'personal', 'family', or 'draft'
+      const currentMode = rawMode === 'family' ? 'family' : rawMode === 'draft' ? 'draft' : 'personal';
 
       const memorialRecord: Record<string, any> = {
         step1: memorialData.step1,
