@@ -108,6 +108,18 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
         }
     };
 
+    const permanentDeleteMemorial = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this draft? This action cannot be undone.')) return;
+        if (!confirm('This is irreversible. The draft and all its content will be lost forever. Continue?')) return;
+        try {
+            const res = await fetch(`/api/memorials/${id}/permanent-delete`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Operation failed');
+            loadMemorials();
+        } catch {
+            alert('Error permanently deleting draft. Please try again.');
+        }
+    };
+
     const getDaysRemaining = (deletedAt: string) => {
         const deleteDate = new Date(deletedAt);
         const expiryDate = new Date(deleteDate.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -264,13 +276,22 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                             {getDaysRemaining(memorial.deleted_at!)} days until permanent deletion
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => restoreMemorial(memorial.id)}
-                                        className="p-2 bg-white border border-charcoal/20 text-charcoal/60 rounded-lg hover:bg-charcoal/10 transition-colors"
-                                        title="Restore"
-                                    >
-                                        <RefreshCcw size={18} />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => restoreMemorial(memorial.id)}
+                                            className="p-2 bg-white border border-charcoal/20 text-charcoal/60 rounded-lg hover:bg-charcoal/10 transition-colors"
+                                            title="Restore"
+                                        >
+                                            <RefreshCcw size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => permanentDeleteMemorial(memorial.id)}
+                                            className="p-2 bg-red-50 border border-red-200 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            title="Delete permanently"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

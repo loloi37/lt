@@ -184,6 +184,18 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         }
     };
 
+    const permanentDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this archive? This action cannot be undone.')) return;
+        if (!confirm('This is irreversible. The archive and all its content will be lost forever. Continue?')) return;
+        try {
+            const res = await fetch(`/api/memorials/${id}/permanent-delete`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Operation failed');
+            loadMemorials();
+        } catch {
+            alert('Error permanently deleting archive. Please try again.');
+        }
+    };
+
     const getDaysRemaining = (deletedAt: string) => {
         const expiry = new Date(new Date(deletedAt).getTime() + 30 * 86400000);
         return Math.max(Math.ceil((expiry.getTime() - Date.now()) / 86400000), 0);
@@ -453,13 +465,22 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                             {getDaysRemaining(m.deleted_at!)} days until permanent deletion
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => restore(m.id)}
-                                        className="p-2 bg-white border border-sand/30 text-charcoal/50 hover:text-charcoal rounded-lg transition-colors"
-                                        title="Restore"
-                                    >
-                                        <RefreshCcw size={18} />
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => restore(m.id)}
+                                            className="p-2 bg-white border border-sand/30 text-charcoal/50 hover:text-charcoal rounded-lg transition-colors"
+                                            title="Restore"
+                                        >
+                                            <RefreshCcw size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => permanentDelete(m.id)}
+                                            className="p-2 bg-red-50 border border-red-200 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            title="Delete permanently"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
