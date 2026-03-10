@@ -228,6 +228,25 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(181, 167, 199, 0.1);
 }
 
+/* Constellation connection handle dots */
+.constellation-handle {
+  width: 8px !important;
+  height: 8px !important;
+  background: rgba(181, 167, 199, 0.5) !important;
+  border: 1px solid rgba(181, 167, 199, 0.3) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 6px rgba(181, 167, 199, 0.3);
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.constellation-handle:hover {
+  background: rgba(181, 167, 199, 0.9) !important;
+  box-shadow: 0 0 12px rgba(181, 167, 199, 0.6);
+  transform: scale(1.4);
+  opacity: 1;
+}
+
 /* Constellation edge glow */
 .react-flow .react-flow__edge-path {
   filter: drop-shadow(0 0 3px rgba(181, 167, 199, 0.5));

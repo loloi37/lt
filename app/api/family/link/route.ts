@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { fromId, toId, type } = await request.json();
+        const { fromId, toId, type, description } = await request.json();
 
         if (!fromId || !toId || !type) {
             return NextResponse.json({ error: 'Missing IDs or type' }, { status: 400 });
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
             .insert([{
                 from_memorial_id: fromId,
                 to_memorial_id: toId,
-                relationship_type: type
+                relationship_type: type,
+                ...(description ? { description } : {}),
             }]);
 
         if (error1) throw error1;
@@ -55,7 +56,8 @@ export async function POST(request: NextRequest) {
             .insert([{
                 from_memorial_id: toId,
                 to_memorial_id: fromId,
-                relationship_type: reverseType
+                relationship_type: reverseType,
+                ...(description ? { description } : {}),
             }]);
 
         // Note: We don't throw on error2 in case it already exists
