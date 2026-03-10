@@ -12,9 +12,8 @@ import Link from 'next/link';
 
 // ─── Family tree layout algorithm ───────────────────────────────────────────
 
-const H_GAP = 250;   // horizontal gap between nodes
-const V_GAP = 200;   // vertical gap between generations
-const NODE_W = 180;
+const H_GAP = 260;
+const V_GAP = 180;
 
 interface PersonData {
     id: string;
@@ -32,8 +31,7 @@ function computeFamilyLayout(
 ): Record<string, { x: number; y: number }> {
     if (people.length === 0) return {};
 
-    // Build relationship maps (deduplicated by pair)
-    const parentChildren: Record<string, string[]> = {}; // parentId → [childIds]
+    const parentChildren: Record<string, string[]> = {};
     const spouses: Record<string, string[]> = {};
     const hasParent = new Set<string>();
     const seen = new Set<string>();
@@ -48,7 +46,6 @@ function computeFamilyLayout(
             parentChildren[rel.from_memorial_id].push(rel.to_memorial_id);
             hasParent.add(rel.to_memorial_id);
         } else if (rel.relationship_type === 'child') {
-            // from is child of to → to is parent
             if (!parentChildren[rel.to_memorial_id]) parentChildren[rel.to_memorial_id] = [];
             parentChildren[rel.to_memorial_id].push(rel.from_memorial_id);
             hasParent.add(rel.from_memorial_id);
@@ -58,10 +55,8 @@ function computeFamilyLayout(
             if (!spouses[rel.to_memorial_id]) spouses[rel.to_memorial_id] = [];
             spouses[rel.to_memorial_id].push(rel.from_memorial_id);
         }
-        // sibling: same generation, handled like unlinked within same gen
     }
 
-    // Also process siblings to keep them in the same generation
     const siblingOf: Record<string, string[]> = {};
     const seenSib = new Set<string>();
     for (const rel of relations) {
@@ -75,12 +70,10 @@ function computeFamilyLayout(
         siblingOf[rel.to_memorial_id].push(rel.from_memorial_id);
     }
 
-    // Assign generations via BFS
     const generation: Record<string, number> = {};
     const visited = new Set<string>();
     const queue: string[] = [];
 
-    // Roots = people with no parent
     const roots = people.filter(p => !hasParent.has(p.id));
     const startNodes = roots.length > 0 ? roots : [people[0]];
 
@@ -96,7 +89,6 @@ function computeFamilyLayout(
         const id = queue.shift()!;
         const gen = generation[id];
 
-        // Children → next generation
         for (const childId of (parentChildren[id] || [])) {
             if (!visited.has(childId)) {
                 generation[childId] = gen + 1;
@@ -105,7 +97,6 @@ function computeFamilyLayout(
             }
         }
 
-        // Spouses → same generation
         for (const spouseId of (spouses[id] || [])) {
             if (!visited.has(spouseId)) {
                 generation[spouseId] = gen;
@@ -114,7 +105,6 @@ function computeFamilyLayout(
             }
         }
 
-        // Siblings → same generation
         for (const sibId of (siblingOf[id] || [])) {
             if (!visited.has(sibId)) {
                 generation[sibId] = gen;
@@ -124,14 +114,12 @@ function computeFamilyLayout(
         }
     }
 
-    // Place any remaining unvisited nodes
     for (const p of people) {
         if (!visited.has(p.id)) {
             generation[p.id] = 0;
         }
     }
 
-    // Group by generation
     const genGroups: Record<number, string[]> = {};
     for (const p of people) {
         const gen = generation[p.id] ?? 0;
@@ -139,13 +127,11 @@ function computeFamilyLayout(
         genGroups[gen].push(p.id);
     }
 
-    // Within each generation, place spouse pairs adjacent
     const sortedGens = Object.keys(genGroups).map(Number).sort((a, b) => a - b);
     const positions: Record<string, { x: number; y: number }> = {};
 
     for (const gen of sortedGens) {
         const ids = genGroups[gen];
-        // Order: try to keep spouse pairs together
         const ordered: string[] = [];
         const placed = new Set<string>();
 
@@ -153,7 +139,6 @@ function computeFamilyLayout(
             if (placed.has(id)) continue;
             ordered.push(id);
             placed.add(id);
-            // Place spouses right next to this person
             for (const spouseId of (spouses[id] || [])) {
                 if (!placed.has(spouseId) && ids.includes(spouseId)) {
                     ordered.push(spouseId);
@@ -199,25 +184,32 @@ function buildGraphEdges(
         let displayLabel = rel.description || rel.relationship_type;
 
         if (rel.relationship_type === 'parent') {
-            // from is parent (above) → to is child (below)
             sourceId = rel.from_memorial_id;
             targetId = rel.to_memorial_id;
             sourceHandle = 'bottom-src';
             targetHandle = 'top-tgt';
         } else if (rel.relationship_type === 'child') {
-            // from is child → to is parent (above)
-            sourceId = rel.to_memorial_id; // parent on top
-            targetId = rel.from_memorial_id; // child on bottom
+            sourceId = rel.to_memorial_id;
+            targetId = rel.from_memorial_id;
             sourceHandle = 'bottom-src';
             targetHandle = 'top-tgt';
-            if (!rel.description) displayLabel = 'parent'; // normalize label
+            if (!rel.description) displayLabel = 'parent';
         } else {
-            // spouse / sibling / other → horizontal
             sourceId = rel.from_memorial_id;
             targetId = rel.to_memorial_id;
             sourceHandle = 'right-src';
             targetHandle = 'left-tgt';
         }
+
+        // Color-code by type
+        const edgeColors: Record<string, string> = {
+            parent: '#89b896',
+            child: '#89b896',
+            spouse: '#d4958a',
+            sibling: '#b5a7c7',
+            other: '#5a6b78',
+        };
+        const color = edgeColors[rel.relationship_type] || edgeColors.other;
 
         edges.push({
             id: rel.id,
@@ -233,97 +225,91 @@ function buildGraphEdges(
                 description: rel.description || '',
             },
             style: {
-                stroke: 'rgba(181, 167, 199, 0.5)',
-                strokeWidth: 1.5,
+                stroke: color,
+                strokeWidth: 2,
+                strokeOpacity: 0.55,
             },
             labelStyle: {
-                fill: 'rgba(181, 167, 199, 0.7)',
+                fill: '#5a6b78',
                 fontSize: 10,
+                fontWeight: 500,
                 fontFamily: 'var(--font-sans)',
                 cursor: 'pointer',
             },
             labelBgStyle: {
-                fill: 'transparent',
+                fill: '#fdf6f0',
+                fillOpacity: 0.9,
             },
+            labelBgPadding: [6, 4] as [number, number],
+            labelBgBorderRadius: 4,
         });
     }
 
     return edges;
 }
 
-// ─── Custom node: rounded rectangle card with 4 handles ─────────────────────
+// ─── Custom node: elegant card ──────────────────────────────────────────────
 
-function ConstellationNode({ data }: NodeProps) {
-    const { photoUrl, name, birthYear, animDelay } = data as {
+function TreeNode({ data }: NodeProps) {
+    const { photoUrl, name, birthYear, deathYear, animDelay } = data as {
         photoUrl: string | null;
         name: string;
         birthYear: string;
+        deathYear: string | null;
         animDelay: number;
     };
 
+    const dateDisplay = deathYear ? `${birthYear} – ${deathYear}` : birthYear;
+
     return (
         <div
-            className="constellation-node"
-            style={{
-                animationDelay: `${animDelay}ms`,
-                background: 'rgba(30, 37, 58, 0.85)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(181, 167, 199, 0.2)',
-                borderRadius: '18px',
-                padding: '14px 18px',
-                minWidth: '160px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.3), 0 0 15px rgba(181,167,199,0.06)',
-            }}
+            className="tree-node"
+            style={{ animationDelay: `${animDelay}ms` }}
         >
-            {/* ── 4 visible source handles (user drags FROM these) ── */}
-            <Handle type="source" position={Position.Top}    id="top-src"    className="constellation-handle" />
-            <Handle type="source" position={Position.Bottom} id="bottom-src" className="constellation-handle" />
-            <Handle type="source" position={Position.Left}   id="left-src"   className="constellation-handle" />
-            <Handle type="source" position={Position.Right}  id="right-src"  className="constellation-handle" />
+            {/* Source handles */}
+            <Handle type="source" position={Position.Top}    id="top-src"    className="tree-handle" />
+            <Handle type="source" position={Position.Bottom} id="bottom-src" className="tree-handle" />
+            <Handle type="source" position={Position.Left}   id="left-src"   className="tree-handle" />
+            <Handle type="source" position={Position.Right}  id="right-src"  className="tree-handle" />
 
-            {/* ── 4 hidden target handles (other nodes can drop ON these) ── */}
-            <Handle type="target" position={Position.Top}    id="top-tgt"    className="constellation-handle-hidden" />
-            <Handle type="target" position={Position.Bottom} id="bottom-tgt" className="constellation-handle-hidden" />
-            <Handle type="target" position={Position.Left}   id="left-tgt"   className="constellation-handle-hidden" />
-            <Handle type="target" position={Position.Right}  id="right-tgt"  className="constellation-handle-hidden" />
+            {/* Hidden target handles */}
+            <Handle type="target" position={Position.Top}    id="top-tgt"    className="tree-handle-target" />
+            <Handle type="target" position={Position.Bottom} id="bottom-tgt" className="tree-handle-target" />
+            <Handle type="target" position={Position.Left}   id="left-tgt"   className="tree-handle-target" />
+            <Handle type="target" position={Position.Right}  id="right-tgt"  className="tree-handle-target" />
 
-            {/* ── Card content ── */}
-            <div className="flex items-center gap-3">
+            {/* Photo */}
+            <div className="tree-node-photo">
                 {photoUrl ? (
                     <img
                         src={photoUrl}
                         alt=""
-                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                        style={{ border: '1.5px solid rgba(181,167,199,0.3)' }}
+                        className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{
-                            background: 'rgba(181,167,199,0.12)',
-                            border: '1.5px solid rgba(181,167,199,0.2)',
-                        }}
-                    >
-                        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 16 }}>&#10022;</span>
+                    <div className="w-full h-full flex items-center justify-center bg-sand/30">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-charcoal/30">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
                     </div>
                 )}
-                <div className="min-w-0">
-                    <div
-                        className="text-sm font-medium leading-tight truncate"
-                        style={{ color: 'rgba(255,255,255,0.9)', maxWidth: '110px' }}
-                    >
-                        {name}
-                    </div>
-                    <div className="text-xs mt-0.5" style={{ color: 'rgba(181,167,199,0.6)' }}>
-                        {birthYear}
-                    </div>
+            </div>
+
+            {/* Name + dates */}
+            <div className="tree-node-info">
+                <div className="font-serif text-sm font-semibold text-charcoal leading-tight truncate">
+                    {name}
+                </div>
+                <div className="text-xs text-charcoal/45 mt-0.5">
+                    {dateDisplay}
                 </div>
             </div>
         </div>
     );
 }
 
-const nodeTypes = { constellation: ConstellationNode };
+const nodeTypes = { constellation: TreeNode };
 
 // ─── Node info popup ────────────────────────────────────────────────────────
 
@@ -354,22 +340,22 @@ function NodeInfoPopup({
     return (
         <div
             ref={popupRef}
-            className="constellation-popup fixed z-50 p-4"
-            style={{ left: screenPos.x + 20, top: screenPos.y - 20, width: 210 }}
+            className="tree-popup fixed z-50 p-4"
+            style={{ left: screenPos.x + 20, top: screenPos.y - 20, width: 220 }}
         >
-            <button onClick={onClose} className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <button onClick={onClose} className="absolute top-2 right-2 p-1 hover:bg-charcoal/5 rounded text-charcoal/30">
                 <X size={12} />
             </button>
 
-            <div className="font-serif text-sm font-semibold mb-1" style={{ color: 'rgba(255,255,255,0.9)' }}>{name}</div>
-            <div className="text-xs mb-2" style={{ color: 'rgba(181,167,199,0.7)' }}>{dateRange}</div>
+            <div className="font-serif text-base font-semibold text-charcoal mb-0.5">{name}</div>
+            <div className="text-xs text-charcoal/50 mb-2">{dateRange}</div>
 
             {birthPlace && (
-                <div className="text-xs mb-2" style={{ color: 'rgba(138,171,180,0.7)' }}>Born in {birthPlace}</div>
+                <div className="text-xs text-charcoal/45 mb-2">Born in {birthPlace}</div>
             )}
 
             {epitaph && (
-                <div className="text-xs italic mb-3" style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                <div className="text-xs italic text-charcoal/40 mb-3 leading-relaxed">
                     &ldquo;{epitaph.length > 80 ? epitaph.substring(0, 80) + '...' : epitaph}&rdquo;
                 </div>
             )}
@@ -377,8 +363,7 @@ function NodeInfoPopup({
             {slug && (
                 <Link
                     href={`/person/${slug}`}
-                    className="flex items-center gap-1.5 text-xs py-1.5 px-2.5 rounded-lg transition-colors hover:bg-white/10"
-                    style={{ color: 'rgba(181,167,199,0.8)', border: '1px solid rgba(181,167,199,0.2)' }}
+                    className="flex items-center gap-1.5 text-xs py-1.5 px-2.5 rounded-lg transition-colors text-sage hover:bg-sage/10 border border-sage/20"
                 >
                     <ExternalLink size={10} />
                     View Memorial
@@ -388,7 +373,7 @@ function NodeInfoPopup({
     );
 }
 
-// ─── Edge label edit popover ────────────────────────────────────────────────
+// ─── Edge edit popover ──────────────────────────────────────────────────────
 
 function EdgeEditPopover({
     edgeData,
@@ -417,17 +402,22 @@ function EdgeEditPopover({
         return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
     }, [onClose]);
 
+    const typeBadgeColors: Record<string, { bg: string; text: string; border: string }> = {
+        parent: { bg: 'bg-sage/10', text: 'text-sage', border: 'border-sage/20' },
+        child: { bg: 'bg-sage/10', text: 'text-sage', border: 'border-sage/20' },
+        spouse: { bg: 'bg-terracotta/10', text: 'text-terracotta', border: 'border-terracotta/20' },
+        sibling: { bg: 'bg-lavender/10', text: 'text-lavender', border: 'border-lavender/20' },
+    };
+    const badge = typeBadgeColors[edgeData.relationType] || { bg: 'bg-charcoal/5', text: 'text-charcoal/60', border: 'border-charcoal/10' };
+
     return (
         <div
             ref={popupRef}
-            className="constellation-popup fixed z-50 p-3"
-            style={{ left: screenPos.x - 100, top: screenPos.y - 50, width: 220 }}
+            className="tree-popup fixed z-50 p-3"
+            style={{ left: screenPos.x - 110, top: screenPos.y - 50, width: 230 }}
         >
             {edgeData.relationType && edgeData.relationType !== 'other' && (
-                <div
-                    className="text-xs capitalize px-2 py-0.5 rounded-full inline-block mb-2"
-                    style={{ color: 'rgba(181,167,199,0.8)', background: 'rgba(181,167,199,0.15)', border: '1px solid rgba(181,167,199,0.2)' }}
-                >
+                <div className={`text-xs capitalize px-2 py-0.5 rounded-full inline-block mb-2 border ${badge.bg} ${badge.text} ${badge.border}`}>
                     {edgeData.relationType}
                 </div>
             )}
@@ -438,38 +428,33 @@ function EdgeEditPopover({
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') onSave(edgeData.id, value.trim()); if (e.key === 'Escape') onClose(); }}
-                placeholder="e.g. grandma/little child"
-                className="w-full text-xs px-2 py-1.5 rounded-lg outline-none"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(181,167,199,0.2)', color: 'rgba(255,255,255,0.85)' }}
+                placeholder="Custom label (optional)"
+                className="w-full text-xs px-2.5 py-1.5 rounded-lg outline-none bg-charcoal/[0.03] border border-charcoal/10 text-charcoal placeholder:text-charcoal/30 focus:border-sage/40 transition-colors"
                 maxLength={50}
             />
 
             <div className="flex justify-between items-center mt-2">
-                {/* Delete button */}
                 {!confirmDelete ? (
                     <button
                         onClick={() => setConfirmDelete(true)}
-                        className="flex items-center gap-1 text-xs p-1.5 rounded hover:bg-red-500/10 transition-colors"
-                        style={{ color: 'rgba(220,100,100,0.6)' }}
+                        className="flex items-center gap-1 text-xs p-1.5 rounded hover:bg-terracotta/10 transition-colors text-terracotta/50"
                     >
                         <Trash2 size={12} />
                     </button>
                 ) : (
                     <button
                         onClick={() => onDelete(edgeData.id)}
-                        className="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors"
-                        style={{ color: '#e87171', background: 'rgba(220,100,100,0.12)', border: '1px solid rgba(220,100,100,0.2)' }}
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors text-terracotta bg-terracotta/10 border border-terracotta/20"
                     >
                         Remove?
                     </button>
                 )}
 
-                {/* Save / Cancel */}
                 <div className="flex gap-1.5">
-                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    <button onClick={onClose} className="p-1.5 rounded hover:bg-charcoal/5 transition-colors text-charcoal/30">
                         <X size={14} />
                     </button>
-                    <button onClick={() => onSave(edgeData.id, value.trim())} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(137,184,150,0.8)' }}>
+                    <button onClick={() => onSave(edgeData.id, value.trim())} className="p-1.5 rounded hover:bg-sage/10 transition-colors text-sage">
                         <Check size={14} />
                     </button>
                 </div>
@@ -478,7 +463,7 @@ function EdgeEditPopover({
     );
 }
 
-// ─── New connection popup: type picker + custom label ───────────────────────
+// ─── New connection popup ───────────────────────────────────────────────────
 
 function NewConnectionPopup({
     sourceName,
@@ -503,73 +488,73 @@ function NewConnectionPopup({
         return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
     }, [onClose]);
 
+    const types = [
+        { key: 'parent', label: 'Parent', color: 'sage' },
+        { key: 'child', label: 'Child', color: 'sage' },
+        { key: 'spouse', label: 'Spouse', color: 'terracotta' },
+        { key: 'sibling', label: 'Sibling', color: 'lavender' },
+    ];
+
     return (
         <div
             ref={popupRef}
-            className="constellation-popup fixed z-50 p-4"
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 260 }}
+            className="tree-popup fixed z-50 p-5"
+            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 280 }}
         >
-            {/* Title */}
-            <div className="text-xs mb-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                New connection
-            </div>
-            <div className="text-sm font-medium mb-4" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                {sourceName} <span style={{ color: 'rgba(181,167,199,0.5)' }}>↔</span> {targetName}
+            <div className="text-xs text-charcoal/40 mb-1">New connection</div>
+            <div className="text-sm font-serif font-semibold text-charcoal mb-4">
+                {sourceName} <span className="text-charcoal/25 mx-1">&harr;</span> {targetName}
             </div>
 
-            {/* Type selector */}
             <div className="mb-3">
-                <div className="text-xs mb-1.5" style={{ color: 'rgba(181,167,199,0.6)' }}>Relationship type</div>
+                <div className="text-xs text-charcoal/50 mb-1.5">Relationship</div>
                 <div className="grid grid-cols-2 gap-1.5">
-                    {['parent', 'child', 'spouse', 'sibling'].map((t) => (
+                    {types.map((t) => (
                         <button
-                            key={t}
-                            onClick={() => setType(t)}
-                            className="text-xs capitalize py-1.5 px-3 rounded-lg transition-all text-center"
-                            style={type === t
-                                ? { background: 'rgba(181,167,199,0.25)', color: 'rgba(255,255,255,0.9)', border: '1px solid rgba(181,167,199,0.4)' }
-                                : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)' }
-                            }
+                            key={t.key}
+                            onClick={() => setType(t.key)}
+                            className={`text-xs py-1.5 px-3 rounded-lg transition-all text-center border ${
+                                type === t.key
+                                    ? `bg-${t.color}/15 text-${t.color} border-${t.color}/30 font-medium`
+                                    : 'bg-charcoal/[0.02] text-charcoal/50 border-charcoal/8 hover:border-charcoal/15'
+                            }`}
                         >
-                            {t}
+                            {t.label}
                         </button>
                     ))}
                 </div>
-                <div className="text-xs mt-1.5" style={{ color: 'rgba(138,171,180,0.5)' }}>
+                <div className="text-xs mt-1.5 text-charcoal/35">
                     {type === 'parent' || type === 'child'
                         ? 'Vertical layout (older on top)'
                         : 'Horizontal layout (side by side)'}
                 </div>
             </div>
 
-            {/* Custom label */}
             <div className="mb-4">
-                <div className="text-xs mb-1.5" style={{ color: 'rgba(181,167,199,0.6)' }}>Custom label <span style={{ color: 'rgba(255,255,255,0.25)' }}>(optional)</span></div>
+                <div className="text-xs text-charcoal/50 mb-1.5">
+                    Custom label <span className="text-charcoal/25">(optional)</span>
+                </div>
                 <input
                     type="text"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') onSave(type, label.trim()); if (e.key === 'Escape') onClose(); }}
-                    placeholder="e.g. grandma/little child"
-                    className="w-full text-xs px-2.5 py-2 rounded-lg outline-none"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(181,167,199,0.15)', color: 'rgba(255,255,255,0.85)' }}
+                    placeholder="e.g. grandma"
+                    className="w-full text-xs px-2.5 py-2 rounded-lg outline-none bg-charcoal/[0.03] border border-charcoal/10 text-charcoal placeholder:text-charcoal/30 focus:border-sage/40 transition-colors"
                     maxLength={50}
                 />
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-2">
                 <button
                     onClick={onClose}
-                    className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10"
-                    style={{ color: 'rgba(255,255,255,0.5)' }}
+                    className="text-xs px-3 py-1.5 rounded-lg transition-colors text-charcoal/40 hover:bg-charcoal/5"
                 >
                     Cancel
                 </button>
                 <button
                     onClick={() => onSave(type, label.trim())}
-                    className="text-xs px-4 py-1.5 rounded-lg transition-colors"
-                    style={{ background: 'rgba(137,184,150,0.25)', color: 'rgba(137,184,150,0.9)', border: '1px solid rgba(137,184,150,0.3)' }}
+                    className="text-xs px-4 py-1.5 rounded-lg transition-colors bg-sage/15 text-sage border border-sage/25 hover:bg-sage/25 font-medium"
                 >
                     Connect
                 </button>
@@ -580,21 +565,18 @@ function NewConnectionPopup({
 
 // ─── Main graph component ───────────────────────────────────────────────────
 
-function ConstellationGraph({ userId }: { userId: string }) {
+function FamilyTreeGraph({ userId }: { userId: string }) {
     const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
     const [loading, setLoading] = useState(true);
 
-    // Node info popup
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [selectedNodeData, setSelectedNodeData] = useState<any>(null);
     const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
-    // Edge edit
     const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: string; description: string } | null>(null);
     const [edgePopupPos, setEdgePopupPos] = useState({ x: 0, y: 0 });
 
-    // New connection (after drag)
     const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
     const [linking, setLinking] = useState(false);
 
@@ -624,10 +606,8 @@ function ConstellationGraph({ userId }: { userId: string }) {
             peopleRef.current = people;
             relationsRef.current = relations || [];
 
-            // Compute family tree positions
             const positions = computeFamilyLayout(people, relations || []);
 
-            // Build nodes
             const graphNodes: Node[] = people.map((person, index) => {
                 const pos = positions[person.id] || { x: index * H_GAP, y: 0 };
                 const step1 = person.step1 || {};
@@ -644,12 +624,11 @@ function ConstellationGraph({ userId }: { userId: string }) {
                         epitaph: step1.epitaph || null,
                         memorialId: person.id,
                         slug: person.slug,
-                        animDelay: index * 100,
+                        animDelay: index * 80,
                     },
                 };
             });
 
-            // Build edges (deduplicated, with correct handles)
             const peopleMap: Record<string, PersonData> = {};
             for (const p of people) peopleMap[p.id] = p;
 
@@ -664,15 +643,12 @@ function ConstellationGraph({ userId }: { userId: string }) {
         }
     };
 
-    // ─── Drag-to-connect handler ──────────────────────────────────────────
-
     const handleNewConnection = useCallback((connection: Connection) => {
         if (connection.source && connection.target && connection.source !== connection.target) {
             setPendingConnection({ source: connection.source, target: connection.target });
         }
     }, []);
 
-    // Save new connection with type + optional custom label
     const handleSaveNewConnection = useCallback(async (type: string, description: string) => {
         if (!pendingConnection) return;
         setLinking(true);
@@ -680,7 +656,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
         let fromId = pendingConnection.source;
         let toId = pendingConnection.target;
 
-        // For parent/child, figure out who's older using birth_date
         if (type === 'parent' || type === 'child') {
             const personA = peopleRef.current.find(p => p.id === fromId);
             const personB = peopleRef.current.find(p => p.id === toId);
@@ -688,16 +663,11 @@ function ConstellationGraph({ userId }: { userId: string }) {
             const dateB = personB?.birth_date || '9999';
 
             if (type === 'parent') {
-                // "parent" means: fromId is the parent of toId
-                // Make the older one the parent
                 if (dateA > dateB) {
-                    // A is younger → swap so the older person is "from" (parent)
                     fromId = pendingConnection.target;
                     toId = pendingConnection.source;
                 }
             } else {
-                // "child" means: fromId is the child of toId
-                // Make the younger one the child (from)
                 if (dateA < dateB) {
                     fromId = pendingConnection.target;
                     toId = pendingConnection.source;
@@ -726,8 +696,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
         }
     }, [pendingConnection]);
 
-    // ─── Node click: info popup ───────────────────────────────────────────
-
     const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
         if (selectedNodeId === node.id) {
             setSelectedNodeId(null);
@@ -744,8 +712,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
         setSelectedNodeId(node.id);
         setSelectedNodeData(node.data);
     }, [selectedNodeId, reactFlowInstance]);
-
-    // ─── Edge click: edit label ───────────────────────────────────────────
 
     const handleEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
         const rel = relationsRef.current.find(r => r.id === edge.id);
@@ -780,15 +746,11 @@ function ConstellationGraph({ userId }: { userId: string }) {
         setEditingEdge(null);
     }, [setEdges]);
 
-    // Delete an edge and its reverse link from DB, then reload
     const handleEdgeDelete = useCallback(async (edgeId: string) => {
         try {
-            // Find the relation to get from/to IDs for reverse deletion
             const rel = relationsRef.current.find(r => r.id === edgeId);
             if (rel) {
-                // Delete the forward link
                 await supabase.from('memorial_relations').delete().eq('id', edgeId);
-                // Delete the reverse link (same pair, opposite direction)
                 await supabase
                     .from('memorial_relations')
                     .delete()
@@ -802,8 +764,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
         }
     }, []);
 
-    // ─── Get names for pending connection popup ───────────────────────────
-
     const pendingSourceName = pendingConnection
         ? (nodes.find(n => n.id === pendingConnection.source)?.data as any)?.name || '?'
         : '';
@@ -811,53 +771,38 @@ function ConstellationGraph({ userId }: { userId: string }) {
         ? (nodes.find(n => n.id === pendingConnection.target)?.data as any)?.name || '?'
         : '';
 
-    // ─── Render ───────────────────────────────────────────────────────────
-
     return (
-        <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #0a0e1a 0%, #121828 40%, #151a30 100%)' }}>
+        <div className="h-screen flex flex-col bg-ivory">
             {/* Header */}
-            <div
-                className="flex-none px-6 py-4 flex justify-between items-center z-10"
-                style={{
-                    background: 'rgba(10, 14, 26, 0.8)',
-                    backdropFilter: 'blur(12px)',
-                    borderBottom: '1px solid rgba(181, 167, 199, 0.1)',
-                }}
-            >
+            <div className="flex-none px-6 py-4 flex justify-between items-center z-10 bg-ivory border-b border-sand/40">
                 <div className="flex items-center gap-4">
-                    <Link href={`/dashboard/family/${userId}`} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
-                        <ArrowLeft size={20} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                    <Link href={`/dashboard/family/${userId}`} className="p-2 hover:bg-charcoal/5 rounded-lg transition-colors">
+                        <ArrowLeft size={20} className="text-charcoal/50" />
                     </Link>
-                    <h1 className="font-serif text-2xl" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                        Family Constellation
-                    </h1>
+                    <div>
+                        <h1 className="font-serif text-2xl text-charcoal">
+                            Family Tree
+                        </h1>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div
-                        className="text-xs px-3 py-1 rounded-full"
-                        style={{
-                            color: 'rgba(181, 167, 199, 0.6)',
-                            background: 'rgba(181, 167, 199, 0.08)',
-                            border: '1px solid rgba(181, 167, 199, 0.1)',
-                        }}
-                    >
-                        Drag between dots to connect · Click a card for info
+                    <div className="text-xs px-3 py-1.5 rounded-full text-charcoal/40 bg-sand/20 border border-sand/30">
+                        Drag between dots to connect
                     </div>
                 </div>
             </div>
 
             {/* Graph Area */}
-            <div className="flex-1 w-full h-full relative overflow-hidden">
-                <div className="constellation-stars" />
-                <div className="constellation-stars-2" />
-                <div className="constellation-nebula" />
+            <div className="flex-1 w-full h-full relative overflow-hidden tree-canvas">
+                {/* Subtle pattern background */}
+                <div className="tree-pattern" />
 
                 {loading ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                        <Loader2 className="animate-spin" size={32} style={{ color: 'rgba(181,167,199,0.6)' }} />
-                        <span className="font-serif text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                            Loading constellation...
+                        <Loader2 className="animate-spin text-sage/60" size={28} />
+                        <span className="font-serif text-sm text-charcoal/40">
+                            Loading family tree...
                         </span>
                     </div>
                 ) : (
@@ -877,16 +822,11 @@ function ConstellationGraph({ userId }: { userId: string }) {
                     >
                         <Controls
                             showInteractive={false}
-                            style={{
-                                background: 'rgba(10, 14, 26, 0.7)',
-                                border: '1px solid rgba(181, 167, 199, 0.15)',
-                                borderRadius: '8px',
-                            }}
+                            className="tree-controls"
                         />
                     </ReactFlow>
                 )}
 
-                {/* Node info popup */}
                 {selectedNodeId && selectedNodeData && (
                     <NodeInfoPopup
                         nodeData={selectedNodeData}
@@ -895,7 +835,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
                     />
                 )}
 
-                {/* Edge edit popover */}
                 {editingEdge && (
                     <EdgeEditPopover
                         edgeData={editingEdge}
@@ -906,7 +845,6 @@ function ConstellationGraph({ userId }: { userId: string }) {
                     />
                 )}
 
-                {/* New connection popup: type + label */}
                 {pendingConnection && (
                     <NewConnectionPopup
                         sourceName={pendingSourceName}
@@ -916,10 +854,9 @@ function ConstellationGraph({ userId }: { userId: string }) {
                     />
                 )}
 
-                {/* Linking overlay */}
                 {linking && (
-                    <div className="absolute inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(10,14,26,0.5)' }}>
-                        <Loader2 className="animate-spin" size={24} style={{ color: 'rgba(181,167,199,0.8)' }} />
+                    <div className="absolute inset-0 flex items-center justify-center z-50 bg-ivory/60">
+                        <Loader2 className="animate-spin text-sage" size={24} />
                     </div>
                 )}
             </div>
@@ -935,7 +872,7 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
 
     return (
         <ReactFlowProvider>
-            <ConstellationGraph userId={userId} />
+            <FamilyTreeGraph userId={userId} />
         </ReactFlowProvider>
     );
 }

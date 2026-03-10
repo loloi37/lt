@@ -82,120 +82,19 @@
   animation: tutorialGlow 2s ease-in-out infinite;
 }
 
-/* ── Constellation Visualization ── */
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-@keyframes twinkle-slow {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes starGlow {
-  0%, 100% {
-    box-shadow:
-      0 0 15px rgba(181, 167, 199, 0.4),
-      0 0 30px rgba(138, 171, 180, 0.2),
-      0 0 60px rgba(181, 167, 199, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 20px rgba(181, 167, 199, 0.6),
-      0 0 40px rgba(138, 171, 180, 0.3),
-      0 0 80px rgba(181, 167, 199, 0.15);
-  }
-}
-
-@keyframes constellationFadeIn {
+/* ── Family Tree Visualization ── */
+@keyframes treeFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    transform: translateY(8px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes nebulaDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(15px, -10px) scale(1.02); }
-  66% { transform: translate(-10px, 8px) scale(0.98); }
-}
-
-/* Constellation star field layers */
-.constellation-stars,
-.constellation-stars-2 {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.constellation-stars {
-  background-image:
-    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.9) 0%, transparent 100%),
-    radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 15% 65%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 35% 80%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1px 1px at 48% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 20% 48%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 75% 40%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 95% 72%, rgba(255,255,255,0.5) 0%, transparent 100%);
-  animation: twinkle 4s ease-in-out infinite;
-}
-
-.constellation-stars-2 {
-  background-image:
-    radial-gradient(1px 1px at 8% 42%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 22% 18%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 38% 58%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1px 1px at 52% 25%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 68% 72%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 82% 38%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 12% 82%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1px 1px at 45% 92%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 62% 8%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 88% 62%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1px 1px at 32% 32%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1px 1px at 72% 52%, rgba(255,255,255,0.4) 0%, transparent 100%);
-  animation: twinkle-slow 6s ease-in-out infinite 2s;
-}
-
-/* Constellation node — card style */
-.constellation-node {
-  animation: constellationFadeIn 0.6s ease-out both;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-}
-
-.constellation-node:hover {
-  transform: translateY(-1px);
-  z-index: 10;
-}
-
-/* Nebula background effect */
-.constellation-nebula {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 600px 400px at 50% 50%, rgba(181, 167, 199, 0.08) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 300px at 30% 40%, rgba(138, 171, 180, 0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 350px 250px at 70% 60%, rgba(137, 184, 150, 0.05) 0%, transparent 60%);
-  animation: nebulaDrift 20s ease-in-out infinite;
-}
-
-/* Constellation popup */
-@keyframes popupFadeIn {
+@keyframes treePopupIn {
   from {
     opacity: 0;
     transform: scale(0.95) translateY(4px);
@@ -206,36 +105,97 @@
   }
 }
 
-.constellation-popup {
-  animation: popupFadeIn 0.2s ease-out;
-  background: rgba(15, 20, 35, 0.92);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(181, 167, 199, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(181, 167, 199, 0.1);
+/* Canvas background */
+.tree-canvas {
+  background:
+    linear-gradient(135deg, #fdf6f0 0%, #f7ede4 50%, #f5ece3 100%);
 }
 
-/* Constellation connection handle dots — visible on all 4 sides */
-.constellation-handle {
-  width: 10px !important;
-  height: 10px !important;
-  min-width: 10px !important;
-  min-height: 10px !important;
-  background: rgba(181, 167, 199, 0.35) !important;
-  border: 1.5px solid rgba(181, 167, 199, 0.5) !important;
+/* Subtle dot pattern on the canvas */
+.tree-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(circle 1px at center, #d4c4b5 0%, transparent 100%);
+  background-size: 28px 28px;
+}
+
+/* Node card */
+.tree-node {
+  animation: treeFadeIn 0.5s ease-out both;
+  background: #fff;
+  border: 1px solid #e8d8cc;
+  border-radius: 14px;
+  padding: 0;
+  width: 170px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px rgba(90, 107, 120, 0.06),
+    0 4px 12px rgba(90, 107, 120, 0.04);
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.tree-node:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 16px rgba(90, 107, 120, 0.1),
+    0 1px 4px rgba(90, 107, 120, 0.06);
+  z-index: 10;
+}
+
+/* Node photo area */
+.tree-node-photo {
+  width: 100%;
+  height: 80px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5ece3 0%, #e8d8cc 100%);
+}
+
+/* Node text area */
+.tree-node-info {
+  padding: 10px 14px 12px;
+}
+
+/* Popup (info, edge edit, new connection) */
+.tree-popup {
+  animation: treePopupIn 0.2s ease-out;
+  background: #fff;
+  border: 1px solid #e8d8cc;
+  border-radius: 12px;
+  box-shadow:
+    0 8px 30px rgba(90, 107, 120, 0.12),
+    0 2px 8px rgba(90, 107, 120, 0.06);
+}
+
+/* Connection handle dots — small, warm-toned */
+.tree-handle {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  background: #e8d8cc !important;
+  border: 1.5px solid #d4958a !important;
   border-radius: 50% !important;
   transition: all 0.2s ease;
+  opacity: 0 !important;
+}
+
+.tree-node:hover .tree-handle {
   opacity: 1 !important;
 }
 
-.constellation-handle:hover {
-  background: rgba(181, 167, 199, 0.9) !important;
-  box-shadow: 0 0 10px rgba(181, 167, 199, 0.5);
-  transform: scale(1.3);
+.tree-handle:hover {
+  background: #d4958a !important;
+  box-shadow: 0 0 8px rgba(212, 149, 138, 0.4);
+  transform: scale(1.4);
+  opacity: 1 !important;
 }
 
-/* Hide the invisible target-overlay handles (needed for bidirectional drag) */
-.constellation-handle-hidden {
+/* Hidden target handles */
+.tree-handle-target {
   width: 16px !important;
   height: 16px !important;
   min-width: 16px !important;
@@ -245,18 +205,42 @@
   opacity: 0 !important;
 }
 
-/* Constellation edge styling */
-.react-flow .react-flow__edge-path {
-  filter: drop-shadow(0 0 2px rgba(181, 167, 199, 0.3));
+/* Edge styling overrides */
+.tree-canvas .react-flow__edge-path {
+  filter: none;
 }
 
-.react-flow .react-flow__edge-textbg {
-  fill: transparent !important;
+.tree-canvas .react-flow__edge-textbg {
+  rx: 4;
+  ry: 4;
 }
 
-.react-flow .react-flow__edge-text {
-  fill: rgba(181, 167, 199, 0.7) !important;
+.tree-canvas .react-flow__edge-text {
   font-size: 10px !important;
+  font-weight: 500;
+}
+
+/* Controls */
+.tree-controls {
+  background: #fff !important;
+  border: 1px solid #e8d8cc !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(90, 107, 120, 0.08) !important;
+}
+
+.tree-controls button {
+  background: transparent !important;
+  border-bottom: 1px solid #f0e6dd !important;
+  color: #5a6b78 !important;
+}
+
+.tree-controls button:hover {
+  background: #fdf6f0 !important;
+}
+
+/* React Flow attribution hide (we keep it small) */
+.tree-canvas .react-flow__attribution {
+  opacity: 0.3;
 }
 
 .scrollbar-hide {
