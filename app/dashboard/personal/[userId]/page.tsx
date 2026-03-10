@@ -203,12 +203,16 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         return 0;
     });
 
-    // SECURITY: Don't render any interactive content until auth is freshly verified.
-    // This prevents bfcache from showing stale personal dashboard to upgraded family users.
-    if (!planVerified || auth.loading || auth.plan === 'family') {
+    // BLOCK RENDERING until auth checks pass — prevents flash of dashboard content
+    // for users who don't belong here (draft users, family-upgraded users, etc.)
+    const hasPersonalAccess = planVerified && !auth.loading && auth.authenticated && auth.plan === 'personal';
+    if (!hasPersonalAccess) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-sand/5 via-ivory to-sand/10 flex items-center justify-center">
-                <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+                <div className="text-center">
+                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                </div>
             </div>
         );
     }

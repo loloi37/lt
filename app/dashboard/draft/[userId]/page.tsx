@@ -116,6 +116,20 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
         return diff > 0 ? diff : 0;
     };
 
+    // BLOCK RENDERING until auth checks pass — prevents flash of dashboard content
+    // for paid users who don't belong on the draft dashboard
+    const hasDraftAccess = !auth.loading && auth.authenticated && !auth.hasPaid;
+    if (!hasDraftAccess) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-charcoal/5 via-ivory to-sand/20 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-charcoal/5 via-ivory to-sand/20">
             <div className="bg-white border-b border-sand/30 shadow-sm">
