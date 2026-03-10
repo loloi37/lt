@@ -69,6 +69,25 @@ export async function GET() {
             currentPlan = 'draft';
         }
 
+        // FALLBACK: If no paid memorials exist (all permanently deleted),
+        // check the users.highest_plan column which preserves the plan after permanent deletion.
+        if (currentPlan === 'none' || currentPlan === 'draft') {
+            const { data: userRow } = await supabaseAdmin
+                .from('users')
+                .select('highest_plan')
+                .eq('id', user.id)
+                .single();
+
+            if (userRow?.highest_plan) {
+                const planRank: Record<string, number> = { none: 0, draft: 1, personal: 2, family: 3, concierge: 4 };
+                const savedRank = planRank[userRow.highest_plan] ?? 0;
+                const currentRank = planRank[currentPlan] ?? 0;
+                if (savedRank > currentRank) {
+                    currentPlan = userRow.highest_plan as typeof currentPlan;
+                }
+            }
+        }
+
         return NextResponse.json({
             authenticated: true,
             user: {
@@ -76,7 +95,7 @@ export async function GET() {
                 email: user.email,
             },
             plan: currentPlan,
-            hasPaid: allPaidMemorials.length > 0,
+            hasPaid: allPaidMemorials.length > 0 || (currentPlan !== 'none' && currentPlan !== 'draft'),
             archives: activeMemorials.map(m => ({
                 id: m.id,
                 mode: m.mode,

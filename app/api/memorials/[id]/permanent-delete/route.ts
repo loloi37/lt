@@ -28,7 +28,7 @@ export async function DELETE(
         // 2. VERIFY OWNERSHIP & confirm it's already soft-deleted
         const { data: memorial, error: fetchError } = await supabaseAdmin
             .from('memorials')
-            .select('user_id, deleted')
+            .select('user_id, deleted, paid, mode')
             .eq('id', id)
             .single();
 
@@ -47,7 +47,35 @@ export async function DELETE(
             );
         }
 
-        // 3. DELETE PERMANENTLY — remove the row from the database
+        // 3. PRESERVE PLAN — if this was a paid memorial, save the highest plan
+        //    on the users table so the plan survives permanent deletion.
+        if (memorial.paid && memorial.mode) {
+            const planRank: Record<string, number> = { draft: 0, personal: 1, family: 2, concierge: 3 };
+            const memorialPlanRank = planRank[memorial.mode] ?? 0;
+
+            // Only upgrade, never downgrade
+            const { data: userRow } = await supabaseAdmin
+                .from('users')
+                .select('highest_plan')
+                .eq('id', user.id)
+                .single();
+
+            const currentRank = planRank[userRow?.highest_plan ?? 'draft'] ?? 0;
+            if (memorialPlanRank > currentRank) {
+                await supabaseAdmin
+                    .from('users')
+                    .update({ highest_plan: memorial.mode })
+                    .eq('id', user.id);
+            } else if (!userRow?.highest_plan && memorial.paid) {
+                // First time — just set it
+                await supabaseAdmin
+                    .from('users')
+                    .update({ highest_plan: memorial.mode })
+                    .eq('id', user.id);
+            }
+        }
+
+        // 4. DELETE PERMANENTLY — remove the row from the database
         const { error } = await supabaseAdmin
             .from('memorials')
             .delete()
