@@ -7,7 +7,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
-import { Loader2, ArrowLeft, X, Check, ExternalLink } from 'lucide-react';
+import { Loader2, ArrowLeft, X, Check, ExternalLink, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 // ─── Family tree layout algorithm ───────────────────────────────────────────
@@ -394,14 +394,17 @@ function EdgeEditPopover({
     edgeData,
     screenPos,
     onSave,
+    onDelete,
     onClose,
 }: {
     edgeData: { id: string; relationType: string; description: string };
     screenPos: { x: number; y: number };
     onSave: (id: string, description: string) => void;
+    onDelete: (id: string) => void;
     onClose: () => void;
 }) {
     const [value, setValue] = useState(edgeData.description || '');
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const popupRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -441,13 +444,35 @@ function EdgeEditPopover({
                 maxLength={50}
             />
 
-            <div className="flex justify-end gap-1.5 mt-2">
-                <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                    <X size={14} />
-                </button>
-                <button onClick={() => onSave(edgeData.id, value.trim())} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(137,184,150,0.8)' }}>
-                    <Check size={14} />
-                </button>
+            <div className="flex justify-between items-center mt-2">
+                {/* Delete button */}
+                {!confirmDelete ? (
+                    <button
+                        onClick={() => setConfirmDelete(true)}
+                        className="flex items-center gap-1 text-xs p-1.5 rounded hover:bg-red-500/10 transition-colors"
+                        style={{ color: 'rgba(220,100,100,0.6)' }}
+                    >
+                        <Trash2 size={12} />
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => onDelete(edgeData.id)}
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors"
+                        style={{ color: '#e87171', background: 'rgba(220,100,100,0.12)', border: '1px solid rgba(220,100,100,0.2)' }}
+                    >
+                        Remove?
+                    </button>
+                )}
+
+                {/* Save / Cancel */}
+                <div className="flex gap-1.5">
+                    <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        <X size={14} />
+                    </button>
+                    <button onClick={() => onSave(edgeData.id, value.trim())} className="p-1.5 rounded hover:bg-white/10 transition-colors" style={{ color: 'rgba(137,184,150,0.8)' }}>
+                        <Check size={14} />
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -755,6 +780,28 @@ function ConstellationGraph({ userId }: { userId: string }) {
         setEditingEdge(null);
     }, [setEdges]);
 
+    // Delete an edge and its reverse link from DB, then reload
+    const handleEdgeDelete = useCallback(async (edgeId: string) => {
+        try {
+            // Find the relation to get from/to IDs for reverse deletion
+            const rel = relationsRef.current.find(r => r.id === edgeId);
+            if (rel) {
+                // Delete the forward link
+                await supabase.from('memorial_relations').delete().eq('id', edgeId);
+                // Delete the reverse link (same pair, opposite direction)
+                await supabase
+                    .from('memorial_relations')
+                    .delete()
+                    .eq('from_memorial_id', rel.to_memorial_id)
+                    .eq('to_memorial_id', rel.from_memorial_id);
+            }
+            setEditingEdge(null);
+            await loadFamilyData();
+        } catch (error) {
+            console.error('Failed to delete edge:', error);
+        }
+    }, []);
+
     // ─── Get names for pending connection popup ───────────────────────────
 
     const pendingSourceName = pendingConnection
@@ -854,6 +901,7 @@ function ConstellationGraph({ userId }: { userId: string }) {
                         edgeData={editingEdge}
                         screenPos={edgePopupPos}
                         onSave={handleEdgeSave}
+                        onDelete={handleEdgeDelete}
                         onClose={() => setEditingEdge(null)}
                     />
                 )}
