@@ -1,23 +1,119 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
-import { ReactFlow, Background, Controls, useNodesState, useEdgesState, Position, MarkerType, Node, Edge } from '@xyflow/react';
+import { useState, useEffect, use, useCallback, useMemo } from 'react';
+import { ReactFlow, Controls, useNodesState, useEdgesState, Position, Node, Edge, Handle, NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-// Custom Node Style (The "Box")
-const nodeStyle = {
-    background: '#fff',
-    border: '1px solid #e8d8cc', // Sand color
-    borderRadius: '12px',
-    padding: '10px',
-    width: 180,
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-    fontFamily: 'var(--font-sans)',
-    textAlign: 'center' as const,
-};
+// Golden angle in radians for organic spiral distribution
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+
+// Seeded pseudo-random for consistent "organic" offsets
+function seededRandom(seed: number) {
+    const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+}
+
+// Calculate constellation positions using golden-angle spiral
+function getConstellationPosition(index: number, total: number) {
+    const centerX = 0;
+    const centerY = 0;
+
+    if (total === 1) return { x: centerX, y: centerY };
+
+    // Radius grows with sqrt for even area distribution
+    const baseRadius = Math.min(200, 120 + total * 15);
+    const radius = baseRadius * Math.sqrt((index + 0.5) / total);
+    const angle = index * GOLDEN_ANGLE;
+
+    // Add organic offset (seeded by index for consistency)
+    const offsetX = (seededRandom(index * 3) - 0.5) * 40;
+    const offsetY = (seededRandom(index * 7) - 0.5) * 40;
+
+    return {
+        x: centerX + radius * Math.cos(angle) + offsetX,
+        y: centerY + radius * Math.sin(angle) + offsetY,
+    };
+}
+
+// Custom constellation node component
+function ConstellationNode({ data }: NodeProps) {
+    const { photoUrl, name, birthYear, animDelay } = data as {
+        photoUrl: string | null;
+        name: string;
+        birthYear: string;
+        animDelay: number;
+    };
+
+    return (
+        <div
+            className="constellation-node flex flex-col items-center"
+            style={{ animationDelay: `${animDelay}ms` }}
+        >
+            <Handle type="target" position={Position.Top} style={{ opacity: 0, pointerEvents: 'all' }} />
+
+            {/* Glow ring behind photo */}
+            <div className="node-photo relative mb-3" style={{ padding: '3px' }}>
+                <div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(181,167,199,0.4), rgba(138,171,180,0.4), rgba(137,184,150,0.3))',
+                        filter: 'blur(4px)',
+                    }}
+                />
+                {photoUrl ? (
+                    <img
+                        src={photoUrl}
+                        alt=""
+                        className="relative w-16 h-16 rounded-full object-cover"
+                        style={{
+                            border: '2px solid rgba(255,255,255,0.3)',
+                        }}
+                    />
+                ) : (
+                    <div
+                        className="relative w-16 h-16 rounded-full flex items-center justify-center"
+                        style={{
+                            background: 'linear-gradient(135deg, rgba(181,167,199,0.3), rgba(138,171,180,0.3))',
+                            border: '2px solid rgba(255,255,255,0.2)',
+                        }}
+                    >
+                        <span className="text-white/50 text-xl">&#10022;</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Name */}
+            <div
+                className="font-semibold text-sm text-center leading-tight"
+                style={{
+                    color: 'rgba(255,255,255,0.9)',
+                    textShadow: '0 1px 8px rgba(0,0,0,0.5)',
+                    maxWidth: '120px',
+                }}
+            >
+                {name}
+            </div>
+
+            {/* Birth year */}
+            <div
+                className="text-xs mt-0.5"
+                style={{
+                    color: 'rgba(181,167,199,0.7)',
+                    textShadow: '0 1px 4px rgba(0,0,0,0.4)',
+                }}
+            >
+                {birthYear}
+            </div>
+
+            <Handle type="source" position={Position.Bottom} style={{ opacity: 0, pointerEvents: 'all' }} />
+        </div>
+    );
+}
+
+const nodeTypes = { constellation: ConstellationNode };
 
 export default function FamilyTreePage({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -41,49 +137,47 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                 .eq('user_id', userId);
 
             // 2. Fetch Relations (The Connections)
-            // We need relations where EITHER side belongs to one of our memorials
-            // Since RLS restricts to owner, a simple select * works fine for "my" relations
             const { data: relations } = await supabase
                 .from('memorial_relations')
                 .select('*');
 
             if (!people) return;
 
-            // 3. Transform into Graph Nodes
-            // Simple layout logic: Distribute in a grid for now
-            // (A real genealogy layout algorithm is complex, this is a starting point)
-            const graphNodes: Node[] = people.map((person, index) => ({
-                id: person.id,
-                position: { x: (index % 4) * 250, y: Math.floor(index / 4) * 150 }, // Simple grid layout
-                data: {
-                    label: (
-                        <div className="flex flex-col items-center">
-                            {person.profile_photo_url ? (
-                                <img src={person.profile_photo_url} alt="" className="w-12 h-12 rounded-full object-cover mb-2 border-2 border-mist/20" />
-                            ) : (
-                                <div className="w-12 h-12 rounded-full bg-mist/10 mb-2" />
-                            )}
-                            <div className="font-semibold text-charcoal text-sm">{person.full_name}</div>
-                            <div className="text-xs text-charcoal/50">{person.birth_date?.substring(0, 4) || '????'}</div>
-                        </div>
-                    )
-                },
-                style: nodeStyle,
-                sourcePosition: Position.Bottom,
-                targetPosition: Position.Top,
-            }));
+            // 3. Transform into Constellation Nodes
+            const total = people.length;
+            const graphNodes: Node[] = people.map((person, index) => {
+                const pos = getConstellationPosition(index, total);
+                return {
+                    id: person.id,
+                    type: 'constellation',
+                    position: { x: pos.x, y: pos.y },
+                    data: {
+                        photoUrl: person.profile_photo_url,
+                        name: person.full_name,
+                        birthYear: person.birth_date?.substring(0, 4) || '????',
+                        animDelay: index * 150,
+                    },
+                };
+            });
 
-            // 4. Transform into Graph Edges
+            // 4. Transform into Constellation Edges
             const graphEdges: Edge[] = (relations || []).map((rel) => ({
                 id: rel.id,
                 source: rel.from_memorial_id,
                 target: rel.to_memorial_id,
                 label: rel.relationship_type,
-                type: 'smoothstep',
+                type: 'straight',
                 animated: false,
-                style: { stroke: '#89b896' }, // Sage color lines
-                labelStyle: { fill: '#5a6b78', fontSize: 10 },
-                markerEnd: { type: MarkerType.ArrowClosed, color: '#89b896' },
+                style: {
+                    stroke: 'rgba(181, 167, 199, 0.45)',
+                    strokeWidth: 1,
+                },
+                labelStyle: {
+                    fill: 'rgba(255, 255, 255, 0.45)',
+                    fontSize: 9,
+                    fontFamily: 'var(--font-sans)',
+                    textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+                },
             }));
 
             setNodes(graphNodes);
@@ -97,25 +191,50 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
     };
 
     return (
-        <div className="h-screen flex flex-col bg-ivory">
+        <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #0a0e1a 0%, #121828 40%, #151a30 100%)' }}>
             {/* Header */}
-            <div className="flex-none bg-white border-b border-sand/30 px-6 py-4 flex justify-between items-center z-10">
+            <div
+                className="flex-none px-6 py-4 flex justify-between items-center z-10"
+                style={{
+                    background: 'rgba(10, 14, 26, 0.8)',
+                    backdropFilter: 'blur(12px)',
+                    borderBottom: '1px solid rgba(181, 167, 199, 0.1)',
+                }}
+            >
                 <div className="flex items-center gap-4">
-                    <Link href={`/dashboard/family/${userId}`} className="p-2 hover:bg-sand/10 rounded-lg transition-colors">
-                        <ArrowLeft size={20} className="text-charcoal/60" />
+                    <Link href={`/dashboard/family/${userId}`} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                        <ArrowLeft size={20} style={{ color: 'rgba(255,255,255,0.6)' }} />
                     </Link>
-                    <h1 className="font-serif text-2xl text-charcoal">Family Constellation</h1>
+                    <h1 className="font-serif text-2xl" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                        Family Constellation
+                    </h1>
                 </div>
-                <div className="text-xs text-charcoal/40 bg-sand/10 px-3 py-1 rounded-full">
+                <div
+                    className="text-xs px-3 py-1 rounded-full"
+                    style={{
+                        color: 'rgba(181, 167, 199, 0.6)',
+                        background: 'rgba(181, 167, 199, 0.08)',
+                        border: '1px solid rgba(181, 167, 199, 0.1)',
+                    }}
+                >
                     Drag nodes to organize
                 </div>
             </div>
 
             {/* Graph Area */}
-            <div className="flex-1 w-full h-full relative">
+            <div className="flex-1 w-full h-full relative overflow-hidden">
+                {/* Star field layers */}
+                <div className="constellation-stars" />
+                <div className="constellation-stars-2" />
+                {/* Nebula glow */}
+                <div className="constellation-nebula" />
+
                 {loading ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="animate-spin text-sage" size={32} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="animate-spin" size={32} style={{ color: 'rgba(181,167,199,0.6)' }} />
+                        <span className="font-serif text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                            Loading constellation...
+                        </span>
                     </div>
                 ) : (
                     <ReactFlow
@@ -123,11 +242,20 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                         edges={edges}
                         onNodesChange={onNodesChange}
                         onEdgesChange={onEdgesChange}
+                        nodeTypes={nodeTypes}
                         fitView
+                        fitViewOptions={{ padding: 0.4 }}
                         attributionPosition="bottom-right"
+                        style={{ background: 'transparent' }}
                     >
-                        <Background color="#e8d8cc" gap={16} />
-                        <Controls showInteractive={false} />
+                        <Controls
+                            showInteractive={false}
+                            style={{
+                                background: 'rgba(10, 14, 26, 0.7)',
+                                border: '1px solid rgba(181, 167, 199, 0.15)',
+                                borderRadius: '8px',
+                            }}
+                        />
                     </ReactFlow>
                 )}
             </div>

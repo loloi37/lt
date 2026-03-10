@@ -82,6 +82,136 @@
   animation: tutorialGlow 2s ease-in-out infinite;
 }
 
+/* ── Constellation Visualization ── */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes twinkle-slow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes starGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 15px rgba(181, 167, 199, 0.4),
+      0 0 30px rgba(138, 171, 180, 0.2),
+      0 0 60px rgba(181, 167, 199, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(181, 167, 199, 0.6),
+      0 0 40px rgba(138, 171, 180, 0.3),
+      0 0 80px rgba(181, 167, 199, 0.15);
+  }
+}
+
+@keyframes constellationFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes nebulaDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15px, -10px) scale(1.02); }
+  66% { transform: translate(-10px, 8px) scale(0.98); }
+}
+
+/* Constellation star field layers */
+.constellation-stars,
+.constellation-stars-2 {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.constellation-stars {
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 10%, rgba(255,255,255,0.9) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 45%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 85% 55%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 65%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 80%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 85%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 20% 48%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 40%, rgba(255,255,255,0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 72%, rgba(255,255,255,0.5) 0%, transparent 100%);
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+.constellation-stars-2 {
+  background-image:
+    radial-gradient(1px 1px at 8% 42%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 22% 18%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 38% 58%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 52% 25%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 68% 72%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 82% 38%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 12% 82%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 92%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 62% 8%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 62%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 32% 32%, rgba(255,255,255,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 52%, rgba(255,255,255,0.4) 0%, transparent 100%);
+  animation: twinkle-slow 6s ease-in-out infinite 2s;
+}
+
+/* Constellation node styling */
+.constellation-node {
+  animation: constellationFadeIn 0.8s ease-out both;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.constellation-node:hover {
+  transform: scale(1.08);
+  z-index: 10;
+}
+
+.constellation-node .node-photo {
+  animation: starGlow 4s ease-in-out infinite;
+  border-radius: 50%;
+  transition: box-shadow 0.3s ease;
+}
+
+.constellation-node:hover .node-photo {
+  box-shadow:
+    0 0 25px rgba(181, 167, 199, 0.7),
+    0 0 50px rgba(138, 171, 180, 0.4),
+    0 0 100px rgba(181, 167, 199, 0.2) !important;
+}
+
+/* Nebula background effect */
+.constellation-nebula {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 50% 50%, rgba(181, 167, 199, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 30% 40%, rgba(138, 171, 180, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 350px 250px at 70% 60%, rgba(137, 184, 150, 0.05) 0%, transparent 60%);
+  animation: nebulaDrift 20s ease-in-out infinite;
+}
+
+/* Constellation edge glow */
+.react-flow .react-flow__edge-path {
+  filter: drop-shadow(0 0 3px rgba(181, 167, 199, 0.5));
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
