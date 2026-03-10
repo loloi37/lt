@@ -51,6 +51,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // If user is logged in and tries to access /login or /signup, redirect to /dashboard
+  // IMPORTANT: Clear search params to prevent infinite redirect loops
+  // (e.g., /login?next=/dashboard → /dashboard?next=/dashboard → loop)
   if (
     user &&
     (request.nextUrl.pathname === '/login' ||
@@ -58,6 +60,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 

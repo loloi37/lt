@@ -87,7 +87,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             lastFetchRef.current = Date.now();
         } catch (err) {
             console.error('[AuthProvider] State fetch error:', err);
-            setState(prev => ({ ...prev, loading: false }));
+            // Fallback: check Supabase client auth directly so we at least
+            // know if the user is authenticated (prevents false redirects to /login)
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    setState(prev => ({
+                        ...prev,
+                        loading: false,
+                        authenticated: true,
+                        user: { id: user.id, email: user.email || '' },
+                        // Keep existing plan/archives — don't overwrite with empty
+                    }));
+                } else {
+                    setState(prev => ({ ...prev, loading: false }));
+                }
+            } catch {
+                setState(prev => ({ ...prev, loading: false }));
+            }
         } finally {
             isFetchingRef.current = false;
         }
