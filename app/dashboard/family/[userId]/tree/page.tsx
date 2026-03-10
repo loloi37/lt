@@ -207,7 +207,7 @@ function buildGraphEdges(relations: any[]): Edge[] {
             source: sourceId, target: targetId,
             sourceHandle, targetHandle,
             label: labelText,
-            type: 'smoothstep',
+            type: isVertical ? 'smoothstep' : 'default',
             animated: false,
             data: { relationType: rel.relationship_type, description: rel.description || '' },
             style: { stroke: color, strokeWidth: 2 },
