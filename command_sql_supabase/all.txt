@@ -1596,6 +1596,20 @@ CREATE POLICY "Owners can delete memorial relations"
   );
 
 
+-- Add description column and UPDATE policy for memorial_relations
+ALTER TABLE public.memorial_relations ADD COLUMN IF NOT EXISTS description TEXT;
+
+CREATE POLICY "Owners can update memorial relations"
+  ON public.memorial_relations FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.memorials m
+      WHERE (m.id = memorial_relations.from_memorial_id
+          OR m.id = memorial_relations.to_memorial_id)
+        AND m.user_id = auth.uid()
+    )
+  );
+
 -- ────────────────────────────────────────────────────────────
 -- STEP 8: RLS Policies for public.memorial_versions
 -- ────────────────────────────────────────────────────────────

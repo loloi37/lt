@@ -207,6 +207,27 @@
   animation: nebulaDrift 20s ease-in-out infinite;
 }
 
+/* Constellation popup */
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.constellation-popup {
+  animation: popupFadeIn 0.2s ease-out;
+  background: rgba(15, 20, 35, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(181, 167, 199, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(181, 167, 199, 0.1);
+}
+
 /* Constellation edge glow */
 .react-flow .react-flow__edge-path {
   filter: drop-shadow(0 0 3px rgba(181, 167, 199, 0.5));
