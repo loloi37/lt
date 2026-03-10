@@ -155,8 +155,11 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             router.replace(`/dashboard/family/${userId}`);
             return;
         }
-        if (paidArchive) {
-            alert('You already have an active Personal Archive. Each account supports one personal archive.');
+        // Block creation if user already has a paid archive (active OR soft-deleted).
+        // A soft-deleted paid archive still counts — the plan is permanent.
+        const hasAnyPaidArchive = paidArchive || deletedArchives.some(m => m.paid);
+        if (hasAnyPaidArchive) {
+            alert('You already have a Personal Archive. Each account supports one personal archive. Check your trash if you recently deleted it.');
             return;
         }
         window.location.href = '/create?mode=personal';

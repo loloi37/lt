@@ -49,16 +49,21 @@ export async function GET() {
 
         const allMemorials = memorials || [];
         const activeMemorials = allMemorials.filter(m => !m.deleted);
-        const paidMemorials = activeMemorials.filter(m => m.paid);
 
-        // Determine the user's current plan from their paid memorials
+        // For plan determination, consider ALL paid memorials (including soft-deleted).
+        // A payment is permanent — soft-deleting an archive does NOT revoke the plan.
+        const allPaidMemorials = allMemorials.filter(m => m.paid);
+        // For display/archive listing, only show active paid memorials
+        const activePaidMemorials = activeMemorials.filter(m => m.paid);
+
+        // Determine the user's current plan from ALL paid memorials (active + deleted)
         // Priority: concierge > family > personal > draft (free)
         let currentPlan: 'none' | 'draft' | 'personal' | 'family' | 'concierge' = 'none';
-        if (paidMemorials.some(m => m.mode === 'concierge')) {
+        if (allPaidMemorials.some(m => m.mode === 'concierge')) {
             currentPlan = 'concierge';
-        } else if (paidMemorials.some(m => m.mode === 'family')) {
+        } else if (allPaidMemorials.some(m => m.mode === 'family')) {
             currentPlan = 'family';
-        } else if (paidMemorials.some(m => m.mode === 'personal')) {
+        } else if (allPaidMemorials.some(m => m.mode === 'personal')) {
             currentPlan = 'personal';
         } else if (activeMemorials.length > 0) {
             currentPlan = 'draft';
@@ -71,7 +76,7 @@ export async function GET() {
                 email: user.email,
             },
             plan: currentPlan,
-            hasPaid: paidMemorials.length > 0,
+            hasPaid: allPaidMemorials.length > 0,
             archives: activeMemorials.map(m => ({
                 id: m.id,
                 mode: m.mode,
