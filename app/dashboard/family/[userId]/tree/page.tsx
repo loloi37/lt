@@ -173,7 +173,6 @@ function buildGraphEdges(relations: any[]): Edge[] {
         if (seenPairs.has(pairKey)) continue;
         seenPairs.add(pairKey);
 
-        const isVertical = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
         let sourceId: string, targetId: string, sourceHandle: string, targetHandle: string;
         let displayLabel = rel.description || '';
 
@@ -187,6 +186,13 @@ function buildGraphEdges(relations: any[]): Edge[] {
             sourceId = rel.from_memorial_id; targetId = rel.to_memorial_id;
             sourceHandle = 'right-src'; targetHandle = 'left-tgt';
         }
+
+        // Override with user-chosen handles if stored in DB
+        if (rel.source_handle) sourceHandle = rel.source_handle;
+        if (rel.target_handle) targetHandle = rel.target_handle;
+
+        // Determine edge type from handle orientation
+        const isVertical = sourceHandle.startsWith('top') || sourceHandle.startsWith('bottom');
 
         // Edge color by relationship type
         const colors: Record<string, string> = {
@@ -537,7 +543,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
     const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: string; description: string } | null>(null);
     const [edgePopupPos, setEdgePopupPos] = useState({ x: 0, y: 0 });
 
-    const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
+    const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null } | null>(null);
     const [linking, setLinking] = useState(false);
 
     const relationsRef = useRef<any[]>([]);
@@ -660,7 +666,12 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
     const handleNewConnection = useCallback((connection: Connection) => {
         if (connection.source && connection.target && connection.source !== connection.target) {
-            setPendingConnection({ source: connection.source, target: connection.target });
+            setPendingConnection({
+                source: connection.source,
+                target: connection.target,
+                sourceHandle: connection.sourceHandle,
+                targetHandle: connection.targetHandle,
+            });
         }
     }, []);
 
@@ -670,21 +681,36 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
         let fromId = pendingConnection.source;
         let toId = pendingConnection.target;
+        let srcHandle = pendingConnection.sourceHandle || null;
+        let tgtHandle = pendingConnection.targetHandle || null;
+        let swapped = false;
 
         if (type === 'parent' || type === 'child') {
             const personA = peopleRef.current.find(p => p.id === fromId);
             const personB = peopleRef.current.find(p => p.id === toId);
             const dateA = personA?.birth_date || '9999';
             const dateB = personB?.birth_date || '9999';
-            if (type === 'parent' && dateA > dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
-            if (type === 'child' && dateA < dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
+            if (type === 'parent' && dateA > dateB) { swapped = true; }
+            if (type === 'child' && dateA < dateB) { swapped = true; }
+        }
+
+        if (swapped) {
+            fromId = pendingConnection.target; toId = pendingConnection.source;
+            // Swap and flip handles (source becomes target and vice versa)
+            srcHandle = pendingConnection.targetHandle?.replace('-tgt', '-src') || null;
+            tgtHandle = pendingConnection.sourceHandle?.replace('-src', '-tgt') || null;
         }
 
         try {
             const res = await fetch('/api/family/link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fromId, toId, type, description: description || undefined }),
+                body: JSON.stringify({
+                    fromId, toId, type,
+                    description: description || undefined,
+                    sourceHandle: srcHandle || undefined,
+                    targetHandle: tgtHandle || undefined,
+                }),
             });
             if (!res.ok) throw new Error('Failed to link');
             await loadFamilyData();

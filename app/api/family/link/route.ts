@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { fromId, toId, type, description } = await request.json();
+        const { fromId, toId, type, description, sourceHandle, targetHandle } = await request.json();
 
         if (!fromId || !toId || !type) {
             return NextResponse.json({ error: 'Missing IDs or type' }, { status: 400 });
@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
                 to_memorial_id: toId,
                 relationship_type: type,
                 ...(description ? { description } : {}),
+                ...(sourceHandle ? { source_handle: sourceHandle } : {}),
+                ...(targetHandle ? { target_handle: targetHandle } : {}),
             }]);
 
         if (error1) throw error1;
@@ -51,6 +53,10 @@ export async function POST(request: NextRequest) {
         if (type === 'spouse') reverseType = 'spouse';
         if (type === 'sibling') reverseType = 'sibling';
 
+        // Flip handles for reverse: source↔target, swap -src↔-tgt suffixes
+        const reverseSourceHandle = targetHandle ? targetHandle.replace('-tgt', '-src') : undefined;
+        const reverseTargetHandle = sourceHandle ? sourceHandle.replace('-src', '-tgt') : undefined;
+
         const { error: error2 } = await supabaseAdmin
             .from('memorial_relations')
             .insert([{
@@ -58,6 +64,8 @@ export async function POST(request: NextRequest) {
                 to_memorial_id: fromId,
                 relationship_type: reverseType,
                 ...(description ? { description } : {}),
+                ...(reverseSourceHandle ? { source_handle: reverseSourceHandle } : {}),
+                ...(reverseTargetHandle ? { target_handle: reverseTargetHandle } : {}),
             }]);
 
         // Note: We don't throw on error2 in case it already exists
