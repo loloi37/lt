@@ -33,18 +33,29 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Create the forward link (A -> B)
-        const { error: error1 } = await supabaseAdmin
+        // Try with handle columns; fall back without them if columns don't exist yet
+        const baseForward = {
+            from_memorial_id: fromId,
+            to_memorial_id: toId,
+            relationship_type: type,
+            ...(description ? { description } : {}),
+        };
+
+        let { error: error1 } = await supabaseAdmin
             .from('memorial_relations')
             .insert([{
-                from_memorial_id: fromId,
-                to_memorial_id: toId,
-                relationship_type: type,
-                ...(description ? { description } : {}),
+                ...baseForward,
                 ...(sourceHandle ? { source_handle: sourceHandle } : {}),
                 ...(targetHandle ? { target_handle: targetHandle } : {}),
             }]);
 
-        if (error1) throw error1;
+        // If it fails due to unknown columns, retry without handles
+        if (error1) {
+            const retry = await supabaseAdmin
+                .from('memorial_relations')
+                .insert([baseForward]);
+            if (retry.error) throw retry.error;
+        }
 
         // 4. Automatically create the reverse link (B -> A)
         let reverseType = 'other';
@@ -53,22 +64,30 @@ export async function POST(request: NextRequest) {
         if (type === 'spouse') reverseType = 'spouse';
         if (type === 'sibling') reverseType = 'sibling';
 
-        // Flip handles for reverse: source↔target, swap -src↔-tgt suffixes
         const reverseSourceHandle = targetHandle ? targetHandle.replace('-tgt', '-src') : undefined;
         const reverseTargetHandle = sourceHandle ? sourceHandle.replace('-src', '-tgt') : undefined;
+
+        const baseReverse = {
+            from_memorial_id: toId,
+            to_memorial_id: fromId,
+            relationship_type: reverseType,
+            ...(description ? { description } : {}),
+        };
 
         const { error: error2 } = await supabaseAdmin
             .from('memorial_relations')
             .insert([{
-                from_memorial_id: toId,
-                to_memorial_id: fromId,
-                relationship_type: reverseType,
-                ...(description ? { description } : {}),
+                ...baseReverse,
                 ...(reverseSourceHandle ? { source_handle: reverseSourceHandle } : {}),
                 ...(reverseTargetHandle ? { target_handle: reverseTargetHandle } : {}),
             }]);
 
-        // Note: We don't throw on error2 in case it already exists
+        // If reverse fails with handle columns, retry without
+        if (error2) {
+            await supabaseAdmin
+                .from('memorial_relations')
+                .insert([baseReverse]);
+        }
 
         return NextResponse.json({ success: true });
 
