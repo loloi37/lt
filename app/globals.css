@@ -139,30 +139,30 @@
 }
 
 /* ── Handle dots ── */
-.ft-handle,
-.ft-handle-target {
-  width: 8px !important;
-  height: 8px !important;
-  min-width: 8px !important;
-  min-height: 8px !important;
-  background: #b0b8c1 !important;
-  border: none !important;
+.ft-handle {
+  width: 7px !important;
+  height: 7px !important;
+  min-width: 7px !important;
+  min-height: 7px !important;
+  background: transparent !important;
+  border: 1.5px solid transparent !important;
   border-radius: 50% !important;
-  transition: all 0.18s ease;
+  transition: all 0.15s ease;
   opacity: 0 !important;
 }
 
-.ft-node:hover .ft-handle,
-.ft-node:hover .ft-handle-target {
+.ft-node:hover .ft-handle {
   opacity: 1 !important;
+  background: #c4ccd4 !important;
+  border-color: #b0b8c0 !important;
 }
 
-.ft-handle:hover,
-.ft-handle-target:hover {
-  background: #6b7a88 !important;
+.ft-handle:hover {
+  background: #8a96a0 !important;
+  border-color: #7a8690 !important;
   transform: scale(1.4);
   opacity: 1 !important;
-  box-shadow: 0 0 0 3px rgba(107, 122, 136, 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(138, 150, 160, 0.15) !important;
 }
 
 /* ── Popups ── */

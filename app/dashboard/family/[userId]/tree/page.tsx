@@ -164,7 +164,10 @@ function computeFamilyLayout(
 
 // ─── Build edges ────────────────────────────────────────────────────────────
 
-function buildGraphEdges(relations: any[]): Edge[] {
+function buildGraphEdges(
+    relations: any[],
+    positions: Record<string, { x: number; y: number }>,
+): Edge[] {
     const edges: Edge[] = [];
     const seenPairs = new Set<string>();
 
@@ -173,57 +176,72 @@ function buildGraphEdges(relations: any[]): Edge[] {
         if (seenPairs.has(pairKey)) continue;
         seenPairs.add(pairKey);
 
-        let sourceId: string, targetId: string, sourceHandle: string, targetHandle: string;
-        let displayLabel = rel.description || '';
+        let sourceId: string, targetId: string;
+        const displayLabel = rel.description || '';
 
+        // Normalize direction: parent always flows top→bottom
         if (rel.relationship_type === 'parent') {
             sourceId = rel.from_memorial_id; targetId = rel.to_memorial_id;
-            sourceHandle = 'bottom-src'; targetHandle = 'top-tgt';
         } else if (rel.relationship_type === 'child') {
             sourceId = rel.to_memorial_id; targetId = rel.from_memorial_id;
-            sourceHandle = 'bottom-src'; targetHandle = 'top-tgt';
         } else {
             sourceId = rel.from_memorial_id; targetId = rel.to_memorial_id;
-            sourceHandle = 'right-src'; targetHandle = 'left-tgt';
         }
 
-        // Override with user-chosen handles if stored in DB
-        if (rel.source_handle) sourceHandle = rel.source_handle;
-        if (rel.target_handle) targetHandle = rel.target_handle;
+        // Smart handle selection based on actual node positions
+        const srcPos = positions[sourceId] || { x: 0, y: 0 };
+        const tgtPos = positions[targetId] || { x: 0, y: 0 };
+        let sourceHandle: string, targetHandle: string;
 
-        // Determine edge type from handle orientation
-        const isVertical = sourceHandle.startsWith('top') || sourceHandle.startsWith('bottom');
+        const isParentChild = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
+        if (isParentChild) {
+            // Parent→child: always bottom→top
+            sourceHandle = 'bottom'; targetHandle = 'top';
+        } else {
+            // Horizontal relationships: pick handles based on relative position
+            const dx = tgtPos.x - srcPos.x;
+            const dy = tgtPos.y - srcPos.y;
+            if (Math.abs(dx) >= Math.abs(dy)) {
+                // Target is more to the side
+                sourceHandle = dx >= 0 ? 'right' : 'left';
+                targetHandle = dx >= 0 ? 'left' : 'right';
+            } else {
+                // Target is more above/below
+                sourceHandle = dy >= 0 ? 'bottom' : 'top';
+                targetHandle = dy >= 0 ? 'top' : 'bottom';
+            }
+        }
 
-        // Edge color by relationship type
-        const colors: Record<string, string> = {
-            parent: '#89b896', child: '#89b896',
-            spouse: '#d4958a', sibling: '#b5a7c7', other: '#c4b8a8',
+        // Muted edge colors by relationship type
+        const edgeStyles: Record<string, { stroke: string; strokeDasharray?: string }> = {
+            parent: { stroke: '#7d8f82' },
+            child:  { stroke: '#7d8f82' },
+            spouse: { stroke: '#a89080' },
+            sibling: { stroke: '#9ea5ad', strokeDasharray: '5 3' },
+            other:  { stroke: '#aab0b8', strokeDasharray: '3 3' },
         };
-        const color = colors[rel.relationship_type] || colors.other;
+        const edgeStyle = edgeStyles[rel.relationship_type] || edgeStyles.other;
 
-        // Relationship icon for label
-        const icons: Record<string, string> = {
-            parent: '↓', child: '↓', spouse: '♥', sibling: '∼', other: '·',
-        };
-        const icon = icons[rel.relationship_type] || '';
-        const labelText = displayLabel || `${icon} ${rel.relationship_type}`;
+        // Minimal label — just the word, no icons
+        const labelText = displayLabel || rel.relationship_type;
 
         edges.push({
             id: rel.id,
             source: sourceId, target: targetId,
             sourceHandle, targetHandle,
             label: labelText,
-            type: isVertical ? 'smoothstep' : 'default',
+            type: 'smoothstep',
             animated: false,
             data: { relationType: rel.relationship_type, description: rel.description || '' },
-            style: { stroke: color, strokeWidth: 2 },
+            style: { ...edgeStyle, strokeWidth: 1.5 },
+            pathOptions: { borderRadius: 8, offset: 20 },
             labelStyle: {
-                fill: '#5a6b78', fontSize: 10, fontWeight: 500,
+                fill: '#8a96a0', fontSize: 9, fontWeight: 500,
                 fontFamily: 'var(--font-sans)', cursor: 'pointer',
             },
-            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.95 },
-            labelBgPadding: [6, 4] as [number, number],
-            labelBgBorderRadius: 6,
+            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.85 },
+            labelBgPadding: [5, 3] as [number, number],
+            labelBgBorderRadius: 4,
         });
     }
     return edges;
@@ -241,15 +259,11 @@ function TreeNode({ data }: NodeProps) {
 
     return (
         <div className="ft-node" style={{ animationDelay: `${animDelay}ms` }}>
-            {/* Handles */}
-            <Handle type="source" position={Position.Top}    id="top-src"    className="ft-handle" />
-            <Handle type="source" position={Position.Bottom} id="bottom-src" className="ft-handle" />
-            <Handle type="source" position={Position.Left}   id="left-src"   className="ft-handle" />
-            <Handle type="source" position={Position.Right}  id="right-src"  className="ft-handle" />
-            <Handle type="target" position={Position.Top}    id="top-tgt"    className="ft-handle-target" />
-            <Handle type="target" position={Position.Bottom} id="bottom-tgt" className="ft-handle-target" />
-            <Handle type="target" position={Position.Left}   id="left-tgt"   className="ft-handle-target" />
-            <Handle type="target" position={Position.Right}  id="right-tgt"  className="ft-handle-target" />
+            {/* Handles — each serves as both source and target */}
+            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd={true} className="ft-handle" />
+            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd={true} className="ft-handle" />
+            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd={true} className="ft-handle" />
+            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd={true} className="ft-handle" />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
@@ -543,7 +557,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
     const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: string; description: string } | null>(null);
     const [edgePopupPos, setEdgePopupPos] = useState({ x: 0, y: 0 });
 
-    const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string; sourceHandle?: string | null; targetHandle?: string | null } | null>(null);
+    const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
     const [linking, setLinking] = useState(false);
 
     const relationsRef = useRef<any[]>([]);
@@ -629,7 +643,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                 };
             });
 
-            const graphEdges = buildGraphEdges(relations || []);
+            const graphEdges = buildGraphEdges(relations || [], mergedPositions);
             // Count unique edge pairs
             const uniquePairs = new Set<string>();
             for (const rel of (relations || [])) {
@@ -656,6 +670,8 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                 position: positions[n.id] || n.position,
             }))
         );
+        // Rebuild edges with new positions for correct handle routing
+        setEdges(buildGraphEdges(relationsRef.current, positions));
         // Clear saved positions
         try { localStorage.removeItem(`family-tree-pos-${userId}`); } catch {}
         // Fit view after layout change
@@ -666,12 +682,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
     const handleNewConnection = useCallback((connection: Connection) => {
         if (connection.source && connection.target && connection.source !== connection.target) {
-            setPendingConnection({
-                source: connection.source,
-                target: connection.target,
-                sourceHandle: connection.sourceHandle,
-                targetHandle: connection.targetHandle,
-            });
+            setPendingConnection({ source: connection.source, target: connection.target });
         }
     }, []);
 
@@ -681,36 +692,21 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
         let fromId = pendingConnection.source;
         let toId = pendingConnection.target;
-        let srcHandle = pendingConnection.sourceHandle || null;
-        let tgtHandle = pendingConnection.targetHandle || null;
-        let swapped = false;
 
         if (type === 'parent' || type === 'child') {
             const personA = peopleRef.current.find(p => p.id === fromId);
             const personB = peopleRef.current.find(p => p.id === toId);
             const dateA = personA?.birth_date || '9999';
             const dateB = personB?.birth_date || '9999';
-            if (type === 'parent' && dateA > dateB) { swapped = true; }
-            if (type === 'child' && dateA < dateB) { swapped = true; }
-        }
-
-        if (swapped) {
-            fromId = pendingConnection.target; toId = pendingConnection.source;
-            // Swap and flip handles (source becomes target and vice versa)
-            srcHandle = pendingConnection.targetHandle?.replace('-tgt', '-src') || null;
-            tgtHandle = pendingConnection.sourceHandle?.replace('-src', '-tgt') || null;
+            if (type === 'parent' && dateA > dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
+            if (type === 'child' && dateA < dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
         }
 
         try {
             const res = await fetch('/api/family/link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fromId, toId, type,
-                    description: description || undefined,
-                    sourceHandle: srcHandle || undefined,
-                    targetHandle: tgtHandle || undefined,
-                }),
+                body: JSON.stringify({ fromId, toId, type, description: description || undefined }),
             });
             if (!res.ok) throw new Error('Failed to link');
             await loadFamilyData();
