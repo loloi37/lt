@@ -331,11 +331,16 @@ function TreeNode({ data }: NodeProps) {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Single handle per side — only the nearest one becomes visible; all become targets during connection drag */}
-            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd isConnectableStart className={handleClass('top')} />
-            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd isConnectableStart className={handleClass('bottom')} />
-            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd isConnectableStart className={handleClass('left')} />
-            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd isConnectableStart className={handleClass('right')} />
+            {/* Source handles for outgoing edges */}
+            <Handle type="source" position={Position.Top}    id="top"    className={handleClass('top')} />
+            <Handle type="source" position={Position.Bottom} id="bottom" className={handleClass('bottom')} />
+            <Handle type="source" position={Position.Left}   id="left"   className={handleClass('left')} />
+            <Handle type="source" position={Position.Right}  id="right"  className={handleClass('right')} />
+            {/* Target handles for incoming edges (same positions, needed for edge routing) */}
+            <Handle type="target" position={Position.Top}    id="top"    className={handleClass('top')} />
+            <Handle type="target" position={Position.Bottom} id="bottom" className={handleClass('bottom')} />
+            <Handle type="target" position={Position.Left}   id="left"   className={handleClass('left')} />
+            <Handle type="target" position={Position.Right}  id="right"  className={handleClass('right')} />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
