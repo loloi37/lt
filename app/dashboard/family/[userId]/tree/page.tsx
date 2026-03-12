@@ -1,958 +1,531 @@
+// app/dashboard/family/[userId]/tree/page.tsx
 'use client';
 
-import { useState, useEffect, use, useCallback, useRef, createContext, useContext, type RefObject } from 'react';
+import React, { useState, useEffect, useCallback, use } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
-    ReactFlow, Controls, MiniMap, Background, useNodesState, useEdgesState, useReactFlow,
-    ReactFlowProvider, Position, Node, Edge, Handle, NodeProps, Connection,
-    type NodeChange,
+    ReactFlow,
+    ReactFlowProvider,
+    Controls,
+    MiniMap,
+    Background,
+    useNodesState,
+    useEdgesState,
+    Handle,
+    Position,
+    MarkerType,
+    Connection,
+    Edge,
+    Node,
+    ConnectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { supabase } from '@/lib/supabase';
-import { Loader2, ArrowLeft, X, ExternalLink, Trash2, LayoutGrid, Users } from 'lucide-react';
-import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+import {
+    ArrowLeft, User, LayoutTemplate, Save, Trash2,
+    X, MapPin, Quote, Settings2, Loader2
+} from 'lucide-react';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ============================================================================
+// 1. CUSTOM NODE COMPONENT (4 Handles, visible only on hover)
+// ============================================================================
+const MemorialNode = ({ data, id }: any) => {
+    const handleClasses = "!w-3.5 !h-3.5 !bg-white !border-2 !border-mist !opacity-0 group-hover:!opacity-100 !transition-all !duration-200 hover:!scale-150 hover:!bg-mist/20 cursor-crosshair z-50";
 
-type RelationType = 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+    return (
+        <div
+            className="ft-node group relative"
+            onClick={() => data.onNodeClick(id, data)}
+        >
+            <Handle type="source" position={Position.Top} id="top" className={handleClasses} />
+            <Handle type="source" position={Position.Bottom} id="bottom" className={handleClasses} />
+            <Handle type="source" position={Position.Left} id="left" className={handleClasses} />
+            <Handle type="source" position={Position.Right} id="right" className={handleClasses} />
 
-interface PersonData {
-    id: string;
-    full_name: string | null;
-    profile_photo_url: string | null;
-    birth_date: string | null;
-    death_date: string | null;
-    step1: Record<string, string | undefined> | null;
-    slug: string | null;
-}
-
-interface RelationRow {
-    id: string;
-    from_memorial_id: string;
-    to_memorial_id: string;
-    relationship_type: RelationType;
-    description?: string | null;
-}
-
-interface NodeData {
-    photoUrl: string | null;
-    name: string;
-    birthYear: string;
-    deathYear: string | null;
-    birthPlace: string | null;
-    epitaph: string | null;
-    memorialId: string;
-    slug: string | null;
-    animDelay: number;
-}
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const H_GAP = 280;
-const V_GAP = 220;
-
-const EDGE_STYLES: Record<RelationType, { stroke: string; strokeDasharray?: string }> = {
-    parent:  { stroke: '#7d8f82' },
-    child:   { stroke: '#7d8f82' },
-    spouse:  { stroke: '#a89080' },
-    sibling: { stroke: '#9ea5ad', strokeDasharray: '5 3' },
-    other:   { stroke: '#aab0b8', strokeDasharray: '3 3' },
+            <div className="ft-node-avatar bg-sand/10 border-r border-sand/30 flex items-center justify-center">
+                {data.image ? (
+                    <img src={data.image} alt={data.label} className="w-full h-full object-cover pointer-events-none" />
+                ) : (
+                    <User className="text-charcoal/20 pointer-events-none" size={24} />
+                )}
+            </div>
+            <div className="ft-node-body flex-1 overflow-hidden pointer-events-none">
+                <p className="text-sm font-serif font-bold text-charcoal truncate">{data.label || 'Unknown'}</p>
+                <p className="text-[10px] text-charcoal/50 tracking-wide mt-0.5">{data.dates || 'Dates unknown'}</p>
+            </div>
+        </div>
+    );
 };
 
-const RELATIONSHIP_TYPES = [
-    { key: 'parent' as RelationType, label: 'Parent', icon: '↑', color: '#89b896' },
-    { key: 'child' as RelationType, label: 'Child', icon: '↓', color: '#89b896' },
-    { key: 'spouse' as RelationType, label: 'Spouse', icon: '♥', color: '#d4958a' },
-    { key: 'sibling' as RelationType, label: 'Sibling', icon: '∼', color: '#b5a7c7' },
-];
+const nodeTypes = { memorial: MemorialNode };
 
-// ─── Connection state context ───────────────────────────────────────────────
+// ============================================================================
+// AUTO-LAYOUT ALGORITHM
+// ============================================================================
+function computeFamilyLayout(nodes: Node[], edges: Edge[]) {
+    const newNodes = [...nodes];
+    const levels = new Map<string, number>();
+    const spouses = new Map<string, string[]>();
 
-const ConnectionContext = createContext<boolean>(false);
+    // Since we removed types visually, we treat all connections similarly for layout
+    edges.forEach(edge => {
+        // If you want to refine this later, you can parse the labels, but for now we 
+        // will just assign levels based on connections.
+        if (!levels.has(edge.source)) levels.set(edge.source, 0);
+        if (!levels.has(edge.target)) levels.set(edge.target, (levels.get(edge.source) || 0) + 1);
+    });
 
-// ─── Hooks ──────────────────────────────────────────────────────────────────
-
-function useClickOutside(ref: RefObject<HTMLElement | null>, callback: () => void) {
-    useEffect(() => {
-        function handleClick(e: MouseEvent) {
-            if (ref.current && !ref.current.contains(e.target as HTMLElement)) callback();
+    newNodes.forEach(node => {
+        if (!levels.has(node.id)) {
+            levels.set(node.id, 0);
         }
-        const timer = setTimeout(() => document.addEventListener('mousedown', handleClick), 50);
-        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClick); };
-    }, [ref, callback]);
+    });
+
+    const levelCounts = new Map<number, number>();
+    const HORIZONTAL_SPACING = 240;
+    const VERTICAL_SPACING = 150;
+
+    newNodes.forEach(node => {
+        const level = levels.get(node.id) || 0;
+        const currentXIndex = levelCounts.get(level) || 0;
+
+        node.position = {
+            x: currentXIndex * HORIZONTAL_SPACING,
+            y: level * VERTICAL_SPACING
+        };
+
+        levelCounts.set(level, currentXIndex + 1);
+    });
+
+    return newNodes;
 }
 
-// ─── Position persistence (localStorage) ────────────────────────────────────
-
-function getSavedPositions(userId: string): Record<string, { x: number; y: number }> {
-    try {
-        const raw = localStorage.getItem(`family-tree-pos-${userId}`);
-        return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
-}
-
-function savePositions(userId: string, nodes: Node[]) {
-    const positions: Record<string, { x: number; y: number }> = {};
-    for (const n of nodes) {
-        positions[n.id] = { x: n.position.x, y: n.position.y };
-    }
-    try {
-        localStorage.setItem(`family-tree-pos-${userId}`, JSON.stringify(positions));
-    } catch { /* quota errors are non-critical */ }
-}
-
-// ─── Family tree layout algorithm ───────────────────────────────────────────
-
-function computeFamilyLayout(
-    people: PersonData[],
-    relations: RelationRow[],
-): { positions: Record<string, { x: number; y: number }>; generations: Record<string, number> } {
-    if (people.length === 0) return { positions: {}, generations: {} };
-
-    const parentChildren: Record<string, string[]> = {};
-    const spouses: Record<string, string[]> = {};
-    const hasParent = new Set<string>();
-    const seen = new Set<string>();
-
-    for (const rel of relations) {
-        const pairKey = [rel.from_memorial_id, rel.to_memorial_id].sort().join('|');
-        if (seen.has(pairKey)) continue;
-        seen.add(pairKey);
-
-        if (rel.relationship_type === 'parent') {
-            (parentChildren[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
-            hasParent.add(rel.to_memorial_id);
-        } else if (rel.relationship_type === 'child') {
-            (parentChildren[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
-            hasParent.add(rel.from_memorial_id);
-        } else if (rel.relationship_type === 'spouse') {
-            (spouses[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
-            (spouses[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
-        }
-    }
-
-    const siblingOf: Record<string, string[]> = {};
-    const seenSib = new Set<string>();
-    for (const rel of relations) {
-        if (rel.relationship_type !== 'sibling') continue;
-        const pk = [rel.from_memorial_id, rel.to_memorial_id].sort().join('|');
-        if (seenSib.has(pk)) continue;
-        seenSib.add(pk);
-        (siblingOf[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
-        (siblingOf[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
-    }
-
-    const generation: Record<string, number> = {};
-    const visited = new Set<string>();
-    const queue: string[] = [];
-
-    const roots = people.filter(p => !hasParent.has(p.id));
-    const startNodes = roots.length > 0 ? roots : [people[0]];
-
-    for (const node of startNodes) {
-        if (!visited.has(node.id)) {
-            generation[node.id] = 0;
-            visited.add(node.id);
-            queue.push(node.id);
-        }
-    }
-
-    while (queue.length > 0) {
-        const id = queue.shift()!;
-        const gen = generation[id];
-        for (const childId of (parentChildren[id] ?? [])) {
-            if (!visited.has(childId)) { generation[childId] = gen + 1; visited.add(childId); queue.push(childId); }
-        }
-        for (const spouseId of (spouses[id] ?? [])) {
-            if (!visited.has(spouseId)) { generation[spouseId] = gen; visited.add(spouseId); queue.push(spouseId); }
-        }
-        for (const sibId of (siblingOf[id] ?? [])) {
-            if (!visited.has(sibId)) { generation[sibId] = gen; visited.add(sibId); queue.push(sibId); }
-        }
-    }
-
-    for (const p of people) {
-        if (!visited.has(p.id)) generation[p.id] = 0;
-    }
-
-    const genGroups: Record<number, string[]> = {};
-    for (const p of people) {
-        const gen = generation[p.id] ?? 0;
-        (genGroups[gen] ??= []).push(p.id);
-    }
-
-    const sortedGens = Object.keys(genGroups).map(Number).sort((a, b) => a - b);
-    const positions: Record<string, { x: number; y: number }> = {};
-
-    for (const gen of sortedGens) {
-        const ids = genGroups[gen];
-        const ordered: string[] = [];
-        const placed = new Set<string>();
-        for (const id of ids) {
-            if (placed.has(id)) continue;
-            ordered.push(id);
-            placed.add(id);
-            for (const spouseId of (spouses[id] ?? [])) {
-                if (!placed.has(spouseId) && ids.includes(spouseId)) {
-                    ordered.push(spouseId);
-                    placed.add(spouseId);
-                }
-            }
-        }
-        const totalWidth = (ordered.length - 1) * H_GAP;
-        const startX = -totalWidth / 2;
-        ordered.forEach((id, index) => {
-            positions[id] = { x: startX + index * H_GAP, y: gen * V_GAP };
-        });
-    }
-
-    return { positions, generations: generation };
-}
-
-// ─── Build edges ────────────────────────────────────────────────────────────
-
-function buildGraphEdges(
-    relations: RelationRow[],
-    positions: Record<string, { x: number; y: number }>,
-): Edge[] {
-    const edges: Edge[] = [];
-    const seenPairs = new Set<string>();
-
-    for (const rel of relations) {
-        const pairKey = [rel.from_memorial_id, rel.to_memorial_id].sort().join('|');
-        if (seenPairs.has(pairKey)) continue;
-        seenPairs.add(pairKey);
-
-        const isParentChild = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
-
-        // Normalize direction: parent always flows top→bottom
-        let sourceId: string, targetId: string;
-        if (rel.relationship_type === 'child') {
-            sourceId = rel.to_memorial_id;
-            targetId = rel.from_memorial_id;
-        } else {
-            sourceId = rel.from_memorial_id;
-            targetId = rel.to_memorial_id;
-        }
-
-        // Smart handle selection based on actual positions
-        const srcPos = positions[sourceId] ?? { x: 0, y: 0 };
-        const tgtPos = positions[targetId] ?? { x: 0, y: 0 };
-        let sourceHandle: string, targetHandle: string;
-
-        if (isParentChild) {
-            sourceHandle = 'bottom';
-            targetHandle = 'top';
-        } else {
-            const dx = tgtPos.x - srcPos.x;
-            const dy = tgtPos.y - srcPos.y;
-            if (Math.abs(dx) >= Math.abs(dy)) {
-                sourceHandle = dx >= 0 ? 'right' : 'left';
-                targetHandle = dx >= 0 ? 'left' : 'right';
-            } else {
-                sourceHandle = dy >= 0 ? 'bottom' : 'top';
-                targetHandle = dy >= 0 ? 'top' : 'bottom';
-            }
-        }
-
-        const edgeStyle = EDGE_STYLES[rel.relationship_type] ?? EDGE_STYLES.other;
-        const labelText = rel.description || rel.relationship_type;
-
-        edges.push({
-            id: rel.id,
-            source: sourceId,
-            target: targetId,
-            sourceHandle,
-            targetHandle,
-            label: labelText,
-            type: 'smoothstep',
-            animated: false,
-            data: { relationType: rel.relationship_type, description: rel.description ?? '' },
-            style: { ...edgeStyle, strokeWidth: 1.5 },
-            pathOptions: { borderRadius: 8, offset: 20 },
-            labelStyle: {
-                fill: '#8a96a0', fontSize: 9, fontWeight: 500,
-                fontFamily: 'var(--font-sans)', cursor: 'pointer',
-            },
-            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.85 },
-            labelBgPadding: [5, 3] as [number, number],
-            labelBgBorderRadius: 4,
-        });
-    }
-    return edges;
-}
-
-// ─── Custom node ────────────────────────────────────────────────────────────
-
-function TreeNode({ data }: NodeProps) {
-    const { photoUrl, name, birthYear, deathYear, animDelay } = data as NodeData;
-    const [activeHandle, setActiveHandle] = useState<string | null>(null);
-    const nodeRef = useRef<HTMLDivElement>(null);
-    const isConnecting = useContext(ConnectionContext);
-
-    const handleMouseMove = useCallback((e: React.MouseEvent) => {
-        const rect = nodeRef.current?.getBoundingClientRect();
-        if (!rect) return;
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const distTop = y;
-        const distBottom = rect.height - y;
-        const distLeft = x;
-        const distRight = rect.width - x;
-        const min = Math.min(distTop, distBottom, distLeft, distRight);
-
-        let nearest: string;
-        if (min === distTop) nearest = 'top';
-        else if (min === distBottom) nearest = 'bottom';
-        else if (min === distLeft) nearest = 'left';
-        else nearest = 'right';
-
-        setActiveHandle((prev: string | null) => prev === nearest ? prev : nearest);
-    }, []);
-
-    const handleMouseLeave = useCallback(() => {
-        if (!isConnecting) {
-            setActiveHandle(null);
-        }
-    }, [isConnecting]);
-
-    const dateDisplay = deathYear ? `${birthYear} – ${deathYear}` : birthYear;
-
-    const handleClass = (side: string) => {
-        if (isConnecting) return 'ft-handle ft-handle-connectable';
-        if (activeHandle === side) return 'ft-handle ft-handle-visible';
-        return 'ft-handle';
-    };
-
-    return (
-        <div
-            ref={nodeRef}
-            className="ft-node"
-            style={{ animationDelay: `${animDelay}ms` }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-        >
-            {/* Source handles — visible on hover, used for dragging connections */}
-            <Handle type="source" position={Position.Top}    id="top"    className={handleClass('top')} />
-            <Handle type="source" position={Position.Bottom} id="bottom" className={handleClass('bottom')} />
-            <Handle type="source" position={Position.Left}   id="left"   className={handleClass('left')} />
-            <Handle type="source" position={Position.Right}  id="right"  className={handleClass('right')} />
-            {/* Target handles — always invisible, only needed for edge endpoint routing */}
-            <Handle type="target" position={Position.Top}    id="top"    className="ft-handle ft-handle-target" />
-            <Handle type="target" position={Position.Bottom} id="bottom" className="ft-handle ft-handle-target" />
-            <Handle type="target" position={Position.Left}   id="left"   className="ft-handle ft-handle-target" />
-            <Handle type="target" position={Position.Right}  id="right"  className="ft-handle ft-handle-target" />
-
-            {/* Avatar */}
-            <div className="ft-node-avatar">
-                {photoUrl ? (
-                    <img src={photoUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f0e6dd 0%, #e8d8cc 100%)' }}>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b5a7c7" strokeWidth="1.5">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                    </div>
-                )}
-            </div>
-
-            {/* Info */}
-            <div className="ft-node-body">
-                <div className="font-serif text-[13px] font-semibold leading-tight truncate" style={{ color: '#3d4a55', maxWidth: 120 }}>
-                    {name}
-                </div>
-                <div className="text-[11px] mt-0.5" style={{ color: '#8a96a0' }}>
-                    {deathYear && <span style={{ color: '#b5a7c7', marginRight: 3 }}>✝</span>}
-                    {dateDisplay}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-const nodeTypes = { familyMember: TreeNode };
-
-// ─── Node info popup ────────────────────────────────────────────────────────
-
-function NodeInfoPopup({ nodeData, screenPos, onClose }: {
-    nodeData: NodeData; screenPos: { x: number; y: number }; onClose: () => void;
-}) {
-    const popupRef = useRef<HTMLDivElement>(null);
-    useClickOutside(popupRef, onClose);
-
-    const { name, birthYear, deathYear, birthPlace, epitaph, slug, photoUrl } = nodeData;
-    const dateRange = deathYear ? `${birthYear} – ${deathYear}` : `Born ${birthYear}`;
-
-    return (
-        <div
-            ref={popupRef}
-            className="ft-popup fixed z-50"
-            style={{ left: screenPos.x + 20, top: screenPos.y - 20, width: 240 }}
-        >
-            {photoUrl && (
-                <div style={{ height: 80, overflow: 'hidden', borderRadius: '12px 12px 0 0', margin: '-1px -1px 0 -1px' }}>
-                    <img src={photoUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-            )}
-            <div className="p-4">
-                <button onClick={onClose} className="absolute top-2 right-2 p-1 hover:bg-black/5 rounded-full" style={{ color: photoUrl ? '#fff' : '#8a96a0' }}>
-                    <X size={14} />
-                </button>
-
-                <div className="font-serif text-base font-semibold mb-0.5" style={{ color: '#3d4a55' }}>{name}</div>
-                <div className="text-xs mb-2" style={{ color: '#8a96a0' }}>{dateRange}</div>
-
-                {birthPlace && (
-                    <div className="text-xs mb-2" style={{ color: '#8a96a0' }}>Born in {birthPlace}</div>
-                )}
-
-                {epitaph && (
-                    <div className="text-xs italic mb-3" style={{ color: '#a0a8b0', lineHeight: 1.5 }}>
-                        &ldquo;{epitaph.length > 80 ? epitaph.substring(0, 80) + '...' : epitaph}&rdquo;
-                    </div>
-                )}
-
-                {slug && (
-                    <Link
-                        href={`/person/${slug}`}
-                        className="flex items-center gap-1.5 text-xs py-2 px-3 rounded-lg transition-colors font-medium"
-                        style={{ color: '#89b896', background: 'rgba(137,184,150,0.08)', border: '1px solid rgba(137,184,150,0.15)' }}
-                    >
-                        <ExternalLink size={11} />
-                        View Memorial
-                    </Link>
-                )}
-            </div>
-        </div>
-    );
-}
-
-// ─── Edge edit popover ──────────────────────────────────────────────────────
-
-function EdgeEditPopover({ edgeData, screenPos, onSave, onDelete, onClose }: {
-    edgeData: { id: string; relationType: RelationType; description: string };
-    screenPos: { x: number; y: number };
-    onSave: (id: string, description: string) => void;
-    onDelete: (id: string) => void;
-    onClose: () => void;
-}) {
-    const [value, setValue] = useState(edgeData.description || '');
-    const [confirmDelete, setConfirmDelete] = useState(false);
-    const popupRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useClickOutside(popupRef, onClose);
-    useEffect(() => { inputRef.current?.focus(); }, []);
-
-    const badgeColors: Record<string, string> = {
-        parent: '#89b896', child: '#89b896', spouse: '#d4958a', sibling: '#b5a7c7',
-    };
-    const badgeColor = badgeColors[edgeData.relationType] || '#8a96a0';
-
-    return (
-        <div ref={popupRef} className="ft-popup fixed z-50 p-4" style={{ left: screenPos.x - 115, top: screenPos.y - 60, width: 240 }}>
-            <div className="flex items-center gap-2 mb-3">
-                {edgeData.relationType && edgeData.relationType !== 'other' && (
-                    <span
-                        className="text-xs capitalize px-2.5 py-0.5 rounded-full font-medium"
-                        style={{ color: badgeColor, background: `${badgeColor}15`, border: `1px solid ${badgeColor}30` }}
-                    >
-                        {edgeData.relationType}
-                    </span>
-                )}
-                <span className="text-xs" style={{ color: '#a0a8b0' }}>relationship</span>
-            </div>
-
-            <input
-                ref={inputRef}
-                type="text"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') onSave(edgeData.id, value.trim()); if (e.key === 'Escape') onClose(); }}
-                placeholder="Custom label (optional)"
-                className="w-full text-xs px-3 py-2 rounded-lg outline-none transition-colors"
-                style={{ background: '#f8f4f0', border: '1px solid #e8d8cc', color: '#3d4a55' }}
-                maxLength={50}
-            />
-
-            <div className="flex justify-between items-center mt-3 pt-3" style={{ borderTop: '1px solid #f0e6dd' }}>
-                {!confirmDelete ? (
-                    <button
-                        onClick={() => setConfirmDelete(true)}
-                        className="flex items-center gap-1 text-xs p-1.5 rounded-lg transition-colors"
-                        style={{ color: '#c4867a' }}
-                    >
-                        <Trash2 size={13} />
-                        <span>Remove</span>
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => onDelete(edgeData.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
-                        style={{ color: '#d4635e', background: '#fef2f2', border: '1px solid #fecaca' }}
-                    >
-                        Confirm remove
-                    </button>
-                )}
-
-                <div className="flex gap-1.5">
-                    <button onClick={onClose} className="p-1.5 rounded-lg transition-colors" style={{ color: '#a0a8b0' }}>
-                        <X size={14} />
-                    </button>
-                    <button
-                        onClick={() => onSave(edgeData.id, value.trim())}
-                        className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
-                        style={{ color: '#89b896', background: 'rgba(137,184,150,0.1)' }}
-                    >
-                        Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── New connection popup ───────────────────────────────────────────────────
-
-function NewConnectionPopup({ sourceName, targetName, onSave, onClose }: {
-    sourceName: string; targetName: string;
-    onSave: (type: RelationType, description: string) => void; onClose: () => void;
-}) {
-    const [type, setType] = useState<RelationType>('spouse');
-    const [label, setLabel] = useState('');
-    const popupRef = useRef<HTMLDivElement>(null);
-
-    useClickOutside(popupRef, onClose);
-
-    return (
-        <div
-            ref={popupRef}
-            className="ft-popup fixed z-50 p-5"
-            style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 300 }}
-        >
-            <div className="text-xs font-medium mb-1" style={{ color: '#a0a8b0' }}>New connection</div>
-            <div className="font-serif text-base font-semibold mb-5" style={{ color: '#3d4a55' }}>
-                {sourceName} <span style={{ color: '#d4c4b5', margin: '0 6px' }}>&harr;</span> {targetName}
-            </div>
-
-            <div className="mb-4">
-                <div className="text-xs font-medium mb-2" style={{ color: '#5a6b78' }}>Relationship type</div>
-                <div className="grid grid-cols-2 gap-2">
-                    {RELATIONSHIP_TYPES.map((t) => (
-                        <button
-                            key={t.key}
-                            onClick={() => setType(t.key)}
-                            className="flex items-center gap-2 text-xs py-2.5 px-3 rounded-lg transition-all border"
-                            style={type === t.key
-                                ? { background: `${t.color}12`, color: t.color, borderColor: `${t.color}40`, fontWeight: 600 }
-                                : { background: '#faf7f4', color: '#8a96a0', borderColor: '#ede5dc' }
-                            }
-                        >
-                            <span style={{ fontSize: 14 }}>{t.icon}</span>
-                            {t.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="mb-5">
-                <div className="text-xs font-medium mb-1.5" style={{ color: '#5a6b78' }}>
-                    Custom label <span style={{ color: '#c4b8a8' }}>(optional)</span>
-                </div>
-                <input
-                    type="text"
-                    value={label}
-                    onChange={(e) => setLabel(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') onSave(type, label.trim()); if (e.key === 'Escape') onClose(); }}
-                    placeholder="e.g. grandma, uncle..."
-                    className="w-full text-xs px-3 py-2.5 rounded-lg outline-none transition-colors"
-                    style={{ background: '#f8f4f0', border: '1px solid #e8d8cc', color: '#3d4a55' }}
-                    maxLength={50}
-                />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3" style={{ borderTop: '1px solid #f0e6dd' }}>
-                <button
-                    onClick={onClose}
-                    className="text-xs px-4 py-2 rounded-lg transition-colors font-medium"
-                    style={{ color: '#8a96a0' }}
-                >
-                    Cancel
-                </button>
-                <button
-                    onClick={() => onSave(type, label.trim())}
-                    className="text-xs px-5 py-2 rounded-lg transition-colors font-medium"
-                    style={{ background: '#89b896', color: '#fff', boxShadow: '0 1px 3px rgba(137,184,150,0.3)' }}
-                >
-                    Connect
-                </button>
-            </div>
-        </div>
-    );
-}
-
-// ─── Main graph component ───────────────────────────────────────────────────
-
+// ============================================================================
+// MAIN PAGE COMPONENT
+// ============================================================================
 function FamilyTreeGraph({ userId }: { userId: string }) {
     const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+    const [rawMemorials, setRawMemorials] = useState<any[]>([]);
+
     const [loading, setLoading] = useState(true);
-    const [memberCount, setMemberCount] = useState(0);
-    const [relationCount, setRelationCount] = useState(0);
+    const [saving, setSaving] = useState(false);
+    const supabase = createClient();
 
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [selectedNodeData, setSelectedNodeData] = useState<NodeData | null>(null);
-    const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+    const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
+    const [selectedNodeData, setSelectedNodeData] = useState<any | null>(null);
+    const [selectedEdgeData, setSelectedEdgeData] = useState<Edge | null>(null);
 
-    const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: RelationType; description: string } | null>(null);
-    const [edgePopupPos, setEdgePopupPos] = useState({ x: 0, y: 0 });
-
-    const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
-    const [linking, setLinking] = useState(false);
-    const [isConnecting, setIsConnecting] = useState(false);
-
-    const relationsRef = useRef<RelationRow[]>([]);
-    const peopleRef = useRef<PersonData[]>([]);
-    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const reactFlowInstance = useReactFlow();
-
-    // ─── Debounced position save ─────────────────────────────────────────
-
-    const debouncedSavePositions = useCallback((updatedNodes: Node[]) => {
-        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = setTimeout(() => {
-            savePositions(userId, updatedNodes);
-        }, 500);
-    }, [userId]);
-
-    const handleNodesChange = useCallback((changes: NodeChange[]) => {
-        onNodesChange(changes);
-        const hasDragEnd = changes.some(c => c.type === 'position' && (c as any).dragging === false);
-        if (hasDragEnd) {
-            setTimeout(() => {
-                setNodes(current => {
-                    debouncedSavePositions(current);
-                    return current;
-                });
-            }, 0);
-        }
-    }, [onNodesChange, debouncedSavePositions, setNodes]);
-
-    // ─── Load data ───────────────────────────────────────────────────────
-
-    const loadFamilyData = useCallback(async () => {
+    // ─── INIT & DATA FETCHING ──────────────────────────────────────────────────
+    const loadGraph = useCallback(async (forceAutoLayout = false) => {
         setLoading(true);
         try {
-            const { data: people } = await supabase
+            const { data: memorials } = await supabase
                 .from('memorials')
-                .select('id, full_name, profile_photo_url, birth_date, death_date, step1, slug')
-                .eq('user_id', userId);
+                .select('*')
+                .eq('user_id', userId)
+                .eq('deleted', false);
 
-            if (!people || people.length === 0) return;
+            setRawMemorials(memorials || []);
 
-            // Only fetch relations involving this user's memorials
-            const memorialIds = people.map(p => p.id);
             const { data: relations } = await supabase
                 .from('memorial_relations')
                 .select('*')
-                .or(`from_memorial_id.in.(${memorialIds.join(',')}),to_memorial_id.in.(${memorialIds.join(',')})`);
+                .or(`from_memorial_id.in.(${memorials?.map(m => m.id).join(',')}),to_memorial_id.in.(${memorials?.map(m => m.id).join(',')})`);
 
-            peopleRef.current = people;
-            relationsRef.current = (relations ?? []) as RelationRow[];
-            setMemberCount(people.length);
+            const savedPositions = JSON.parse(localStorage.getItem(`family-tree-positions-${userId}`) || '{}');
 
-            const { positions: computedPositions } = computeFamilyLayout(people, relationsRef.current);
-            const savedPositions = getSavedPositions(userId);
+            let initialNodes: Node[] = (memorials || []).map(m => {
+                const birthYear = m.birth_date ? new Date(m.birth_date).getFullYear() : '';
+                const deathYear = m.death_date ? new Date(m.death_date).getFullYear() : '';
 
-            const mergedPositions: Record<string, { x: number; y: number }> = {};
-            for (const person of people) {
-                mergedPositions[person.id] = savedPositions[person.id] ?? computedPositions[person.id] ?? { x: 0, y: 0 };
-            }
-
-            const graphNodes: Node[] = people.map((person, index) => {
-                const pos = mergedPositions[person.id];
-                const step1 = person.step1 ?? {};
                 return {
-                    id: person.id,
-                    type: 'familyMember',
-                    position: pos,
+                    id: m.id,
+                    type: 'memorial',
+                    position: (!forceAutoLayout && savedPositions[m.id]) ? savedPositions[m.id] : { x: 0, y: 0 },
                     data: {
-                        photoUrl: person.profile_photo_url,
-                        name: person.full_name || 'Unknown',
-                        birthYear: person.birth_date?.substring(0, 4) || '????',
-                        deathYear: person.death_date?.substring(0, 4) || null,
-                        birthPlace: step1.birthPlace || null,
-                        epitaph: step1.epitaph || null,
-                        memorialId: person.id,
-                        slug: person.slug,
-                        animDelay: index * 60,
-                    } satisfies NodeData,
+                        label: m.full_name || 'Unknown',
+                        image: m.profile_photo_url,
+                        dates: birthYear ? `${birthYear} ${deathYear ? `- ${deathYear}` : ''}` : '',
+                        raw: m,
+                        onNodeClick: handleNodeClick
+                    }
                 };
             });
 
-            const graphEdges = buildGraphEdges(relationsRef.current, mergedPositions);
+            // FILTER DUPLICATE VISUAL LINES (Because DB creates A->B and B->A)
+            const processedPairs = new Set<string>();
+            const initialEdges: Edge[] = [];
 
-            const uniquePairs = new Set<string>();
-            for (const rel of relationsRef.current) {
-                uniquePairs.add([rel.from_memorial_id, rel.to_memorial_id].sort().join('|'));
+            (relations || []).forEach(rel => {
+                // Sort IDs so A-B and B-A generate the exact same string
+                const pairKey = [rel.from_memorial_id, rel.to_memorial_id].sort().join('-');
+
+                // Only draw one line per pair of memorials
+                if (!processedPairs.has(pairKey)) {
+                    processedPairs.add(pairKey);
+                    initialEdges.push(createEdgeObject(
+                        rel.id,
+                        rel.from_memorial_id,
+                        rel.to_memorial_id,
+                        rel.description, // We just pass the description as the label
+                        rel.source_handle,
+                        rel.target_handle
+                    ));
+                }
+            });
+
+            if (forceAutoLayout || Object.keys(savedPositions).length === 0) {
+                initialNodes = computeFamilyLayout(initialNodes, initialEdges);
             }
-            setRelationCount(uniquePairs.size);
 
-            setNodes(graphNodes);
-            setEdges(graphEdges);
-        } catch (error) {
-            console.error('Error loading tree:', error);
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+        } catch (err) {
+            console.error("Failed to load family tree:", err);
         } finally {
             setLoading(false);
         }
     }, [userId, setNodes, setEdges]);
 
-    useEffect(() => { loadFamilyData(); }, [loadFamilyData]);
+    useEffect(() => {
+        loadGraph();
+    }, [loadGraph]);
 
-    // ─── Auto-arrange ────────────────────────────────────────────────────
+    const onNodeDragStop = () => {
+        const positions: Record<string, { x: number, y: number }> = {};
+        nodes.forEach(n => {
+            positions[n.id] = n.position;
+        });
+        localStorage.setItem(`family-tree-positions-${userId}`, JSON.stringify(positions));
+    };
 
-    const handleAutoArrange = useCallback(() => {
-        const { positions } = computeFamilyLayout(peopleRef.current, relationsRef.current);
-        setNodes(current =>
-            current.map(n => ({ ...n, position: positions[n.id] ?? n.position }))
-        );
-        setEdges(buildGraphEdges(relationsRef.current, positions));
-        try { localStorage.removeItem(`family-tree-pos-${userId}`); } catch { /* non-critical */ }
-        setTimeout(() => reactFlowInstance.fitView({ padding: 0.3, duration: 400 }), 50);
-    }, [userId, setNodes, setEdges, reactFlowInstance]);
+    // ─── EDGE CREATION HELPER ──────────────────────────────────────────────────
+    const createEdgeObject = (
+        id: string,
+        source: string,
+        target: string,
+        label?: string | null,
+        sourceHandle?: string | null,
+        targetHandle?: string | null
+    ): Edge => {
+        return {
+            id: id,
+            source,
+            target,
+            sourceHandle: sourceHandle || undefined,
+            targetHandle: targetHandle || undefined,
+            type: 'smoothstep',
+            label: label || 'Connected',
+            data: { description: label },
+            animated: false,
+            style: {
+                strokeWidth: 2.5,
+                stroke: '#5a6b78', // Always solid charcoal line
+                strokeDasharray: 'none', // No dashes
+            },
+            markerEnd: undefined, // NO ARROWS
+            labelStyle: { fill: '#5a6b78', fontWeight: 600, fontSize: 10, fontFamily: 'sans-serif' },
+            labelBgStyle: { fill: '#fdf6f0', fillOpacity: 0.8, rx: 4 },
+        };
+    };
 
-    // ─── Connection handling ─────────────────────────────────────────────
-
-    const handleNewConnection = useCallback((connection: Connection) => {
-        if (connection.source && connection.target && connection.source !== connection.target) {
-            setPendingConnection({ source: connection.source, target: connection.target });
-        }
+    const onConnect = useCallback((connection: Connection) => {
+        setPendingConnection(connection);
     }, []);
 
-    const handleConnectStart = useCallback(() => setIsConnecting(true), []);
-    const handleConnectEnd = useCallback(() => setIsConnecting(false), []);
+    const handleNodeClick = (nodeId: string, nodeData: any) => {
+        setSelectedNodeData(nodeData);
+    };
 
-    const handleSaveNewConnection = useCallback(async (type: RelationType, description: string) => {
+    const onEdgeClick = (event: React.MouseEvent, edge: Edge) => {
+        event.stopPropagation();
+        setSelectedEdgeData(edge);
+    };
+
+    // ============================================================================
+    // SAVING CONNECTION TO DB
+    // ============================================================================
+    const confirmConnection = async (description: string) => {
         if (!pendingConnection) return;
-        setLinking(true);
+        setSaving(true);
 
-        let fromId = pendingConnection.source;
-        let toId = pendingConnection.target;
-
-        // Auto-correct direction for parent/child based on birth dates
-        if (type === 'parent' || type === 'child') {
-            const personA = peopleRef.current.find(p => p.id === fromId);
-            const personB = peopleRef.current.find(p => p.id === toId);
-            const dateA = personA?.birth_date ?? '9999';
-            const dateB = personB?.birth_date ?? '9999';
-            if (type === 'parent' && dateA > dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
-            if (type === 'child' && dateA < dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
-        }
+        const sourceId = pendingConnection.source;
+        const targetId = pendingConnection.target;
+        const sourceHandle = pendingConnection.sourceHandle;
+        const targetHandle = pendingConnection.targetHandle;
 
         try {
             const res = await fetch('/api/family/link', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fromId, toId, type, description: description || undefined }),
+                body: JSON.stringify({
+                    fromId: sourceId,
+                    toId: targetId,
+                    type: 'other', // Default type for the database since we removed the dropdown
+                    description: description,
+                    sourceHandle: sourceHandle,
+                    targetHandle: targetHandle
+                })
             });
-            if (!res.ok) throw new Error('Failed to link');
-            await loadFamilyData();
-        } catch (error) {
-            console.error('Failed to connect:', error);
-        } finally {
+
+            if (!res.ok) throw new Error('Failed to create link via API');
+
+            await loadGraph();
             setPendingConnection(null);
-            setLinking(false);
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to save connection. Please check your database permissions.");
+        } finally {
+            setSaving(false);
         }
-    }, [pendingConnection, loadFamilyData]);
+    };
 
-    // ─── Node click ──────────────────────────────────────────────────────
-
-    const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-        if (selectedNodeId === node.id) {
-            setSelectedNodeId(null);
-            setSelectedNodeData(null);
-            return;
-        }
-        const screenPos = reactFlowInstance.flowToScreenPosition({ x: node.position.x, y: node.position.y });
-        setPopupPos({ x: screenPos.x + 100, y: screenPos.y });
-        setSelectedNodeId(node.id);
-        setSelectedNodeData(node.data as NodeData);
-    }, [selectedNodeId, reactFlowInstance]);
-
-    // ─── Edge click ──────────────────────────────────────────────────────
-
-    const handleEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
-        const rel = relationsRef.current.find(r => r.id === edge.id);
-        setEditingEdge({
-            id: edge.id,
-            relationType: (rel?.relationship_type ?? 'other') as RelationType,
-            description: rel?.description ?? '',
-        });
-        setEdgePopupPos({ x: _event.clientX, y: _event.clientY });
-    }, []);
-
-    const handleEdgeSave = useCallback(async (edgeId: string, description: string) => {
+    const updateEdge = async (newLabel: string) => {
+        if (!selectedEdgeData) return;
+        setSaving(true);
         try {
-            await supabase.from('memorial_relations').update({ description: description || null }).eq('id', edgeId);
-            setEdges(eds => eds.map(e =>
-                e.id === edgeId ? { ...e, label: description || (e.data as any)?.relationType || '' } : e
-            ));
-            const rel = relationsRef.current.find(r => r.id === edgeId);
-            if (rel) rel.description = description || null;
-        } catch (error) {
-            console.error('Failed to update edge label:', error);
-        }
-        setEditingEdge(null);
-    }, [setEdges]);
+            // Because we hid the duplicate reverse lines, we need to update BOTH lines in DB
+            // matching these two memorials.
+            const sourceId = selectedEdgeData.source;
+            const targetId = selectedEdgeData.target;
 
-    const handleEdgeDelete = useCallback(async (edgeId: string) => {
-        try {
-            const rel = relationsRef.current.find(r => r.id === edgeId);
-            if (rel) {
-                await supabase.from('memorial_relations').delete().eq('id', edgeId);
-                await supabase.from('memorial_relations').delete()
-                    .eq('from_memorial_id', rel.to_memorial_id)
-                    .eq('to_memorial_id', rel.from_memorial_id);
+            const { data: relatedEdges } = await supabase
+                .from('memorial_relations')
+                .select('id')
+                .or(`and(from_memorial_id.eq.${sourceId},to_memorial_id.eq.${targetId}),and(from_memorial_id.eq.${targetId},to_memorial_id.eq.${sourceId})`);
+
+            if (relatedEdges) {
+                const edgeIds = relatedEdges.map(e => e.id);
+                await supabase
+                    .from('memorial_relations')
+                    .update({ description: newLabel })
+                    .in('id', edgeIds);
             }
-            setEditingEdge(null);
-            await loadFamilyData();
-        } catch (error) {
-            console.error('Failed to delete edge:', error);
+
+            await loadGraph();
+            setSelectedEdgeData(null);
+        } catch (err) {
+            alert("Failed to update connection.");
+        } finally {
+            setSaving(false);
         }
-    }, [loadFamilyData]);
+    };
 
-    // ─── Derived values ─────────────────────────────────────────────────
+    const deleteEdge = async () => {
+        if (!selectedEdgeData) return;
+        if (!confirm("Remove this connection?")) return;
+        setSaving(true);
+        try {
+            // Delete BOTH the forward and reverse relations between these two memorials
+            const sourceId = selectedEdgeData.source;
+            const targetId = selectedEdgeData.target;
 
-    const pendingSourceName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.source)?.data as NodeData)?.name ?? '?' : '';
-    const pendingTargetName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.target)?.data as NodeData)?.name ?? '?' : '';
+            await supabase
+                .from('memorial_relations')
+                .delete()
+                .or(`and(from_memorial_id.eq.${sourceId},to_memorial_id.eq.${targetId}),and(from_memorial_id.eq.${targetId},to_memorial_id.eq.${sourceId})`);
 
-    // ─── Render ──────────────────────────────────────────────────────────
+            await loadGraph();
+            setSelectedEdgeData(null);
+        } catch (err) {
+            alert("Failed to delete connection.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
-        <div className="h-screen flex flex-col" style={{ background: '#faf7f4' }}>
-            {/* Header */}
-            <div
-                className="flex-none px-5 py-3 flex justify-between items-center z-10"
-                style={{ background: '#fff', borderBottom: '1px solid #ede5dc' }}
+        <div className="w-full h-[calc(100vh-85px)] relative bg-ivory">
+            {loading && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-ivory/50 backdrop-blur-sm">
+                    <Loader2 className="animate-spin text-mist" size={32} />
+                </div>
+            )}
+
+            {/* Floating Toolbar */}
+            <div className="absolute top-4 right-4 z-40 flex gap-2">
+                <button
+                    onClick={() => loadGraph(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-sand/40 rounded-xl shadow-sm text-sm font-medium text-charcoal hover:bg-sand/10 transition-all"
+                >
+                    <LayoutTemplate size={16} className="text-mist" />
+                    Auto-Arrange
+                </button>
+            </div>
+
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeDragStop={onNodeDragStop}
+                onEdgeClick={onEdgeClick}
+                nodeTypes={nodeTypes}
+                connectionMode={ConnectionMode.Loose}
+                fitView
+                className="touch-none"
             >
-                <div className="flex items-center gap-3">
-                    <Link href={`/dashboard/family/${userId}`} className="p-2 rounded-lg transition-colors hover:bg-black/[0.03]">
-                        <ArrowLeft size={18} style={{ color: '#8a96a0' }} />
-                    </Link>
-                    <h1 className="font-serif text-xl font-semibold" style={{ color: '#3d4a55' }}>
-                        Family Tree
-                    </h1>
-                </div>
+                <Background color="#e8d8cc" gap={24} size={1} />
+                <Controls className="ft-controls" />
+                <MiniMap className="ft-minimap hidden md:block" nodeColor="#89b896" maskColor="rgba(253,246,240,0.8)" />
+            </ReactFlow>
 
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-3 mr-2">
-                        <div className="flex items-center gap-1.5 text-xs" style={{ color: '#a0a8b0' }}>
-                            <Users size={13} />
-                            <span>{memberCount} members</span>
+            {/* NEW CONNECTION POPUP */}
+            {pendingConnection && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                    <div className="ft-popup w-full max-w-sm p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-serif text-xl text-charcoal">Define Relationship</h3>
+                            <button onClick={() => setPendingConnection(null)} className="text-charcoal/40 hover:text-charcoal"><X size={20} /></button>
                         </div>
-                        {relationCount > 0 && (
-                            <div className="text-xs" style={{ color: '#c4b8a8' }}>
-                                {relationCount} connections
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.currentTarget);
+                            confirmConnection(formData.get('label') as string);
+                        }}>
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">
+                                        Relationship Name
+                                    </label>
+                                    <input
+                                        name="label"
+                                        type="text"
+                                        required
+                                        placeholder="e.g. Mother, Best Friend, Husband"
+                                        className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:ring-2 focus:ring-mist/30 outline-none text-charcoal"
+                                        autoFocus
+                                    />
+                                </div>
                             </div>
-                        )}
+                            <button type="submit" disabled={saving} className="w-full py-3 bg-charcoal text-ivory rounded-lg font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2">
+                                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Create Link
+                            </button>
+                        </form>
                     </div>
-
-                    <button
-                        onClick={handleAutoArrange}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
-                        style={{ color: '#5a6b78', background: '#f0e6dd', border: '1px solid #e8d8cc' }}
-                        title="Reset to automatic layout"
-                    >
-                        <LayoutGrid size={13} />
-                        Auto-arrange
-                    </button>
                 </div>
-            </div>
+            )}
 
-            {/* Graph Area */}
-            <div className="flex-1 w-full h-full relative overflow-hidden">
-                {loading ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3" style={{ background: '#faf7f4' }}>
-                        <Loader2 className="animate-spin" size={28} style={{ color: '#b5a7c7' }} />
-                        <span className="font-serif text-sm" style={{ color: '#a0a8b0' }}>
-                            Loading family tree...
-                        </span>
-                    </div>
-                ) : (
-                    <ConnectionContext.Provider value={isConnecting}>
-                        <ReactFlow
-                            nodes={nodes}
-                            edges={edges}
-                            onNodesChange={handleNodesChange}
-                            onEdgesChange={onEdgesChange}
-                            onNodeClick={handleNodeClick}
-                            onEdgeClick={handleEdgeClick}
-                            onConnect={handleNewConnection}
-                            onConnectStart={handleConnectStart}
-                            onConnectEnd={handleConnectEnd}
-                            onPaneClick={() => { setSelectedNodeId(null); setSelectedNodeData(null); }}
-                            nodeTypes={nodeTypes}
-                            fitView
-                            fitViewOptions={{ padding: 0.3 }}
-                            attributionPosition="bottom-right"
-                            style={{ background: '#faf7f4' }}
-                            connectionLineStyle={{ stroke: '#7c5bf0', strokeWidth: 2 }}
-                            defaultEdgeOptions={{ type: 'smoothstep' }}
-                            connectionRadius={30}
-                        >
-                            <Background color="#e0d6cc" gap={24} size={1} />
-                            <Controls showInteractive={false} className="ft-controls" />
-                            <MiniMap
-                                nodeColor={() => '#d4c4b5'}
-                                maskColor="rgba(250, 247, 244, 0.85)"
-                                className="ft-minimap"
-                            />
-                        </ReactFlow>
-                    </ConnectionContext.Provider>
-                )}
+            {/* NODE INFO POPUP */}
+            {selectedNodeData && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                    <div className="ft-popup w-full max-w-md p-6 relative">
+                        <button onClick={() => setSelectedNodeData(null)} className="absolute top-4 right-4 p-2 bg-sand/10 hover:bg-sand/30 rounded-full transition-all">
+                            <X size={16} className="text-charcoal" />
+                        </button>
 
-                {/* Onboarding hint */}
-                {!loading && edges.length === 0 && nodes.length > 1 && (
-                    <div
-                        className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 text-xs px-4 py-2.5 rounded-full"
-                        style={{ background: '#fff', color: '#5a6b78', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ede5dc' }}
-                    >
-                        <span style={{ fontSize: 16 }}>↔</span>
-                        Hover a card and drag from the dot to another card to create a connection
-                    </div>
-                )}
+                        <div className="flex flex-col items-center text-center mt-2">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-ivory shadow-lg bg-sand/10 flex items-center justify-center mb-4">
+                                {selectedNodeData.image ? (
+                                    <img src={selectedNodeData.image} alt={selectedNodeData.label} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="text-charcoal/20" size={48} />
+                                )}
+                            </div>
+                            <h2 className="font-serif text-3xl text-charcoal mb-1">{selectedNodeData.label}</h2>
+                            <p className="text-sm font-medium text-charcoal/50 uppercase tracking-wider mb-4">{selectedNodeData.dates}</p>
 
-                {/* Popups */}
-                {selectedNodeId && selectedNodeData && (
-                    <NodeInfoPopup nodeData={selectedNodeData} screenPos={popupPos}
-                        onClose={() => { setSelectedNodeId(null); setSelectedNodeData(null); }} />
-                )}
-                {editingEdge && (
-                    <EdgeEditPopover edgeData={editingEdge} screenPos={edgePopupPos}
-                        onSave={handleEdgeSave} onDelete={handleEdgeDelete} onClose={() => setEditingEdge(null)} />
-                )}
-                {pendingConnection && (
-                    <NewConnectionPopup sourceName={pendingSourceName} targetName={pendingTargetName}
-                        onSave={handleSaveNewConnection} onClose={() => setPendingConnection(null)} />
-                )}
-                {linking && (
-                    <div className="absolute inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(250,247,244,0.7)' }}>
-                        <Loader2 className="animate-spin" size={24} style={{ color: '#89b896' }} />
+                            {selectedNodeData.raw.birth_place && (
+                                <div className="flex items-center gap-2 text-sm text-charcoal/70 mb-4 bg-sand/10 px-3 py-1.5 rounded-full">
+                                    <MapPin size={14} className="text-stone" /> {selectedNodeData.raw.birth_place}
+                                </div>
+                            )}
+
+                            {selectedNodeData.raw.step1?.epitaph && (
+                                <div className="relative py-4 px-6 mt-2 mb-6 border-y border-sand/30 w-full">
+                                    <Quote size={24} className="text-mist/20 absolute top-2 left-2" />
+                                    <p className="font-serif italic text-charcoal/80">"{selectedNodeData.raw.step1.epitaph}"</p>
+                                </div>
+                            )}
+
+                            <Link
+                                href={`/person/${selectedNodeData.raw.id}`}
+                                target="_blank"
+                                className="w-full py-3 bg-mist text-ivory rounded-lg font-medium hover:bg-mist/90 transition-all flex items-center justify-center gap-2"
+                            >
+                                Open Full Archive
+                            </Link>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* EDGE EDIT POPUP */}
+            {selectedEdgeData && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                    <div className="ft-popup w-full max-w-sm p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-serif text-xl text-charcoal flex items-center gap-2"><Settings2 size={20} className="text-stone" /> Edit Connection</h3>
+                            <button onClick={() => setSelectedEdgeData(null)} className="text-charcoal/40 hover:text-charcoal"><X size={20} /></button>
+                        </div>
+
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            updateEdge(new FormData(e.currentTarget).get('label') as string);
+                        }}>
+                            <div className="mb-6">
+                                <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">Relationship Name</label>
+                                <input
+                                    name="label"
+                                    type="text"
+                                    required
+                                    defaultValue={(selectedEdgeData.data?.description as string) || ''}
+                                    placeholder="e.g. Mother, Best Friend"
+                                    className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:ring-2 focus:ring-mist/30 outline-none text-charcoal"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="submit" disabled={saving} className="flex-1 py-3 bg-charcoal text-ivory rounded-lg font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2">
+                                    <Save size={16} /> Save
+                                </button>
+                                <button type="button" onClick={deleteEdge} disabled={saving} className="px-4 py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-all flex items-center justify-center">
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
-// ─── Page wrapper ───────────────────────────────────────────────────────────
-
+// ============================================================================
+// NEXT.JS PAGE WRAPPER
+// ============================================================================
 export default function FamilyTreePage({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
+
     return (
-        <ReactFlowProvider>
-            <FamilyTreeGraph userId={unwrappedParams.userId} />
-        </ReactFlowProvider>
+        <div className="min-h-screen flex flex-col bg-ivory">
+            {/* Header */}
+            <div className="bg-white border-b border-sand/30 shadow-sm flex-none z-50 relative">
+                <div className="max-w-[1920px] mx-auto px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={`/dashboard/family/${unwrappedParams.userId}`}
+                            className="p-2 hover:bg-sand/10 rounded-lg transition-colors border border-sand/20"
+                            title="Back to Dashboard"
+                        >
+                            <ArrowLeft size={18} className="text-charcoal/60" />
+                        </Link>
+                        <div>
+                            <h1 className="font-serif text-2xl text-charcoal leading-none">Family Constellation</h1>
+                            <p className="text-xs text-charcoal/50 mt-1">Drag nodes to organize. Hover over a card to reveal connection points.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* React Flow Canvas */}
+            <ReactFlowProvider>
+                <FamilyTreeGraph userId={unwrappedParams.userId} />
+            </ReactFlowProvider>
+        </div>
     );
 }
