@@ -196,7 +196,7 @@ function buildGraphEdges(
         const isParentChild = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
         if (isParentChild) {
             // Parent→child: always bottom→top
-            sourceHandle = 'bottom'; targetHandle = 'target-top';
+            sourceHandle = 'bottom'; targetHandle = 'top';
         } else {
             // Horizontal relationships: pick handles based on relative position
             const dx = tgtPos.x - srcPos.x;
@@ -204,11 +204,11 @@ function buildGraphEdges(
             if (Math.abs(dx) >= Math.abs(dy)) {
                 // Target is more to the side
                 sourceHandle = dx >= 0 ? 'right' : 'left';
-                targetHandle = dx >= 0 ? 'target-left' : 'target-right';
+                targetHandle = dx >= 0 ? 'left' : 'right';
             } else {
                 // Target is more above/below
                 sourceHandle = dy >= 0 ? 'bottom' : 'top';
-                targetHandle = dy >= 0 ? 'target-top' : 'target-bottom';
+                targetHandle = dy >= 0 ? 'top' : 'bottom';
             }
         }
 
@@ -259,16 +259,11 @@ function TreeNode({ data }: NodeProps) {
 
     return (
         <div className="ft-node" style={{ animationDelay: `${animDelay}ms` }}>
-            {/* Source handles — for dragging connections out */}
-            <Handle type="source" position={Position.Top}    id="top"    className="ft-handle" />
-            <Handle type="source" position={Position.Bottom} id="bottom" className="ft-handle" />
-            <Handle type="source" position={Position.Left}   id="left"   className="ft-handle" />
-            <Handle type="source" position={Position.Right}  id="right"  className="ft-handle" />
-            {/* Target handles — for receiving connections (invisible, overlapping source handles) */}
-            <Handle type="target" position={Position.Top}    id="target-top"    className="ft-handle" />
-            <Handle type="target" position={Position.Bottom} id="target-bottom" className="ft-handle" />
-            <Handle type="target" position={Position.Left}   id="target-left"   className="ft-handle" />
-            <Handle type="target" position={Position.Right}  id="target-right"  className="ft-handle" />
+            {/* Single handle per side — acts as both source and target */}
+            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
+            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
+            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
+            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
