@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback, useRef, type RefObject } from 'react';
+import { useState, useEffect, use, useCallback, useRef, createContext, useContext, type RefObject } from 'react';
 import {
     ReactFlow, Controls, MiniMap, Background, useNodesState, useEdgesState, useReactFlow,
     ReactFlowProvider, Position, Node, Edge, Handle, NodeProps, Connection,
@@ -64,6 +64,10 @@ const RELATIONSHIP_TYPES = [
     { key: 'spouse' as RelationType, label: 'Spouse', icon: '♥', color: '#d4958a' },
     { key: 'sibling' as RelationType, label: 'Sibling', icon: '∼', color: '#b5a7c7' },
 ];
+
+// ─── Connection state context ───────────────────────────────────────────────
+
+const ConnectionContext = createContext<boolean>(false);
 
 // ─── Hooks ──────────────────────────────────────────────────────────────────
 
@@ -283,6 +287,7 @@ function TreeNode({ data }: NodeProps) {
     const { photoUrl, name, birthYear, deathYear, animDelay } = data as NodeData;
     const [activeHandle, setActiveHandle] = useState<string | null>(null);
     const nodeRef = useRef<HTMLDivElement>(null);
+    const isConnecting = useContext(ConnectionContext);
 
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
         const rect = nodeRef.current?.getBoundingClientRect();
@@ -304,9 +309,19 @@ function TreeNode({ data }: NodeProps) {
         setActiveHandle((prev: string | null) => prev === nearest ? prev : nearest);
     }, []);
 
-    const handleMouseLeave = useCallback(() => setActiveHandle(null), []);
+    const handleMouseLeave = useCallback(() => {
+        if (!isConnecting) {
+            setActiveHandle(null);
+        }
+    }, [isConnecting]);
 
     const dateDisplay = deathYear ? `${birthYear} – ${deathYear}` : birthYear;
+
+    const handleClass = (side: string) => {
+        if (isConnecting) return 'ft-handle ft-handle-connectable';
+        if (activeHandle === side) return 'ft-handle ft-handle-visible';
+        return 'ft-handle';
+    };
 
     return (
         <div
@@ -316,11 +331,11 @@ function TreeNode({ data }: NodeProps) {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Single handle per side — only the nearest one becomes visible */}
-            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'top' ? 'ft-handle-visible' : ''}`} />
-            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'bottom' ? 'ft-handle-visible' : ''}`} />
-            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'left' ? 'ft-handle-visible' : ''}`} />
-            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'right' ? 'ft-handle-visible' : ''}`} />
+            {/* Single handle per side — only the nearest one becomes visible; all become targets during connection drag */}
+            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd isConnectableStart className={handleClass('top')} />
+            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd isConnectableStart className={handleClass('bottom')} />
+            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd isConnectableStart className={handleClass('left')} />
+            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd isConnectableStart className={handleClass('right')} />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
@@ -589,6 +604,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
     const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
     const [linking, setLinking] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
 
     const relationsRef = useRef<RelationRow[]>([]);
     const peopleRef = useRef<PersonData[]>([]);
@@ -708,6 +724,9 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
             setPendingConnection({ source: connection.source, target: connection.target });
         }
     }, []);
+
+    const handleConnectStart = useCallback(() => setIsConnecting(true), []);
+    const handleConnectEnd = useCallback(() => setIsConnecting(false), []);
 
     const handleSaveNewConnection = useCallback(async (type: RelationType, description: string) => {
         if (!pendingConnection) return;
@@ -856,32 +875,36 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                         </span>
                     </div>
                 ) : (
-                    <ReactFlow
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={handleNodesChange}
-                        onEdgesChange={onEdgesChange}
-                        onNodeClick={handleNodeClick}
-                        onEdgeClick={handleEdgeClick}
-                        onConnect={handleNewConnection}
-                        onPaneClick={() => { setSelectedNodeId(null); setSelectedNodeData(null); }}
-                        nodeTypes={nodeTypes}
-                        fitView
-                        fitViewOptions={{ padding: 0.3 }}
-                        attributionPosition="bottom-right"
-                        style={{ background: '#faf7f4' }}
-                        connectionLineStyle={{ stroke: '#7c5bf0', strokeWidth: 2 }}
-                        defaultEdgeOptions={{ type: 'smoothstep' }}
-                        connectionRadius={30}
-                    >
-                        <Background color="#e0d6cc" gap={24} size={1} />
-                        <Controls showInteractive={false} className="ft-controls" />
-                        <MiniMap
-                            nodeColor={() => '#d4c4b5'}
-                            maskColor="rgba(250, 247, 244, 0.85)"
-                            className="ft-minimap"
-                        />
-                    </ReactFlow>
+                    <ConnectionContext.Provider value={isConnecting}>
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={handleNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onNodeClick={handleNodeClick}
+                            onEdgeClick={handleEdgeClick}
+                            onConnect={handleNewConnection}
+                            onConnectStart={handleConnectStart}
+                            onConnectEnd={handleConnectEnd}
+                            onPaneClick={() => { setSelectedNodeId(null); setSelectedNodeData(null); }}
+                            nodeTypes={nodeTypes}
+                            fitView
+                            fitViewOptions={{ padding: 0.3 }}
+                            attributionPosition="bottom-right"
+                            style={{ background: '#faf7f4' }}
+                            connectionLineStyle={{ stroke: '#7c5bf0', strokeWidth: 2 }}
+                            defaultEdgeOptions={{ type: 'smoothstep' }}
+                            connectionRadius={30}
+                        >
+                            <Background color="#e0d6cc" gap={24} size={1} />
+                            <Controls showInteractive={false} className="ft-controls" />
+                            <MiniMap
+                                nodeColor={() => '#d4c4b5'}
+                                maskColor="rgba(250, 247, 244, 0.85)"
+                                className="ft-minimap"
+                            />
+                        </ReactFlow>
+                    </ConnectionContext.Provider>
                 )}
 
                 {/* Onboarding hint */}
