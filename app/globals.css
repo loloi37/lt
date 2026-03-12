@@ -172,6 +172,16 @@
   cursor: crosshair;
 }
 
+/* Target handles are always invisible — only used for edge endpoint routing */
+.react-flow__handle.ft-handle-target {
+  opacity: 0 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  pointer-events: all;
+  width: 10px !important;
+  height: 10px !important;
+}
+
 /* During active connection drag, all handles become visible drop targets */
 .react-flow__handle.ft-handle-connectable {
   opacity: 1 !important;

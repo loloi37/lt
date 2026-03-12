@@ -331,16 +331,16 @@ function TreeNode({ data }: NodeProps) {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Source handles for outgoing edges */}
+            {/* Source handles — visible on hover, used for dragging connections */}
             <Handle type="source" position={Position.Top}    id="top"    className={handleClass('top')} />
             <Handle type="source" position={Position.Bottom} id="bottom" className={handleClass('bottom')} />
             <Handle type="source" position={Position.Left}   id="left"   className={handleClass('left')} />
             <Handle type="source" position={Position.Right}  id="right"  className={handleClass('right')} />
-            {/* Target handles for incoming edges (same positions, needed for edge routing) */}
-            <Handle type="target" position={Position.Top}    id="top"    className={handleClass('top')} />
-            <Handle type="target" position={Position.Bottom} id="bottom" className={handleClass('bottom')} />
-            <Handle type="target" position={Position.Left}   id="left"   className={handleClass('left')} />
-            <Handle type="target" position={Position.Right}  id="right"  className={handleClass('right')} />
+            {/* Target handles — always invisible, only needed for edge endpoint routing */}
+            <Handle type="target" position={Position.Top}    id="top"    className="ft-handle ft-handle-target" />
+            <Handle type="target" position={Position.Bottom} id="bottom" className="ft-handle ft-handle-target" />
+            <Handle type="target" position={Position.Left}   id="left"   className="ft-handle ft-handle-target" />
+            <Handle type="target" position={Position.Right}  id="right"  className="ft-handle ft-handle-target" />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
