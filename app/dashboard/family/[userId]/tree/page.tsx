@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback, useRef } from 'react';
+import { useState, useEffect, use, useCallback, useRef, type RefObject } from 'react';
 import {
     ReactFlow, Controls, MiniMap, Background, useNodesState, useEdgesState, useReactFlow,
     ReactFlowProvider, Position, Node, Edge, Handle, NodeProps, Connection,
@@ -8,13 +8,74 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { supabase } from '@/lib/supabase';
-import { Loader2, ArrowLeft, X, Check, ExternalLink, Trash2, LayoutGrid, Users } from 'lucide-react';
+import { Loader2, ArrowLeft, X, ExternalLink, Trash2, LayoutGrid, Users } from 'lucide-react';
 import Link from 'next/link';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type RelationType = 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+
+interface PersonData {
+    id: string;
+    full_name: string | null;
+    profile_photo_url: string | null;
+    birth_date: string | null;
+    death_date: string | null;
+    step1: Record<string, string | undefined> | null;
+    slug: string | null;
+}
+
+interface RelationRow {
+    id: string;
+    from_memorial_id: string;
+    to_memorial_id: string;
+    relationship_type: RelationType;
+    description?: string | null;
+}
+
+interface NodeData {
+    photoUrl: string | null;
+    name: string;
+    birthYear: string;
+    deathYear: string | null;
+    birthPlace: string | null;
+    epitaph: string | null;
+    memorialId: string;
+    slug: string | null;
+    animDelay: number;
+}
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const H_GAP = 280;
 const V_GAP = 220;
+
+const EDGE_STYLES: Record<RelationType, { stroke: string; strokeDasharray?: string }> = {
+    parent:  { stroke: '#7d8f82' },
+    child:   { stroke: '#7d8f82' },
+    spouse:  { stroke: '#a89080' },
+    sibling: { stroke: '#9ea5ad', strokeDasharray: '5 3' },
+    other:   { stroke: '#aab0b8', strokeDasharray: '3 3' },
+};
+
+const RELATIONSHIP_TYPES = [
+    { key: 'parent' as RelationType, label: 'Parent', icon: '↑', color: '#89b896' },
+    { key: 'child' as RelationType, label: 'Child', icon: '↓', color: '#89b896' },
+    { key: 'spouse' as RelationType, label: 'Spouse', icon: '♥', color: '#d4958a' },
+    { key: 'sibling' as RelationType, label: 'Sibling', icon: '∼', color: '#b5a7c7' },
+];
+
+// ─── Hooks ──────────────────────────────────────────────────────────────────
+
+function useClickOutside(ref: RefObject<HTMLElement | null>, callback: () => void) {
+    useEffect(() => {
+        function handleClick(e: MouseEvent) {
+            if (ref.current && !ref.current.contains(e.target as HTMLElement)) callback();
+        }
+        const timer = setTimeout(() => document.addEventListener('mousedown', handleClick), 50);
+        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClick); };
+    }, [ref, callback]);
+}
 
 // ─── Position persistence (localStorage) ────────────────────────────────────
 
@@ -32,26 +93,14 @@ function savePositions(userId: string, nodes: Node[]) {
     }
     try {
         localStorage.setItem(`family-tree-pos-${userId}`, JSON.stringify(positions));
-    } catch { /* ignore quota errors */ }
-}
-
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-interface PersonData {
-    id: string;
-    full_name: string | null;
-    profile_photo_url: string | null;
-    birth_date: string | null;
-    death_date: string | null;
-    step1: any;
-    slug: string | null;
+    } catch { /* quota errors are non-critical */ }
 }
 
 // ─── Family tree layout algorithm ───────────────────────────────────────────
 
 function computeFamilyLayout(
     people: PersonData[],
-    relations: any[],
+    relations: RelationRow[],
 ): { positions: Record<string, { x: number; y: number }>; generations: Record<string, number> } {
     if (people.length === 0) return { positions: {}, generations: {} };
 
@@ -66,18 +115,14 @@ function computeFamilyLayout(
         seen.add(pairKey);
 
         if (rel.relationship_type === 'parent') {
-            if (!parentChildren[rel.from_memorial_id]) parentChildren[rel.from_memorial_id] = [];
-            parentChildren[rel.from_memorial_id].push(rel.to_memorial_id);
+            (parentChildren[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
             hasParent.add(rel.to_memorial_id);
         } else if (rel.relationship_type === 'child') {
-            if (!parentChildren[rel.to_memorial_id]) parentChildren[rel.to_memorial_id] = [];
-            parentChildren[rel.to_memorial_id].push(rel.from_memorial_id);
+            (parentChildren[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
             hasParent.add(rel.from_memorial_id);
         } else if (rel.relationship_type === 'spouse') {
-            if (!spouses[rel.from_memorial_id]) spouses[rel.from_memorial_id] = [];
-            spouses[rel.from_memorial_id].push(rel.to_memorial_id);
-            if (!spouses[rel.to_memorial_id]) spouses[rel.to_memorial_id] = [];
-            spouses[rel.to_memorial_id].push(rel.from_memorial_id);
+            (spouses[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
+            (spouses[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
         }
     }
 
@@ -88,10 +133,8 @@ function computeFamilyLayout(
         const pk = [rel.from_memorial_id, rel.to_memorial_id].sort().join('|');
         if (seenSib.has(pk)) continue;
         seenSib.add(pk);
-        if (!siblingOf[rel.from_memorial_id]) siblingOf[rel.from_memorial_id] = [];
-        siblingOf[rel.from_memorial_id].push(rel.to_memorial_id);
-        if (!siblingOf[rel.to_memorial_id]) siblingOf[rel.to_memorial_id] = [];
-        siblingOf[rel.to_memorial_id].push(rel.from_memorial_id);
+        (siblingOf[rel.from_memorial_id] ??= []).push(rel.to_memorial_id);
+        (siblingOf[rel.to_memorial_id] ??= []).push(rel.from_memorial_id);
     }
 
     const generation: Record<string, number> = {};
@@ -112,13 +155,13 @@ function computeFamilyLayout(
     while (queue.length > 0) {
         const id = queue.shift()!;
         const gen = generation[id];
-        for (const childId of (parentChildren[id] || [])) {
+        for (const childId of (parentChildren[id] ?? [])) {
             if (!visited.has(childId)) { generation[childId] = gen + 1; visited.add(childId); queue.push(childId); }
         }
-        for (const spouseId of (spouses[id] || [])) {
+        for (const spouseId of (spouses[id] ?? [])) {
             if (!visited.has(spouseId)) { generation[spouseId] = gen; visited.add(spouseId); queue.push(spouseId); }
         }
-        for (const sibId of (siblingOf[id] || [])) {
+        for (const sibId of (siblingOf[id] ?? [])) {
             if (!visited.has(sibId)) { generation[sibId] = gen; visited.add(sibId); queue.push(sibId); }
         }
     }
@@ -130,8 +173,7 @@ function computeFamilyLayout(
     const genGroups: Record<number, string[]> = {};
     for (const p of people) {
         const gen = generation[p.id] ?? 0;
-        if (!genGroups[gen]) genGroups[gen] = [];
-        genGroups[gen].push(p.id);
+        (genGroups[gen] ??= []).push(p.id);
     }
 
     const sortedGens = Object.keys(genGroups).map(Number).sort((a, b) => a - b);
@@ -145,7 +187,7 @@ function computeFamilyLayout(
             if (placed.has(id)) continue;
             ordered.push(id);
             placed.add(id);
-            for (const spouseId of (spouses[id] || [])) {
+            for (const spouseId of (spouses[id] ?? [])) {
                 if (!placed.has(spouseId) && ids.includes(spouseId)) {
                     ordered.push(spouseId);
                     placed.add(spouseId);
@@ -165,7 +207,7 @@ function computeFamilyLayout(
 // ─── Build edges ────────────────────────────────────────────────────────────
 
 function buildGraphEdges(
-    relations: any[],
+    relations: RelationRow[],
     positions: Record<string, { x: number; y: number }>,
 ): Edge[] {
     const edges: Edge[] = [];
@@ -176,63 +218,51 @@ function buildGraphEdges(
         if (seenPairs.has(pairKey)) continue;
         seenPairs.add(pairKey);
 
-        let sourceId: string, targetId: string;
-        const displayLabel = rel.description || '';
+        const isParentChild = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
 
         // Normalize direction: parent always flows top→bottom
-        if (rel.relationship_type === 'parent') {
-            sourceId = rel.from_memorial_id; targetId = rel.to_memorial_id;
-        } else if (rel.relationship_type === 'child') {
-            sourceId = rel.to_memorial_id; targetId = rel.from_memorial_id;
+        let sourceId: string, targetId: string;
+        if (rel.relationship_type === 'child') {
+            sourceId = rel.to_memorial_id;
+            targetId = rel.from_memorial_id;
         } else {
-            sourceId = rel.from_memorial_id; targetId = rel.to_memorial_id;
+            sourceId = rel.from_memorial_id;
+            targetId = rel.to_memorial_id;
         }
 
-        // Smart handle selection based on actual node positions
-        const srcPos = positions[sourceId] || { x: 0, y: 0 };
-        const tgtPos = positions[targetId] || { x: 0, y: 0 };
+        // Smart handle selection based on actual positions
+        const srcPos = positions[sourceId] ?? { x: 0, y: 0 };
+        const tgtPos = positions[targetId] ?? { x: 0, y: 0 };
         let sourceHandle: string, targetHandle: string;
 
-        const isParentChild = rel.relationship_type === 'parent' || rel.relationship_type === 'child';
         if (isParentChild) {
-            // Parent→child: always bottom→top
-            sourceHandle = 'bottom'; targetHandle = 'top';
+            sourceHandle = 'bottom';
+            targetHandle = 'top';
         } else {
-            // Horizontal relationships: pick handles based on relative position
             const dx = tgtPos.x - srcPos.x;
             const dy = tgtPos.y - srcPos.y;
             if (Math.abs(dx) >= Math.abs(dy)) {
-                // Target is more to the side
                 sourceHandle = dx >= 0 ? 'right' : 'left';
                 targetHandle = dx >= 0 ? 'left' : 'right';
             } else {
-                // Target is more above/below
                 sourceHandle = dy >= 0 ? 'bottom' : 'top';
                 targetHandle = dy >= 0 ? 'top' : 'bottom';
             }
         }
 
-        // Muted edge colors by relationship type
-        const edgeStyles: Record<string, { stroke: string; strokeDasharray?: string }> = {
-            parent: { stroke: '#7d8f82' },
-            child:  { stroke: '#7d8f82' },
-            spouse: { stroke: '#a89080' },
-            sibling: { stroke: '#9ea5ad', strokeDasharray: '5 3' },
-            other:  { stroke: '#aab0b8', strokeDasharray: '3 3' },
-        };
-        const edgeStyle = edgeStyles[rel.relationship_type] || edgeStyles.other;
-
-        // Minimal label — just the word, no icons
-        const labelText = displayLabel || rel.relationship_type;
+        const edgeStyle = EDGE_STYLES[rel.relationship_type] ?? EDGE_STYLES.other;
+        const labelText = rel.description || rel.relationship_type;
 
         edges.push({
             id: rel.id,
-            source: sourceId, target: targetId,
-            sourceHandle, targetHandle,
+            source: sourceId,
+            target: targetId,
+            sourceHandle,
+            targetHandle,
             label: labelText,
             type: 'smoothstep',
             animated: false,
-            data: { relationType: rel.relationship_type, description: rel.description || '' },
+            data: { relationType: rel.relationship_type, description: rel.description ?? '' },
             style: { ...edgeStyle, strokeWidth: 1.5 },
             pathOptions: { borderRadius: 8, offset: 20 },
             labelStyle: {
@@ -250,20 +280,47 @@ function buildGraphEdges(
 // ─── Custom node ────────────────────────────────────────────────────────────
 
 function TreeNode({ data }: NodeProps) {
-    const { photoUrl, name, birthYear, deathYear, animDelay } = data as {
-        photoUrl: string | null; name: string; birthYear: string; deathYear: string | null; animDelay: number;
-    };
+    const { photoUrl, name, birthYear, deathYear, animDelay } = data as NodeData;
+    const [activeHandle, setActiveHandle] = useState<string | null>(null);
+    const nodeRef = useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        const rect = nodeRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const distTop = y;
+        const distBottom = rect.height - y;
+        const distLeft = x;
+        const distRight = rect.width - x;
+        const min = Math.min(distTop, distBottom, distLeft, distRight);
+
+        let nearest: string;
+        if (min === distTop) nearest = 'top';
+        else if (min === distBottom) nearest = 'bottom';
+        else if (min === distLeft) nearest = 'left';
+        else nearest = 'right';
+
+        setActiveHandle((prev: string | null) => prev === nearest ? prev : nearest);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => setActiveHandle(null), []);
 
     const dateDisplay = deathYear ? `${birthYear} – ${deathYear}` : birthYear;
-    const isDeceased = !!deathYear;
 
     return (
-        <div className="ft-node" style={{ animationDelay: `${animDelay}ms` }}>
-            {/* Single handle per side — acts as both source and target */}
-            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
-            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
-            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
-            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd={true} isConnectableStart={true} className="ft-handle" />
+        <div
+            ref={nodeRef}
+            className="ft-node"
+            style={{ animationDelay: `${animDelay}ms` }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
+            {/* Single handle per side — only the nearest one becomes visible */}
+            <Handle type="source" position={Position.Top}    id="top"    isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'top' ? 'ft-handle-visible' : ''}`} />
+            <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'bottom' ? 'ft-handle-visible' : ''}`} />
+            <Handle type="source" position={Position.Left}   id="left"   isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'left' ? 'ft-handle-visible' : ''}`} />
+            <Handle type="source" position={Position.Right}  id="right"  isConnectableEnd isConnectableStart className={`ft-handle ${activeHandle === 'right' ? 'ft-handle-visible' : ''}`} />
 
             {/* Avatar */}
             <div className="ft-node-avatar">
@@ -285,7 +342,7 @@ function TreeNode({ data }: NodeProps) {
                     {name}
                 </div>
                 <div className="text-[11px] mt-0.5" style={{ color: '#8a96a0' }}>
-                    {isDeceased && <span style={{ color: '#b5a7c7', marginRight: 3 }}>✝</span>}
+                    {deathYear && <span style={{ color: '#b5a7c7', marginRight: 3 }}>✝</span>}
                     {dateDisplay}
                 </div>
             </div>
@@ -298,17 +355,10 @@ const nodeTypes = { familyMember: TreeNode };
 // ─── Node info popup ────────────────────────────────────────────────────────
 
 function NodeInfoPopup({ nodeData, screenPos, onClose }: {
-    nodeData: any; screenPos: { x: number; y: number }; onClose: () => void;
+    nodeData: NodeData; screenPos: { x: number; y: number }; onClose: () => void;
 }) {
     const popupRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (popupRef.current && !popupRef.current.contains(e.target as HTMLElement)) onClose();
-        }
-        const timer = setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 50);
-        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
-    }, [onClose]);
+    useClickOutside(popupRef, onClose);
 
     const { name, birthYear, deathYear, birthPlace, epitaph, slug, photoUrl } = nodeData;
     const dateRange = deathYear ? `${birthYear} – ${deathYear}` : `Born ${birthYear}`;
@@ -319,7 +369,6 @@ function NodeInfoPopup({ nodeData, screenPos, onClose }: {
             className="ft-popup fixed z-50"
             style={{ left: screenPos.x + 20, top: screenPos.y - 20, width: 240 }}
         >
-            {/* Header with photo */}
             {photoUrl && (
                 <div style={{ height: 80, overflow: 'hidden', borderRadius: '12px 12px 0 0', margin: '-1px -1px 0 -1px' }}>
                     <img src={photoUrl} alt="" className="w-full h-full object-cover" />
@@ -361,7 +410,7 @@ function NodeInfoPopup({ nodeData, screenPos, onClose }: {
 // ─── Edge edit popover ──────────────────────────────────────────────────────
 
 function EdgeEditPopover({ edgeData, screenPos, onSave, onDelete, onClose }: {
-    edgeData: { id: string; relationType: string; description: string };
+    edgeData: { id: string; relationType: RelationType; description: string };
     screenPos: { x: number; y: number };
     onSave: (id: string, description: string) => void;
     onDelete: (id: string) => void;
@@ -372,14 +421,8 @@ function EdgeEditPopover({ edgeData, screenPos, onSave, onDelete, onClose }: {
     const popupRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        inputRef.current?.focus();
-        function handleClickOutside(e: MouseEvent) {
-            if (popupRef.current && !popupRef.current.contains(e.target as HTMLElement)) onClose();
-        }
-        const timer = setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 50);
-        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
-    }, [onClose]);
+    useClickOutside(popupRef, onClose);
+    useEffect(() => { inputRef.current?.focus(); }, []);
 
     const badgeColors: Record<string, string> = {
         parent: '#89b896', child: '#89b896', spouse: '#d4958a', sibling: '#b5a7c7',
@@ -453,26 +496,13 @@ function EdgeEditPopover({ edgeData, screenPos, onSave, onDelete, onClose }: {
 
 function NewConnectionPopup({ sourceName, targetName, onSave, onClose }: {
     sourceName: string; targetName: string;
-    onSave: (type: string, description: string) => void; onClose: () => void;
+    onSave: (type: RelationType, description: string) => void; onClose: () => void;
 }) {
-    const [type, setType] = useState('spouse');
+    const [type, setType] = useState<RelationType>('spouse');
     const [label, setLabel] = useState('');
     const popupRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            if (popupRef.current && !popupRef.current.contains(e.target as HTMLElement)) onClose();
-        }
-        const timer = setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 50);
-        return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
-    }, [onClose]);
-
-    const types = [
-        { key: 'parent', label: 'Parent', icon: '↑', color: '#89b896' },
-        { key: 'child', label: 'Child', icon: '↓', color: '#89b896' },
-        { key: 'spouse', label: 'Spouse', icon: '♥', color: '#d4958a' },
-        { key: 'sibling', label: 'Sibling', icon: '∼', color: '#b5a7c7' },
-    ];
+    useClickOutside(popupRef, onClose);
 
     return (
         <div
@@ -488,7 +518,7 @@ function NewConnectionPopup({ sourceName, targetName, onSave, onClose }: {
             <div className="mb-4">
                 <div className="text-xs font-medium mb-2" style={{ color: '#5a6b78' }}>Relationship type</div>
                 <div className="grid grid-cols-2 gap-2">
-                    {types.map((t) => (
+                    {RELATIONSHIP_TYPES.map((t) => (
                         <button
                             key={t.key}
                             onClick={() => setType(t.key)}
@@ -551,16 +581,16 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
     const [relationCount, setRelationCount] = useState(0);
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [selectedNodeData, setSelectedNodeData] = useState<any>(null);
+    const [selectedNodeData, setSelectedNodeData] = useState<NodeData | null>(null);
     const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
-    const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: string; description: string } | null>(null);
+    const [editingEdge, setEditingEdge] = useState<{ id: string; relationType: RelationType; description: string } | null>(null);
     const [edgePopupPos, setEdgePopupPos] = useState({ x: 0, y: 0 });
 
     const [pendingConnection, setPendingConnection] = useState<{ source: string; target: string } | null>(null);
     const [linking, setLinking] = useState(false);
 
-    const relationsRef = useRef<any[]>([]);
+    const relationsRef = useRef<RelationRow[]>([]);
     const peopleRef = useRef<PersonData[]>([]);
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -575,13 +605,10 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
         }, 500);
     }, [userId]);
 
-    // Intercept node changes to detect drag end and save positions
     const handleNodesChange = useCallback((changes: NodeChange[]) => {
         onNodesChange(changes);
-        // Save after any position change
-        const hasDrag = changes.some(c => c.type === 'position' && (c as any).dragging === false);
-        if (hasDrag) {
-            // Use a micro delay so the state has updated
+        const hasDragEnd = changes.some(c => c.type === 'position' && (c as any).dragging === false);
+        if (hasDragEnd) {
             setTimeout(() => {
                 setNodes(current => {
                     debouncedSavePositions(current);
@@ -593,9 +620,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
     // ─── Load data ───────────────────────────────────────────────────────
 
-    useEffect(() => { loadFamilyData(); }, []);
-
-    const loadFamilyData = async () => {
+    const loadFamilyData = useCallback(async () => {
         setLoading(true);
         try {
             const { data: people } = await supabase
@@ -603,28 +628,30 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                 .select('id, full_name, profile_photo_url, birth_date, death_date, step1, slug')
                 .eq('user_id', userId);
 
+            if (!people || people.length === 0) return;
+
+            // Only fetch relations involving this user's memorials
+            const memorialIds = people.map(p => p.id);
             const { data: relations } = await supabase
                 .from('memorial_relations')
-                .select('*');
-
-            if (!people) return;
+                .select('*')
+                .or(`from_memorial_id.in.(${memorialIds.join(',')}),to_memorial_id.in.(${memorialIds.join(',')})`);
 
             peopleRef.current = people;
-            relationsRef.current = relations || [];
+            relationsRef.current = (relations ?? []) as RelationRow[];
             setMemberCount(people.length);
 
-            const { positions: computedPositions } = computeFamilyLayout(people, relations || []);
+            const { positions: computedPositions } = computeFamilyLayout(people, relationsRef.current);
             const savedPositions = getSavedPositions(userId);
 
-            // Merge: use saved positions if available, otherwise computed
             const mergedPositions: Record<string, { x: number; y: number }> = {};
             for (const person of people) {
-                mergedPositions[person.id] = savedPositions[person.id] || computedPositions[person.id] || { x: 0, y: 0 };
+                mergedPositions[person.id] = savedPositions[person.id] ?? computedPositions[person.id] ?? { x: 0, y: 0 };
             }
 
             const graphNodes: Node[] = people.map((person, index) => {
                 const pos = mergedPositions[person.id];
-                const step1 = person.step1 || {};
+                const step1 = person.step1 ?? {};
                 return {
                     id: person.id,
                     type: 'familyMember',
@@ -639,14 +666,14 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                         memorialId: person.id,
                         slug: person.slug,
                         animDelay: index * 60,
-                    },
+                    } satisfies NodeData,
                 };
             });
 
-            const graphEdges = buildGraphEdges(relations || [], mergedPositions);
-            // Count unique edge pairs
+            const graphEdges = buildGraphEdges(relationsRef.current, mergedPositions);
+
             const uniquePairs = new Set<string>();
-            for (const rel of (relations || [])) {
+            for (const rel of relationsRef.current) {
                 uniquePairs.add([rel.from_memorial_id, rel.to_memorial_id].sort().join('|'));
             }
             setRelationCount(uniquePairs.size);
@@ -654,29 +681,25 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
             setNodes(graphNodes);
             setEdges(graphEdges);
         } catch (error) {
-            console.error("Error loading tree:", error);
+            console.error('Error loading tree:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId, setNodes, setEdges]);
 
-    // ─── Auto-arrange (reset to computed layout) ─────────────────────────
+    useEffect(() => { loadFamilyData(); }, [loadFamilyData]);
+
+    // ─── Auto-arrange ────────────────────────────────────────────────────
 
     const handleAutoArrange = useCallback(() => {
         const { positions } = computeFamilyLayout(peopleRef.current, relationsRef.current);
         setNodes(current =>
-            current.map(n => ({
-                ...n,
-                position: positions[n.id] || n.position,
-            }))
+            current.map(n => ({ ...n, position: positions[n.id] ?? n.position }))
         );
-        // Rebuild edges with new positions for correct handle routing
         setEdges(buildGraphEdges(relationsRef.current, positions));
-        // Clear saved positions
-        try { localStorage.removeItem(`family-tree-pos-${userId}`); } catch {}
-        // Fit view after layout change
+        try { localStorage.removeItem(`family-tree-pos-${userId}`); } catch { /* non-critical */ }
         setTimeout(() => reactFlowInstance.fitView({ padding: 0.3, duration: 400 }), 50);
-    }, [userId, setNodes, reactFlowInstance]);
+    }, [userId, setNodes, setEdges, reactFlowInstance]);
 
     // ─── Connection handling ─────────────────────────────────────────────
 
@@ -686,18 +709,19 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
         }
     }, []);
 
-    const handleSaveNewConnection = useCallback(async (type: string, description: string) => {
+    const handleSaveNewConnection = useCallback(async (type: RelationType, description: string) => {
         if (!pendingConnection) return;
         setLinking(true);
 
         let fromId = pendingConnection.source;
         let toId = pendingConnection.target;
 
+        // Auto-correct direction for parent/child based on birth dates
         if (type === 'parent' || type === 'child') {
             const personA = peopleRef.current.find(p => p.id === fromId);
             const personB = peopleRef.current.find(p => p.id === toId);
-            const dateA = personA?.birth_date || '9999';
-            const dateB = personB?.birth_date || '9999';
+            const dateA = personA?.birth_date ?? '9999';
+            const dateB = personB?.birth_date ?? '9999';
             if (type === 'parent' && dateA > dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
             if (type === 'child' && dateA < dateB) { fromId = pendingConnection.target; toId = pendingConnection.source; }
         }
@@ -716,30 +740,32 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
             setPendingConnection(null);
             setLinking(false);
         }
-    }, [pendingConnection]);
+    }, [pendingConnection, loadFamilyData]);
 
     // ─── Node click ──────────────────────────────────────────────────────
 
     const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
         if (selectedNodeId === node.id) {
-            setSelectedNodeId(null); setSelectedNodeData(null); return;
+            setSelectedNodeId(null);
+            setSelectedNodeData(null);
+            return;
         }
         const screenPos = reactFlowInstance.flowToScreenPosition({ x: node.position.x, y: node.position.y });
         setPopupPos({ x: screenPos.x + 100, y: screenPos.y });
         setSelectedNodeId(node.id);
-        setSelectedNodeData(node.data);
+        setSelectedNodeData(node.data as NodeData);
     }, [selectedNodeId, reactFlowInstance]);
 
     // ─── Edge click ──────────────────────────────────────────────────────
 
-    const handleEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    const handleEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
         const rel = relationsRef.current.find(r => r.id === edge.id);
         setEditingEdge({
             id: edge.id,
-            relationType: rel?.relationship_type || 'other',
-            description: rel?.description || '',
+            relationType: (rel?.relationship_type ?? 'other') as RelationType,
+            description: rel?.description ?? '',
         });
-        setEdgePopupPos({ x: event.clientX, y: event.clientY });
+        setEdgePopupPos({ x: _event.clientX, y: _event.clientY });
     }, []);
 
     const handleEdgeSave = useCallback(async (edgeId: string, description: string) => {
@@ -770,12 +796,12 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
         } catch (error) {
             console.error('Failed to delete edge:', error);
         }
-    }, []);
+    }, [loadFamilyData]);
 
-    // ─── Pending connection names ────────────────────────────────────────
+    // ─── Derived values ─────────────────────────────────────────────────
 
-    const pendingSourceName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.source)?.data as any)?.name || '?' : '';
-    const pendingTargetName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.target)?.data as any)?.name || '?' : '';
+    const pendingSourceName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.source)?.data as NodeData)?.name ?? '?' : '';
+    const pendingTargetName = pendingConnection ? (nodes.find(n => n.id === pendingConnection.target)?.data as NodeData)?.name ?? '?' : '';
 
     // ─── Render ──────────────────────────────────────────────────────────
 
@@ -790,15 +816,12 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                     <Link href={`/dashboard/family/${userId}`} className="p-2 rounded-lg transition-colors hover:bg-black/[0.03]">
                         <ArrowLeft size={18} style={{ color: '#8a96a0' }} />
                     </Link>
-                    <div>
-                        <h1 className="font-serif text-xl font-semibold" style={{ color: '#3d4a55' }}>
-                            Family Tree
-                        </h1>
-                    </div>
+                    <h1 className="font-serif text-xl font-semibold" style={{ color: '#3d4a55' }}>
+                        Family Tree
+                    </h1>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    {/* Stats */}
                     <div className="flex items-center gap-3 mr-2">
                         <div className="flex items-center gap-1.5 text-xs" style={{ color: '#a0a8b0' }}>
                             <Users size={13} />
@@ -811,7 +834,6 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                         )}
                     </div>
 
-                    {/* Auto-arrange button */}
                     <button
                         onClick={handleAutoArrange}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors font-medium"
@@ -853,10 +875,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                         connectionRadius={30}
                     >
                         <Background color="#e0d6cc" gap={24} size={1} />
-                        <Controls
-                            showInteractive={false}
-                            className="ft-controls"
-                        />
+                        <Controls showInteractive={false} className="ft-controls" />
                         <MiniMap
                             nodeColor={() => '#d4c4b5'}
                             maskColor="rgba(250, 247, 244, 0.85)"
@@ -865,14 +884,14 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                     </ReactFlow>
                 )}
 
-                {/* Onboarding hint (show only when no edges) */}
+                {/* Onboarding hint */}
                 {!loading && edges.length === 0 && nodes.length > 1 && (
                     <div
                         className="absolute bottom-20 left-1/2 -translate-x-1/2 flex items-center gap-2 text-xs px-4 py-2.5 rounded-full"
                         style={{ background: '#fff', color: '#5a6b78', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #ede5dc' }}
                     >
                         <span style={{ fontSize: 16 }}>↔</span>
-                        Hover a card and drag from a dot to another card to create a connection
+                        Hover a card and drag from the dot to another card to create a connection
                     </div>
                 )}
 
