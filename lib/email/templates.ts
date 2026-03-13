@@ -1,6 +1,6 @@
-// lib/email/templates.ts
+// lib/email/templates.ts - Updated with warm "Contributor" language
 
-export function getWitnessInvitationEmail(
+export function getContributorInvitationEmail(
   inviterName: string,
   deceasedName: string,
   inviteLink: string,
@@ -9,30 +9,30 @@ export function getWitnessInvitationEmail(
   return `
     <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #fdfbf7; padding: 60px; border: 1px solid #e8d8cc; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-        
+
         <div style="text-align: center; margin-bottom: 40px;">
-          <h2 style="font-weight: normal; font-style: italic; color: #d4958a; margin: 0; font-size: 24px;">An Invitation to Bear Witness</h2>
+          <h2 style="font-weight: normal; font-style: italic; color: #d4958a; margin: 0; font-size: 24px;">You're Invited to Contribute</h2>
         </div>
 
         <p style="font-size: 16px; margin-bottom: 25px;">
-          ${inviterName} has entrusted you with a portion of the memory of 
-          <strong style="color: #5a6b78;">${deceasedName}</strong>.
+          ${inviterName} is creating a memorial for
+          <strong style="color: #5a6b78;">${deceasedName}</strong> and would love your help.
         </p>
 
         <p style="font-size: 16px; margin-bottom: 25px; font-style: italic; border-left: 3px solid #89b896; padding-left: 20px; color: #555;">
-          "This is not a request for photos. This is an invitation to bear witness. Your contribution will become part of the permanent historical archives."
+          "Your memories, stories, and photos would mean the world. Every voice adds depth to the legacy we're preserving together."
         </p>
 
         ${personalMessage ? `
         <div style="margin: 30px 0; padding: 20px; background-color: #fdf6f0; border: 1px dashed #e8d8cc; font-size: 15px;">
-          <strong>Message from ${inviterName}:</strong><br/>
+          <strong>A note from ${inviterName}:</strong><br/>
           ${personalMessage}
         </div>
         ` : ''}
 
         <div style="text-align: center; margin-top: 50px;">
           <a href="${inviteLink}" style="background-color: #5a6b78; color: #fdf6f0; padding: 18px 35px; text-decoration: none; border-radius: 2px; font-size: 14px; letter-spacing: 0.1em; display: inline-block; text-transform: uppercase;">
-            Accept and Bear Witness
+            Share Your Memories
           </a>
         </div>
 
@@ -45,6 +45,9 @@ export function getWitnessInvitationEmail(
   `;
 }
 
+// Keep backward compatibility alias
+export const getWitnessInvitationEmail = getContributorInvitationEmail;
+
 
 export function getSuccessorInvitationEmail(
   ownerName: string,
@@ -54,7 +57,7 @@ export function getSuccessorInvitationEmail(
   return `
     <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 60px; border: 2px solid #5a6b78; border-radius: 4px;">
-        
+
         <div style="text-align: center; margin-bottom: 40px;">
           <h2 style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 18px; color: #5a6b78; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
             Legacy Vault Stewardship
@@ -104,11 +107,11 @@ export function getProofOfLifeEmail(userName: string, checkInLink: string): stri
         </h2>
         <p>Dear ${userName},</p>
         <p>
-          This is your annual check-in from Legacy Vault. You have enabled the 
+          This is your annual check-in from Legacy Vault. You have enabled the
           <strong>Dead Man's Switch</strong> for your archive.
         </p>
         <p>
-          We are verifying that you are still active and in control of your account. 
+          We are verifying that you are still active and in control of your account.
           If you do not respond within <strong>90 days</strong>, we will notify your designated successor.
         </p>
         <div style="text-align: center; margin: 30px 0;">
@@ -124,7 +127,6 @@ export function getProofOfLifeEmail(userName: string, checkInLink: string): stri
   `;
 }
 
-// Step 1.1.4: Gentle reminder email — no urgency, no guilt
 export function getGentleReminderEmail(
   archiveName: string,
   continueLink: string
@@ -171,7 +173,7 @@ export function getSuccessorAlertEmail(
           You are the designated Archive Steward for <strong>${ownerName}</strong>.
         </p>
         <p>
-          We have not received a response from ${ownerName} regarding their annual verification check for over 90 days. 
+          We have not received a response from ${ownerName} regarding their annual verification check for over 90 days.
           Per their instructions, we are notifying you to investigate their status.
         </p>
         <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #d4958a; margin: 20px 0;">
@@ -182,6 +184,42 @@ export function getSuccessorAlertEmail(
           <a href="${claimLink}" style="background-color: #5a6b78; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">
             View Options & Report Status
           </a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function getLetterToFutureEmail(
+  senderName: string,
+  recipientName: string,
+  message: string,
+  deceasedName: string
+): string {
+  return `
+    <div style="background-color: #f4f1ea; padding: 50px; font-family: 'Georgia', serif; color: #5a6b78; line-height: 1.8;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #fdfbf7; padding: 60px; border: 1px solid #e8d8cc; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h2 style="font-weight: normal; font-style: italic; color: #d4958a; margin: 0; font-size: 24px;">A Letter From the Past</h2>
+        </div>
+
+        <p style="font-size: 16px; margin-bottom: 25px;">
+          Dear ${recipientName},
+        </p>
+
+        <p style="font-size: 16px; margin-bottom: 25px;">
+          ${senderName} wrote this message for you while creating the memorial of
+          <strong>${deceasedName}</strong>. They asked us to deliver it to you today.
+        </p>
+
+        <div style="margin: 30px 0; padding: 30px; background-color: #fdf6f0; border: 1px solid #e8d8cc; font-size: 16px; font-style: italic; line-height: 2;">
+          ${message}
+        </div>
+
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
+          <p>This letter was scheduled through Legacy Vault.</p>
+          <p>Some words are meant to arrive at just the right moment.</p>
         </div>
       </div>
     </div>
