@@ -1,4 +1,4 @@
-// lib/supabase.ts - UPDATED to use auth-aware SSR client
+// lib/supabase.ts - UPDATED for Collections-based data model
 import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -9,36 +9,44 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
-// EXISTING MEMORIAL INTERFACE
+// MEMORIAL INTERFACE (Collections Model)
 // ============================================
+
+import type { MemorialState } from '@/types/memorial';
 
 export interface Memorial {
     id: string;
     created_at: string;
     updated_at: string;
     user_id: string;
-    mode: 'draft' | 'personal' | 'family';
-    step1: any;
-    step2: any;
-    step3: any;
-    step4: any;
-    step5: any;
-    step6: any;
-    step7: any;
-    step8: any;
-    step9: any;
-    status: 'draft' | 'published';
+
+    // Single state field replaces mode + status + paid
+    state: MemorialState;
+
+    // Collections data (JSONB columns)
+    stories: any;
+    media: any;
+    timeline: any;
+    network: any;
+
+    // Denormalized fields for quick queries
     slug: string | null;
     full_name: string | null;
     birth_date: string | null;
     death_date: string | null;
     profile_photo_url: string | null;
     cover_photo_url: string | null;
-    completed_steps: number[];
+
+    // Preservation (Arweave)
+    arweave_tx_id: string | null;
+    arweave_status: 'pending' | 'confirming' | 'confirmed' | 'failed' | null;
+    certificate_url: string | null;
 
     // Soft Delete Fields
     deleted?: boolean;
     deleted_at?: string | null;
+
+    // Legacy compatibility (payment tracking)
     paid?: boolean;
     payment_confirmed_at?: string | null;
 }
@@ -66,12 +74,11 @@ export {
 } from '@/types/concierge';
 
 
-// lib/supabase.ts
-
-// ... keep your imports and other interfaces (Memorial, ConciergeProject, etc.) ...
+// ============================================
+// AUTHORIZATION INTERFACE (Simplified)
+// ============================================
 
 export interface MemorialAuthorization {
-    // IDs and timestamps
     id: string;
     created_at: string;
     updated_at?: string;
@@ -95,40 +102,30 @@ export interface MemorialAuthorization {
     deceased_death_place?: string | null;
     deceased_last_residence?: string | null;
 
-    // Section 3: Authority / Agreements (Enhanced for Step 4.1)
-    agree_legal_authority: boolean;    // NEW
-    agree_good_faith: boolean;         // NEW
-    agree_permanence: boolean;         // NEW
-    agree_indemnification: boolean;    // (Replaces indemnification_accepted or maps to it)
-    indemnification_accepted?: boolean; // Keep for backward compatibility if needed
-
-    // Section 4: Content Representations (Old fields, keep for safety)
+    // Section 3: Legal Agreements (simplified — checkbox-based, no video/signature pad)
+    agree_legal_authority: boolean;
+    agree_good_faith: boolean;
+    agree_permanence: boolean;
+    agree_indemnification: boolean;
     accuracy_confirmed?: boolean;
     copyright_confirmed?: boolean;
     privacy_confirmed?: boolean;
 
-    // Section 8: Electronic Signature & Evidence
-    signature_type: 'typed' | 'drawn'; // NEW
-    electronic_signature: string;      // The text name OR base64 image
+    // Section 4: Electronic Acknowledgment (simplified from drawn/video signature)
+    electronic_signature: string; // Typed full name only
     signature_date: string;
 
-    // Technical Evidence
+    // Technical Evidence (kept for legal compliance)
     signature_ip_address: string | null;
     signature_user_agent: string | null;
-    device_fingerprint?: string | null; // NEW
-    geolocation?: string | null;        // NEW
+    device_fingerprint?: string | null;
+    geolocation?: string | null;
 
     // Status and Review
     status: 'pending' | 'approved' | 'rejected';
     reviewed_by?: string | null;
     reviewed_at?: string | null;
-
-    // Optional PDF Storage path
     pdf_storage_path?: string | null;
 
-
-    authorization_type: 'account' | 'individual'; // ADD THIS LINE
-
-    video_storage_path?: string | null;
-    video_hash?: string | null;
+    authorization_type: 'account' | 'individual';
 }

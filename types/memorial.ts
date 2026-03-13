@@ -1,21 +1,32 @@
-// types/memorial.ts - UPDATED with Step 9 for Videos
+// types/memorial.ts - Collections-based data model (Luxury Refactor)
+// Replaces the old step1-step9 wizard structure with thematic collections:
+// Stories, Media, Timeline, Network
 
-export interface BasicInfo {
+// ==========================================
+// CORE COLLECTION INTERFACES
+// ==========================================
+
+/** Stories Collection - merges biography, personality, childhood, career, values */
+export interface StoryData {
+  // Basic identity
   fullName: string;
   birthDate: string;
   deathDate: string | null;
   isStillLiving: boolean;
-  isSelfArchive?: boolean; // NEW: Track if user is creating for themselves
-  privateUntilDeath?: boolean; // NEW: Controls visibility logic
+  isSelfArchive?: boolean;
+  privateUntilDeath?: boolean;
   birthPlace: string;
   deathPlace: string;
   profilePhoto: File | null;
   profilePhotoPreview: string | null;
-  profilePhotoHash?: string; // NEW: Store hash for profile photo
+  profilePhotoHash?: string;
   epitaph: string;
-}
 
-export interface ChildhoodInfo {
+  // Biography & life narrative
+  biography: string;
+  lifePhilosophy: string;
+
+  // Childhood & early life
   childhoodHome: string;
   familyBackground: string;
   schools: {
@@ -26,15 +37,8 @@ export interface ChildhoodInfo {
   };
   childhoodPersonality: string[];
   earlyInterests: string[];
-  childhoodPhotos: Array<{
-    file: File;
-    preview: string;
-    caption: string;
-    year: string;
-  }>;
-}
 
-export interface CareerEducation {
+  // Career & education
   occupations: Array<{
     id: string;
     title: string;
@@ -49,9 +53,93 @@ export interface CareerEducation {
     graduationYear: string;
     honors: string;
   };
+
+  // Personality & values
+  personalityTraits: string[];
+  coreValues: string[];
+  passions: string[];
+  favoriteQuotes: Array<{
+    id: string;
+    text: string;
+    context: string;
+  }>;
+  memorableSayings: string[];
+
+  // Legacy
+  legacyStatement: string;
 }
 
-export interface RelationshipsFamily {
+/** Media Collection - all photos, videos, voice recordings */
+export interface MediaData {
+  coverPhoto: File | null;
+  coverPhotoPreview: string | null;
+  coverPhotoHash?: string;
+
+  gallery: Array<{
+    id: string;
+    file: File;
+    preview: string;
+    caption: string;
+    year: string;
+    type: 'photo' | 'video';
+    sha256_hash?: string;
+  }>;
+
+  childhoodPhotos: Array<{
+    file: File;
+    preview: string;
+    caption: string;
+    year: string;
+  }>;
+
+  interactiveGallery: Array<{
+    id: string;
+    file: File;
+    preview: string;
+    description: string;
+    sha256_hash?: string;
+  }>;
+
+  voiceRecordings: Array<{
+    id: string;
+    file: File;
+    title: string;
+    sha256_hash?: string;
+  }>;
+
+  videos: Array<{
+    id: string;
+    url: string;
+    thumbnail: string;
+    title: string;
+    duration?: string;
+    description?: string;
+    sha256_hash?: string;
+  }>;
+}
+
+/** Timeline Collection - life events, chapters, milestones */
+export interface TimelineData {
+  lifeChapters: Array<{
+    id: string;
+    period: string;
+    ageRange: string;
+    title: string;
+    description: string;
+    keyEvents: string[];
+  }>;
+
+  majorLifeEvents: Array<{
+    id: string;
+    year: string;
+    title: string;
+    category: 'marriage' | 'birth' | 'career' | 'achievement' | 'loss' | 'milestone';
+    description: string;
+  }>;
+}
+
+/** Network Collection - family members, contributors, shared memories */
+export interface NetworkData {
   partners: Array<{
     id: string;
     name: string;
@@ -62,52 +150,81 @@ export interface RelationshipsFamily {
     photo: File | null;
     photoPreview: string | null;
   }>;
+
   children: Array<{
     id: string;
     name: string;
     birthYear: string;
     description: string;
   }>;
-  majorLifeEvents: Array<{
-    id: string;
-    year: string;
-    title: string;
-    category: 'marriage' | 'birth' | 'career' | 'achievement' | 'loss' | 'milestone';
-    description: string;
-  }>;
+
+  // Contributor invitations (formerly "Witnesses")
+  invitedEmails: string[];
+  contributorPersonalMessage: string;
+  sentInvitations: SentInvitation[];
+  memorialId?: string;
+
+  // Shared memories & impact stories
+  sharedMemories: SharedMemory[];
+  impactStories: ImpactStory[];
 }
 
-export interface PersonalityValues {
-  personalityTraits: string[];
-  coreValues: string[];
-  passions: string[];
-  lifePhilosophy: string;
-  favoriteQuotes: Array<{
-    id: string;
-    text: string;
-    context: string;
-  }>;
-  memorableSayings: string[];
+/** Letter to the Future - time-delayed messages */
+export interface LetterData {
+  id: string;
+  message: string;
+  recipientEmail: string;
+  recipientName: string;
+  deliveryDate: string;
+  createdAt: string;
+  status: 'scheduled' | 'delivered' | 'failed';
 }
 
-export interface LifeStory {
-  biography: string;
-  lifeChapters: Array<{
-    id: string;
-    period: string;
-    ageRange: string;
-    title: string;
-    description: string;
-    keyEvents: string[];
-  }>;
+/** Preservation status for Arweave blockchain storage */
+export interface PreservationStatus {
+  arweaveTxId: string | null;
+  arweaveStatus: 'pending' | 'confirming' | 'confirmed' | 'failed' | null;
+  replicationCount: number;
+  certificateUrl: string | null;
+  preservedAt: string | null;
 }
 
-// NEW: Invitation tracking type
+// ==========================================
+// MEMORIAL STATE MODEL
+// ==========================================
+
+/** Single state field replaces mode + status + paid booleans */
+export type MemorialState = 'creating' | 'private' | 'live' | 'preserved';
+
+/** The unified memorial data structure */
+export interface MemorialData {
+  stories: StoryData;
+  media: MediaData;
+  timeline: TimelineData;
+  network: NetworkData;
+  letters: LetterData[];
+  lastSaved: string | null;
+}
+
+/** Collection tab names for the builder UI */
+export const COLLECTION_NAMES = [
+  'Stories',
+  'Photos',
+  'Timeline',
+  'Voices'
+] as const;
+
+export type CollectionName = typeof COLLECTION_NAMES[number];
+
+// ==========================================
+// SHARED SUB-TYPES
+// ==========================================
+
 export interface SentInvitation {
   email: string;
-  sentAt: string;        // ISO date string
+  sentAt: string;
   status: 'sent' | 'accepted' | 'declined' | 'pending';
-  acceptedAt?: string;   // When witness accepted the invitation
+  acceptedAt?: string;
 }
 
 export interface SharedMemory {
@@ -126,145 +243,140 @@ export interface ImpactStory {
   author: string;
 }
 
-export interface MemoriesStories {
-  sharedMemories: SharedMemory[];
-  impactStories: ImpactStory[];
-  invitedEmails: string[];
-  witnessPersonalMessage: string;     // ← NEW
-  sentInvitations: SentInvitation[];  // ← NEW
-  memorialId?: string;               // ← NEW (passed from parent for API calls)
-}
-
-// UPDATED: Step 8 now only has Photos & Legacy (no videos)
-export interface MediaLegacy {
-  coverPhoto: File | null;
-  coverPhotoPreview: string | null;
-  coverPhotoHash?: string; // NEW: Store hash for cover photo
-  gallery: Array<{
-    id: string;
-    file: File;
-    preview: string;
-    caption: string;
-    year: string;
-    type: 'photo' | 'video';
-    sha256_hash?: string; // NEW: Store hash for gallery items
-  }>;
-  interactiveGallery: Array<{
-    id: string;
-    file: File;
-    preview: string;
-    description: string;
-    sha256_hash?: string; // NEW: Store hash for interactive items
-  }>;
-  voiceRecordings: Array<{
-    id: string;
-    file: File;
-    title: string;
-    sha256_hash?: string; // NEW: Store hash for voice recordings
-  }>;
-  legacyStatement: string;
-}
-
-// NEW: Step 9 for Videos only
-export interface VideoContent {
-  videos: Array<{
-    id: string;
-    url: string; // Public URL from Supabase Storage
-    thumbnail: string; // Public URL of thumbnail image
-    title: string;
-    duration?: string;
-    description?: string; // NEW: Description for video
-    sha256_hash?: string; // NEW: Store hash for videos
-  }>;
-}
-
-
-// UPDATED: MemorialData with step9
-export interface MemorialData {
-  step1: BasicInfo;
-  step2: ChildhoodInfo;
-  step3: CareerEducation;
-  step4: RelationshipsFamily;
-  step5: PersonalityValues;
-  step6: LifeStory;
-  step7: MemoriesStories;
-  step8: MediaLegacy;
-  step9: VideoContent; // NEW
-  currentStep: number;
-  paid: boolean; // Tracking payment status
-  lastSaved: string | null;
-  completedSteps: number[];
-}
-
-export const TOTAL_STEPS = 10; // UPDATED from 9 to 10
-
-// Step 1.3.2: Exploration vocabulary
-export const STEP_NAMES = [
-  'Basic Information',
-  'Early Life & Childhood',
-  'Career & Education',
-  'Relationships & Family',
-  'Personality, Values & Passions',
-  'Full Life Story',
-  'Memories & Witnesses',
-  'Photos & Legacy',
-  'Videos',
-  'Review & Seal'
-];
-
 // ==========================================
-// PHASE 2: WITNESS & COLLABORATION TYPES
+// COLLABORATION TYPES (Contributors, formerly Witnesses)
 // ==========================================
 
-export type WitnessRole = 'owner' | 'co_guardian' | 'witness';
+export type ContributorRole = 'owner' | 'co_guardian' | 'contributor';
 
 export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 
 export type ContributionStatus = 'pending_approval' | 'approved' | 'rejected' | 'needs_changes';
 
-export interface WitnessInvitation {
-  id: string; // Unique token/UUID for the link
+export interface ContributorInvitation {
+  id: string;
   memorialId: string;
   inviterName: string;
   inviteeEmail: string;
-  role: WitnessRole;
+  role: ContributorRole;
   personalMessage?: string;
   status: InvitationStatus;
   createdAt: string;
-  expiresAt: string; // Invitations should expire for security (e.g., 30 days)
+  expiresAt: string;
 }
 
-export interface MemorialWitness {
+export interface MemorialContributor {
   id: string;
   memorialId: string;
-  userId: string; // Link to the registered user
+  userId: string;
   displayName: string;
   email: string;
-  role: WitnessRole;
+  role: ContributorRole;
   joinedAt: string;
   status: 'active' | 'suspended';
 }
 
-// Updated structure for a Memory/Contribution to support the Approval System
-export interface WitnessContribution {
+export interface Contribution {
   id: string;
   memorialId: string;
-  witnessId: string; // Who wrote it
+  contributorId: string;
   type: 'memory' | 'photo' | 'video';
-  content: any; // The actual data (text, url, etc.)
+  content: any;
   status: ContributionStatus;
-  adminNotes?: string; // If rejected or needs changes, owner writes why here
+  adminNotes?: string;
   createdAt: string;
   updatedAt: string;
-  disputed?: boolean; // For Step 2.1.6 (Conflict detection)
+  disputed?: boolean;
 }
 
+// ==========================================
+// MEMORIAL RELATIONS
+// ==========================================
 
 export interface MemorialRelation {
   id: string;
   from_memorial_id: string;
   to_memorial_id: string;
-  target_name?: string; // Fetched from the joined table
-  target_photo?: string; // Fetched from the joined table
+  target_name?: string;
+  target_photo?: string;
   relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+  description?: string;
+}
+
+// ==========================================
+// DEFAULT DATA FACTORIES
+// ==========================================
+
+export function createDefaultStoryData(): StoryData {
+  return {
+    fullName: '',
+    birthDate: '',
+    deathDate: null,
+    isStillLiving: false,
+    isSelfArchive: false,
+    privateUntilDeath: false,
+    birthPlace: '',
+    deathPlace: '',
+    profilePhoto: null,
+    profilePhotoPreview: null,
+    epitaph: '',
+    biography: '',
+    lifePhilosophy: '',
+    childhoodHome: '',
+    familyBackground: '',
+    schools: { elementary: '', highSchool: '', college: '', additionalEducation: '' },
+    childhoodPersonality: [],
+    earlyInterests: [],
+    occupations: [],
+    careerHighlights: [],
+    education: { major: '', graduationYear: '', honors: '' },
+    personalityTraits: [],
+    coreValues: [],
+    passions: [],
+    favoriteQuotes: [],
+    memorableSayings: [],
+    legacyStatement: '',
+  };
+}
+
+export function createDefaultMediaData(): MediaData {
+  return {
+    coverPhoto: null,
+    coverPhotoPreview: null,
+    gallery: [],
+    childhoodPhotos: [],
+    interactiveGallery: [],
+    voiceRecordings: [],
+    videos: [],
+  };
+}
+
+export function createDefaultTimelineData(): TimelineData {
+  return {
+    lifeChapters: [],
+    majorLifeEvents: [],
+  };
+}
+
+export function createDefaultNetworkData(): NetworkData {
+  return {
+    partners: [],
+    children: [],
+    invitedEmails: [],
+    contributorPersonalMessage: '',
+    sentInvitations: [],
+    sharedMemories: [],
+    impactStories: [],
+  };
+}
+
+export function createDefaultMemorialData(): MemorialData {
+  return {
+    stories: createDefaultStoryData(),
+    media: createDefaultMediaData(),
+    timeline: createDefaultTimelineData(),
+    network: createDefaultNetworkData(),
+    letters: [],
+    lastSaved: null,
+  };
 }
