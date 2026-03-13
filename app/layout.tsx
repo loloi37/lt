@@ -61,14 +61,11 @@ function Footer() {
               Navigation
             </p>
             <div className="mt-1 flex flex-col gap-1 text-sm text-charcoal/80">
-              <a href="/process" className="hover:text-stone">
-                Process
+              <a href="/create" className="hover:text-stone">
+                Create
               </a>
-              <a href="/plans" className="hover:text-stone">
-                Plans
-              </a>
-              <a href="/advisor" className="hover:text-stone">
-                Advisor
+              <a href="/dashboard" className="hover:text-stone">
+                Dashboard
               </a>
             </div>
           </div>

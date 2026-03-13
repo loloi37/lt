@@ -16,7 +16,7 @@ interface ThresholdMemorial {
     death_date: string | null;
     profile_photo_url: string | null;
     user_id: string;
-    step1: any;
+    stories: any;
 }
 
 // ─── Helper: format a date string as readable year or full date ───────────────
@@ -39,8 +39,7 @@ function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const { revalidate } = useAuth();
     const memorialId = searchParams.get('id');
-    const planParam = searchParams.get('plan') || 'personal';
-    const isUpgrade = searchParams.get('upgrade') === 'true';
+    const isUpgrade = false; // Upgrades removed in luxury refactor
     const hasFinalized = useRef(false);
 
     // Phases: finalizing → threshold → doors → redirecting
@@ -64,46 +63,23 @@ function PaymentSuccessContent() {
             }
 
             try {
-                if (isUpgrade) {
-                    // UPGRADE FLOW: Use finalize-upgrade to preserve data (idempotent)
-                    const response = await fetch('/api/finalize-upgrade', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ memorialId, targetPlan: planParam }),
-                    });
-                    const result = await response.json();
-                    if (result.error) throw new Error(result.error);
-                } else {
-                    // NEW PAYMENT FLOW: Standard finalization
-                    const response = await fetch('/api/finalize-payment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ memorialId }),
-                    });
-                    const result = await response.json();
-                    if (result.error) throw new Error(result.error);
-                }
+                // Finalize payment — single state transition
+                const response = await fetch('/api/finalize-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memorialId }),
+                });
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
 
-                // Revalidate auth state so the entire app reflects the new payment status
+                // Revalidate auth state
                 await revalidate();
 
-                // UPGRADE FLOW: Go straight to family dashboard with welcome message.
-                // Uses replace() so payment-success is removed from browser history —
-                // back button from family dashboard will land on personal dashboard,
-                // which already redirects to family if plan is 'family'.
-                if (isUpgrade) {
-                    const supabase = createClient();
-                    const { data: { user } } = await supabase.auth.getUser();
-                    const uid = user?.id || '';
-                    window.location.replace(`/dashboard/${planParam}/${uid}?welcome=true`);
-                    return;
-                }
-
-                // STANDARD (non-upgrade) FLOW: Show threshold experience in this window
+                // Show threshold experience
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
-                    .select('full_name, birth_date, death_date, profile_photo_url, user_id, step1')
+                    .select('full_name, birth_date, death_date, profile_photo_url, user_id, stories')
                     .eq('id', memorialId)
                     .single();
 
@@ -133,7 +109,7 @@ function PaymentSuccessContent() {
     }, [memorialId]);
 
     // ── Derived data ──────────────────────────────────────────────────────────
-    const isSelfArchive = memorial?.step1?.isSelfArchive === true;
+    const isSelfArchive = memorial?.stories?.isSelfArchive === true;
     const name = memorial?.full_name || 'this person';
     const birthFormatted = formatDate(memorial?.birth_date ?? null);
     const deathFormatted = formatDate(memorial?.death_date ?? null);
@@ -142,28 +118,18 @@ function PaymentSuccessContent() {
             ? `${birthFormatted} — ${deathFormatted}`
             : birthFormatted
         : null;
-    const mode = planParam === 'family' ? 'family' : 'personal';
 
     // ── Door action handler ───────────────────────────────────────────────────
-    // Uses router.replace to prevent the back button from returning to payment-success
     const handleDoor = async (door: 'photograph' | 'story' | 'silence') => {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        const userId = user?.id || memorial?.user_id;
-
         setPhase('redirecting');
 
         setTimeout(() => {
             if (door === 'silence') {
-                const dashPath = userId
-                    ? `/dashboard/${mode}/${userId}?welcome=true`
-                    : `/dashboard/${mode}`;
-                router.replace(dashPath);
+                router.replace('/dashboard');
             } else if (door === 'photograph') {
-                router.replace(`/create?id=${memorialId}&mode=${mode}&step=8`);
+                router.replace(`/create?id=${memorialId}&tab=photos`);
             } else {
-                // story
-                router.replace(`/create?id=${memorialId}&mode=${mode}&step=6`);
+                router.replace(`/create?id=${memorialId}&tab=stories`);
             }
         }, 600);
     };

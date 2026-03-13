@@ -1,8 +1,7 @@
 // hooks/useAutoSave.ts
-// Step 1.1.3: Silent auto-save with offline support
-// Auto-saves memorial data to Supabase every 30 seconds
-// Also saves on any change after a 3-second debounce (so rapid typing doesn't spam)
-// NEVER asks "Would you like to save?" — saves silently, always
+// Collections-based auto-save: silently persists memorial data to Supabase
+// Saves every 30s on interval + 3s debounce after changes
+// Offline-aware: caches to localStorage when disconnected, syncs on reconnect
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -13,15 +12,15 @@ export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline' | 're
 interface UseAutoSaveOptions {
     memorialId: string | null;
     data: MemorialData;
-    enabled?: boolean;         // Disable auto-save if needed
-    intervalMs?: number;       // Default: 30000 (30s)
-    debounceMs?: number;       // Default: 3000 (3s) after last change
+    enabled?: boolean;
+    intervalMs?: number;
+    debounceMs?: number;
 }
 
 interface UseAutoSaveReturn {
     saveStatus: SaveStatus;
     lastSavedAt: Date | null;
-    saveNow: () => Promise<void>;   // Force immediate save
+    saveNow: () => Promise<void>;
     error: string | null;
 }
 
@@ -36,42 +35,64 @@ export function useAutoSave({
     const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Refs to track latest data without re-triggering effects
     const dataRef = useRef(data);
     const lastSavedDataRef = useRef<string>('');
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isSavingRef = useRef(false);
 
-    // Keep data ref current
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
 
-    // Step 1.1.3: Serialize data for save (shared between save and offline cache)
+    // Serialize collections data for save — strips File objects, keeps serializable data
     const serializeForSave = useCallback((currentData: MemorialData) => {
         return {
-            step1: currentData.step1,
-            step2: currentData.step2,
-            step3: currentData.step3,
-            step4: currentData.step4,
-            step5: currentData.step5,
-            step6: currentData.step6,
-            step7: currentData.step7,
-            step8: {
-                coverPhotoPreview: currentData.step8.coverPhotoPreview,
-                gallery: currentData.step8.gallery.map(g => ({
-                    id: g.id, preview: g.preview, caption: g.caption, year: g.year, type: g.type
-                })),
-                interactiveGallery: currentData.step8.interactiveGallery?.map(ig => ({
-                    id: ig.id, preview: ig.preview, description: ig.description
-                })),
-                voiceRecordings: currentData.step8.voiceRecordings.map(v => ({
-                    id: v.id, title: v.title
-                })),
-                legacyStatement: currentData.step8.legacyStatement,
+            stories: {
+                ...currentData.stories,
+                profilePhoto: null, // File objects can't be serialized
             },
-            step9: currentData.step9,
+            media: {
+                ...currentData.media,
+                coverPhoto: null,
+                gallery: currentData.media.gallery.map(g => ({
+                    id: g.id,
+                    preview: g.preview,
+                    caption: g.caption,
+                    year: g.year,
+                    type: g.type,
+                    sha256_hash: g.sha256_hash,
+                })),
+                childhoodPhotos: currentData.media.childhoodPhotos.map(p => ({
+                    preview: p.preview,
+                    caption: p.caption,
+                    year: p.year,
+                })),
+                interactiveGallery: currentData.media.interactiveGallery.map(ig => ({
+                    id: ig.id,
+                    preview: ig.preview,
+                    description: ig.description,
+                    sha256_hash: ig.sha256_hash,
+                })),
+                voiceRecordings: currentData.media.voiceRecordings.map(v => ({
+                    id: v.id,
+                    title: v.title,
+                    sha256_hash: v.sha256_hash,
+                })),
+                videos: currentData.media.videos,
+            },
+            timeline: currentData.timeline,
+            network: {
+                ...currentData.network,
+                partners: currentData.network.partners.map(p => ({
+                    ...p,
+                    photo: null,
+                })),
+            },
+            // Denormalized fields for quick queries
+            full_name: currentData.stories.fullName || null,
+            birth_date: currentData.stories.birthDate || null,
+            death_date: currentData.stories.deathDate || null,
         };
     }, []);
 
@@ -83,18 +104,14 @@ export function useAutoSave({
         const serializable = serializeForSave(currentData);
         const serialized = JSON.stringify(serializable);
 
-        if (serialized === lastSavedDataRef.current) {
-            return; // Nothing changed, skip
-        }
+        if (serialized === lastSavedDataRef.current) return;
 
-        // Step 1.1.3: Check if offline — cache locally
+        // Offline: cache locally
         if (!navigator.onLine) {
             try {
                 localStorage.setItem(`offline-save-${memorialId}`, serialized);
                 setSaveStatus('offline');
-            } catch {
-                // localStorage full or unavailable — silent fail
-            }
+            } catch { /* silent */ }
             return;
         }
 
@@ -117,17 +134,14 @@ export function useAutoSave({
             setLastSavedAt(new Date());
             setSaveStatus('saved');
 
-            // Clear any offline cache on success
             localStorage.removeItem(`offline-save-${memorialId}`);
 
-            // Reset to idle after 2 seconds (brief "Saved" then disappear)
             setTimeout(() => {
                 setSaveStatus(prev => prev === 'saved' ? 'idle' : prev);
             }, 2000);
 
         } catch (err: any) {
             console.error('Auto-save failed:', err);
-            // Fall back to offline cache
             try {
                 localStorage.setItem(`offline-save-${memorialId}`, serialized);
             } catch { /* silent */ }
@@ -138,12 +152,11 @@ export function useAutoSave({
         }
     }, [memorialId, enabled, serializeForSave]);
 
-    // Public "save now" function
     const saveNow = useCallback(async () => {
         await performSave();
     }, [performSave]);
 
-    // Debounced save on data change (3s after last change)
+    // Debounced save on data change
     useEffect(() => {
         if (!memorialId || !enabled) return;
 
@@ -156,13 +169,11 @@ export function useAutoSave({
         }, debounceMs);
 
         return () => {
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
     }, [data, memorialId, enabled, debounceMs, performSave]);
 
-    // Interval save every 30 seconds
+    // Interval save every 30s
     useEffect(() => {
         if (!memorialId || !enabled) return;
 
@@ -171,13 +182,11 @@ export function useAutoSave({
         }, intervalMs);
 
         return () => {
-            if (intervalTimerRef.current) {
-                clearInterval(intervalTimerRef.current);
-            }
+            if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
         };
     }, [memorialId, enabled, intervalMs, performSave]);
 
-    // Step 1.1.3: Sync offline cache when connection returns
+    // Sync offline cache on reconnect
     useEffect(() => {
         if (!memorialId || !enabled) return;
 
@@ -185,7 +194,6 @@ export function useAutoSave({
             const cached = localStorage.getItem(`offline-save-${memorialId}`);
             if (cached) {
                 setSaveStatus('reconnected');
-                // Wait a beat then save
                 setTimeout(async () => {
                     await performSave();
                 }, 1000);

@@ -1,5 +1,6 @@
-// app/person/[id]/page.tsx
+// app/person/[id]/page.tsx — Public memorial viewer (collections-based)
 'use client';
+
 import { useState, useEffect, use } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
@@ -33,37 +34,29 @@ export default function PersonMemorialPage({ params }: {
                 .single();
 
             if (error) throw error;
-
             if (!data) {
                 setError('Archive not found');
                 return;
             }
 
-            // ── ACCESS CONTROL ──────────────────────────────────────────────
-            // An archive is publicly readable if it has been paid for OR
-            // if it belongs to a personal/family plan (user already paid).
-            // Only draft archives are private to the owner.
+            // Access control: only 'live' or 'preserved' memorials are public
             const { data: { user } } = await supabase.auth.getUser();
             const isOwner = user && user.id === data.user_id;
-            const isPaidMode = data.mode === 'personal' || data.mode === 'family';
+            const isPublic = data.state === 'live' || data.state === 'preserved';
 
-            if (!data.paid && !isPaidMode && !isOwner) {
+            if (!isPublic && !isOwner) {
                 setAccessDenied(true);
                 setLoading(false);
                 return;
             }
-            // ────────────────────────────────────────────────────────────────
 
+            // Pass collections data to renderer
             setMemorialData({
-                step1: data.step1,
-                step2: data.step2,
-                step3: data.step3,
-                step4: data.step4,
-                step5: data.step5,
-                step6: data.step6,
-                step7: data.step7,
-                step8: data.step8,
-                step9: data.step9 || { videos: [] },
+                stories: data.stories || {},
+                media: data.media || {},
+                timeline: data.timeline || {},
+                network: data.network || {},
+                letters: data.letters || [],
             });
 
             // Fetch relations
@@ -105,7 +98,6 @@ export default function PersonMemorialPage({ params }: {
         );
     }
 
-    // Private archive — viewer is not the owner
     if (accessDenied) {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center px-6">
@@ -132,16 +124,13 @@ export default function PersonMemorialPage({ params }: {
         return (
             <div className="min-h-screen bg-ivory flex items-center justify-center">
                 <div className="text-center max-w-md">
-                    <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-4xl">😔</span>
-                    </div>
                     <h1 className="font-serif text-3xl text-charcoal mb-3">Memorial Not Found</h1>
                     <p className="text-charcoal/60 mb-6">{error || 'This memorial does not exist.'}</p>
                     <a href="/dashboard" className="btn-paper inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all">
                         Go to Dashboard
                     </a>
                 </div>
-            </div >
+            </div>
         );
     }
 
