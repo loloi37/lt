@@ -9,19 +9,19 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        // 1. AUTHENTICATE THE USER
+        // 1. Authenticate the user
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { fromId, toId, type, description, sourceHandle, targetHandle } = await request.json();
+        const { fromId, toId, type, description } = await request.json();
 
         if (!fromId || !toId || !type) {
             return NextResponse.json({ error: 'Missing IDs or type' }, { status: 400 });
         }
 
-        // 2. VERIFY OWNERSHIP OF THE SOURCE MEMORIAL
+        // 2. Verify ownership of the source memorial
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
             .select('user_id')
@@ -32,62 +32,33 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
-        // 3. Create the forward link (A -> B)
-        // Try with handle columns; fall back without them if columns don't exist yet
-        const baseForward = {
-            from_memorial_id: fromId,
-            to_memorial_id: toId,
-            relationship_type: type,
-            ...(description ? { description } : {}),
-        };
-
-        let { error: error1 } = await supabaseAdmin
+        // 3. Create the forward link (A -> B) — simple relational insert
+        const { error: error1 } = await supabaseAdmin
             .from('memorial_relations')
             .insert([{
-                ...baseForward,
-                ...(sourceHandle ? { source_handle: sourceHandle } : {}),
-                ...(targetHandle ? { target_handle: targetHandle } : {}),
+                from_memorial_id: fromId,
+                to_memorial_id: toId,
+                relationship_type: type,
+                ...(description ? { description } : {}),
             }]);
 
-        // If it fails due to unknown columns, retry without handles
-        if (error1) {
-            const retry = await supabaseAdmin
-                .from('memorial_relations')
-                .insert([baseForward]);
-            if (retry.error) throw retry.error;
-        }
+        if (error1) throw error1;
 
-        // 4. Automatically create the reverse link (B -> A)
+        // 4. Create the reverse link (B -> A)
         let reverseType = 'other';
         if (type === 'parent') reverseType = 'child';
         if (type === 'child') reverseType = 'parent';
         if (type === 'spouse') reverseType = 'spouse';
         if (type === 'sibling') reverseType = 'sibling';
 
-        const reverseSourceHandle = targetHandle ? targetHandle.replace('-tgt', '-src') : undefined;
-        const reverseTargetHandle = sourceHandle ? sourceHandle.replace('-src', '-tgt') : undefined;
-
-        const baseReverse = {
-            from_memorial_id: toId,
-            to_memorial_id: fromId,
-            relationship_type: reverseType,
-            ...(description ? { description } : {}),
-        };
-
-        const { error: error2 } = await supabaseAdmin
+        await supabaseAdmin
             .from('memorial_relations')
             .insert([{
-                ...baseReverse,
-                ...(reverseSourceHandle ? { source_handle: reverseSourceHandle } : {}),
-                ...(reverseTargetHandle ? { target_handle: reverseTargetHandle } : {}),
+                from_memorial_id: toId,
+                to_memorial_id: fromId,
+                relationship_type: reverseType,
+                ...(description ? { description } : {}),
             }]);
-
-        // If reverse fails with handle columns, retry without
-        if (error2) {
-            await supabaseAdmin
-                .from('memorial_relations')
-                .insert([baseReverse]);
-        }
 
         return NextResponse.json({ success: true });
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
-import { getWitnessInvitationEmail } from '@/lib/email/templates';
+import { getContributorInvitationEmail } from '@/lib/email/templates';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const supabaseAdmin = createClient(
@@ -11,7 +11,6 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        // We now look for 'emails' (plural) and the necessary names
         const { memorialId, inviterName, emails, personalMessage, deceasedName } = await request.json();
 
         if (!memorialId || !emails || emails.length === 0 || !inviterName) {
@@ -20,9 +19,8 @@ export async function POST(request: NextRequest) {
 
         const results = [];
 
-        // Loop through each email to create a database record and send an email
         for (const email of emails) {
-            // 1. Create invitation record in Supabase
+            // 1. Create invitation record
             const { data: invitation, error: dbError } = await supabaseAdmin
                 .from('witness_invitations')
                 .insert([{
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
                     inviter_name: inviterName,
                     invitee_email: email,
                     personal_message: personalMessage,
-                    role: 'witness'
+                    role: 'contributor' // Changed from 'witness'
                 }])
                 .select()
                 .single();
@@ -45,12 +43,12 @@ export async function POST(request: NextRequest) {
             const host = request.headers.get('host');
             const inviteLink = `${protocol}://${host}/invitation/accept/${invitation.id}`;
 
-            // 3. Send email
+            // 3. Send email with warm contributor language
             await resend.emails.send({
                 from: 'Legacy Vault <onboarding@resend.dev>',
                 to: [email],
-                subject: `An invitation to bear witness for ${deceasedName || 'a loved one'}`,
-                html: getWitnessInvitationEmail(inviterName, deceasedName || 'a loved one', inviteLink, personalMessage),
+                subject: `You're invited to contribute to ${deceasedName || 'a loved one'}'s memorial`,
+                html: getContributorInvitationEmail(inviterName, deceasedName || 'a loved one', inviteLink, personalMessage),
             });
 
             results.push({ email, status: 'sent' });

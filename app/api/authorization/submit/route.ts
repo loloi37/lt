@@ -1,8 +1,9 @@
 // app/api/authorization/submit/route.ts
+// Simplified: checkbox-based legal acknowledgment + email verification
+// Removed: video signature recording, canvas signature pad, SHA-256 video hashing
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
-import crypto from 'crypto'; // For SHA-256 hashing
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,30 +13,29 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { 
-            memorialId, 
-            userId, 
-            identity, 
-            agreements, 
-            signature, 
+        const {
+            memorialId,
+            userId,
+            identity,
+            agreements,
+            signature, // Now just { content: "typed full name" }
             fingerprint,
             authorizationType,
-            videoContent // Base64 string from frontend
         } = body;
 
         if (!memorialId || !signature.content || !identity.fullName) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // 1. Fetch Deceased Info (Legacy Logic)
+        // 1. Fetch memorial info for deceased name
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
-            .select('step1')
+            .select('stories')
             .eq('id', memorialId)
             .single();
-        
-        const deceasedName = memorial?.step1?.fullName || 'Family Account';
-        const deceasedDob = memorial?.step1?.birthDate || '1900-01-01';
+
+        const deceasedName = memorial?.stories?.fullName || 'Family Account';
+        const deceasedDob = memorial?.stories?.birthDate || '1900-01-01';
 
         // 2. Capture Technical Metadata
         const headerList = await headers();
@@ -45,44 +45,7 @@ export async function POST(request: NextRequest) {
         const city = headerList.get('x-vercel-ip-city') || '';
         const geolocation = city ? `${city}, ${country}` : country;
 
-        // 3. Process Video Signature (if present)
-        let videoPath = null;
-        let videoHash = null;
-
-        if (videoContent) {
-            console.log('[Security] Processing video signature...');
-            
-            // Convert Base64 to Buffer
-            const base64Data = videoContent.split(';base64,').pop();
-            const videoBuffer = Buffer.from(base64Data, 'base64');
-
-            // --- Generate SHA-256 Hash ---
-            videoHash = crypto
-                .createHash('sha256')
-                .update(videoBuffer)
-                .digest('hex');
-
-            // Define secure path: authorizations/{memorial_id}/{timestamp}.mp4
-            const fileName = `${Date.now()}_video_signature.mp4`;
-            videoPath = `${memorialId}/${fileName}`;
-
-            // Upload to Private Bucket 'authorizations'
-            const { error: uploadError } = await supabaseAdmin.storage
-                .from('authorizations')
-                .upload(videoPath, videoBuffer, {
-                    contentType: 'video/mp4',
-                    upsert: false
-                });
-
-            if (uploadError) {
-                console.error('[Storage Error]', uploadError);
-                throw new Error('Failed to secure video evidence.');
-            }
-            
-            console.log(`[Security] Video stored: ${videoHash.substring(0, 8)}...`);
-        }
-
-        // 4. Insert Comprehensive Record
+        // 3. Insert authorization record (no video, no drawn signature)
         const { data: authRecord, error: insertError } = await supabaseAdmin
             .from('memorial_authorizations')
             .insert([{
@@ -98,15 +61,12 @@ export async function POST(request: NextRequest) {
                 agree_good_faith: agreements.good_faith,
                 agree_permanence: agreements.permanence,
                 agree_indemnification: agreements.indemnification,
-                signature_type: signature.type,
-                electronic_signature: signature.content,
+                electronic_signature: signature.content, // Typed name only
                 signature_date: new Date().toISOString(),
                 signature_ip_address: ip,
                 signature_user_agent: userAgent,
                 device_fingerprint: fingerprint,
                 geolocation: geolocation,
-                video_storage_path: videoPath,
-                video_hash: videoHash,
                 status: 'approved'
             }])
             .select()
@@ -114,10 +74,9 @@ export async function POST(request: NextRequest) {
 
         if (insertError) throw insertError;
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             id: authRecord.id,
-            log: videoHash ? `Video signature recorded - Hash: ${videoHash.substring(0, 8)}` : null
         });
 
     } catch (error: any) {
