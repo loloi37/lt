@@ -60,7 +60,7 @@ export default function NetworkCollection({
     setSendResult(null);
 
     try {
-      const res = await fetch('/api/send-witness-invitations', {
+      const res = await fetch('/api/send-contributor-invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

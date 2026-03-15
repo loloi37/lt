@@ -79,7 +79,7 @@ function PaymentForm({ memorialId, amount, fullName, plan, isPopup }: {
                 router.replace(`/payment-success?id=${memorialId}&plan=${plan}${isPopup ? '&popup=true' : ''}`);
             }
         } catch (err: any) {
-            setPaymentError('An unexpected error occurred. Your draft is saved, and you can return at any time.');
+            setPaymentError('An unexpected error occurred. Your memorial is saved, and you can return at any time.');
             setIsProcessing(false);
         }
     };
@@ -119,7 +119,7 @@ function PaymentForm({ memorialId, amount, fullName, plan, isPopup }: {
                         {paymentError}
                     </p>
                     <p className="text-xs text-charcoal/30">
-                        Your draft is saved, and you can return at any time.
+                        Your memorial is saved, and you can return at any time.
                         Need help? Contact us at <a href="mailto:support@legacyvault.com" className="underline hover:text-charcoal/50">support@legacyvault.com</a>
                     </p>
                 </div>

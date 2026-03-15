@@ -45,9 +45,6 @@ export function getContributorInvitationEmail(
   `;
 }
 
-// Keep backward compatibility alias
-export const getWitnessInvitationEmail = getContributorInvitationEmail;
-
 
 export function getSuccessorInvitationEmail(
   ownerName: string,

@@ -21,22 +21,18 @@ export async function POST(request: NextRequest) {
             body = await request.json();
         }
 
-        const { memorialId, step1, step2, step3, step4, step5, step6, step7, step8, step9 } = body;
+        const { memorialId, stories, media, timeline, network, letters } = body;
 
         if (!memorialId) {
-            // Fallback: create a new memorial if no ID provided
-            // SECURITY: Force draft mode on creation. Only a successful payment can change mode.
-            // Never trust body.mode — a malicious user could set 'family' for free.
-            const mode = 'draft';
+            // Create a new memorial — always starts in 'creating' state
+            // SECURITY: Never trust client-provided state values
             const { data: newMemorial, error: insertError } = await supabase
                 .from('memorials')
                 .insert({
                     user_id: user.id,
-                    status: 'draft',
-                    mode,
-                    slug: `draft-${Date.now()}`,
-                    paid: false,
-                    step1, step2, step3, step4, step5, step6, step7, step8, step9,
+                    state: 'creating',
+                    slug: `memorial-${Date.now()}`,
+                    stories, media, timeline, network, letters,
                     updated_at: new Date().toISOString(),
                 })
                 .select()
@@ -50,16 +46,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, memorialId: newMemorial.id });
         }
 
-        // 3. Update using the SECURE client (This will respect your SQL RLS Rules)
-        // We also add `.eq('user_id', user.id)` as an extra layer of absolute security
+        // 3. Update using the SECURE client (respects RLS)
+        // Extra `.eq('user_id', user.id)` ensures only the owner can update
         const { error } = await supabase
             .from('memorials')
             .update({
-                step1, step2, step3, step4, step5, step6, step7, step8, step9,
+                stories, media, timeline, network, letters,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', memorialId)
-            .eq('user_id', user.id); // ONLY update if the logged-in user is the owner
+            .eq('user_id', user.id);
 
         if (error) {
             console.error('Autosave API error:', error);

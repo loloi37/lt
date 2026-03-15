@@ -37,16 +37,15 @@ export async function POST(request: NextRequest) {
     if (event.type === 'checkout.session.completed' || event.type === 'payment_intent.succeeded') {
         const session = event.data.object as any;
 
-        // Extract the metadata you passed when creating the checkout/payment intent
+        // Extract the memorial ID from payment metadata
         const memorialId = session.metadata?.memorialId;
-        const planLabel = session.metadata?.plan?.toLowerCase() || 'personal';
 
         if (!memorialId) {
             console.error('[Stripe Webhook] No memorialId found in metadata');
             return NextResponse.json({ received: true });
         }
 
-        console.log(`[Stripe Webhook] Payment succeeded for memorial: ${memorialId}, Plan: ${planLabel}`);
+        console.log(`[Stripe Webhook] Payment succeeded for memorial: ${memorialId}`);
 
         // 1. Fetch current memorial to check its state
         const { data: currentMemorial } = await supabaseAdmin
@@ -60,30 +59,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        // 2. Build the update payload based on the plan
+        // 2. Build the update payload — single preservation payment model
         const updatePayload: Record<string, any> = {
-            paid: true,
+            state: 'live',
             payment_confirmed_at: new Date().toISOString(),
             refund_eligible: true,
         };
-
-        if (planLabel.includes('family')) {
-            updatePayload.mode = 'family';
-            updatePayload.plan_type = 'family';
-            updatePayload.amount_paid = 2940;
-            if (currentMemorial.mode === 'personal') {
-                updatePayload.upgraded_from = 'personal';
-                updatePayload.upgraded_at = new Date().toISOString();
-            }
-        } else if (planLabel.includes('concierge')) {
-            updatePayload.mode = 'concierge';
-            updatePayload.plan_type = 'concierge';
-            updatePayload.amount_paid = 6300;
-        } else {
-            updatePayload.mode = 'personal';
-            updatePayload.plan_type = 'personal';
-            updatePayload.amount_paid = 1470;
-        }
 
         // 3. Update the database securely
         const { error: updateError } = await supabaseAdmin
@@ -102,16 +83,15 @@ export async function POST(request: NextRequest) {
             version_number: 1,
             snapshot_data: { ...currentMemorial, ...updatePayload },
             is_full_snapshot: true,
-            steps_modified: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             change_type: 'manual',
-            change_summary: `Archive activated via Webhook — ${planLabel.toUpperCase()} plan`,
+            change_summary: 'Archive preserved — payment confirmed',
             change_reason: 'stripe_payment_success',
             created_by: currentMemorial.user_id,
             created_by_name: 'System (Stripe)',
             created_at: new Date().toISOString(),
         });
 
-        console.log(`[Stripe Webhook] Successfully updated memorial ${memorialId} to ${planLabel}`);
+        console.log(`[Stripe Webhook] Successfully preserved memorial ${memorialId}`);
     }
 
     return NextResponse.json({ received: true });

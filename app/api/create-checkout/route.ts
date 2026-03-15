@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, plan, amount, isDraftUpgrade } = await request.json();
+        const { memorialId } = await request.json();
         const origin = request.headers.get('origin') || 'http://localhost:3000';
 
         if (!memorialId) {
@@ -29,10 +29,7 @@ export async function POST(request: NextRequest) {
             .in('status', ['pending', 'approved'])
             .maybeSingle();
 
-        // Family plan requires account-level auth; Personal (direct or draft upgrade) requires individual
-        const expectedType = plan === 'Family' ? 'account' : 'individual';
-
-        if (authError || !auth || auth.authorization_type !== expectedType) {
+        if (authError || !auth) {
             return NextResponse.json({
                 error: 'Authorization required',
                 code: 'LEGAL_AUTH_REQUIRED',
@@ -41,9 +38,6 @@ export async function POST(request: NextRequest) {
         }
         // -----------------------------------------------
 
-        // Determine the success URL plan label for the redirect
-        const planLabel = isDraftUpgrade ? 'personal' : (plan?.toLowerCase() ?? 'personal');
-
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [
@@ -51,14 +45,10 @@ export async function POST(request: NextRequest) {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: isDraftUpgrade
-                                ? 'Legacy Vault - Draft → Personal Upgrade'
-                                : `Legacy Vault - ${plan} Plan`,
-                            description: isDraftUpgrade
-                                ? 'Activate your draft memorial with lifetime hosting and no watermarks'
-                                : 'Permanent archival for your memorial',
+                            name: 'Legacy Vault — Permanent Archive',
+                            description: 'One-time payment for permanent preservation on the Arweave blockchain',
                         },
-                        unit_amount: amount * 100,
+                        unit_amount: 147000, // $1,470.00
                     },
                     quantity: 1,
                 },
@@ -66,13 +56,9 @@ export async function POST(request: NextRequest) {
             mode: 'payment',
             metadata: {
                 memorialId: memorialId,
-                plan: plan,
-                isDraftUpgrade: isDraftUpgrade ? 'true' : 'false',
             },
-            success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&id=${memorialId}&plan=${planLabel}`,
-            cancel_url: isDraftUpgrade
-                ? `${origin}/dashboard/draft/${memorialId}` // back to draft dashboard on cancel
-                : `${origin}/create?id=${memorialId}`,
+            success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&id=${memorialId}`,
+            cancel_url: `${origin}/create?id=${memorialId}`,
         });
 
         return NextResponse.json({ url: session.url });

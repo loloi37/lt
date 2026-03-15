@@ -66,19 +66,12 @@ export async function POST(request: NextRequest) {
             .eq('id', memorialId);
 
         const fullData = {
-            step1: memorial.step1,
-            step2: memorial.step2,
-            step3: memorial.step3,
-            step4: memorial.step4,
-            step5: memorial.step5,
-            step6: memorial.step6,
-            step7: memorial.step7,
-            step8: memorial.step8,
-            step9: memorial.step9,
-            currentStep: memorial.current_step || 10,
-            paid: memorial.paid,
+            stories: memorial.stories,
+            media: memorial.media,
+            timeline: memorial.timeline,
+            network: memorial.network,
+            letters: memorial.letters,
             lastSaved: memorial.updated_at,
-            completedSteps: memorial.completed_steps || []
         };
 
         // 6. Initialize Archiver
@@ -109,7 +102,7 @@ export async function POST(request: NextRequest) {
         const zipBuffer = await archiver.generateZip();
 
         // 11. Upload to Supabase
-        const filename = `archive_${fullData.step1.fullName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.zip`;
+        const filename = `archive_${(fullData.stories?.fullName || 'memorial').replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.zip`;
         const filePath = `${memorialId}/${filename}`;
 
         const { error: uploadError } = await supabaseAdmin.storage
