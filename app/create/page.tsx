@@ -204,7 +204,7 @@ function CreatePageContent() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <SaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} />
+                        <SaveIndicator status={saveStatus} lastSavedAt={lastSavedAt} error={null} />
                         <button
                             onClick={() => setShowPreview(true)}
                             className="px-3 py-1.5 text-xs border border-sand/30 rounded-lg text-charcoal/50 hover:bg-sand/10 transition-colors flex items-center gap-1.5"

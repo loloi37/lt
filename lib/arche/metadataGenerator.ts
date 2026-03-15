@@ -4,7 +4,7 @@ import { MemorialData } from '@/types/memorial';
 export function generateReadme(data: MemorialData): string {
     return `LEGACY VAULT ARCHIVE
 ================================================================
-ARCHIVE FOR: ${data.step1.fullName}
+ARCHIVE FOR: ${data.stories.fullName}
 GENERATED: ${new Date().toLocaleDateString()}
 ================================================================
 
@@ -23,8 +23,8 @@ CONTENTS:
 - Timeline of Major Events
 
 DURABILITY:
-This archive uses standard, open formats (HTML, JPG, MP4, JSON) 
-guaranteed to be readable by computers for decades to come. 
+This archive uses standard, open formats (HTML, JPG, MP4, JSON)
+guaranteed to be readable by computers for decades to come.
 No proprietary software is needed.
 
 SUPPORT:
@@ -42,18 +42,15 @@ export function generateManifest(data: MemorialData, memorialId: string): string
         generatedAt: new Date().toISOString(),
         memorialId: memorialId,
         subject: {
-            name: data.step1.fullName,
-            birthDate: data.step1.birthDate,
-            deathDate: data.step1.deathDate,
+            name: data.stories.fullName,
+            birthDate: data.stories.birthDate,
+            deathDate: data.stories.deathDate,
         },
         stats: {
-            photos: data.step8.gallery.length,
-            videos: data.step9.videos.length,
-            tributes: data.step7.sharedMemories.length + data.step7.impactStories.length,
-            completedSteps: data.completedSteps
+            photos: data.media.gallery.length,
+            videos: data.media.videos.length,
+            tributes: data.network.sharedMemories.length + data.network.impactStories.length,
         },
-        // We include the full raw data for potential future re-importing
-        // into Legacy Vault or another system.
         rawData: data
     };
 

@@ -1,6 +1,6 @@
 // lib/arche/archiver.ts
 import JSZip from 'jszip';
-import crypto from 'crypto'; // Import crypto for hashing
+import crypto from 'crypto';
 import { MemorialData } from '@/types/memorial';
 import { ResourceMap } from './htmlGenerator';
 
@@ -8,7 +8,7 @@ export class ArcheArchiver {
     private zip: JSZip;
     private resourceMap: ResourceMap;
     private memorialData: MemorialData;
-    private verificationLog: string[]; // Store verification results
+    private verificationLog: string[];
 
     constructor(data: MemorialData) {
         this.zip = new JSZip();
@@ -17,13 +17,12 @@ export class ArcheArchiver {
         this.verificationLog = [
             `LEGACY VAULT - INTEGRITY VERIFICATION REPORT`,
             `Generated: ${new Date().toISOString()}`,
-            `Subject: ${data.step1.fullName}`,
+            `Subject: ${data.stories.fullName}`,
             `-------------------------------------------------------------------`,
             `STATUS      | FILE                                     | DETAILS`,
             `-------------------------------------------------------------------`
         ];
 
-        // Initialize Folder Structure
         this.zip.folder("media");
         this.zip.folder("media/photos");
         this.zip.folder("media/photos/original");
@@ -31,15 +30,11 @@ export class ArcheArchiver {
         this.zip.folder("media/documents");
     }
 
-    /**
-     * Add media from URL or Base64 Data URI
-     * Now accepts an optional expectedHash to verify integrity
-     */
     async addMedia(
         url: string | null | undefined,
         folder: string,
         filename: string,
-        expectedHash?: string // <--- NEW PARAMETER
+        expectedHash?: string
     ): Promise<string | null> {
         if (!url) return null;
 
@@ -47,7 +42,6 @@ export class ArcheArchiver {
             let buffer: Buffer;
             let extension = 'jpg';
 
-            // 1. Handle Base64 Data URIs
             if (url.startsWith('data:')) {
                 const commaIdx = url.indexOf(',');
                 if (commaIdx === -1) throw new Error('Invalid Data URI');
@@ -60,9 +54,7 @@ export class ArcheArchiver {
                 if (meta.includes('png')) extension = 'png';
                 else if (meta.includes('jpeg') || meta.includes('jpg')) extension = 'jpg';
                 else if (meta.includes('mp4')) extension = 'mp4';
-            }
-            // 2. Handle Standard HTTP URLs
-            else {
+            } else {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`Failed to fetch ${url}`);
                 const arrayBuffer = await response.arrayBuffer();
@@ -74,9 +66,7 @@ export class ArcheArchiver {
                 if (ext && ext.length < 5) extension = ext;
             }
 
-            // --- STEP 1.4.2: INTEGRITY CHECK ---
             if (expectedHash) {
-                // Calculate SHA-256 of the downloaded/decoded buffer
                 const hashSum = crypto.createHash('sha256');
                 hashSum.update(buffer);
                 const calculatedHash = hashSum.digest('hex');
@@ -92,7 +82,6 @@ export class ArcheArchiver {
             } else {
                 this.verificationLog.push(`[WARN]      | ${filename}.${extension}`.padEnd(60) + `| No signature found in database.`);
             }
-            // -----------------------------------
 
             const safeName = filename.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
             const finalName = `${safeName}.${extension}`;
@@ -113,7 +102,6 @@ export class ArcheArchiver {
         this.zip.file(path, content);
     }
 
-    // NEW: Method to get the report
     getVerificationReport(): string {
         return this.verificationLog.join('\n');
     }
