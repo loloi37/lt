@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify payment before allowing preservation
-        if (!memorial.paid && memorial.state !== 'live') {
+        if (memorial.state !== 'live' && memorial.state !== 'preserved') {
             return NextResponse.json({ error: 'Payment required before preservation' }, { status: 402 });
         }
 
