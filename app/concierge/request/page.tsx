@@ -21,7 +21,7 @@ export default function ConciergeRequestPage() {
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <Link
-                        href="/choice-pricing"
+                        href="/preservation-gate"
                         className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
                     >
                         <ArrowLeft size={20} />
@@ -90,7 +90,7 @@ export default function ConciergeRequestPage() {
 
                 <div className="mt-12">
                     <Link
-                        href="/choice-pricing"
+                        href="/preservation-gate"
                         className="text-mist hover:text-mist/80 font-medium underline underline-offset-4"
                     >
                         Create a Personal Memorial instead &rarr;

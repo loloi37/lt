@@ -156,7 +156,7 @@ function RequestedContent() {
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row gap-4">
                         <Link
-                            href="/choice-pricing"
+                            href="/preservation-gate"
                             className="btn-paper flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-lg font-medium transition-all text-center"
                         >
                             Back to Home

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { Shield, Check, Loader2, AlertCircle } from 'lucide-react';
 
-export default function WitnessAcceptancePage({ params }: { params: Promise<{ id: string }> }) {
+export default function ContributorAcceptancePage({ params }: { params: Promise<{ id: string }> }) {
     const unwrappedParams = use(params);
     const invitationId = unwrappedParams.id;
     const router = useRouter();
@@ -27,7 +27,6 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            // Redirect to login, then come back here after sign-in
             router.push(`/login?next=${encodeURIComponent(`/invitation/accept/${invitationId}`)}`);
             return;
         }
@@ -38,7 +37,6 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
 
     const fetchInvitationDetails = async (supabase: ReturnType<typeof createClient>) => {
         try {
-            // 1. Fetch Invitation
             const { data: inv, error: invError } = await supabase
                 .from('witness_invitations')
                 .select('*')
@@ -50,15 +48,14 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
 
             setInvitation(inv);
 
-            // 2. Fetch Memorial Name
             const { data: mem, error: memError } = await supabase
                 .from('memorials')
-                .select('step1')
+                .select('stories')
                 .eq('id', inv.memorial_id)
                 .single();
 
             if (memError) throw new Error('Associated memorial not found.');
-            setMemorialName(mem.step1?.fullName || 'a loved one');
+            setMemorialName(mem.stories?.fullName || 'a loved one');
 
         } catch (err: any) {
             setError(err.message);
@@ -74,7 +71,6 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
         try {
             const supabase = createClient();
 
-            // 1. Update invitation status and link to authenticated user
             const { error: updateError } = await supabase
                 .from('witness_invitations')
                 .update({
@@ -85,8 +81,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
 
             if (updateError) throw updateError;
 
-            // 2. Redirect to the memorial archive view
-            router.push(`/create?id=${invitation.memorial_id}&role=witness`);
+            router.push(`/create?id=${invitation.memorial_id}&role=contributor`);
 
         } catch (err: any) {
             alert('Error accepting invitation: ' + err.message);
@@ -124,7 +119,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
                     </div>
 
                     <h1 className="font-serif text-3xl text-center text-charcoal mb-4">
-                        Bearer of Witness
+                        Family & Contributors
                     </h1>
 
                     <div className="prose prose-sm text-charcoal/80 space-y-4 mb-10 text-center leading-relaxed">
@@ -137,7 +132,7 @@ export default function WitnessAcceptancePage({ params }: { params: Promise<{ id
                         </p>
 
                         <p className="italic bg-sand/5 p-4 rounded-xl border border-sand/20 mt-6">
-                            &ldquo;To bear witness is to preserve the truth of a life. It is an act of love that defies time. By entering this space, you agree to handle these memories with the dignity and respect they deserve.&rdquo;
+                            &ldquo;Your memories, stories, and photos will help preserve a complete picture of this life for future generations. By entering this space, you agree to handle these memories with the dignity and respect they deserve.&rdquo;
                         </p>
                     </div>
 

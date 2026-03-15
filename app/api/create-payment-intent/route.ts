@@ -1,6 +1,5 @@
 // app/api/create-payment-intent/route.ts
-// Step 2.2.1: Create a PaymentIntent for Stripe Elements (on-site payment)
-// This replaces the Checkout Session redirect flow for the seal flow.
+// Create a PaymentIntent for Stripe Elements (Preservation Gate payment)
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
@@ -16,14 +15,11 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1470, plan = 'personal' } = await request.json();
+        const { memorialId, amount = 1470 } = await request.json();
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
         }
-
-        // Determine expected authorization type based on plan
-        const expectedAuthType = plan === 'family' ? 'account' : 'individual';
 
         // Verify authorization exists
         const { data: auth } = await supabaseAdmin
@@ -33,38 +29,30 @@ export async function POST(request: NextRequest) {
             .in('status', ['pending', 'approved'])
             .maybeSingle();
 
-        if (!auth || auth.authorization_type !== expectedAuthType) {
+        if (!auth) {
             return NextResponse.json({
                 error: 'Authorization required before payment',
                 code: 'LEGAL_AUTH_REQUIRED',
             }, { status: 403 });
         }
 
-        // Fetch memorial details for the description
+        // Fetch memorial details
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
-            .select('full_name, mode')
+            .select('full_name, state')
             .eq('id', memorialId)
             .single();
 
         const fullName = memorial?.full_name || 'Memorial Archive';
-        const isDraft = memorial?.mode === 'draft';
-
-        const planLabel = plan === 'family' ? 'Family' : (isDraft ? 'Personal (Draft Upgrade)' : 'Personal');
 
         // Create PaymentIntent
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount * 100, // Stripe expects cents
             currency: 'usd',
-            description: plan === 'family'
-                ? `Legacy Vault — Family Plan for ${fullName}`
-                : isDraft
-                    ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
-                    : `Legacy Vault — Permanent Archive for ${fullName}`,
+            description: `Legacy Vault — Permanent Archive for ${fullName}`,
             metadata: {
                 memorialId,
-                plan: planLabel,
-                isDraftUpgrade: isDraft ? 'true' : 'false',
+                plan: 'preservation',
             },
             automatic_payment_methods: {
                 enabled: true,

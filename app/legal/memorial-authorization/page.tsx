@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function LegalMemorialAuthorizationRedirect() {
     const router = useRouter();
     useEffect(() => {
-        router.replace('/choice-pricing');
+        router.replace('/preservation-gate');
     }, [router]);
     return null;
 }

@@ -197,7 +197,7 @@ function PaymentPageContent() {
     useEffect(() => {
         if (auth.loading) return;
         if (!auth.authenticated) {
-            router.replace('/login?next=/choice-pricing');
+            router.replace('/login?next=/preservation-gate');
             return;
         }
     }, [auth.loading, auth.authenticated, router]);

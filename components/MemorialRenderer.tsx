@@ -20,7 +20,7 @@ import BioWithLinks from '@/components/BioWithLinks';
 
 
 interface MemorialRendererProps {
-    data: any;               // Memorial data (step1-step9)
+    data: any;               // Memorial data (stories/media/timeline/network)
     relations?: any[];       // Related individuals
     isPreview?: boolean;     // true = show watermark + badge
     compact?: boolean;       // true = LiveMirror sidebar mode (scrollable, smaller)
@@ -40,10 +40,10 @@ export default function MemorialRenderer({
     const [viewerStartIndex, setViewerStartIndex] = useState(0);
 
     const calculateAge = () => {
-        if (!data.step1?.birthDate) return null;
-        const birth = new Date(data.step1.birthDate);
-        const end = data.step1.isStillLiving ? new Date() :
-            data.step1.deathDate ? new Date(data.step1.deathDate) : new Date();
+        if (!data.stories?.birthDate) return null;
+        const birth = new Date(data.stories.birthDate);
+        const end = data.stories.isStillLiving ? new Date() :
+            data.stories.deathDate ? new Date(data.stories.deathDate) : new Date();
         return end.getFullYear() - birth.getFullYear();
     };
 
@@ -81,7 +81,7 @@ export default function MemorialRenderer({
                     {/* Step 1.2.2: Small fixed badge, bottom-right, semi-transparent */}
                     <div className="fixed bottom-4 right-4 z-30 px-3 py-1.5 bg-charcoal/40 backdrop-blur-sm rounded-lg pointer-events-none">
                         <p className="text-ivory/70 text-[10px] tracking-wide">
-                            Preview — Draft
+                            Preview — Private
                         </p>
                     </div>
 
@@ -103,11 +103,11 @@ export default function MemorialRenderer({
 
                 {/* HERO SECTION */}
                 <div className={`relative ${s.heroH} bg-gradient-to-br from-mist/30 to-stone/30`}>
-                    {data.step8?.coverPhotoPreview ? (
+                    {data.media?.coverPhotoPreview ? (
                         <>
-                            <img src={data.step8.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
+                            <img src={data.media.coverPhotoPreview} alt="Cover" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#6b7f8e] via-[#6b7f8e]/20 to-[#6b7f8e]/10" />
-                            <IntegrityBadge hash={data.step8.coverPhotoHash} className="top-4 left-4" />
+                            <IntegrityBadge hash={data.media.coverPhotoHash} className="top-4 left-4" />
                         </>
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-[#8a9ba8] via-[#7d8e9b] to-[#6b7f8e]" />
@@ -116,26 +116,26 @@ export default function MemorialRenderer({
                     <div className="absolute bottom-0 left-0 right-0">
                         <div className={`${s.maxW} pb-${compact ? '4' : '8'}`}>
                             <div className={`flex ${compact ? 'flex-col items-center text-center gap-3' : 'flex-col md:flex-row items-center md:items-end gap-6'}`}>
-                                {data.step1?.profilePhotoPreview && (
+                                {data.stories?.profilePhotoPreview && (
                                     <div className={`${s.profileSize} rounded-2xl border-4 border-ivory shadow-2xl overflow-hidden flex-shrink-0 bg-white`}>
-                                        <img src={data.step1.profilePhotoPreview} alt={data.step1.fullName} className="w-full h-full object-cover" />
+                                        <img src={data.stories.profilePhotoPreview} alt={data.stories.fullName} className="w-full h-full object-cover" />
                                     </div>
                                 )}
                                 <div className={compact ? '' : 'text-center md:text-left pb-4'}>
                                     <h1 className={`font-serif ${s.nameSize} text-ivory mb-2 drop-shadow-2xl`}>
-                                        {data.step1?.fullName || 'Name'}
+                                        {data.stories?.fullName || 'Name'}
                                     </h1>
                                     <div className={`flex ${compact ? 'justify-center' : 'flex-col md:flex-row items-center'} gap-2 text-ivory/90 ${compact ? 'text-xs' : 'text-lg'} drop-shadow-lg`}>
-                                        {data.step1?.birthDate && (
+                                        {data.stories?.birthDate && (
                                             <div className="flex items-center gap-1">
                                                 <Calendar size={compact ? 12 : 20} />
-                                                <span>{new Date(data.step1.birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                <span>{new Date(data.stories.birthDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                                             </div>
                                         )}
-                                        {!data.step1?.isStillLiving && data.step1?.deathDate && (
+                                        {!data.stories?.isStillLiving && data.stories?.deathDate && (
                                             <>
                                                 <span className="hidden md:inline">—</span>
-                                                <span>{new Date(data.step1.deathDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                                <span>{new Date(data.stories.deathDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                                             </>
                                         )}
                                         {calculateAge() && (
@@ -167,18 +167,18 @@ export default function MemorialRenderer({
                 <div className={`${s.maxW} py-${compact ? '6' : '12'} ${s.gap}`}>
 
                     {/* Epitaph */}
-                    {data.step1?.epitaph && (
+                    {data.stories?.epitaph && (
                         <div className={`text-center py-${compact ? '6' : '12'} border-y border-sand/30`}>
                             <Quote size={compact ? 24 : 40} className="text-stone mx-auto mb-4 opacity-50" />
                             <p className={`font-serif ${s.quoteSize} text-charcoal/80 italic leading-relaxed max-w-4xl mx-auto`}>
-                                "{data.step1.epitaph}"
+                                "{data.stories.epitaph}"
                             </p>
                         </div>
                     )}
 
                     {/* Quick Facts Grid */}
                     <div className={`grid ${s.gridCols} gap-${compact ? '3' : '6'}`}>
-                        {data.step1?.birthPlace && (
+                        {data.stories?.birthPlace && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
                                     <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -186,12 +186,12 @@ export default function MemorialRenderer({
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Born in</p>
-                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.step1.birthPlace}</p>
+                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.stories.birthPlace}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
-                        {data.step1?.deathPlace && !data.step1?.isStillLiving && (
+                        {data.stories?.deathPlace && !data.stories?.isStillLiving && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
                                     <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -199,12 +199,12 @@ export default function MemorialRenderer({
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Passed in</p>
-                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.step1.deathPlace}</p>
+                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.stories.deathPlace}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
-                        {data.step3?.occupations?.length > 0 && (
+                        {data.stories?.occupations?.length > 0 && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
                                     <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -212,12 +212,12 @@ export default function MemorialRenderer({
                                     </div>
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Career</p>
-                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.step3.occupations[0].title}</p>
+                                        <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>{data.stories.occupations[0].title}</p>
                                     </div>
                                 </div>
                             </div>
                         )}
-                        {data.step4?.children?.length > 0 && (
+                        {data.network?.children?.length > 0 && (
                             <div className={`${compact ? 'p-3' : 'p-6'} bg-white rounded-xl border border-sand/30 shadow-sm`}>
                                 <div className="flex items-start gap-3">
                                     <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center flex-shrink-0`}>
@@ -226,7 +226,7 @@ export default function MemorialRenderer({
                                     <div>
                                         <p className={`${compact ? 'text-[10px]' : 'text-sm'} font-medium text-charcoal/60 mb-0.5`}>Family</p>
                                         <p className={`text-charcoal font-semibold ${compact ? 'text-xs' : ''}`}>
-                                            {data.step4.children.length} child{data.step4.children.length !== 1 ? 'ren' : ''}
+                                            {data.network.children.length} child{data.network.children.length !== 1 ? 'ren' : ''}
                                         </p>
                                     </div>
                                 </div>
@@ -235,7 +235,7 @@ export default function MemorialRenderer({
                     </div>
 
                     {/* Life Story */}
-                    {data.step6?.biography && (
+                    {data.stories?.biography && (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
@@ -247,8 +247,8 @@ export default function MemorialRenderer({
                                 <div className={`text-charcoal/80 leading-relaxed font-serif ${s.bodyText}`}>
                                     <BioWithLinks
                                         text={compact
-                                            ? data.step6.biography.substring(0, 500) + (data.step6.biography.length > 500 ? '...' : '')
-                                            : data.step6.biography
+                                            ? data.stories.biography.substring(0, 500) + (data.stories.biography.length > 500 ? '...' : '')
+                                            : data.stories.biography
                                         }
                                         relations={relations}
                                     />
@@ -258,11 +258,11 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Life Chapters */}
-                    {data.step6?.lifeChapters?.length > 0 && (
+                    {data.timeline?.lifeChapters?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'}`}>Life Chapters</h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
-                                {data.step6.lifeChapters.map((chapter: any, index: number) => (
+                                {data.timeline.lifeChapters.map((chapter: any, index: number) => (
                                     <div key={chapter.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6 md:p-8'} shadow-sm border-l-4 border-mist`}>
                                         <div className="flex items-start gap-4">
                                             <div className={`${compact ? 'w-8 h-8 text-sm' : 'w-12 h-12 text-xl'} bg-mist text-ivory rounded-full flex items-center justify-center font-serif font-bold flex-shrink-0`}>
@@ -282,7 +282,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Early Life */}
-                    {(data.step2?.childhoodHome || data.step2?.familyBackground) && (
+                    {(data.stories?.childhoodHome || data.stories?.familyBackground) && (
                         <section className={`bg-gradient-to-br from-mist/5 to-stone/5 rounded-2xl ${s.sectionPadding} border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
@@ -291,21 +291,21 @@ export default function MemorialRenderer({
                                 Early Life & Childhood
                             </h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
-                                {data.step2.childhoodHome && (
+                                {data.stories.childhoodHome && (
                                     <div>
                                         <h3 className={`font-semibold text-charcoal mb-2 ${compact ? 'text-sm' : ''}`}>Childhood Home</h3>
-                                        <p className={`text-charcoal/70 leading-relaxed ${compact ? 'text-xs' : ''}`}>{data.step2.childhoodHome}</p>
+                                        <p className={`text-charcoal/70 leading-relaxed ${compact ? 'text-xs' : ''}`}>{data.stories.childhoodHome}</p>
                                     </div>
                                 )}
-                                {data.step2.familyBackground && (
+                                {data.stories.familyBackground && (
                                     <div>
                                         <h3 className={`font-semibold text-charcoal mb-2 ${compact ? 'text-sm' : ''}`}>Family Background</h3>
-                                        <p className={`text-charcoal/70 leading-relaxed ${compact ? 'text-xs' : ''}`}>{data.step2.familyBackground}</p>
+                                        <p className={`text-charcoal/70 leading-relaxed ${compact ? 'text-xs' : ''}`}>{data.stories.familyBackground}</p>
                                     </div>
                                 )}
-                                {data.step2?.childhoodPersonality?.length > 0 && (
+                                {data.stories?.childhoodPersonality?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
-                                        {data.step2.childhoodPersonality.map((trait: string) => (
+                                        {data.stories.childhoodPersonality.map((trait: string) => (
                                             <span key={trait} className={`px-3 py-1.5 bg-mist/10 text-mist rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{trait}</span>
                                         ))}
                                     </div>
@@ -315,7 +315,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Career & Education */}
-                    {data.step3?.occupations?.length > 0 && (
+                    {data.stories?.occupations?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
@@ -324,7 +324,7 @@ export default function MemorialRenderer({
                                 Career & Achievements
                             </h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
-                                {data.step3.occupations.map((job: any) => (
+                                {data.stories.occupations.map((job: any) => (
                                     <div key={job.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-sand/30`}>
                                         <h4 className={`font-semibold ${compact ? 'text-sm' : 'text-xl'} text-charcoal`}>{job.title}</h4>
                                         <p className={`text-charcoal/60 ${compact ? 'text-xs' : ''} mb-2`}>{job.company}</p>
@@ -339,7 +339,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Family & Relationships */}
-                    {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0)) && (
+                    {((data.network?.partners?.length > 0) || (data.network?.children?.length > 0)) && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
@@ -347,9 +347,9 @@ export default function MemorialRenderer({
                                 </div>
                                 Family & Relationships
                             </h2>
-                            {data.step4?.partners?.length > 0 && (
+                            {data.network?.partners?.length > 0 && (
                                 <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'} mb-6`}>
-                                    {data.step4.partners.map((partner: any) => (
+                                    {data.network.partners.map((partner: any) => (
                                         <div key={partner.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-sand/30`}>
                                             <h4 className={`font-semibold text-charcoal mb-1 ${compact ? 'text-sm' : ''}`}>{partner.name}</h4>
                                             <p className={`text-charcoal/60 mb-2 ${compact ? 'text-[10px]' : 'text-sm'}`}>{partner.relationshipType}</p>
@@ -359,9 +359,9 @@ export default function MemorialRenderer({
                                     ))}
                                 </div>
                             )}
-                            {data.step4?.children?.length > 0 && (
+                            {data.network?.children?.length > 0 && (
                                 <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '2' : '4'}`}>
-                                    {data.step4.children.map((child: any) => (
+                                    {data.network.children.map((child: any) => (
                                         <div key={child.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-6'} shadow-sm border border-sand/30`}>
                                             <h4 className={`font-semibold text-charcoal mb-1 ${compact ? 'text-sm' : ''}`}>{child.name}</h4>
                                             <p className={`text-charcoal/60 ${compact ? 'text-[10px]' : 'text-sm'}`}>Born {child.birthYear}</p>
@@ -373,7 +373,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Personality & Values */}
-                    {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy) && (
+                    {(data.stories?.personalityTraits?.length > 0 || data.stories?.lifePhilosophy) && (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-sand/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
@@ -382,23 +382,23 @@ export default function MemorialRenderer({
                                 Personality, Values & Passions
                             </h2>
                             <div className={`space-y-${compact ? '4' : '8'}`}>
-                                {data.step5?.personalityTraits?.length > 0 && (
+                                {data.stories?.personalityTraits?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
-                                        {data.step5.personalityTraits.map((trait: string) => (
+                                        {data.stories.personalityTraits.map((trait: string) => (
                                             <span key={trait} className={`px-3 py-1.5 bg-mist/10 text-mist rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{trait}</span>
                                         ))}
                                     </div>
                                 )}
-                                {data.step5?.coreValues?.length > 0 && (
+                                {data.stories?.coreValues?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
-                                        {data.step5.coreValues.map((value: string) => (
+                                        {data.stories.coreValues.map((value: string) => (
                                             <span key={value} className={`px-3 py-1.5 bg-stone/10 text-stone rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{value}</span>
                                         ))}
                                     </div>
                                 )}
-                                {data.step5?.lifePhilosophy && (
+                                {data.stories?.lifePhilosophy && (
                                     <div className="bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl p-6 border border-sand/20">
-                                        <p className={`text-charcoal/80 leading-relaxed italic ${compact ? 'text-xs' : ''}`}>{data.step5.lifePhilosophy}</p>
+                                        <p className={`text-charcoal/80 leading-relaxed italic ${compact ? 'text-xs' : ''}`}>{data.stories.lifePhilosophy}</p>
                                     </div>
                                 )}
                             </div>
@@ -406,7 +406,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Memories & Stories */}
-                    {(data.step7?.sharedMemories?.length > 0 || data.step7?.impactStories?.length > 0) && (
+                    {(data.network?.sharedMemories?.length > 0 || data.network?.impactStories?.length > 0) && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
@@ -415,7 +415,7 @@ export default function MemorialRenderer({
                                 Memories & Stories
                             </h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
-                                {data.step7.sharedMemories?.map((memory: any) => (
+                                {data.network.sharedMemories?.map((memory: any) => (
                                     <div key={memory.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-8'} shadow-sm border border-sand/30`}>
                                         <h4 className={`font-semibold ${compact ? 'text-sm' : 'text-xl'} text-charcoal mb-2`}>{memory.title}</h4>
                                         <p className={`text-charcoal/70 leading-relaxed mb-3 ${compact ? 'text-xs' : ''}`}>{memory.content}</p>
@@ -427,7 +427,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Interactive Photo Stories */}
-                    {data.step8?.interactiveGallery?.length > 0 && (
+                    {data.media?.interactiveGallery?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-mist/10 rounded-xl flex items-center justify-center`}>
@@ -436,7 +436,7 @@ export default function MemorialRenderer({
                                 Interactive Photo Stories
                             </h2>
                             <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-${compact ? '3' : '6'}`}>
-                                {data.step8.interactiveGallery.map((item: any, index: number) => (
+                                {data.media.interactiveGallery.map((item: any, index: number) => (
                                     <div
                                         key={item.id}
                                         className={`relative aspect-video rounded-xl overflow-hidden border-2 border-sand/30 group ${isPreview && index > 0 ? 'opacity-50 pointer-events-none' : ''}`}
@@ -481,11 +481,11 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Photo Gallery */}
-                    {data.step8?.gallery?.length > 0 && (
+                    {data.media?.gallery?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'}`}>Photo Gallery</h2>
                             <div className={`grid ${s.galleryGrid} gap-${compact ? '2' : '4'}`}>
-                                {data.step8.gallery.map((photo: any, index: number) => (
+                                {data.media.gallery.map((photo: any, index: number) => (
                                     <button
                                         key={photo.id}
                                         onClick={() => { setViewerStartIndex(index); setViewerOpen(true); }}
@@ -505,17 +505,17 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                             {viewerOpen && !compact && (
-                                <ImageViewer images={data.step8.gallery} initialIndex={viewerStartIndex} onClose={() => setViewerOpen(false)} />
+                                <ImageViewer images={data.media.gallery} initialIndex={viewerStartIndex} onClose={() => setViewerOpen(false)} />
                             )}
                         </section>
                     )}
 
                     {/* Videos */}
-                    {data.step9?.videos?.length > 0 && (
+                    {data.media?.videos?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'}`}>Video Memories</h2>
                             <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'}`}>
-                                {data.step9.videos.map((video: any) => (
+                                {data.media.videos.map((video: any) => (
                                     <div key={video.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4'} border border-sand/30 shadow-sm relative`}>
 
                                         <IntegrityBadge hash={video.sha256_hash} className="top-2 left-2" />
@@ -533,7 +533,7 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Voice Recordings */}
-                    {data.step8?.voiceRecordings?.length > 0 && (
+                    {data.media?.voiceRecordings?.length > 0 && (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-charcoal mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-stone/10 rounded-xl flex items-center justify-center`}>
@@ -542,7 +542,7 @@ export default function MemorialRenderer({
                                 Voice Recordings
                             </h2>
                             <div className={`space-y-${compact ? '2' : '4'}`}>
-                                {data.step8.voiceRecordings.map((recording: any) => (
+                                {data.media.voiceRecordings.map((recording: any) => (
                                     <div key={recording.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-4 md:p-6'} shadow-sm border border-sand/30 flex items-center gap-4`}>
                                         <div className={`${compact ? 'w-10 h-10' : 'w-14 h-14'} bg-stone/10 rounded-full flex items-center justify-center flex-shrink-0`}>
                                             <Mic size={compact ? 16 : 24} className="text-stone" />
@@ -558,12 +558,12 @@ export default function MemorialRenderer({
                     )}
 
                     {/* Legacy Statement */}
-                    {data.step8?.legacyStatement && (
+                    {data.stories?.legacyStatement && (
                         <section className={`bg-gradient-to-br from-mist/20 via-ivory to-stone/20 rounded-2xl ${compact ? 'p-6' : 'p-12 md:p-16'} text-center border-2 border-sand/30 shadow-lg`}>
                             <Star size={compact ? 24 : 48} className="text-stone mx-auto mb-4" />
                             <h2 className={`font-serif ${compact ? 'text-lg' : 'text-3xl'} text-charcoal mb-4`}>Legacy</h2>
                             <p className={`${compact ? 'text-sm' : 'text-xl md:text-2xl'} text-charcoal/80 leading-relaxed max-w-4xl mx-auto font-serif`}>
-                                {data.step8.legacyStatement}
+                                {data.media.legacyStatement}
                             </p>
                         </section>
                     )}

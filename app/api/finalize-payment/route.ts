@@ -42,7 +42,6 @@ export async function POST(request: NextRequest) {
             .from('memorials')
             .update({
                 state: 'live',
-                paid: true,
                 payment_confirmed_at: new Date().toISOString(),
             })
             .eq('id', memorialId);

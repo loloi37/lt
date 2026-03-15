@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
                 memorial_id: memorialId,
                 user_id: requesterId,
                 type: 'memory', // Placeholder type
-                witness_name: "Family Member",
+                contributor_name: "Family Member",
                 content: { note: "Requested to be a Co-Guardian" },
                 status: 'pending_approval' // Re-using the approval queue
             }]);

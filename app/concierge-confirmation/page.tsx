@@ -53,7 +53,7 @@ export default function ConciergeConfirmationPage() {
             <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <Link
-                        href="/choice-pricing"
+                        href="/preservation-gate"
                         className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
                     >
                         <ArrowLeft size={20} />
