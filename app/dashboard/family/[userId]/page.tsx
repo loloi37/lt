@@ -3,10 +3,12 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi } from 'lucide-react';
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
+import AnchorPanel from '@/components/AnchorPanel';
+import PreservationStatus from '@/components/PreservationStatus';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
 
@@ -181,57 +183,86 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         return matchesSearch && matchesFilter;
     });
 
+    // Derive family name from first memorial's last name
+    const deriveFamilyName = (): string => {
+        if (memorials.length === 0) return 'Your';
+        const firstName = memorials[0];
+        const fullName = firstName?.full_name || '';
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length > 1) {
+            return parts[parts.length - 1];
+        }
+        return fullName || 'Your';
+    };
+
+    const familyName = deriveFamilyName();
+
+    // Find the first paid memorial for PreservationStatus
+    const firstPaidMemorial = memorials.find(m => m.paid);
+
+    // Count unique members (from memorial contributor relationships or just active memorials)
+    const memberCount = memorials.length;
+
     // BLOCK RENDERING until auth checks pass
     const hasAccess = auth.plan === 'family' || auth.plan === 'concierge';
     if (auth.loading || !auth.authenticated || !hasAccess) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-mist/10 flex items-center justify-center">
+            <div className="dark-dashboard min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-2 border-sage/30 border-t-sage rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                    <div className="w-12 h-12 border-2 border-vault-border border-t-gold rounded-full animate-spin mx-auto mb-4" />
+                    <p className="vault-muted text-sm font-sans">Verifying access...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-mist/5 via-ivory to-mist/10">
+        <div className="dark-dashboard min-h-screen">
+            {/* Welcome banner */}
             {showWelcome && (
-                <div className="animate-fadeIn" style={{ backgroundColor: '#1a2332' }}>
+                <div className="animate-fadeIn vault-dark border-b vault-border">
                     <div className="max-w-7xl mx-auto px-6 py-4 text-center">
-                        <p className="text-sm" style={{ color: 'rgba(253,246,240,0.60)', letterSpacing: '0.04em' }}>
+                        <p className="text-sm font-sans vault-muted tracking-wide">
                             When you are ready, everything is here.
                         </p>
                     </div>
                 </div>
             )}
-            <div className="bg-white border-b border-sand/30 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-6">
+
+            {/* HEADER */}
+            <div className="vault-dark border-b vault-border">
+                <div className="max-w-7xl mx-auto px-6 py-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <Link href="/choice-pricing" className="p-2 hover:bg-sand/10 rounded-lg">
-                                    <ArrowLeft size={20} className="text-charcoal/60" />
+                            <div className="flex items-center gap-3 mb-3">
+                                <Link href="/choice-pricing" className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                                    <ArrowLeft size={20} className="vault-muted" />
                                 </Link>
-                                <h1 className="font-serif text-4xl text-charcoal">Family Memorials</h1>
+                                <h1 className="font-serif text-4xl vault-text">
+                                    The {familyName} Legacy Archive
+                                </h1>
+                                <span className="live-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-semibold">
+                                    Live
+                                </span>
                             </div>
-                            <p className="text-charcoal/60">Your private dashboard</p>
-                            <p className="text-xs text-charcoal/40 mt-1">ID: {userId.slice(0, 8)}...</p>
+                            <p className="vault-muted font-sans text-sm tracking-wide ml-12">
+                                {memorials.length} memorial{memorials.length !== 1 ? 's' : ''} &bull; {memberCount} member{memberCount !== 1 ? 's' : ''} &bull; 0 devices anchored
+                            </p>
                         </div>
 
                         <div className="flex gap-3">
                             <Link
                                 href={`/dashboard/family/${userId}/tree`}
-                                className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage/20 text-sage hover:bg-sage/5 transition-all"
+                                className="dark-card-hover px-5 py-3 rounded-lg font-sans font-semibold flex items-center gap-2 vault-border border vault-text text-sm transition-all"
                             >
-                                <Network size={20} />
+                                <Network size={18} />
                                 View Constellation
                             </Link>
                             <button
                                 onClick={handleCreate}
-                                className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory"
+                                className="px-5 py-3 rounded-lg font-sans font-semibold flex items-center gap-2 bg-gold text-black text-sm hover:bg-gold/90 transition-all"
                             >
-                                <Plus size={20} />
+                                <Plus size={18} />
                                 Create Memorial
                             </button>
                         </div>
@@ -244,21 +275,21 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                 {!loading && memorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={20} />
                             <input
                                 type="text"
                                 placeholder="Search by name..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-sand/20 focus:border-mist/50 focus:outline-none transition-all"
+                                className="w-full pl-12 pr-4 py-3 rounded-xl dark-card vault-border border vault-text font-sans focus:border-gold/50 focus:outline-none transition-all bg-transparent placeholder:text-white/30"
                             />
                         </div>
                         <div className="relative">
-                            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={20} />
+                            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={20} />
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                                className="pl-12 pr-8 py-3 rounded-xl border-2 border-sand/20 focus:border-mist/50 focus:outline-none bg-white appearance-none cursor-pointer"
+                                className="pl-12 pr-8 py-3 rounded-xl dark-card vault-border border vault-text font-sans focus:border-gold/50 focus:outline-none bg-transparent appearance-none cursor-pointer"
                             >
                                 <option value="all">All Memorials</option>
                                 <option value="draft">Drafts</option>
@@ -270,79 +301,151 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
                 {loading ? (
                     <div className="text-center py-20">
-                        <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
+                        <Loader2 size={48} className="gold animate-spin mx-auto mb-4" />
                     </div>
                 ) : memorials.length === 0 && deletedMemorials.length === 0 ? (
                     <div className="text-center py-20">
-                        <div className="w-24 h-24 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <User size={48} className="text-mist" />
+                        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <User size={48} className="vault-muted" />
                         </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Create Your First Memorial</h2>
-                        <button onClick={handleCreate} className="btn-paper inline-flex items-center gap-2 px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-semibold">
+                        <h2 className="font-serif text-3xl vault-text mb-3">Create Your First Memorial</h2>
+                        <p className="vault-muted font-sans mb-6">Begin preserving your family&apos;s legacy</p>
+                        <button onClick={handleCreate} className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-black rounded-lg font-sans font-semibold hover:bg-gold/90 transition-all">
                             <Plus size={20} />
                             Create
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredMemorials.map((memorial) => (
-                            <div key={memorial.id} className="bg-white rounded-xl shadow-sm border border-sand/30 overflow-hidden">
-                                <div className="relative h-48 bg-gradient-to-br from-mist/10 to-mist/20">
-                                    {memorial.profile_photo_url ? (
-                                        <img src={memorial.profile_photo_url} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <User size={64} className="text-charcoal/20" />
-                                        </div>
-                                    )}
-                                    {memorial.paid && (
+                    <>
+                        {/* FAMILY ROW: Visual Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {filteredMemorials.map((memorial) => (
+                                <div key={memorial.id} className="dark-card dark-card-hover vault-border border rounded-xl overflow-hidden transition-all group">
+                                    {/* Profile Photo */}
+                                    <div className="relative h-48 bg-gradient-to-br from-white/5 to-white/[0.02]">
+                                        {memorial.profile_photo_url ? (
+                                            <img src={memorial.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <User size={64} className="text-white/10" />
+                                            </div>
+                                        )}
+                                        {/* Status Badge */}
                                         <div className="absolute top-3 right-3">
-                                            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-charcoal/50 border border-sand/30">
-                                                <Archive size={10} />
-                                                Sealed
-                                            </span>
+                                            {memorial.paid ? (
+                                                <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm gold vault-border border font-sans">
+                                                    <Archive size={10} />
+                                                    Sealed
+                                                </span>
+                                            ) : memorial.status === 'published' ? (
+                                                <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-500/10 backdrop-blur-sm text-green-400 border border-green-500/20 font-sans">
+                                                    Published
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm vault-muted vault-border border font-sans">
+                                                    Draft
+                                                </span>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="font-serif text-2xl text-charcoal mb-4">{memorial.full_name || 'Untitled'}</h3>
-                                    <div className="flex gap-2">
-                                        <Link href={`/person/${memorial.id}`} className="btn-paper flex-1 py-2 px-3 bg-sage/10 hover:bg-sage/20 text-sage rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
-                                            <Eye size={16} /> View
-                                        </Link>
-                                        <Link href={`/create?id=${memorial.id}&mode=family`} className="btn-paper flex-1 py-2 px-3 bg-terracotta/10 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium text-center text-sm flex items-center justify-center gap-1">
-                                            <Edit size={16} /> Edit
-                                        </Link>
-                                        <button
-                                            onClick={() => setManagingId(memorial.id)}
-                                            className="btn-paper py-2 px-3 bg-charcoal/5 hover:bg-charcoal/10 text-charcoal rounded-lg"
-                                            title="Manage Connections"
-                                        >
-                                            <Network size={16} />
-                                        </button>
-                                        <button onClick={() => softDeleteMemorial(memorial.id)} className="btn-paper py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg">
-                                            <Trash2 size={16} />
-                                        </button>
+                                    </div>
+
+                                    {/* Card Body */}
+                                    <div className="p-5">
+                                        <h3 className="font-serif text-xl vault-text mb-1">{memorial.full_name || 'Untitled'}</h3>
+                                        <p className="text-xs vault-muted font-sans mb-4">
+                                            {memorial.birth_date || '?'} &mdash; {memorial.death_date || 'Present'}
+                                        </p>
+
+                                        {/* Actions */}
+                                        <div className="flex gap-2">
+                                            <Link href={`/person/${memorial.id}`} className="flex-1 py-2 px-3 vault-dark rounded-lg font-sans font-medium text-center text-sm flex items-center justify-center gap-1 vault-text hover:bg-white/10 transition-colors">
+                                                <Eye size={14} /> View
+                                            </Link>
+                                            <Link href={`/create?id=${memorial.id}&mode=family`} className="flex-1 py-2 px-3 vault-dark rounded-lg font-sans font-medium text-center text-sm flex items-center justify-center gap-1 vault-text hover:bg-white/10 transition-colors">
+                                                <Edit size={14} /> Edit
+                                            </Link>
+                                            <button
+                                                onClick={() => setManagingId(memorial.id)}
+                                                className="py-2 px-3 vault-dark rounded-lg vault-muted hover:bg-white/10 transition-colors"
+                                                title="Manage Connections"
+                                            >
+                                                <Network size={14} />
+                                            </button>
+                                            <button onClick={() => softDeleteMemorial(memorial.id)} className="py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+
+                            {/* + Add Memorial Card */}
+                            <button
+                                onClick={handleCreate}
+                                className="dark-card dark-card-hover vault-border border border-dashed rounded-xl overflow-hidden transition-all flex flex-col items-center justify-center min-h-[320px] group cursor-pointer"
+                            >
+                                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-gold/10 transition-colors">
+                                    <Plus size={28} className="vault-muted group-hover:text-gold transition-colors" />
+                                </div>
+                                <p className="font-sans font-semibold vault-muted group-hover:vault-text text-sm transition-colors">Add Memorial</p>
+                            </button>
+                        </div>
+                    </>
+                )}
+
+                {/* ANCHOR PANEL — Device Sync Display */}
+                {firstPaidMemorial && (
+                    <div className="mt-12">
+                        <AnchorPanel memorialId={firstPaidMemorial.id} />
                     </div>
                 )}
 
-                {/* NEW: DELETED ARCHIVES SECTION */}
+                {/* PRESERVATION STATUS — for first paid memorial */}
+                {firstPaidMemorial && (
+                    <div className="mt-8">
+                        <PreservationStatus
+                            memorialId={firstPaidMemorial.id}
+                            arweaveTxId={(firstPaidMemorial as any).arweave_tx_id || null}
+                            fullName={firstPaidMemorial.full_name || ''}
+                            birthDate={firstPaidMemorial.birth_date || ''}
+                            deathDate={firstPaidMemorial.death_date || null}
+                            planType={auth.plan || 'family'}
+                        />
+                    </div>
+                )}
+
+                {/* OFFLINE ACCESS GUARANTEE */}
+                <div className="mt-8">
+                    <div className="dark-card vault-border border rounded-xl p-6">
+                        <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Wifi size={16} className="text-green-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold vault-text font-sans mb-1">Offline Access Guarantee</h3>
+                                <p className="text-sm vault-muted font-sans leading-relaxed">
+                                    Every anchored device holds a complete, verified copy of your family&apos;s memorial data.
+                                    Your legacy remains accessible even without an internet connection &mdash; no subscription,
+                                    no server dependency. Once anchored, it&apos;s yours forever.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* DELETED ARCHIVES SECTION (TRASH) */}
                 {deletedMemorials.length > 0 && (
-                    <div className="mt-16 pt-10 border-t border-sand/30 animate-fadeIn">
-                        <h3 className="text-xl font-serif text-charcoal mb-6 flex items-center gap-2">
-                            <Trash2 size={20} className="text-charcoal/40" />
-                            Deleted Archives (Trash)
+                    <div className="mt-16 pt-10 border-t vault-border animate-fadeIn">
+                        <h3 className="text-xl font-serif vault-text mb-6 flex items-center gap-2">
+                            <Trash2 size={20} className="vault-muted" />
+                            Deleted Archives
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (
-                                <div key={memorial.id} className="bg-sand/10 rounded-xl border border-sand/30 p-4 flex items-center justify-between">
+                                <div key={memorial.id} className="dark-card vault-border border rounded-xl p-4 flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-charcoal">{memorial.full_name || 'Untitled'}</p>
-                                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                        <p className="font-sans font-medium vault-text">{memorial.full_name || 'Untitled'}</p>
+                                        <p className="text-xs text-red-400 mt-1 flex items-center gap-1 font-sans">
                                             <AlertTriangle size={12} />
                                             {getDaysRemaining(memorial.deleted_at!)} days until permanent deletion
                                         </p>
@@ -350,14 +453,14 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => restoreMemorial(memorial.id)}
-                                            className="p-2 bg-white border border-mist/30 text-mist rounded-lg hover:bg-mist/10 transition-colors"
+                                            className="p-2 dark-card vault-border border vault-text rounded-lg hover:bg-white/10 transition-colors"
                                             title="Restore"
                                         >
                                             <RefreshCcw size={18} />
                                         </button>
                                         <button
                                             onClick={() => permanentDeleteMemorial(memorial.id)}
-                                            className="p-2 bg-red-50 border border-red-200 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
                                             title="Delete permanently"
                                         >
                                             <Trash2 size={18} />
@@ -369,59 +472,12 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     </div>
                 )}
 
-                {/* ARCHIVE HEALTH — Status overview */}
-                {memorials.some(m => m.paid) && (
-                    <div className="mt-16 pt-10 border-t border-sand/30">
-                        <h3 className="text-xs uppercase tracking-widest text-charcoal/40 mb-6 font-medium">
-                            Status of your archive
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
-                                <Archive size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-charcoal/40 mb-0.5">Publication status</p>
-                                    <p className="text-sm font-medium text-charcoal">
-                                        Sealed — {memorials.filter(m => m.paid).length} active archive{memorials.filter(m => m.paid).length !== 1 ? 's' : ''}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
-                                <Clock size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-charcoal/40 mb-0.5">Last modification</p>
-                                    <p className="text-sm font-medium text-charcoal">
-                                        {memorials.length > 0
-                                            ? new Date(memorials[0].updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-                                            : '—'
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-white rounded-xl border border-sand/30 p-5 flex items-start gap-3">
-                                <Shield size={16} className="text-charcoal/30 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="text-xs text-charcoal/40 mb-0.5">Successor designated</p>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-sm font-medium text-charcoal">Not set</p>
-                                        <Link
-                                            href="/succession/request"
-                                            className="text-xs text-mist underline hover:text-mist/80 transition-colors"
-                                        >
-                                            Set up
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* SUCCESSION MANAGEMENT SECTION */}
-                <div className="mt-16 pt-12 border-t border-sand/20">
+                <div className="mt-16 pt-12 border-t vault-border">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                         <div className="lg:col-span-1">
-                            <h2 className="font-serif text-3xl text-charcoal mb-4">Account Stewardship</h2>
-                            <p className="text-charcoal/60 leading-relaxed">
+                            <h2 className="font-serif text-3xl vault-text mb-4">Account Stewardship</h2>
+                            <p className="vault-muted font-sans leading-relaxed">
                                 Legacy is not just what you create, but how you ensure it survives. Use this section to designate the person who will care for these archives when you no longer can.
                             </p>
                         </div>
@@ -435,15 +491,15 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
             {/* CONNECTION MANAGER MODAL */}
             {managingId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fadeIn">
-                        <div className="p-4 border-b border-sand/20 flex justify-between items-center bg-ivory">
-                            <h3 className="font-serif text-lg text-charcoal">Manage Family Connections</h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="dark-card vault-border border rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-fadeIn">
+                        <div className="p-4 border-b vault-border flex justify-between items-center vault-dark">
+                            <h3 className="font-serif text-lg vault-text">Manage Family Connections</h3>
                             <button
                                 onClick={() => setManagingId(null)}
-                                className="p-2 hover:bg-sand/20 rounded-full transition-colors"
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             >
-                                <X size={20} className="text-charcoal/60" />
+                                <X size={20} className="vault-muted" />
                             </button>
                         </div>
                         <div className="p-6">

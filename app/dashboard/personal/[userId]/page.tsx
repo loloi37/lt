@@ -5,11 +5,13 @@ import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
     AlertTriangle, CheckCircle, Share2, Image, Video, BookOpen, Heart,
     ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter,
-    Archive, Download, Users
+    Archive, Download, Users, Copy, Mail, QrCode, Camera, FileText
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
+import PreservationStatus from '@/components/PreservationStatus';
+import SuccessionSetup from '@/components/SuccessionSetup';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -223,54 +225,70 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const hasPersonalAccess = planVerified && !auth.loading && auth.authenticated && auth.plan === 'personal';
     if (!hasPersonalAccess) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-sand/5 via-ivory to-sand/10 flex items-center justify-center">
+            <div className="dark-dashboard min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                    <div className="w-12 h-12 border-2 border-vault-border border-t-gold rounded-full animate-spin mx-auto mb-4" />
+                    <p className="vault-muted text-sm font-sans">Verifying access...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sand/5 via-ivory to-sand/10">
+        <div className="dark-dashboard min-h-screen">
             {showCheckinSuccess && (
-                <div className="bg-charcoal text-ivory px-6 py-4 flex items-center justify-center gap-3">
-                    <CheckCircle size={20} />
+                <div className="bg-green-500/10 border-b border-green-500/20 px-6 py-4 flex items-center justify-center gap-3">
+                    <CheckCircle size={20} className="text-green-400" />
                     <div>
-                        <p className="font-semibold text-sm">Verification successful</p>
-                        <p className="text-xs opacity-70">Your Dead Man&apos;s Switch timer has been reset for another year.</p>
+                        <p className="font-semibold text-sm font-sans text-vault-text">Verification successful</p>
+                        <p className="text-xs vault-muted font-sans">Your Dead Man&apos;s Switch timer has been reset for another year.</p>
                     </div>
                 </div>
             )}
             {showWelcome && (
-                <div className="animate-fadeIn" style={{ backgroundColor: '#1a2332' }}>
+                <div className="animate-fadeIn border-b border-vault-border">
                     <div className="max-w-6xl mx-auto px-6 py-4 text-center">
-                        <p className="text-sm" style={{ color: 'rgba(253,246,240,0.60)', letterSpacing: '0.04em' }}>
+                        <p className="text-sm font-sans vault-muted tracking-wide">
                             When you are ready, everything is here.
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* Header — styled like Family */}
-            <div className="bg-white border-b border-sand/30 shadow-sm">
-                <div className="max-w-6xl mx-auto px-6 py-6">
+            {/* Header */}
+            <div className="vault-dark border-b vault-border">
+                <div className="max-w-6xl mx-auto px-6 py-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <Link href="/choice-pricing" className="p-2 hover:bg-sand/10 rounded-lg transition-colors">
-                                    <ArrowLeft size={20} className="text-charcoal/60" />
+                            <div className="flex items-center gap-3 mb-3">
+                                <Link href="/choice-pricing" className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                                    <ArrowLeft size={20} className="vault-muted" />
                                 </Link>
-                                <h1 className="font-serif text-4xl text-charcoal">Personal Archive</h1>
+                                <h1 className="font-serif text-4xl text-vault-text">
+                                    {paidArchive?.full_name || 'Personal Archive'}
+                                </h1>
+                                <span className="live-badge flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-semibold font-sans">
+                                    Live
+                                </span>
                             </div>
-                            <p className="text-charcoal/60">Your private dashboard</p>
-                            <p className="text-xs text-charcoal/40 mt-1">ID: {userId.slice(0, 8)}...</p>
+                            {paidArchive && (
+                                <p className="vault-muted font-serif text-lg ml-12">
+                                    {paidArchive.birth_date && paidArchive.death_date
+                                        ? `${new Date(paidArchive.birth_date).getFullYear()} \u2014 ${new Date(paidArchive.death_date).getFullYear()}`
+                                        : paidArchive.birth_date
+                                        ? `Born ${new Date(paidArchive.birth_date).getFullYear()}`
+                                        : ''}
+                                </p>
+                            )}
+                            <p className="text-xs vault-muted font-sans mt-1 ml-12 flex items-center gap-1.5">
+                                <Shield size={12} className="text-gold" />
+                                Permanently preserved on Arweave
+                            </p>
                         </div>
                         {!paidArchive && (
                             <button
                                 onClick={handleCreate}
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-charcoal to-charcoal/90 text-ivory rounded-lg font-semibold hover:shadow-lg transition-all"
+                                className="flex items-center gap-2 px-6 py-3 bg-gold text-vault-dark rounded-lg font-semibold font-sans hover:bg-gold/90 transition-all"
                             >
                                 <Plus size={20} />
                                 Create Archive
@@ -283,7 +301,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             <div className="max-w-6xl mx-auto px-6 py-12">
                 {loading ? (
                     <div className="text-center py-20">
-                        <Loader2 size={48} className="text-charcoal/30 animate-spin mx-auto mb-4" />
+                        <Loader2 size={48} className="text-gold/30 animate-spin mx-auto mb-4" />
                     </div>
                 ) : paidArchive ? (
                     <ActiveArchive
@@ -296,16 +314,16 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     />
                 ) : (
                     <div className="text-center py-20">
-                        <div className="w-24 h-24 bg-sand/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <User size={48} className="text-charcoal/20" />
+                        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <User size={48} className="vault-muted" />
                         </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">No active archive yet</h2>
-                        <p className="text-charcoal/50 mb-8 max-w-md mx-auto leading-relaxed">
+                        <h2 className="font-serif text-3xl text-vault-text mb-3">No active archive yet</h2>
+                        <p className="vault-muted mb-8 max-w-md mx-auto leading-relaxed font-sans">
                             Create your Personal Archive to begin preserving your life story, memories, and legacy.
                         </p>
                         <button
                             onClick={handleCreate}
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-charcoal to-charcoal/90 text-ivory rounded-lg font-semibold hover:shadow-lg transition-all"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-vault-dark rounded-lg font-semibold font-sans hover:bg-gold/90 transition-all"
                         >
                             <Plus size={20} />
                             Create my archive
@@ -313,52 +331,13 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     </div>
                 )}
 
-                {/* Upgrade to Family prompt — shown after completing at least 2 paths */}
-                {paidArchive && (
-                    <div className="mt-10 bg-gradient-to-r from-stone/5 to-mist/5 border border-stone/15 rounded-2xl p-6">
-                        <div className="flex items-center justify-between flex-wrap gap-4">
-                            <div>
-                                <p className="font-serif text-lg text-charcoal mb-1">Would you like to create an archive for another family member?</p>
-                                <p className="text-sm text-charcoal/50">
-                                    Upgrade to the Family plan. You only pay the difference: <strong>$1,470</strong> (Family $2,940 &minus; Personal $1,470 already paid).
-                                </p>
-                            </div>
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch('/api/upgrade-plan', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ userId, targetPlan: 'family' }),
-                                        });
-                                        const data = await res.json();
-                                        if (data.url) {
-                                            // Redirect to Stripe checkout — after payment, user lands on payment-success
-                                            // which handles finalization and redirects to family dashboard
-                                            window.location.href = data.url;
-                                        } else {
-                                            alert(data.error || 'Could not start upgrade');
-                                        }
-                                    } catch {
-                                        alert('Upgrade failed. Please try again.');
-                                    }
-                                }}
-                                className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-stone hover:bg-stone/90 text-ivory rounded-lg font-semibold transition-all"
-                            >
-                                <Users size={18} />
-                                Discover the Family plan
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Unpaid drafts — card grid like Family */}
+                {/* Unpaid drafts — dark themed */}
                 {draftArchives.length > 0 && (
-                    <div className="mt-16 pt-10 border-t border-sand/30">
+                    <div className="mt-16 pt-10 border-t vault-border">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="font-serif text-2xl text-charcoal mb-1">Unpublished Drafts</h3>
-                                <p className="text-sm text-charcoal/50">
+                                <h3 className="font-serif text-2xl text-vault-text mb-1">Unpublished Drafts</h3>
+                                <p className="text-sm vault-muted font-sans">
                                     Started but not yet sealed. Complete one to activate it.
                                 </p>
                             </div>
@@ -368,21 +347,21 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         {draftArchives.length > 1 && (
                             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                                 <div className="flex-1 relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={18} />
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={18} />
                                     <input
                                         type="text"
                                         placeholder="Search drafts..."
                                         value={searchDrafts}
                                         onChange={(e) => setSearchDrafts(e.target.value)}
-                                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border-2 border-sand/20 focus:border-charcoal/30 focus:outline-none transition-all text-sm"
+                                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-vault-dark border vault-border focus:border-gold/30 focus:outline-none transition-all text-sm font-sans text-vault-text placeholder:text-vault-muted/50"
                                     />
                                 </div>
                                 <div className="relative">
-                                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" size={18} />
+                                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={18} />
                                     <select
                                         value={filterDrafts}
                                         onChange={(e) => setFilterDrafts(e.target.value as any)}
-                                        className="pl-11 pr-8 py-2.5 rounded-xl border-2 border-sand/20 focus:border-charcoal/30 focus:outline-none bg-white appearance-none cursor-pointer text-sm"
+                                        className="pl-11 pr-8 py-2.5 rounded-xl bg-vault-dark border vault-border focus:border-gold/30 focus:outline-none appearance-none cursor-pointer text-sm font-sans text-vault-text"
                                     >
                                         <option value="all">All Drafts</option>
                                         <option value="recent">Most Recent</option>
@@ -396,43 +375,43 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                             {filteredDrafts.map(m => (
                                 <div
                                     key={m.id}
-                                    className="bg-white rounded-xl shadow-sm border border-sand/30 overflow-hidden"
+                                    className="dark-card dark-card-hover rounded-xl overflow-hidden"
                                 >
                                     {/* Draft card photo area */}
-                                    <div className="relative h-40 bg-gradient-to-br from-sand/10 to-sand/20">
+                                    <div className="relative h-40 bg-vault-dark">
                                         {m.profile_photo_url ? (
-                                            <img src={m.profile_photo_url} alt="" className="w-full h-full object-cover" />
+                                            <img src={m.profile_photo_url} alt="" className="w-full h-full object-cover opacity-80" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <User size={48} className="text-charcoal/15" />
+                                                <User size={48} className="vault-muted opacity-30" />
                                             </div>
                                         )}
                                         <div className="absolute top-3 right-3">
-                                            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-charcoal/60 border border-sand/30">
+                                            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-vault-dark/90 backdrop-blur-sm vault-muted border vault-border font-sans">
                                                 <Lock size={10} />
                                                 Draft
                                             </span>
                                         </div>
                                     </div>
                                     <div className="p-5">
-                                        <h4 className="font-serif text-xl text-charcoal mb-1">
+                                        <h4 className="font-serif text-xl text-vault-text mb-1">
                                             {m.full_name || 'Untitled draft'}
                                         </h4>
-                                        <p className="text-xs text-charcoal/40 mb-4 flex items-center gap-1">
+                                        <p className="text-xs vault-muted mb-4 flex items-center gap-1 font-sans">
                                             <Clock size={11} />
                                             Last edited {timeAgo(m.updated_at)}
                                         </p>
                                         <div className="flex gap-2">
                                             <Link
                                                 href={`/create?id=${m.id}&mode=personal`}
-                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-charcoal/5 hover:bg-charcoal/10 text-charcoal rounded-lg font-medium text-sm transition-all"
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white/5 hover:bg-white/10 text-vault-text rounded-lg font-medium text-sm transition-all font-sans"
                                             >
                                                 <Edit size={14} />
                                                 Continue
                                             </Link>
                                             <button
                                                 onClick={() => softDelete(m.id)}
-                                                className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                                                className="py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
                                                 title="Delete draft"
                                             >
                                                 <Trash2 size={14} />
@@ -445,22 +424,22 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     </div>
                 )}
 
-                {/* Trash — styled like Family */}
+                {/* Trash — dark themed */}
                 {deletedArchives.length > 0 && (
-                    <div className="mt-16 pt-10 border-t border-sand/30">
-                        <h3 className="text-xl font-serif text-charcoal mb-6 flex items-center gap-2">
-                            <Trash2 size={20} className="text-charcoal/40" />
+                    <div className="mt-16 pt-10 border-t vault-border">
+                        <h3 className="text-xl font-serif text-vault-text mb-6 flex items-center gap-2">
+                            <Trash2 size={20} className="vault-muted" />
                             Deleted Archives (Trash)
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedArchives.map(m => (
                                 <div
                                     key={m.id}
-                                    className="bg-sand/10 rounded-xl border border-sand/30 p-5 flex items-center justify-between"
+                                    className="dark-card rounded-xl p-5 flex items-center justify-between"
                                 >
                                     <div>
-                                        <p className="font-medium text-charcoal">{m.full_name || 'Untitled'}</p>
-                                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                        <p className="font-medium text-vault-text font-sans">{m.full_name || 'Untitled'}</p>
+                                        <p className="text-xs text-red-400 mt-1 flex items-center gap-1 font-sans">
                                             <AlertTriangle size={12} />
                                             {getDaysRemaining(m.deleted_at!)} days until permanent deletion
                                         </p>
@@ -468,14 +447,14 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => restore(m.id)}
-                                            className="p-2 bg-white border border-sand/30 text-charcoal/50 hover:text-charcoal rounded-lg transition-colors"
+                                            className="p-2 bg-white/5 border vault-border vault-muted hover:text-vault-text rounded-lg transition-colors"
                                             title="Restore"
                                         >
                                             <RefreshCcw size={18} />
                                         </button>
                                         <button
                                             onClick={() => permanentDelete(m.id)}
-                                            className="p-2 bg-red-50 border border-red-200 text-red-400 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                            className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
                                             title="Delete permanently"
                                         >
                                             <Trash2 size={18} />
@@ -486,62 +465,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         </div>
                     </div>
                 )}
-
-                {/* Succession & Stewardship — styled like Family */}
-                <div className="mt-16 pt-12 border-t border-sand/20">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                        <div className="lg:col-span-1">
-                            <h2 className="font-serif text-3xl text-charcoal mb-4">Account Stewardship</h2>
-                            <p className="text-charcoal/60 leading-relaxed">
-                                Legacy is not just what you create, but how you ensure it survives. Designate someone to manage and transmit this archive when the time comes.
-                            </p>
-                        </div>
-                        <div className="lg:col-span-2 flex flex-col gap-6">
-                            {/* Succession card */}
-                            <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-sand/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Shield size={24} className="text-charcoal/40" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-serif text-xl text-charcoal mb-2">Succession</h3>
-                                        <p className="text-sm text-charcoal/50 leading-relaxed mb-4">
-                                            Choose a trusted person who will inherit stewardship of your archive. They will be able to manage, update, and preserve it in your name.
-                                        </p>
-                                        <Link
-                                            href="/succession/request"
-                                            className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-charcoal/15 text-charcoal rounded-lg text-sm font-medium hover:bg-sand/10 transition-all"
-                                        >
-                                            <ChevronRight size={16} />
-                                            Set up succession
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Dead Man's Switch card */}
-                            <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 bg-sand/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Clock size={24} className="text-charcoal/40" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-serif text-xl text-charcoal mb-2">Dead Man&apos;s Switch</h3>
-                                        <p className="text-sm text-charcoal/50 leading-relaxed mb-4">
-                                            An annual check-in ensures your archive is cared for. If no check-in is received, your designated successor will be notified and granted access.
-                                        </p>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-xs text-charcoal/40 flex items-center gap-1.5">
-                                                <CheckCircle size={14} className="text-sage" />
-                                                Active — next check-in in 12 months
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
@@ -563,22 +486,53 @@ function ActiveArchive({
     paymentConfirmedAt: string | null;
 }) {
     const stats = computeStats(archive);
+    const [activeTab, setActiveTab] = useState<'photos' | 'stories' | 'about'>('photos');
+    const [linkCopied, setLinkCopied] = useState(false);
+
     const birthYear = archive.birth_date ? new Date(archive.birth_date).getFullYear() : null;
     const deathYear = archive.death_date ? new Date(archive.death_date).getFullYear() : null;
     const dates = birthYear
-        ? deathYear ? `${birthYear} – ${deathYear}` : `Born ${birthYear}`
+        ? deathYear ? `${birthYear} \u2014 ${deathYear}` : `Born ${birthYear}`
         : null;
     const sealedDate = paymentConfirmedAt
         ? new Date(paymentConfirmedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : null;
 
+    const arweaveTxId = (archive as any).arweave_tx_id || null;
+
+    const handleCopyLink = () => {
+        const url = `${window.location.origin}/person/${archive.id}`;
+        navigator.clipboard.writeText(url).then(() => {
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        });
+    };
+
+    const handleEmailFamily = () => {
+        const url = `${window.location.origin}/person/${archive.id}`;
+        const subject = encodeURIComponent(`${archive.full_name || 'Memorial'} - Personal Archive`);
+        const body = encodeURIComponent(`I wanted to share this memorial with you: ${url}`);
+        window.open(`mailto:?subject=${subject}&body=${body}`);
+    };
+
+    const handlePrintQR = () => {
+        const url = `${window.location.origin}/person/${archive.id}`;
+        window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`, '_blank');
+    };
+
+    const tabs = [
+        { key: 'photos' as const, label: 'Photos', count: stats.photos },
+        { key: 'stories' as const, label: 'Stories', count: stats.memories },
+        { key: 'about' as const, label: 'About', count: null },
+    ];
+
     return (
         <div className="flex flex-col gap-8">
 
-            {/* Hero card — wider with larger photo like Family */}
-            <div className="bg-white rounded-xl shadow-sm border border-sand/30 overflow-hidden">
+            {/* Hero card */}
+            <div className="dark-card rounded-xl overflow-hidden preservation-glow">
                 <div className="flex flex-col md:flex-row">
-                    <div className="md:w-72 h-64 md:h-auto bg-gradient-to-br from-sand/10 to-sand/20 flex-shrink-0">
+                    <div className="md:w-72 h-64 md:h-auto bg-vault-dark flex-shrink-0">
                         {archive.profile_photo_url ? (
                             <img
                                 src={archive.profile_photo_url}
@@ -587,7 +541,7 @@ function ActiveArchive({
                             />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                                <User size={64} className="text-charcoal/15" />
+                                <User size={64} className="vault-muted opacity-30" />
                             </div>
                         )}
                     </div>
@@ -595,23 +549,27 @@ function ActiveArchive({
                     <div className="flex-1 p-8 flex flex-col justify-between">
                         <div>
                             <div className="flex items-start justify-between gap-4 mb-2">
-                                <h2 className="font-serif text-3xl text-charcoal leading-tight">
+                                <h2 className="font-serif text-3xl text-vault-text leading-tight">
                                     {archive.full_name || 'Unnamed Archive'}
                                 </h2>
                                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border-2 bg-sage/5 text-sage border-sage/20 font-medium">
+                                    <span className="live-badge flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium font-sans">
                                         <Unlock size={12} />
-                                        Active
+                                        Live
                                     </span>
-                                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-charcoal/15 text-charcoal/50 bg-sand/10 font-medium">
+                                    <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border vault-border vault-muted bg-white/5 font-medium font-sans">
                                         <Archive size={11} />
                                         Sealed Archive
-                                        {sealedDate && <span className="text-charcoal/35 ml-1">· {sealedDate}</span>}
+                                        {sealedDate && <span className="opacity-50 ml-1">· {sealedDate}</span>}
                                     </span>
                                 </div>
                             </div>
-                            {dates && <p className="text-charcoal/50 text-base mb-1">{dates}</p>}
-                            <p className="text-sm text-charcoal/35 flex items-center gap-1.5">
+                            {dates && <p className="vault-muted text-base font-serif mb-1">{dates}</p>}
+                            <p className="text-sm vault-muted flex items-center gap-1.5 font-sans">
+                                <Shield size={13} className="text-gold" />
+                                Permanently preserved on Arweave
+                            </p>
+                            <p className="text-xs vault-muted flex items-center gap-1.5 mt-1 font-sans">
                                 <Clock size={13} />
                                 Last edited {timeAgo(archive.updated_at)}
                             </p>
@@ -620,28 +578,28 @@ function ActiveArchive({
                         <div className="flex flex-wrap gap-2 mt-6">
                             <Link
                                 href={`/person/${archive.id}`}
-                                className="flex items-center gap-1.5 px-5 py-2.5 bg-gradient-to-r from-charcoal to-charcoal/90 text-ivory rounded-lg text-sm font-semibold hover:shadow-lg transition-all"
+                                className="flex items-center gap-1.5 px-5 py-2.5 bg-gold text-vault-dark rounded-lg text-sm font-semibold font-sans hover:bg-gold/90 transition-all"
                             >
                                 <Eye size={15} />
                                 View archive
                             </Link>
                             <Link
                                 href={`/create?id=${archive.id}&mode=personal`}
-                                className="flex items-center gap-1.5 px-5 py-2.5 border-2 border-charcoal/15 text-charcoal rounded-lg text-sm font-medium hover:bg-sand/10 transition-all"
+                                className="flex items-center gap-1.5 px-5 py-2.5 border vault-border text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/5 transition-all"
                             >
                                 <Edit size={15} />
                                 Edit
                             </Link>
                             <button
                                 onClick={() => onCopyLink(archive.id)}
-                                className="flex items-center gap-1.5 px-5 py-2.5 border-2 border-charcoal/15 text-charcoal rounded-lg text-sm font-medium hover:bg-sand/10 transition-all"
+                                className="flex items-center gap-1.5 px-5 py-2.5 border vault-border text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/5 transition-all"
                             >
                                 <Share2 size={15} />
                                 {copied ? 'Copied!' : 'Share link'}
                             </button>
                             <button
                                 onClick={() => onDelete(archive.id)}
-                                className="flex items-center gap-1.5 px-3 py-2.5 text-charcoal/30 hover:text-red-500 rounded-lg text-sm transition-colors ml-auto"
+                                className="flex items-center gap-1.5 px-3 py-2.5 vault-muted hover:text-red-400 rounded-lg text-sm transition-colors ml-auto"
                                 title="Delete archive"
                             >
                                 <Trash2 size={15} />
@@ -651,64 +609,166 @@ function ActiveArchive({
                 </div>
             </div>
 
-            {/* Content stats — grid cards like Family style */}
+            {/* Content Tabs */}
             <div>
-                <h3 className="text-xs uppercase tracking-widest text-charcoal/40 mb-4 font-medium">Archive Content</h3>
+                <div className="flex items-center gap-2 mb-6">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-sans font-medium transition-all ${
+                                activeTab === tab.key
+                                    ? 'bg-gold text-vault-dark'
+                                    : 'bg-white/5 text-vault-muted hover:bg-white/10 hover:text-vault-text'
+                            }`}
+                        >
+                            {tab.key === 'photos' && <Image size={14} />}
+                            {tab.key === 'stories' && <BookOpen size={14} />}
+                            {tab.key === 'about' && <User size={14} />}
+                            {tab.label}
+                            {tab.count !== null && (
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                                    activeTab === tab.key ? 'bg-vault-dark/20 text-vault-dark' : 'bg-white/10 vault-muted'
+                                }`}>
+                                    {tab.count}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Tab content - stats grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <StatCard icon={Image} count={stats.photos} label="Photos" color="from-sand/10 to-sand/5" />
-                    <StatCard icon={Video} count={stats.videos} label="Videos" color="from-mist/10 to-mist/5" />
-                    <StatCard icon={Heart} count={stats.memories} label="Memories" color="from-terracotta/10 to-terracotta/5" />
-                    <StatCard icon={BookOpen} count={stats.chapters} label="Chapters" color="from-sage/10 to-sage/5" />
+                    <DarkStatCard icon={Image} count={stats.photos} label="Photos" />
+                    <DarkStatCard icon={Video} count={stats.videos} label="Videos" />
+                    <DarkStatCard icon={Heart} count={stats.memories} label="Memories" />
+                    <DarkStatCard icon={BookOpen} count={stats.chapters} label="Chapters" />
                 </div>
             </div>
 
-            {/* Archive Health — always visible, fact-based, no score */}
-            <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
-                <h3 className="text-xs uppercase tracking-widest text-charcoal/40 mb-5 font-medium">
+            {/* Quick Actions */}
+            <div className="dark-card rounded-xl p-6">
+                <h3 className="text-xs uppercase tracking-widest vault-muted mb-4 font-medium font-sans">Quick Actions</h3>
+                <div className="flex flex-wrap gap-3">
+                    <Link
+                        href={`/create?id=${archive.id}&mode=personal&step=7`}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gold/10 text-gold rounded-lg text-sm font-medium font-sans hover:bg-gold/20 transition-all"
+                    >
+                        <Plus size={14} />
+                        Add Memory
+                    </Link>
+                    <Link
+                        href={`/create?id=${archive.id}&mode=personal&step=6`}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/10 transition-all border vault-border"
+                    >
+                        <FileText size={14} />
+                        Edit Biography
+                    </Link>
+                    <Link
+                        href={`/create?id=${archive.id}&mode=personal&step=8`}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/10 transition-all border vault-border"
+                    >
+                        <Camera size={14} />
+                        Manage Photos
+                    </Link>
+                </div>
+            </div>
+
+            {/* Preservation Status */}
+            <PreservationStatus
+                memorialId={archive.id}
+                arweaveTxId={arweaveTxId}
+                fullName={archive.full_name || ''}
+                birthDate={archive.birth_date || ''}
+                deathDate={archive.death_date || null}
+                planType="personal"
+            />
+
+            {/* Succession Planning */}
+            <SuccessionSetup
+                memorialId={archive.id}
+            />
+
+            {/* Share Panel */}
+            <div className="dark-card rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="w-8 h-8 bg-gold/10 rounded-lg flex items-center justify-center">
+                        <Share2 size={16} className="text-gold" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-vault-text font-sans">Share</h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={handleCopyLink}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/10 transition-all border vault-border"
+                    >
+                        <Copy size={14} />
+                        {linkCopied ? 'Copied!' : 'Copy Link'}
+                    </button>
+                    <button
+                        onClick={handleEmailFamily}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/10 transition-all border vault-border"
+                    >
+                        <Mail size={14} />
+                        Email to Family
+                    </button>
+                    <button
+                        onClick={handlePrintQR}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white/5 text-vault-text rounded-lg text-sm font-medium font-sans hover:bg-white/10 transition-all border vault-border"
+                    >
+                        <QrCode size={14} />
+                        Print QR Code
+                    </button>
+                </div>
+            </div>
+
+            {/* Archive Health */}
+            <div className="dark-card rounded-xl p-6">
+                <h3 className="text-xs uppercase tracking-widest vault-muted mb-5 font-medium font-sans">
                     Status of your archive
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                    <HealthRow
+                    <DarkHealthRow
                         label="Publication status"
                         value="Sealed"
                         icon={<Archive size={14} />}
                     />
-                    <HealthRow
+                    <DarkHealthRow
                         label="Sealed on"
                         value={sealedDate || 'Unknown'}
                         icon={<Clock size={14} />}
                     />
-                    <HealthRow
+                    <DarkHealthRow
                         label="Last modification"
                         value={timeAgo(archive.updated_at)}
                         icon={<Edit size={14} />}
                     />
-                    <HealthRow
+                    <DarkHealthRow
                         label="Successor designated"
                         value="Not set"
                         icon={<Shield size={14} />}
                         action={
                             <Link
                                 href="/succession/request"
-                                className="text-xs text-mist underline hover:text-mist/80 transition-colors"
+                                className="text-xs text-gold underline hover:text-gold/80 transition-colors font-sans"
                             >
                                 Set up
                             </Link>
                         }
                     />
-                    <HealthRow
+                    <DarkHealthRow
                         label="Witnesses invited"
                         value={`${stats.memories} contributor${stats.memories !== 1 ? 's' : ''}`}
                         icon={<Users size={14} />}
                     />
-                    <HealthRow
+                    <DarkHealthRow
                         label="Ark export"
                         value="Generate a portable copy"
                         icon={<Download size={14} />}
                         action={
                             <Link
                                 href={`/api/arche/generate?id=${archive.id}`}
-                                className="text-xs text-mist underline hover:text-mist/80 transition-colors"
+                                className="text-xs text-gold underline hover:text-gold/80 transition-colors font-sans"
                                 target="_blank"
                             >
                                 Download
@@ -718,22 +778,22 @@ function ActiveArchive({
                 </div>
             </div>
 
-            {/* Action cards grid — 2 columns like Family's sections */}
+            {/* Action cards grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Continue editing */}
-                <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
+                <div className="dark-card dark-card-hover rounded-xl p-6">
                     <div className="flex items-start gap-4">
-                        <div className="w-11 h-11 bg-charcoal/5 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Edit size={20} className="text-charcoal/40" />
+                        <div className="w-11 h-11 bg-white/5 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Edit size={20} className="vault-muted" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-serif text-lg text-charcoal mb-1">Continue Editing</h3>
-                            <p className="text-sm text-charcoal/50 leading-relaxed mb-4">
+                            <h3 className="font-serif text-lg text-vault-text mb-1">Continue Editing</h3>
+                            <p className="text-sm vault-muted leading-relaxed mb-4 font-sans">
                                 Add and update the sections of your archive.
                             </p>
                             <Link
                                 href={`/create?id=${archive.id}&mode=personal`}
-                                className="inline-flex items-center gap-2 px-4 py-2 border-2 border-charcoal/15 text-charcoal text-sm rounded-lg font-medium hover:bg-sand/10 transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2 border vault-border text-vault-text text-sm rounded-lg font-medium font-sans hover:bg-white/5 transition-all"
                             >
                                 <Edit size={14} />
                                 Open editor
@@ -743,19 +803,19 @@ function ActiveArchive({
                 </div>
 
                 {/* Witnesses */}
-                <div className="bg-white rounded-xl shadow-sm border border-sand/30 p-6">
+                <div className="dark-card dark-card-hover rounded-xl p-6">
                     <div className="flex items-start gap-4">
-                        <div className="w-11 h-11 bg-charcoal/5 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Heart size={20} className="text-charcoal/40" />
+                        <div className="w-11 h-11 bg-white/5 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Heart size={20} className="vault-muted" />
                         </div>
                         <div className="flex-1">
-                            <h3 className="font-serif text-lg text-charcoal mb-1">Witnesses & Contributors</h3>
-                            <p className="text-sm text-charcoal/50 leading-relaxed mb-4">
+                            <h3 className="font-serif text-lg text-vault-text mb-1">Witnesses & Contributors</h3>
+                            <p className="text-sm vault-muted leading-relaxed mb-4 font-sans">
                                 Invite people to contribute memories, photos, and stories.
                             </p>
                             <Link
                                 href={`/create?id=${archive.id}&mode=personal&step=7`}
-                                className="inline-flex items-center gap-2 px-4 py-2 border-2 border-charcoal/15 text-charcoal text-sm rounded-lg font-medium hover:bg-sand/10 transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2 border vault-border text-vault-text text-sm rounded-lg font-medium font-sans hover:bg-white/5 transition-all"
                             >
                                 <Plus size={14} />
                                 Invite witnesses
@@ -768,17 +828,17 @@ function ActiveArchive({
     );
 }
 
-function StatCard({ icon: Icon, count, label, color }: { icon: any; count: number; label: string; color: string }) {
+function DarkStatCard({ icon: Icon, count, label }: { icon: any; count: number; label: string }) {
     return (
-        <div className={`bg-gradient-to-br ${color} rounded-xl border border-sand/20 p-5`}>
-            <Icon size={22} className="text-charcoal/30 mb-3" />
-            <div className="font-serif text-3xl text-charcoal leading-none mb-1">{count}</div>
-            <div className="text-xs text-charcoal/45 font-medium">{label}</div>
+        <div className="dark-card dark-card-hover rounded-xl p-5">
+            <Icon size={22} className="vault-muted mb-3" />
+            <div className="font-serif text-3xl text-vault-text leading-none mb-1">{count}</div>
+            <div className="text-xs vault-muted font-medium font-sans">{label}</div>
         </div>
     );
 }
 
-function HealthRow({
+function DarkHealthRow({
     label,
     value,
     icon,
@@ -791,11 +851,11 @@ function HealthRow({
 }) {
     return (
         <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-charcoal/30 flex-shrink-0">{icon}</div>
+            <div className="mt-0.5 vault-muted flex-shrink-0">{icon}</div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs text-charcoal/40 mb-0.5">{label}</p>
+                <p className="text-xs vault-muted mb-0.5 font-sans">{label}</p>
                 <div className="flex items-center gap-2">
-                    <p className="text-sm text-charcoal font-medium truncate">{value}</p>
+                    <p className="text-sm text-vault-text font-medium truncate font-sans">{value}</p>
                     {action && action}
                 </div>
             </div>

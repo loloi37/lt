@@ -336,6 +336,16 @@
     --color-peach: #f0c4a8;
   }
 
+  .dark {
+    --color-bg: #111318;
+    --color-card: #1a1d24;
+    --color-border: #2a2d35;
+    --color-text: #c8ccd4;
+    --color-muted: #6b7280;
+    --color-gold: #c9a84c;
+    --color-amber: #d4a574;
+  }
+
   body {
     @apply bg-ivory text-charcoal overflow-x-hidden;
   }
@@ -343,6 +353,39 @@
   html {
     scroll-behavior: smooth;
   }
+}
+
+/* Dark dashboard utilities */
+.dark-dashboard {
+  background: #111318;
+  color: #c8ccd4;
+  min-height: 100vh;
+}
+
+.dark-card {
+  background: #1a1d24;
+  border: 1px solid #2a2d35;
+  border-radius: 12px;
+}
+
+.dark-card-hover:hover {
+  border-color: #3a3d45;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Preservation status glow */
+.preservation-glow {
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.08), 0 0 40px rgba(201, 168, 76, 0.04);
+}
+
+/* Live badge pulse */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.live-badge {
+  animation: livePulse 2s ease-in-out infinite;
 }
 
 @layer components {

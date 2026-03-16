@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -19,10 +20,41 @@ const config: Config = {
         parchment: '#EDE9E1',
         mist: '#8AABB4',
         stone: '#9E8E82',
+        // Dark luxury palette
+        obsidian: '#1a1a2e',
+        midnight: '#16213e',
+        'slate-deep': '#0f3460',
+        gold: '#c9a84c',
+        platinum: '#e5e5e5',
+        'amber-warm': '#d4a574',
+        'vault-dark': '#111318',
+        'vault-card': '#1a1d24',
+        'vault-border': '#2a2d35',
+        'vault-text': '#c8ccd4',
+        'vault-muted': '#6b7280',
       },
       fontFamily: {
         sans: ['var(--font-inter)'],
         serif: ['var(--font-cormorant)'],
+      },
+      animation: {
+        'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+        'slide-in': 'slideIn 0.3s ease-out forwards',
+      },
+      keyframes: {
+        pulseSubtle: {
+          '0%, 100%': { opacity: '0.6' },
+          '50%': { opacity: '1' },
+        },
+        fadeInUp: {
+          from: { opacity: '0', transform: 'translateY(16px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideIn: {
+          from: { opacity: '0', transform: 'translateX(-8px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
       },
     },
   },

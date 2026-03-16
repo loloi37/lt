@@ -1,25 +1,13 @@
 // ./app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Cormorant_Garamond } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-});
-
-const cormorant = Cormorant_Garamond({
-  weight: ['300', '400', '500', '600'],
-  subsets: ['latin'],
-  variable: '--font-cormorant',
-});
-
 export const metadata: Metadata = {
-  title: 'Legacy Vault — The echo that never fades',
+  title: 'Legacy Vault — Permanent Digital Memorials',
   description:
-    'A discreet and timeless vessel to preserve the essence of your family story. More than an archive, a form of love that endures through time.',
-  keywords: ['family memory', 'legacy', 'heritage', 'archive', 'family history', 'memories'],
+    'Permanent memorials for generations. Preserve life stories, photos, and memories on the Arweave blockchain with a 200-year endowment. Not a social network — a legacy.',
+  keywords: ['digital memorial', 'legacy', 'permanent preservation', 'Arweave', 'family archive', 'estate planning', 'digital legacy'],
 };
 
 export default function RootLayout({
@@ -30,8 +18,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${cormorant.variable}`}
     >
+      <head>
+        <style>{`
+          :root {
+            --font-inter: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --font-cormorant: Georgia, Cambria, 'Times New Roman', Times, serif;
+          }
+        `}</style>
+      </head>
       <body className="bg-ivory text-charcoal">
         <AuthProvider>
           {children}

@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Re-fetch when navigating to critical pages
     useEffect(() => {
-        const criticalPaths = ['/dashboard', '/payment', '/choice-pricing', '/personal-confirmation', '/family-confirmation', '/payment-success'];
+        const criticalPaths = ['/dashboard', '/payment', '/choice-pricing', '/personal-confirmation', '/family-confirmation', '/payment-success', '/preserve'];
         const isCritical = criticalPaths.some(p => pathname.startsWith(p));
         if (isCritical) {
             fetchState(true);

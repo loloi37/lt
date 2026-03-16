@@ -268,3 +268,56 @@ export interface MemorialRelation {
   target_photo?: string; // Fetched from the joined table
   relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
 }
+
+
+// ==========================================
+// PRESERVATION & LUXURY PLATFORM TYPES
+// ==========================================
+
+export type PreservationState =
+  | 'draft'
+  | 'building'
+  | 'review'
+  | 'preserving'
+  | 'preserved'
+  | 'archived';
+
+export interface PreservationStatus {
+  state: PreservationState;
+  arweaveTxId: string | null;
+  gatewayUrls: string[];
+  nodeCount: number;
+  lastVerifiedAt: string | null;
+  preservedAt: string | null;
+  storageBytesUsed: number;
+  storageBytesIncluded: number; // e.g. 100GB
+}
+
+export interface AnchorDeviceInfo {
+  id: string;
+  deviceName: string;
+  browser: string;
+  os: string;
+  syncProgressBytes: number;
+  totalBytes: number;
+  lastSyncAt: string | null;
+  status: 'syncing' | 'synced' | 'error' | 'stale';
+  location?: string;
+}
+
+export interface RecoveryContactInfo {
+  id: string;
+  name: string;
+  email: string;
+  relationship: string;
+  status: 'pending' | 'confirmed' | 'delivered';
+}
+
+export type SuccessorAccessLevel = 'read_only' | 'editorial' | 'full_ownership';
+
+export interface ContentReviewStatus {
+  status: 'not_submitted' | 'pending_review' | 'approved' | 'needs_changes';
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  flaggedItems: string[];
+}
