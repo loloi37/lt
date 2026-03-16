@@ -64,10 +64,11 @@ function PaymentSuccessContent() {
 
             try {
                 // Finalize payment — single state transition
+                const planParam = searchParams.get('plan') || 'personal';
                 const response = await fetch('/api/finalize-payment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memorialId }),
+                    body: JSON.stringify({ memorialId, plan: planParam }),
                 });
                 const result = await response.json();
                 if (result.error) throw new Error(result.error);

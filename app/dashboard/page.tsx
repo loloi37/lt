@@ -1,17 +1,19 @@
 // app/dashboard/page.tsx — Unified memorial dashboard
-// Single dashboard for all memorials, regardless of tier
+// Shows all memorials with family features when plan = 'family'
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, BookOpen, Shield, Clock, ExternalLink } from 'lucide-react';
+import { Plus, BookOpen, Shield, Clock, ExternalLink, Network, X } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/providers/AuthProvider';
+import FamilyLinker from '@/components/FamilyLinker';
 import type { MemorialState } from '@/types/memorial';
 
 interface DashboardMemorial {
     id: string;
     state: MemorialState;
+    plan: string | null;
     stories: any;
     full_name: string | null;
     profile_photo_url: string | null;
@@ -34,6 +36,9 @@ function DashboardContent() {
     const auth = useAuth();
     const [memorials, setMemorials] = useState<DashboardMemorial[]>([]);
     const [loading, setLoading] = useState(true);
+    const [managingId, setManagingId] = useState<string | null>(null);
+
+    const hasFamily = memorials.some(m => m.plan === 'family');
 
     useEffect(() => {
         if (auth.loading) return;
@@ -48,8 +53,9 @@ function DashboardContent() {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('memorials')
-            .select('id, state, stories, full_name, profile_photo_url, updated_at, paid, arweave_tx_id, arweave_status, certificate_url')
+            .select('id, state, plan, stories, full_name, profile_photo_url, updated_at, paid, arweave_tx_id, arweave_status, certificate_url')
             .eq('user_id', auth.user!.id)
+            .eq('deleted', false)
             .order('updated_at', { ascending: false });
 
         if (data && !error) {
@@ -87,6 +93,19 @@ function DashboardContent() {
                     </button>
                 </div>
 
+                {/* Family badge */}
+                {hasFamily && (
+                    <div className="mb-8 p-4 bg-mist/5 border border-mist/20 rounded-xl flex items-center gap-3">
+                        <Network size={18} className="text-mist flex-shrink-0" />
+                        <div>
+                            <p className="text-sm font-medium text-charcoal">Family Legacy Network</p>
+                            <p className="text-xs text-charcoal/40">
+                                Link memorials together using the connection button on each card.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Memorial cards */}
                 {memorials.length === 0 ? (
                     <div className="text-center py-24">
@@ -112,6 +131,7 @@ function DashboardContent() {
                                 day: 'numeric',
                                 year: 'numeric',
                             });
+                            const isFamily = memorial.plan === 'family';
 
                             return (
                                 <div
@@ -142,6 +162,11 @@ function DashboardContent() {
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${stateConfig.color}`}>
                                                     {stateConfig.label}
                                                 </span>
+                                                {isFamily && (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-mist/10 text-mist border border-mist/20">
+                                                        Family
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-4 text-xs text-charcoal/30">
                                                 <span className="flex items-center gap-1">
@@ -157,6 +182,16 @@ function DashboardContent() {
 
                                         {/* Actions */}
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* Family: connection manager button */}
+                                            {isFamily && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setManagingId(memorial.id); }}
+                                                    className="p-2 hover:bg-mist/10 rounded-lg text-mist/60 hover:text-mist"
+                                                    title="Manage Family Connections"
+                                                >
+                                                    <Network size={16} />
+                                                </button>
+                                            )}
                                             {memorial.state === 'live' || memorial.state === 'preserved' ? (
                                                 <a
                                                     href={`/person/${memorial.id}`}
@@ -185,6 +220,29 @@ function DashboardContent() {
                     </div>
                 )}
             </div>
+
+            {/* Family Connection Manager Modal */}
+            {managingId && auth.user && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+                        <div className="p-4 border-b border-sand/20 flex justify-between items-center bg-ivory">
+                            <h3 className="font-serif text-lg text-charcoal">Manage Family Connections</h3>
+                            <button
+                                onClick={() => setManagingId(null)}
+                                className="p-2 hover:bg-sand/20 rounded-full transition-colors"
+                            >
+                                <X size={20} className="text-charcoal/60" />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <FamilyLinker
+                                currentMemorialId={managingId}
+                                userId={auth.user.id}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

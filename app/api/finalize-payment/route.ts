@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId } = await request.json();
+        const { memorialId, plan } = await request.json();
 
         if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
             console.error('[Finalize Payment] Invalid memorial ID:', memorialId);
@@ -38,12 +38,17 @@ export async function POST(request: NextRequest) {
         }
 
         // Single state transition: creating/private -> live
+        const updatePayload: Record<string, any> = {
+            state: 'live',
+            payment_confirmed_at: new Date().toISOString(),
+        };
+        if (plan === 'personal' || plan === 'family') {
+            updatePayload.plan = plan;
+        }
+
         const { error: updateError } = await supabaseAdmin
             .from('memorials')
-            .update({
-                state: 'live',
-                payment_confirmed_at: new Date().toISOString(),
-            })
+            .update(updatePayload)
             .eq('id', memorialId);
 
         if (updateError) {

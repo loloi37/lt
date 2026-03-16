@@ -142,10 +142,10 @@ export default function PricingPage() {
                         </div>
 
                         <Link
-                            href="mailto:contact@legacyvault.example?subject=Family Legacy Network inquiry"
+                            href="/family-confirmation"
                             className="block w-full text-center px-6 py-3.5 bg-mist text-ivory rounded-lg font-sans font-medium text-sm hover:bg-mist/90 transition-colors"
                         >
-                            Book a consultation
+                            Choose Family Network
                         </Link>
                     </div>
                 </div>

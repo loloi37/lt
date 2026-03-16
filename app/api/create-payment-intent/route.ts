@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1470 } = await request.json();
+        const { memorialId, amount = 1470, plan = 'personal' } = await request.json();
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
             description: `Legacy Vault — Permanent Archive for ${fullName}`,
             metadata: {
                 memorialId,
-                plan: 'preservation',
+                plan,
             },
             automatic_payment_methods: {
                 enabled: true,

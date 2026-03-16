@@ -196,6 +196,9 @@ export interface PreservationStatus {
 /** Single state field replaces mode + status + paid booleans */
 export type MemorialState = 'creating' | 'private' | 'live' | 'preserved';
 
+/** Plan tier — determines which features are available */
+export type MemorialPlan = 'personal' | 'family';
+
 /** The unified memorial data structure */
 export interface MemorialData {
   stories: StoryData;
