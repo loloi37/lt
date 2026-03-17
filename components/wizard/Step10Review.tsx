@@ -58,7 +58,7 @@ export default function Step10Review({
         data,
         userId: user?.id || undefined,
         userName: 'Owner',
-        changeSummary: 'Archive sealed',
+        changeSummary: 'Archive activated',
         changeType: 'manual',
       });
     }

@@ -144,7 +144,7 @@ function PaymentForm({ memorialId, amount, fullName, plan, isPopup }: {
             {/* Refund policy reminder */}
             <div className="mb-6 p-4 bg-sand/5 border border-sand/15 rounded-xl">
                 <p className="text-xs text-charcoal/40 leading-relaxed">
-                    Your archive is in &ldquo;Sealed&rdquo; status. You may request a full refund as long as it has not been published. Once published, the archive is no longer eligible for refund.
+                    After payment, your archive will be active. You may request a full refund as long as it has not been published. Once published, the archive is no longer eligible for refund.
                 </p>
             </div>
 
@@ -270,7 +270,7 @@ function PaymentPageContent() {
                     </div>
                     <h2 className="font-serif text-2xl text-charcoal mb-3">Payment already completed</h2>
                     <p className="text-sm text-charcoal/50 mb-8">
-                        This archive has already been sealed. You can access it from your dashboard.
+                        This archive has already been activated. You can access it from your dashboard.
                     </p>
                     <button
                         onClick={() => router.replace('/dashboard')}

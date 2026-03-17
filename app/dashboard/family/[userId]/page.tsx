@@ -8,7 +8,7 @@ import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
 import AnchorPanel from '@/components/AnchorPanel';
-import PreservationStatus from '@/components/PreservationStatus';
+
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
 
@@ -99,8 +99,14 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         window.location.href = '/create?mode=family';
     };
 
-    // UPDATED: Soft Delete with Contributor Check (Step 5.2.4)
+    // Soft Delete with Contributor Check — blocks preserved archives
     const softDeleteMemorial = async (id: string) => {
+        // 0. Block deletion of preserved (blockchain) archives
+        const target = memorials.find(m => m.id === id);
+        if (target && (target as any).preservation_state === 'preserved') {
+            alert('This archive has been permanently preserved on the blockchain and cannot be removed.');
+            return;
+        }
         // 1. Check for contributions first
         const { count } = await supabase
             .from('memorial_contributions')
@@ -197,7 +203,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     const familyName = deriveFamilyName();
 
-    // Find the first paid memorial for PreservationStatus
     const firstPaidMemorial = memorials.find(m => m.paid);
 
     // Count unique members (from memorial contributor relationships or just active memorials)
@@ -335,7 +340,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                             {memorial.paid ? (
                                                 <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm gold vault-border border font-sans">
                                                     <Archive size={10} />
-                                                    Sealed
+                                                    Active
                                                 </span>
                                             ) : memorial.status === 'published' ? (
                                                 <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-green-500/10 backdrop-blur-sm text-green-400 border border-green-500/20 font-sans">
@@ -371,9 +376,11 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                             >
                                                 <Network size={14} />
                                             </button>
-                                            <button onClick={() => softDeleteMemorial(memorial.id)} className="py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors">
-                                                <Trash2 size={14} />
-                                            </button>
+                                            {(memorial as any).preservation_state !== 'preserved' && (
+                                                <button onClick={() => softDeleteMemorial(memorial.id)} className="py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -400,19 +407,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     </div>
                 )}
 
-                {/* PRESERVATION STATUS — for first paid memorial */}
-                {firstPaidMemorial && (
-                    <div className="mt-8">
-                        <PreservationStatus
-                            memorialId={firstPaidMemorial.id}
-                            arweaveTxId={(firstPaidMemorial as any).arweave_tx_id || null}
-                            fullName={firstPaidMemorial.full_name || ''}
-                            birthDate={firstPaidMemorial.birth_date || ''}
-                            deathDate={firstPaidMemorial.death_date || null}
-                            planType={auth.plan || 'family'}
-                        />
-                    </div>
-                )}
+                {/* Note: Blockchain preservation (Arweave) is available on the Personal plan only */}
 
                 {/* OFFLINE ACCESS GUARANTEE */}
                 <div className="mt-8">
@@ -433,13 +428,16 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     </div>
                 </div>
 
-                {/* DELETED ARCHIVES SECTION (TRASH) */}
+                {/* REMOVED ARCHIVES */}
                 {deletedMemorials.length > 0 && (
                     <div className="mt-16 pt-10 border-t vault-border animate-fadeIn">
-                        <h3 className="text-xl font-serif vault-text mb-6 flex items-center gap-2">
-                            <Trash2 size={20} className="vault-muted" />
-                            Deleted Archives
+                        <h3 className="text-xl font-serif vault-text mb-2 flex items-center gap-2">
+                            <Archive size={20} className="vault-muted" />
+                            Removed Archives
                         </h3>
+                        <p className="text-sm vault-muted font-sans mb-6">
+                            Archives are kept for 30 days before permanent deletion.
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (
                                 <div key={memorial.id} className="dark-card vault-border border rounded-xl p-4 flex items-center justify-between">

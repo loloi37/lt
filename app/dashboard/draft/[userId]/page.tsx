@@ -259,13 +259,16 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                     </div>
                 )}
 
-                {/* Deleted Archives */}
+                {/* Removed Drafts */}
                 {deletedMemorials.length > 0 && (
                     <div className="mt-16 pt-10 border-t border-sand/30">
-                        <h3 className="text-xl font-serif text-charcoal mb-6 flex items-center gap-2">
+                        <h3 className="text-xl font-serif text-charcoal mb-2 flex items-center gap-2">
                             <Trash2 size={20} className="text-charcoal/40" />
-                            Deleted Drafts (Trash)
+                            Removed Drafts
                         </h3>
+                        <p className="text-sm text-charcoal/40 mb-6">
+                            Drafts are kept for 30 days before permanent deletion.
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (
                                 <div key={memorial.id} className="bg-sand/10 rounded-xl border border-sand/30 p-4 flex items-center justify-between">

@@ -29,7 +29,7 @@ export async function PATCH(
         // 2. VERIFY OWNERSHIP
         const { data: memorial, error: fetchError } = await supabaseAdmin
             .from('memorials')
-            .select('user_id')
+            .select('user_id, preservation_state')
             .eq('id', id)
             .single();
 
@@ -41,7 +41,15 @@ export async function PATCH(
             return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
-        // 3. EXECUTE THE ACTION
+        // 3. BLOCK DELETION OF PRESERVED ARCHIVES
+        if (action === 'delete' && memorial.preservation_state === 'preserved') {
+            return NextResponse.json(
+                { error: 'This archive has been permanently preserved on the blockchain and cannot be deleted.' },
+                { status: 403 }
+            );
+        }
+
+        // 4. EXECUTE THE ACTION
         const updates =
             action === 'restore'
                 ? { deleted: false, deleted_at: null }

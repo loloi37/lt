@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
     AlertTriangle, CheckCircle, Share2, Image, Video, BookOpen, Heart,
-    ChevronRight, Lock, Unlock, Clock, Shield, Search, Filter,
+    ChevronRight, Unlock, Clock, Shield,
     Archive, Download, Users, Copy, Mail, QrCode, Camera, FileText
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -52,14 +52,11 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const router = useRouter();
 
     const [paidArchive, setPaidArchive] = useState<Memorial | null>(null);
-    const [draftArchives, setDraftArchives] = useState<Memorial[]>([]);
     const [deletedArchives, setDeletedArchives] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
     const [showWelcome, setShowWelcome] = useState(false);
     const [copied, setCopied] = useState(false);
-    const [searchDrafts, setSearchDrafts] = useState('');
-    const [filterDrafts, setFilterDrafts] = useState<'all' | 'recent' | 'oldest'>('all');
     const searchParams = useSearchParams();
 
     // SECURITY: Force a fresh auth check on mount to prevent bfcache from showing stale state.
@@ -145,7 +142,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             const active = data.filter(m => !m.deleted);
             const deleted = data.filter(m => m.deleted);
             setPaidArchive(active.find(m => m.paid) || null);
-            setDraftArchives(active.filter(m => !m.paid));
             setDeletedArchives(deleted);
         }
         setLoading(false);
@@ -157,27 +153,36 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             router.replace(`/dashboard/family/${userId}`);
             return;
         }
-        // Block creation if user already has a paid archive (active OR soft-deleted).
-        // A soft-deleted paid archive still counts — the plan is permanent.
-        const hasAnyPaidArchive = paidArchive || deletedArchives.some(m => m.paid);
-        if (hasAnyPaidArchive) {
-            alert('You already have a Personal Archive. Each account supports one personal archive. Check your trash if you recently deleted it.');
+        // Single-archive slot: block if active paid archive exists
+        if (paidArchive) {
+            alert('You already have an active Personal Archive. Each account supports one personal archive.');
             return;
         }
+        // If there's a removed archive, the slot is free — user can create a new one
         window.location.href = '/create?mode=personal';
     };
 
     const softDelete = async (id: string) => {
-        if (!confirm('Move this archive to the trash? It will be permanently deleted after 30 days.')) return;
+        // Block deletion of preserved (blockchain) archives
+        if (paidArchive?.id === id && (paidArchive as any).preservation_state === 'preserved') {
+            alert('This archive has been permanently preserved on the blockchain and cannot be removed.');
+            return;
+        }
+        if (!confirm('Move this archive to Removed Archives? It will be permanently deleted after 30 days.')) return;
         try {
             await apiSoftDelete(id, 'delete');
             loadMemorials();
         } catch {
-            alert('Error deleting archive. Please try again.');
+            alert('Error removing archive. Please try again.');
         }
     };
 
     const restore = async (id: string) => {
+        // Single-archive slot: only allow restore if no active paid archive
+        if (paidArchive) {
+            alert('You already have an active archive. Remove it first before restoring another.');
+            return;
+        }
         try {
             await apiSoftDelete(id, 'restore');
             loadMemorials();
@@ -211,14 +216,8 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         });
     };
 
-    const filteredDrafts = draftArchives.filter(m => {
-        const matchesSearch = (m.full_name || '').toLowerCase().includes(searchDrafts.toLowerCase());
-        return matchesSearch;
-    }).sort((a, b) => {
-        if (filterDrafts === 'recent') return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-        if (filterDrafts === 'oldest') return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
-        return 0;
-    });
+    // Check if the active archive is preserved (blockchain)
+    const isPreserved = paidArchive && (paidArchive as any).preservation_state === 'preserved';
 
     // BLOCK RENDERING until auth checks pass — prevents flash of dashboard content
     // for users who don't belong here (draft users, family-upgraded users, etc.)
@@ -331,106 +330,16 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     </div>
                 )}
 
-                {/* Unpaid drafts — dark themed */}
-                {draftArchives.length > 0 && (
-                    <div className="mt-16 pt-10 border-t vault-border">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="font-serif text-2xl text-vault-text mb-1">Unpublished Drafts</h3>
-                                <p className="text-sm vault-muted font-sans">
-                                    Started but not yet sealed. Complete one to activate it.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Search & Filter for drafts (show when 2+) */}
-                        {draftArchives.length > 1 && (
-                            <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                                <div className="flex-1 relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search drafts..."
-                                        value={searchDrafts}
-                                        onChange={(e) => setSearchDrafts(e.target.value)}
-                                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-vault-dark border vault-border focus:border-gold/30 focus:outline-none transition-all text-sm font-sans text-vault-text placeholder:text-vault-muted/50"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <Filter className="absolute left-4 top-1/2 -translate-y-1/2 vault-muted" size={18} />
-                                    <select
-                                        value={filterDrafts}
-                                        onChange={(e) => setFilterDrafts(e.target.value as any)}
-                                        className="pl-11 pr-8 py-2.5 rounded-xl bg-vault-dark border vault-border focus:border-gold/30 focus:outline-none appearance-none cursor-pointer text-sm font-sans text-vault-text"
-                                    >
-                                        <option value="all">All Drafts</option>
-                                        <option value="recent">Most Recent</option>
-                                        <option value="oldest">Oldest First</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredDrafts.map(m => (
-                                <div
-                                    key={m.id}
-                                    className="dark-card dark-card-hover rounded-xl overflow-hidden"
-                                >
-                                    {/* Draft card photo area */}
-                                    <div className="relative h-40 bg-vault-dark">
-                                        {m.profile_photo_url ? (
-                                            <img src={m.profile_photo_url} alt="" className="w-full h-full object-cover opacity-80" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <User size={48} className="vault-muted opacity-30" />
-                                            </div>
-                                        )}
-                                        <div className="absolute top-3 right-3">
-                                            <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-vault-dark/90 backdrop-blur-sm vault-muted border vault-border font-sans">
-                                                <Lock size={10} />
-                                                Draft
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="p-5">
-                                        <h4 className="font-serif text-xl text-vault-text mb-1">
-                                            {m.full_name || 'Untitled draft'}
-                                        </h4>
-                                        <p className="text-xs vault-muted mb-4 flex items-center gap-1 font-sans">
-                                            <Clock size={11} />
-                                            Last edited {timeAgo(m.updated_at)}
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <Link
-                                                href={`/create?id=${m.id}&mode=personal`}
-                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-white/5 hover:bg-white/10 text-vault-text rounded-lg font-medium text-sm transition-all font-sans"
-                                            >
-                                                <Edit size={14} />
-                                                Continue
-                                            </Link>
-                                            <button
-                                                onClick={() => softDelete(m.id)}
-                                                className="py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
-                                                title="Delete draft"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Trash — dark themed */}
+                {/* Removed Archives */}
                 {deletedArchives.length > 0 && (
                     <div className="mt-16 pt-10 border-t vault-border">
-                        <h3 className="text-xl font-serif text-vault-text mb-6 flex items-center gap-2">
-                            <Trash2 size={20} className="vault-muted" />
-                            Deleted Archives (Trash)
+                        <h3 className="text-xl font-serif text-vault-text mb-2 flex items-center gap-2">
+                            <Archive size={20} className="vault-muted" />
+                            Removed Archives
                         </h3>
+                        <p className="text-sm vault-muted font-sans mb-6">
+                            Archives are kept for 30 days before permanent deletion.
+                        </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedArchives.map(m => (
                                 <div
@@ -559,9 +468,15 @@ function ActiveArchive({
                                     </span>
                                     <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border vault-border vault-muted bg-white/5 font-medium font-sans">
                                         <Archive size={11} />
-                                        Sealed Archive
+                                        Active Archive
                                         {sealedDate && <span className="opacity-50 ml-1">· {sealedDate}</span>}
                                     </span>
+                                    {(archive as any).preservation_state === 'preserved' && (
+                                        <span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-gold/30 text-gold bg-gold/5 font-medium font-sans">
+                                            <Shield size={11} />
+                                            Preserved
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             {dates && <p className="vault-muted text-base font-serif mb-1">{dates}</p>}
@@ -597,13 +512,15 @@ function ActiveArchive({
                                 <Share2 size={15} />
                                 {copied ? 'Copied!' : 'Share link'}
                             </button>
-                            <button
-                                onClick={() => onDelete(archive.id)}
-                                className="flex items-center gap-1.5 px-3 py-2.5 vault-muted hover:text-red-400 rounded-lg text-sm transition-colors ml-auto"
-                                title="Delete archive"
-                            >
-                                <Trash2 size={15} />
-                            </button>
+                            {(archive as any).preservation_state !== 'preserved' && (
+                                <button
+                                    onClick={() => onDelete(archive.id)}
+                                    className="flex items-center gap-1.5 px-3 py-2.5 vault-muted hover:text-red-400 rounded-lg text-sm transition-colors ml-auto"
+                                    title="Remove archive"
+                                >
+                                    <Trash2 size={15} />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -730,11 +647,11 @@ function ActiveArchive({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                     <DarkHealthRow
                         label="Publication status"
-                        value="Sealed"
+                        value={(archive as any).preservation_state === 'preserved' ? 'Preserved' : 'Active'}
                         icon={<Archive size={14} />}
                     />
                     <DarkHealthRow
-                        label="Sealed on"
+                        label="Activated on"
                         value={sealedDate || 'Unknown'}
                         icon={<Clock size={14} />}
                     />

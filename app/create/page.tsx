@@ -844,7 +844,7 @@ function CreateMemorialPageContent() {
     header: isSelf ? "Your Legacy Archive" : "The Crossroads",
     subHeader: isSelf
       ? (isPrivate
-        ? "This archive is currently sealed. It will strictly remain accessible only to you until the succession process is triggered."
+        ? "This archive is private. It will remain accessible only to you until the succession process is triggered."
         : "You are creating your own permanent record. You can choose to share this at any time.")
       : mode === 'family'
         ? "This is a shared space to preserve your family's heritage."
