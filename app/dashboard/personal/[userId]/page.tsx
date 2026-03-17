@@ -51,7 +51,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const auth = useAuth();
     const router = useRouter();
 
-    const [paidArchive, setPaidArchive] = useState<Memorial | null>(null);
+    const [activeArchive, setActiveArchive] = useState<Memorial | null>(null);
     const [deletedArchives, setDeletedArchives] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
@@ -141,7 +141,8 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         if (data) {
             const active = data.filter(m => !m.deleted);
             const deleted = data.filter(m => m.deleted);
-            setPaidArchive(active.find(m => m.paid) || null);
+            // Show any non-deleted personal archive (paid or unpaid) as the active one
+            setActiveArchive(active.find(m => m.paid) || active[0] || null);
             setDeletedArchives(deleted);
         }
         setLoading(false);
@@ -154,7 +155,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             return;
         }
         // Single-archive slot: block if active paid archive exists
-        if (paidArchive) {
+        if (activeArchive) {
             alert('You already have an active Personal Archive. Each account supports one personal archive.');
             return;
         }
@@ -164,7 +165,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 
     const softDelete = async (id: string) => {
         // Block deletion of preserved (blockchain) archives
-        if (paidArchive?.id === id && (paidArchive as any).preservation_state === 'preserved') {
+        if (activeArchive?.id === id && (activeArchive as any).preservation_state === 'preserved') {
             alert('This archive has been permanently preserved on the blockchain and cannot be removed.');
             return;
         }
@@ -179,7 +180,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 
     const restore = async (id: string) => {
         // Single-archive slot: only allow restore if no active paid archive
-        if (paidArchive) {
+        if (activeArchive) {
             alert('You already have an active archive. Remove it first before restoring another.');
             return;
         }
@@ -217,7 +218,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     };
 
     // Check if the active archive is preserved (blockchain)
-    const isPreserved = paidArchive && (paidArchive as any).preservation_state === 'preserved';
+    const isPreserved = activeArchive && (activeArchive as any).preservation_state === 'preserved';
 
     // BLOCK RENDERING until auth checks pass — prevents flash of dashboard content
     // for users who don't belong here (draft users, family-upgraded users, etc.)
@@ -264,18 +265,18 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     <ArrowLeft size={20} className="vault-muted" />
                                 </Link>
                                 <h1 className="font-serif text-4xl text-vault-text">
-                                    {paidArchive?.full_name || 'Personal Archive'}
+                                    {activeArchive?.full_name || 'Personal Archive'}
                                 </h1>
                                 <span className="live-badge flex items-center gap-1.5 text-xs px-3 py-1 rounded-full font-semibold font-sans">
                                     Live
                                 </span>
                             </div>
-                            {paidArchive && (
+                            {activeArchive && (
                                 <p className="vault-muted font-serif text-lg ml-12">
-                                    {paidArchive.birth_date && paidArchive.death_date
-                                        ? `${new Date(paidArchive.birth_date).getFullYear()} \u2014 ${new Date(paidArchive.death_date).getFullYear()}`
-                                        : paidArchive.birth_date
-                                        ? `Born ${new Date(paidArchive.birth_date).getFullYear()}`
+                                    {activeArchive.birth_date && activeArchive.death_date
+                                        ? `${new Date(activeArchive.birth_date).getFullYear()} \u2014 ${new Date(activeArchive.death_date).getFullYear()}`
+                                        : activeArchive.birth_date
+                                        ? `Born ${new Date(activeArchive.birth_date).getFullYear()}`
                                         : ''}
                                 </p>
                             )}
@@ -284,7 +285,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                 Permanently preserved on Arweave
                             </p>
                         </div>
-                        {!paidArchive && (
+                        {!activeArchive && (
                             <button
                                 onClick={handleCreate}
                                 className="flex items-center gap-2 px-6 py-3 bg-gold text-vault-dark rounded-lg font-semibold font-sans hover:bg-gold/90 transition-all"
@@ -302,14 +303,14 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     <div className="text-center py-20">
                         <Loader2 size={48} className="text-gold/30 animate-spin mx-auto mb-4" />
                     </div>
-                ) : paidArchive ? (
+                ) : activeArchive ? (
                     <ActiveArchive
-                        archive={paidArchive}
+                        archive={activeArchive}
                         onDelete={softDelete}
                         onCopyLink={copyShareLink}
                         copied={copied}
                         userId={userId}
-                        paymentConfirmedAt={paidArchive.payment_confirmed_at ?? null}
+                        paymentConfirmedAt={activeArchive.payment_confirmed_at ?? null}
                     />
                 ) : (
                     <div className="text-center py-20">
