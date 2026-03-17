@@ -100,30 +100,87 @@ function PersonalConfirmationContent() {
         }
     }, [authorizationCompleted]);
 
-    const handlePayment = async () => {
-        setIsProcessing(true);
-        try {
-            const supabase = createClient();
-            let memorialId = upgradeMemorialId || currentMemorialId || localStorage.getItem('current-memorial-id');
+    // Mutex to prevent concurrent memorial creation
+    const creatingRef = useRef(false);
 
-            if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
-                const { data: existing } = await supabase
-                    .from('memorials').select('id').eq('id', memorialId).maybeSingle();
-                if (!existing) { memorialId = null; localStorage.removeItem('current-memorial-id'); }
+    // Single source of truth for memorial creation — prevents duplicates
+    const ensureMemorial = async (): Promise<string> => {
+        const supabase = createClient();
+
+        // 1. Check React state first (most reliable)
+        let memorialId = upgradeMemorialId || currentMemorialId;
+
+        // 2. Fallback to localStorage
+        if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+            memorialId = localStorage.getItem('current-memorial-id');
+        }
+
+        // 3. Validate the memorial still exists in the DB
+        if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
+            const { data: existing } = await supabase
+                .from('memorials').select('id').eq('id', memorialId).maybeSingle();
+            if (existing) {
+                // Memorial exists — update state and return
+                setCurrentMemorialId(memorialId);
+                localStorage.setItem('current-memorial-id', memorialId);
+                return memorialId;
             }
+            // Memorial was deleted or invalid — clear stale reference
+            memorialId = null;
+            localStorage.removeItem('current-memorial-id');
+        }
 
-            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Please sign in to continue.');
+        // 4. Prevent concurrent creation
+        if (creatingRef.current) {
+            // Wait briefly and re-check state (another call is creating)
+            await new Promise(r => setTimeout(r, 1000));
+            if (currentMemorialId) return currentMemorialId;
+            throw new Error('Memorial creation in progress. Please try again.');
+        }
+
+        creatingRef.current = true;
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Please sign in to continue.');
+
+            // 5. Check for an existing unpaid personal memorial (dedup)
+            const { data: existingUnpaid } = await supabase
+                .from('memorials')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('mode', 'personal')
+                .eq('paid', false)
+                .eq('deleted', false)
+                .limit(1)
+                .maybeSingle();
+
+            if (existingUnpaid) {
+                memorialId = existingUnpaid.id;
+            } else {
+                // 6. Create only if truly none exists
                 const { data, error: insertError } = await supabase
                     .from('memorials')
                     .insert({ user_id: user.id, slug: `memorial-${Date.now()}`, mode: 'personal', paid: false })
                     .select().single();
-                if (insertError) { console.error('Memorial insert error:', insertError); throw insertError; }
+                if (insertError || !data) {
+                    console.error('Memorial insert error:', insertError);
+                    throw new Error(insertError?.message || 'Could not initialize your archive');
+                }
                 memorialId = data.id;
-                localStorage.setItem('current-memorial-id', memorialId!);
-                setCurrentMemorialId(memorialId);
             }
+
+            localStorage.setItem('current-memorial-id', memorialId!);
+            setCurrentMemorialId(memorialId);
+            return memorialId!;
+        } finally {
+            creatingRef.current = false;
+        }
+    };
+
+    const handlePayment = async () => {
+        setIsProcessing(true);
+        try {
+            const memorialId = await ensureMemorial();
 
             // replace: prevent back-button from returning to confirmation after going to payment
             const popupParam = isPopup ? '&popup=true' : '';
@@ -139,26 +196,7 @@ function PersonalConfirmationContent() {
     const handleOpenAuthorization = async () => {
         setIsOpeningAuth(true);
         try {
-            const supabase = createClient();
-            let memorialId = upgradeMemorialId || currentMemorialId || localStorage.getItem('current-memorial-id');
-
-            if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Please sign in to continue.');
-                const { data, error: insertError } = await supabase
-                    .from('memorials')
-                    .insert({ user_id: user.id, slug: `memorial-${Date.now()}`, mode: 'personal', paid: false })
-                    .select().single();
-                if (insertError || !data) {
-                    console.error('Memorial insert error:', insertError);
-                    throw new Error(insertError?.message || 'Could not initialize your archive');
-                }
-                memorialId = data.id;
-                localStorage.setItem('current-memorial-id', memorialId!);
-                setCurrentMemorialId(memorialId);
-            } else {
-                setCurrentMemorialId(memorialId);
-            }
+            const memorialId = await ensureMemorial();
 
             const url = `/authorization/${memorialId}?type=individual&popup=true`;
             window.open(url, '_blank', 'width=960,height=820,scrollbars=yes,resizable=yes');

@@ -42,7 +42,13 @@ export default function LandingPage() {
                             Sign in
                         </Link>
                         <Link
-                            href="/create"
+                            href="/choice-pricing"
+                            className="px-5 py-2.5 text-sm font-sans font-medium text-charcoal/70 hover:text-charcoal transition-all"
+                        >
+                            Pricing
+                        </Link>
+                        <Link
+                            href="/choice-pricing"
                             className="px-5 py-2.5 text-sm font-sans font-medium text-white bg-charcoal rounded-lg hover:bg-charcoal/85 transition-all btn-paper"
                         >
                             Start Building
@@ -68,7 +74,7 @@ export default function LandingPage() {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href="/create"
+                            href="/choice-pricing"
                             className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-sans font-medium text-white bg-charcoal rounded-lg hover:bg-charcoal/85 transition-all btn-paper"
                         >
                             Start Building a Memorial
@@ -382,7 +388,7 @@ export default function LandingPage() {
                         that some things must outlast us.
                     </p>
                     <Link
-                        href="/create"
+                        href="/choice-pricing"
                         className="inline-flex items-center gap-2 px-10 py-4 text-base font-sans font-medium text-white bg-charcoal rounded-lg hover:bg-charcoal/85 transition-all btn-paper"
                     >
                         Build a Memorial
