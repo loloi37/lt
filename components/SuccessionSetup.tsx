@@ -47,35 +47,35 @@ export default function SuccessionSetup({
     };
 
     return (
-        <div className="dark-card p-6">
+        <div className="bg-white border border-sand/40 p-6 rounded-xl">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
-                        <UserCheck size={16} className="text-emerald-400" />
+                        <UserCheck size={16} className="text-emerald-600" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-vault-text font-sans">Succession Planning</h3>
-                        <p className="text-xs text-vault-muted font-sans">
+                        <h3 className="text-sm font-semibold text-charcoal font-sans">Succession Planning</h3>
+                        <p className="text-xs text-charcoal/60 font-sans">
                             {isPreservationGate ? 'Required before preservation' : 'Manage access continuity'}
                         </p>
                     </div>
                 </div>
                 {isPreservationGate && !saved && (
-                    <span className="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs font-sans font-medium rounded-full">
+                    <span className="px-2 py-1 bg-amber-500/10 text-amber-600 text-xs font-sans font-medium rounded-full">
                         Required
                     </span>
                 )}
                 {saved && (
-                    <span className="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-sans font-medium rounded-full flex items-center gap-1">
+                    <span className="px-2 py-1 bg-green-500/10 text-green-600 text-xs font-sans font-medium rounded-full flex items-center gap-1">
                         <Shield size={10} /> Configured
                     </span>
                 )}
             </div>
 
             {isPreservationGate && !saved && (
-                <div className="flex items-start gap-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg mb-5">
-                    <AlertTriangle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-amber-300 font-sans">
+                <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg mb-5">
+                    <AlertTriangle size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-amber-700 font-sans">
                         You must designate a successor before your memorial can be permanently preserved.
                         This ensures continuous access to your memorial.
                     </p>
@@ -85,31 +85,31 @@ export default function SuccessionSetup({
             <div className="space-y-4">
                 {/* Successor name */}
                 <div>
-                    <label className="text-xs text-vault-muted font-sans mb-1 block">Successor name</label>
+                    <label className="text-xs text-charcoal/60 font-sans mb-1 block">Successor name</label>
                     <input
                         type="text"
                         value={successor.name}
                         onChange={e => { setSuccessor(prev => ({ ...prev, name: e.target.value })); setSaved(false); }}
                         placeholder="e.g. Sarah Johnson"
-                        className="w-full px-3 py-2 bg-vault-dark border border-vault-border rounded-lg text-sm font-sans text-vault-text placeholder:text-vault-muted/50 focus:outline-none focus:border-emerald-500/40"
+                        className="w-full px-3 py-2 bg-white border border-sand/40 rounded-lg text-sm font-sans text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-emerald-500/40"
                     />
                 </div>
 
                 {/* Successor email */}
                 <div>
-                    <label className="text-xs text-vault-muted font-sans mb-1 block">Successor email</label>
+                    <label className="text-xs text-charcoal/60 font-sans mb-1 block">Successor email</label>
                     <input
                         type="email"
                         value={successor.email}
                         onChange={e => { setSuccessor(prev => ({ ...prev, email: e.target.value })); setSaved(false); }}
                         placeholder="successor@example.com"
-                        className="w-full px-3 py-2 bg-vault-dark border border-vault-border rounded-lg text-sm font-sans text-vault-text placeholder:text-vault-muted/50 focus:outline-none focus:border-emerald-500/40"
+                        className="w-full px-3 py-2 bg-white border border-sand/40 rounded-lg text-sm font-sans text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-emerald-500/40"
                     />
                 </div>
 
                 {/* Access level */}
                 <div>
-                    <label className="text-xs text-vault-muted font-sans mb-2 block">Access level</label>
+                    <label className="text-xs text-charcoal/60 font-sans mb-2 block">Access level</label>
                     <div className="space-y-2">
                         {ACCESS_LEVELS.map(level => (
                             <button
@@ -118,15 +118,15 @@ export default function SuccessionSetup({
                                 className={`w-full flex items-center justify-between p-3 rounded-lg border text-left transition-colors ${
                                     successor.accessLevel === level.value
                                         ? 'border-emerald-500/40 bg-emerald-500/5'
-                                        : 'border-vault-border hover:border-vault-muted/30'
+                                        : 'border-sand/40 hover:border-sand/60'
                                 }`}
                             >
                                 <div>
-                                    <p className="text-sm font-sans font-medium text-vault-text">{level.label}</p>
-                                    <p className="text-xs text-vault-muted font-sans">{level.description}</p>
+                                    <p className="text-sm font-sans font-medium text-charcoal">{level.label}</p>
+                                    <p className="text-xs text-charcoal/60 font-sans">{level.description}</p>
                                 </div>
                                 {successor.accessLevel === level.value && (
-                                    <div className="w-3 h-3 bg-emerald-400 rounded-full flex-shrink-0" />
+                                    <div className="w-3 h-3 bg-emerald-600 rounded-full flex-shrink-0" />
                                 )}
                             </button>
                         ))}
@@ -136,8 +136,8 @@ export default function SuccessionSetup({
                 {/* Dead man's switch */}
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Clock size={14} className="text-vault-muted" />
-                        <label className="text-xs text-vault-muted font-sans">Dead man&apos;s switch interval</label>
+                        <Clock size={14} className="text-charcoal/60" />
+                        <label className="text-xs text-charcoal/60 font-sans">Dead man&apos;s switch interval</label>
                     </div>
                     <div className="flex gap-2">
                         {[6, 12, 24].map(months => (
@@ -146,15 +146,15 @@ export default function SuccessionSetup({
                                 onClick={() => { setSuccessor(prev => ({ ...prev, deadManSwitchMonths: months })); setSaved(false); }}
                                 className={`flex-1 py-2 text-sm font-sans rounded-lg border transition-colors ${
                                     successor.deadManSwitchMonths === months
-                                        ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-300'
-                                        : 'border-vault-border text-vault-muted hover:border-vault-muted/30'
+                                        ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-600'
+                                        : 'border-sand/40 text-charcoal/60 hover:border-sand/60'
                                 }`}
                             >
                                 {months} months
                             </button>
                         ))}
                     </div>
-                    <p className="text-xs text-vault-muted font-sans mt-2">
+                    <p className="text-xs text-charcoal/60 font-sans mt-2">
                         If you don&apos;t log in for {successor.deadManSwitchMonths} months, your successor will
                         be notified and granted access.
                     </p>
@@ -163,7 +163,7 @@ export default function SuccessionSetup({
                 <button
                     onClick={handleSave}
                     disabled={!successor.email || !successor.name}
-                    className="w-full py-2.5 bg-emerald-600 text-white text-sm font-sans font-medium rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-emerald-600 text-white text-sm font-sans font-medium rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                     {saved ? 'Update Succession Plan' : 'Save Succession Plan'}
                 </button>

@@ -66,11 +66,11 @@ export default function PreservationStatus({
 
     if (loading) {
         return (
-            <div className="dark-card p-6 preservation-glow">
+            <div className="bg-white border border-sand/40 p-6 rounded-xl shadow-sm">
                 <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-vault-border rounded w-1/3" />
-                    <div className="h-3 bg-vault-border rounded w-2/3" />
-                    <div className="h-3 bg-vault-border rounded w-1/2" />
+                    <div className="h-4 bg-sand/40 rounded w-1/3" />
+                    <div className="h-3 bg-sand/40 rounded w-2/3" />
+                    <div className="h-3 bg-sand/40 rounded w-1/2" />
                 </div>
             </div>
         );
@@ -78,12 +78,12 @@ export default function PreservationStatus({
 
     if (!arweaveTxId || !txData) {
         return (
-            <div className="dark-card p-6 border-dashed border-vault-border">
+            <div className="bg-white border border-dashed border-sand/40 p-6 rounded-xl">
                 <div className="flex items-center gap-3 mb-3">
-                    <Shield size={18} className="text-vault-muted" />
-                    <h3 className="text-sm font-semibold text-vault-text font-sans">Preservation Status</h3>
+                    <Shield size={18} className="text-charcoal/60" />
+                    <h3 className="text-sm font-semibold text-charcoal font-sans">Preservation Status</h3>
                 </div>
-                <p className="text-sm text-vault-muted font-sans">
+                <p className="text-sm text-charcoal/60 font-sans">
                     This memorial has not been preserved yet. Preservation permanently stores your memorial on the Arweave network.
                 </p>
             </div>
@@ -96,24 +96,24 @@ export default function PreservationStatus({
         : 'Pending';
 
     return (
-        <div className="dark-card p-6 preservation-glow">
+        <div className="bg-white border border-sand/40 p-6 rounded-xl shadow-sm">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gold/10 rounded-lg flex items-center justify-center">
-                        <Shield size={16} className="text-gold" />
+                    <div className="w-8 h-8 bg-mist/10 rounded-lg flex items-center justify-center">
+                        <Shield size={16} className="text-mist" />
                     </div>
-                    <h3 className="text-sm font-semibold text-vault-text font-sans">Preservation Status</h3>
+                    <h3 className="text-sm font-semibold text-charcoal font-sans">Preservation Status</h3>
                 </div>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 rounded-full">
-                    <CheckCircle size={12} className="text-green-400" />
-                    <span className="text-xs font-sans text-green-400 font-medium">Confirmed</span>
+                    <CheckCircle size={12} className="text-green-600" />
+                    <span className="text-xs font-sans text-green-600 font-medium">Confirmed</span>
                 </div>
             </div>
 
             {/* Transaction ID */}
             <div className="mb-4">
-                <p className="text-xs text-vault-muted font-sans mb-1">Arweave Transaction</p>
-                <code className="text-xs text-gold/80 font-mono bg-vault-dark/50 px-2 py-1 rounded break-all">
+                <p className="text-xs text-charcoal/60 font-sans mb-1">Arweave Transaction</p>
+                <code className="text-xs text-mist/80 font-mono bg-charcoal/5 px-2 py-1 rounded break-all">
                     {txData.txId}
                 </code>
             </div>
@@ -122,38 +122,38 @@ export default function PreservationStatus({
             <div className="grid grid-cols-3 gap-4 mb-5">
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Globe size={12} className="text-vault-muted" />
-                        <span className="text-xs text-vault-muted font-sans">Nodes</span>
+                        <Globe size={12} className="text-charcoal/60" />
+                        <span className="text-xs text-charcoal/60 font-sans">Nodes</span>
                     </div>
-                    <p className="text-sm font-semibold text-vault-text font-sans">847 worldwide</p>
+                    <p className="text-sm font-semibold text-charcoal font-sans">847 worldwide</p>
                 </div>
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Clock size={12} className="text-vault-muted" />
-                        <span className="text-xs text-vault-muted font-sans">Last verified</span>
+                        <Clock size={12} className="text-charcoal/60" />
+                        <span className="text-xs text-charcoal/60 font-sans">Last verified</span>
                     </div>
-                    <p className="text-sm font-semibold text-vault-text font-sans">{verifiedAgo}</p>
+                    <p className="text-sm font-semibold text-charcoal font-sans">{verifiedAgo}</p>
                 </div>
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Shield size={12} className="text-vault-muted" />
-                        <span className="text-xs text-vault-muted font-sans">Endowment</span>
+                        <Shield size={12} className="text-charcoal/60" />
+                        <span className="text-xs text-charcoal/60 font-sans">Endowment</span>
                     </div>
-                    <p className="text-sm font-semibold text-vault-text font-sans">200+ years</p>
+                    <p className="text-sm font-semibold text-charcoal font-sans">200+ years</p>
                 </div>
             </div>
 
             {/* Storage usage */}
             <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-vault-muted font-sans">Storage used</span>
-                    <span className="text-xs text-vault-text font-sans">
+                    <span className="text-xs text-charcoal/60 font-sans">Storage used</span>
+                    <span className="text-xs text-charcoal font-sans">
                         {formatBytes(storageBytesUsed)} of {formatBytes(storageBytesIncluded)}
                     </span>
                 </div>
-                <div className="w-full h-1.5 bg-vault-dark rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gold/60 rounded-full transition-all"
+                        className="h-full bg-mist/60 rounded-full transition-all"
                         style={{ width: `${usagePercent}%` }}
                     />
                 </div>
@@ -165,14 +165,14 @@ export default function PreservationStatus({
                     href={txData.gatewayUrls[0]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-vault-text bg-vault-dark/50 rounded-lg hover:bg-vault-dark transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-charcoal bg-charcoal/5 rounded-lg hover:bg-charcoal/10 transition-colors"
                 >
                     <ExternalLink size={12} />
                     View on Blockchain
                 </a>
                 <button
                     onClick={handleDownloadCertificate}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-gold bg-gold/10 rounded-lg hover:bg-gold/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-mist bg-mist/10 rounded-lg hover:bg-mist/20 transition-colors"
                 >
                     <Download size={12} />
                     Download Certificate
