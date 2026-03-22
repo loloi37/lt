@@ -13,6 +13,7 @@ export async function POST(
     try {
         const { token } = await params;
 
+
         const { error } = await supabaseAdmin
             .from('witness_invitations')
             .update({ status: 'declined' })

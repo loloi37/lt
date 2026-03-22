@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email/sender';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-const resend = new Resend(
-    process.env.RESEND_API_KEY
-);
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { token: string } }
+    { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        const { token } = await params;
         const { name, email } = await req.json();
 
         if (!name || !email) {
@@ -30,55 +28,50 @@ export async function POST(
         ).toString();
 
         const expires = new Date(
-            Date.now() + 15 * 60 * 1000 // 15 minutes
+            Date.now() + 15 * 60 * 1000
         );
 
-        // Store code in a temporary contribution
-        // record (unverified)
+        // Store code in a temporary contribution record
         await supabaseAdmin
             .from('memorial_contributions')
             .insert({
-                memorial_id: await getMemorialId(
-                    params.token
-                ),
+                memorial_id: await getMemorialId(token),
                 witness_name: name,
                 contributor_email: email,
                 contributor_verified: false,
                 verification_code: code,
-                verification_expires_at:
-                    expires.toISOString(),
+                verification_expires_at: expires.toISOString(),
                 is_anonymous: true,
                 type: 'memory',
                 content: {},
                 status: 'pending_approval'
             });
 
-        // Send code via email
-        await resend.emails.send({
-            from: 'Legacy Vault <noreply@resend.dev>',
-            to: [email],
-            subject: 'Your verification code',
+        // Send code via Brevo
+        await sendEmail({
+            to: email,
+            subject: 'Your verification code — Legacy Vault',
             html: `
-        <div style="font-family: Georgia, serif; 
-          max-width: 400px; margin: 0 auto; 
-          padding: 40px;">
-          <p style="font-size: 16px; 
-            color: #5a6b78;">
-            Your verification code is:
-          </p>
-          <p style="font-size: 48px; 
-            font-weight: bold; 
-            letter-spacing: 12px; 
-            color: #1a1a1a; 
-            margin: 20px 0;">
-            ${code}
-          </p>
-          <p style="font-size: 13px; 
-            color: #9a9a9a;">
-            This code expires in 15 minutes.
-          </p>
-        </div>
-      `
+                <div style="font-family: Georgia, serif; 
+                  max-width: 400px; margin: 0 auto; 
+                  padding: 40px;">
+                  <p style="font-size: 16px; 
+                    color: #5a6b78;">
+                    Your verification code is:
+                  </p>
+                  <p style="font-size: 48px; 
+                    font-weight: bold; 
+                    letter-spacing: 12px; 
+                    color: #1a1a1a; 
+                    margin: 20px 0;">
+                    ${code}
+                  </p>
+                  <p style="font-size: 13px; 
+                    color: #9a9a9a;">
+                    This code expires in 15 minutes.
+                  </p>
+                </div>
+            `
         });
 
         return NextResponse.json({ success: true });

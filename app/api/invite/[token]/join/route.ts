@@ -14,6 +14,7 @@ export async function POST(
     try {
         const { token } = await params;
 
+
         // 1. Authenticate the user making the request
         const { user, error: authError } =
             await createAuthenticatedClient();

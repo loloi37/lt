@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 import { getWitnessInvitationEmail } from '@/lib/email/templates';
+import { sendEmail } from '@/lib/email/sender';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
             const inviteLink = `${protocol}://${host}/invite/${invitation.id}`;
 
             // 3. Send email
-            await resend.emails.send({
-                from: 'Legacy Vault <onboarding@resend.dev>',
-                to: [email],
+            await sendEmail({
+                to: email,
                 subject: `An invitation to bear witness for ${deceasedName || 'a loved one'}`,
                 html: getWitnessInvitationEmail(inviterName, deceasedName || 'a loved one', inviteLink, personalMessage),
             });
+
 
             results.push({ email, status: 'sent' });
         }

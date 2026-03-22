@@ -9,10 +9,10 @@ const supabaseAdmin = createClient(
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { token: string } }
+    { params }: { params: Promise<{ token: string }> }
 ) {
     try {
-        const token = params.token;
+        const { token } = await params;
 
         // 1. Fetch invitation + memorial data in one query
         const { data: invitation, error } = await supabaseAdmin
@@ -34,7 +34,7 @@ export async function GET(
           death_date,
           profile_photo_url,
           mode,
-          deleted
+          deleted_at
         )
       `)
             .eq('id', token)
@@ -51,7 +51,7 @@ export async function GET(
         const memorial = (invitation as any).memorials;
 
         // 3. Memorial was deleted
-        if (memorial?.deleted) {
+        if (memorial?.deleted_at) {
             return NextResponse.json({
                 state: 'MEMORIAL_DELETED',
                 inviterName: invitation.inviter_name,
