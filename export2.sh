@@ -35,7 +35,7 @@ for f in "${EXCLUDE_FILES[@]}"; do
 done
 
 # Extensions de fichiers à exporter
-EXTENSIONS="sh js ts jsx tsx py go java cpp hpp c h html css scss json yaml yml md"
+EXTENSIONS="sh js ts jsx tsx py go java cpp hpp c h html css scss json yaml yml md sql"
 
 echo "==== EXPORT CODE ====" >> "$OUTPUT"
 

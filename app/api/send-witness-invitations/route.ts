@@ -11,16 +11,23 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        // We now look for 'emails' (plural) and the necessary names
         const { memorialId, inviterName, emails, personalMessage, deceasedName } = await request.json();
 
         if (!memorialId || !emails || emails.length === 0 || !inviterName) {
             return NextResponse.json({ error: 'Missing required fields: memorialId, inviterName, or emails' }, { status: 400 });
         }
 
+        // Fetch the memorial's mode to determine the plan
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('mode')
+            .eq('id', memorialId)
+            .single();
+
+        const plan = memorial?.mode === 'family' ? 'family' : 'personal';
+
         const results = [];
 
-        // Loop through each email to create a database record and send an email
         for (const email of emails) {
             // 1. Create invitation record in Supabase
             const { data: invitation, error: dbError } = await supabaseAdmin
@@ -30,7 +37,8 @@ export async function POST(request: NextRequest) {
                     inviter_name: inviterName,
                     invitee_email: email,
                     personal_message: personalMessage,
-                    role: 'witness'
+                    role: 'witness',
+                    plan: plan
                 }])
                 .select()
                 .single();
@@ -40,10 +48,10 @@ export async function POST(request: NextRequest) {
                 continue;
             }
 
-            // 2. Construct link
+            // 2. Construct link — now pointing to the new flow
             const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
             const host = request.headers.get('host');
-            const inviteLink = `${protocol}://${host}/invitation/accept/${invitation.id}`;
+            const inviteLink = `${protocol}://${host}/invite/${invitation.id}`;
 
             // 3. Send email
             await resend.emails.send({
