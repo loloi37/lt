@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email/sender';
 import { getSuccessorInvitationEmail } from '@/lib/email/templates';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -45,9 +45,8 @@ export async function POST(request: NextRequest) {
         const acceptLink = `${protocol}://${host}/succession/accept/${successor.verification_token}`;
 
         // 3. Send Email
-        await resend.emails.send({
-            from: 'Legacy Vault <onboarding@resend.dev>', // Update with verified domain in production
-            to: [successorEmail],
+        await sendEmail({
+            to: successorEmail,
             subject: `IMPORTANT: ${ownerName} has designated you as Archive Steward`,
             html: getSuccessorInvitationEmail(ownerName, successorName, acceptLink),
         });

@@ -1239,5 +1239,209 @@ AND tablename IN (
 
 
 -- ============================================================
--- DONE! Your Supabase project is fully configured.
+-- SECTION 22
 -- ============================================================
+
+ALTER TABLE witness_invitations
+ADD COLUMN IF NOT EXISTS plan TEXT
+  NOT NULL DEFAULT 'personal'
+  CHECK (plan IN ('personal', 'family'));
+
+
+-- After 
+
+ALTER TABLE memorial_contributions
+ADD COLUMN IF NOT EXISTS contributor_email TEXT,
+ADD COLUMN IF NOT EXISTS contributor_verified BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS verification_code TEXT,
+ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN DEFAULT FALSE;
+
+--After 
+
+CREATE TABLE IF NOT EXISTS user_memorial_roles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  memorial_id UUID NOT NULL REFERENCES memorials(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('owner', 'witness', 'co_guardian')),
+  invited_via_invitation_id UUID REFERENCES witness_invitations(id) ON DELETE SET NULL,
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  last_visited_at TIMESTAMPTZ,
+  CONSTRAINT unique_user_memorial UNIQUE (user_id, memorial_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_memorial_roles_user ON user_memorial_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_memorial_roles_memorial ON user_memorial_roles(memorial_id);
+CREATE INDEX IF NOT EXISTS idx_user_memorial_roles_role ON user_memorial_roles(memorial_id, role);
+
+-- After 
+
+ALTER TABLE user_memorial_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own roles"
+  ON user_memorial_roles FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Owners can view all roles for their memorials"
+  ON user_memorial_roles FOR SELECT
+  USING (
+    memorial_id IN (
+      SELECT id FROM memorials WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Service role full access"
+  ON user_memorial_roles FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- After 
+
+CREATE OR REPLACE FUNCTION link_anonymous_contributions()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE memorial_contributions
+  SET
+    user_id = NEW.id,
+    is_anonymous = FALSE
+  WHERE
+    contributor_email = NEW.email
+    AND is_anonymous = TRUE
+    AND contributor_verified = TRUE;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER tr_link_anonymous_contributions
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION link_anonymous_contributions();
+
+-- After 
+
+CREATE OR REPLACE FUNCTION accept_invitation(
+  p_invitation_id UUID,
+  p_user_id UUID
+)
+RETURNS JSONB AS $$
+DECLARE
+  v_invitation witness_invitations%ROWTYPE;
+  v_role_id UUID;
+BEGIN
+  SELECT * INTO v_invitation
+  FROM witness_invitations
+  WHERE id = p_invitation_id
+  FOR UPDATE;
+
+  IF v_invitation.id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'INVITATION_NOT_FOUND');
+  END IF;
+
+  IF v_invitation.status != 'pending' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'INVITATION_NOT_PENDING', 'status', v_invitation.status);
+  END IF;
+
+  IF v_invitation.expires_at < NOW() THEN
+    UPDATE witness_invitations SET status = 'expired' WHERE id = p_invitation_id;
+    RETURN jsonb_build_object('success', false, 'error', 'INVITATION_EXPIRED');
+  END IF;
+
+  UPDATE witness_invitations
+  SET status = 'accepted', accepted_by_user_id = p_user_id
+  WHERE id = p_invitation_id;
+
+  INSERT INTO user_memorial_roles (
+    user_id, memorial_id, role, invited_via_invitation_id, joined_at
+  ) VALUES (
+    p_user_id, v_invitation.memorial_id, v_invitation.role, p_invitation_id, NOW()
+  )
+  ON CONFLICT (user_id, memorial_id) DO NOTHING
+  RETURNING id INTO v_role_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'memorial_id', v_invitation.memorial_id,
+    'role', v_invitation.role,
+    'plan', v_invitation.plan
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- After 
+
+CREATE TABLE IF NOT EXISTS flow_events (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  event TEXT NOT NULL,
+  properties JSONB DEFAULT '{}',
+  session_id TEXT,
+  user_id UUID REFERENCES auth.users(id)
+    ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_flow_events_event
+  ON flow_events(event);
+CREATE INDEX idx_flow_events_created
+  ON flow_events(created_at);
+
+-- After
+
+DROP TRIGGER IF EXISTS tr_link_anonymous_contributions ON auth.users;
+DROP FUNCTION IF EXISTS link_anonymous_contributions();
+
+-- After 
+
+SELECT column_name 
+FROM information_schema.columns 
+WHERE table_name = 'memorials'
+ORDER BY column_name;
+
+-- After 
+
+-- Add the missing column to witness_invitations table
+ALTER TABLE witness_invitations 
+ADD COLUMN accepted_by_user_id UUID REFERENCES auth.users(id);
+
+-- Optional: Add an index for better query performance
+CREATE INDEX idx_witness_invitations_accepted_by_user_id 
+ON witness_invitations(accepted_by_user_id);
+
+-- After 
+
+SELECT * FROM memorial_contributions;
+
+-- After 
+
+DROP POLICY IF EXISTS "Owners can update contributions" ON memorial_contributions;
+
+CREATE POLICY "Owners can update contributions"
+ ON memorial_contributions FOR UPDATE
+ USING (
+   -- Only allow the owner of the memorial, OR the owner of the contribution
+   memorial_id IN (SELECT id FROM memorials WHERE user_id = auth.uid())
+ );
+
+-- After 
+
+-- 1. Remove the old, permissive policy
+DROP POLICY IF EXISTS "Owners can update contributions" ON memorial_contributions;
+
+-- 2. Create the strict policy
+CREATE POLICY "Only owners/co-guardians can update contributions"
+ ON memorial_contributions FOR UPDATE
+ USING (
+   -- Allow if the user owns the memorial
+   memorial_id IN (SELECT id FROM memorials WHERE user_id = auth.uid())
+   OR
+   -- OR allow if the user is a co-guardian for this memorial
+   memorial_id IN (
+     SELECT memorial_id 
+     FROM user_memorial_roles 
+     WHERE user_id = auth.uid() 
+     AND role = 'co_guardian'
+   )
+ );
+
+ -- ============================================================
+-- Done
+-- ============================================================
+

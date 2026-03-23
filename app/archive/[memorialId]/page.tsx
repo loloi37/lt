@@ -80,6 +80,10 @@ export default function ArchiveDashboard({
         myContributions, pendingCount
     } = data;
 
+    const canReview =
+        userRole === 'co_guardian' ||
+        userRole === 'owner';
+
     return (
         <div className="min-h-screen bg-ivory">
 
@@ -146,9 +150,7 @@ export default function ArchiveDashboard({
         px-6 py-10 space-y-8">
 
                 {/* Co-guardian alert banner */}
-                {(userRole === 'co_guardian' ||
-                    userRole === 'owner') &&
-                    pendingCount > 0 && (
+                {canReview && pendingCount > 0 && (
                         <div
                             onClick={() =>
                                 router.push(
@@ -239,23 +241,15 @@ export default function ArchiveDashboard({
                             />
                         )}
 
-                        {(userRole === 'co_guardian' ||
-                            userRole === 'owner') && (
-                                <QuickAction
-                                    icon={Shield}
-                                    label="Review queue"
-                                    badge={
-                                        pendingCount > 0
-                                            ? pendingCount
-                                            : undefined
-                                    }
-                                    onClick={() =>
-                                        router.push(
-                                            `/archive/${memorialId}/steward`
-                                        )
-                                    }
-                                />
-                            )}
+                        {/* Only show "Review Queue" if the user has permission */}
+                        {canReview && (
+                            <QuickAction
+                                icon={Shield}
+                                label="Review queue"
+                                badge={pendingCount > 0 ? pendingCount : undefined}
+                                onClick={() => router.push(`/archive/${memorialId}/steward`)}
+                            />
+                        )}
                     </div>
                 </section>
 

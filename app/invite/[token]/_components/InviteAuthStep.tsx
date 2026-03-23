@@ -64,31 +64,35 @@ export default function InviteAuthStep({
                     return;
                 }
                 if (password.length < 6) {
-                    setError(
-                        'Password must be at least 6 characters.'
-                    );
+                    setError('Password must be at least 6 characters.');
                     setLoading(false);
                     return;
                 }
 
-                const { error: signUpError } =
+                // ADDED: Destructure `data`
+                const { data, error: signUpError } =
                     await supabase.auth.signUp({
                         email: email.trim(),
                         password,
                         options: {
-                            data: { full_name: name.trim() }
+                            data: { full_name: name.trim() },
+                            // ADDED: Tell Supabase to send them right back to this invite page after verifying!
+                            emailRedirectTo: window.location.href,
                         }
                     });
 
                 if (signUpError) throw signUpError;
 
-                // If email confirmation is required,
-                // show a message instead of proceeding
-                // For now we assume auto-confirm is on
-                onSuccess();
+                // ADDED: Handle the email confirmation requirement gracefully
+                if (!data.session) {
+                    setError('Account created! Please check your email and click the confirmation link to join the archive.');
+                    setLoading(false);
+                    return;
+                }
 
+                onSuccess();
             } else {
-                // Login mode
+                // Login mode remains the same
                 const { error: signInError } =
                     await supabase.auth.signInWithPassword({
                         email: email.trim(),
@@ -99,17 +103,12 @@ export default function InviteAuthStep({
                 onSuccess();
             }
         } catch (err: any) {
-            // Make error messages human-readable
             const msg = err.message || '';
             if (msg.includes('already registered')) {
-                setError(
-                    'This email already has an account. Try logging in instead.'
-                );
+                setError('This email already has an account. Try logging in instead.');
                 setMode('login');
             } else if (msg.includes('Invalid login')) {
-                setError(
-                    'Incorrect email or password. Please try again.'
-                );
+                setError('Incorrect email or password. Please try again.');
             } else {
                 setError(msg);
             }

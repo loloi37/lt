@@ -2,6 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 // Initialize Admin Client
 const supabaseAdmin = createClient(
@@ -11,6 +12,26 @@ const supabaseAdmin = createClient(
 
 export async function GET() {
     try {
+        // --- Authentication Gate ---
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // --- Authorization Gate: must be owner or co_guardian of at least one memorial ---
+        const { data: roles } = await supabaseAdmin
+            .from('user_memorial_roles')
+            .select('role, memorial_id')
+            .eq('user_id', user.id)
+            .in('role', ['owner', 'co_guardian']);
+
+        if (!roles || roles.length === 0) {
+            return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+
+        // Scope results to only memorials the user has owner/co_guardian access to
+        const authorizedMemorialIds = roles.map((r: any) => r.memorial_id);
+
         const now = new Date();
         const ninetyDaysAgo = new Date(now.setDate(now.getDate() - 90)).toISOString();
 
@@ -19,6 +40,7 @@ export async function GET() {
         // 2. Draft status (not finished)
         // 3. Not updated in 90 days
         // 4. Not deleted
+        // 5. User has owner/co_guardian role on
         const { data: memorials, error } = await supabaseAdmin
             .from('memorials')
             .select(`
@@ -30,6 +52,7 @@ export async function GET() {
         user_id,
         users ( email, full_name )
       `)
+            .in('id', authorizedMemorialIds)
             .eq('status', 'draft')
             .eq('paid', true)
             .eq('deleted', false) // Exclude soft-deleted items
@@ -39,7 +62,7 @@ export async function GET() {
         if (error) throw error;
 
         // Calculate metrics for the report
-        const report = memorials.map((m: any) => {
+        const report = (memorials || []).map((m: any) => {
             const lastUpdate = new Date(m.updated_at);
             const today = new Date();
             const daysInactive = Math.floor((today.getTime() - lastUpdate.getTime()) / (1000 * 3600 * 24));

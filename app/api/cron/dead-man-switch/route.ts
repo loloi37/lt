@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { sendEmail } from '@/lib/email/sender';
 import { getProofOfLifeEmail, getSuccessorAlertEmail } from '@/lib/email/templates';
 
 // Initialize Admin Client (Service Role needed to scan all users)
@@ -11,7 +11,7 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 export async function GET(request: NextRequest) {
     // Security: Check for a secret CRON key to prevent unauthorized triggering
@@ -63,14 +63,13 @@ export async function GET(request: NextRequest) {
 
                 if (successor) {
                     // Send Alert to Successor
-                    await resend.emails.send({
-                        from: 'Legacy Vault <security@resend.dev>',
-                        to: [successor.successor_email],
+                    await sendEmail({
+                        to: successor.successor_email,
                         subject: `URGENT: Status Check for ${user.full_name || 'Account Owner'}`,
                         html: getSuccessorAlertEmail(
                             successor.successor_name,
                             user.full_name || 'the account owner',
-                            `${process.env.NEXT_PUBLIC_BASE_URL}/succession/request` // Direct them to request page
+                            `${process.env.NEXT_PUBLIC_BASE_URL}/succession/request`
                         )
                     });
                     results.alertsSent++;
@@ -84,13 +83,12 @@ export async function GET(request: NextRequest) {
 
                 if (daysSinceLastSend > 30) {
                     // Send Warning to User
-                    await resend.emails.send({
-                        from: 'Legacy Vault <security@resend.dev>',
-                        to: [user.email],
+                    await sendEmail({
+                        to: user.email,
                         subject: 'Legacy Vault: Annual Verification Required',
                         html: getProofOfLifeEmail(
                             user.full_name || 'Valued Member',
-                            `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?checkin=true` // Login link acts as check-in
+                            `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?checkin=true`
                         )
                     });
 
