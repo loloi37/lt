@@ -1444,11 +1444,42 @@ CREATE POLICY "Only owners/co-guardians can update contributions"
 -- ============================================================
 -- FIX: Identity, Authorization & Data Visibility Bugs
 -- ============================================================
+-- IMPORTANT: RLS policies on memorials and user_memorial_roles
+-- previously formed a circular dependency (each table's SELECT
+-- policy subqueried the other), causing PostgreSQL error 42P17:
+-- "infinite recursion detected in policy for relation memorials".
+--
+-- Solution: SECURITY DEFINER helper functions that bypass RLS,
+-- breaking the cycle while keeping the same access logic.
+-- ============================================================
+
+-- Helper: memorial IDs where the user has any role (bypasses user_memorial_roles RLS)
+CREATE OR REPLACE FUNCTION get_memorial_ids_for_user(p_user_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT memorial_id FROM user_memorial_roles WHERE user_id = p_user_id;
+$$;
+
+-- Helper: memorial IDs owned by the user (bypasses memorials RLS)
+CREATE OR REPLACE FUNCTION get_owned_memorial_ids(p_user_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT id FROM memorials WHERE user_id = p_user_id;
+$$;
+
+-- Helper: memorial IDs where the user is co-guardian (bypasses user_memorial_roles RLS)
+CREATE OR REPLACE FUNCTION get_co_guardian_memorial_ids(p_user_id UUID)
+RETURNS SETOF UUID
+LANGUAGE sql SECURITY DEFINER STABLE
+AS $$
+  SELECT memorial_id FROM user_memorial_roles
+  WHERE user_id = p_user_id AND role = 'co_guardian';
+$$;
 
 -- BUG 1 FIX: Owners and co-guardians can now see ALL contributions
 -- (including pending) for their memorials, not just approved ones.
--- Previously: USING (status = 'approved' OR user_id = auth.uid())
--- This blocked owners from seeing pending witness submissions.
 
 DROP POLICY IF EXISTS "Anyone can view approved contributions" ON memorial_contributions;
 
@@ -1457,18 +1488,13 @@ CREATE POLICY "Anyone can view approved contributions"
   USING (
     status = 'approved'
     OR user_id = auth.uid()
-    OR memorial_id IN (SELECT id FROM memorials WHERE user_id = auth.uid())
-    OR memorial_id IN (
-      SELECT memorial_id FROM user_memorial_roles
-      WHERE user_id = auth.uid() AND role = 'co_guardian'
-    )
+    OR memorial_id IN (SELECT get_owned_memorial_ids(auth.uid()))
+    OR memorial_id IN (SELECT get_co_guardian_memorial_ids(auth.uid()))
   );
 
 -- BUG 2 FIX: Co-guardians and witnesses can now see draft memorials.
--- Previously: USING (user_id = auth.uid() OR status = 'published')
--- This blocked anyone with a role in user_memorial_roles from seeing
--- draft memorials they were invited to.
 
+DROP POLICY IF EXISTS "Owners and role-holders can view memorials" ON memorials;
 DROP POLICY IF EXISTS "Owners can view own memorials" ON memorials;
 
 CREATE POLICY "Owners and role-holders can view memorials"
@@ -1476,37 +1502,41 @@ CREATE POLICY "Owners and role-holders can view memorials"
   USING (
     user_id = auth.uid()
     OR status = 'published'
-    OR id IN (
-      SELECT memorial_id FROM user_memorial_roles
-      WHERE user_id = auth.uid()
-    )
+    OR id IN (SELECT get_memorial_ids_for_user(auth.uid()))
   );
 
 -- BUG 3 FIX: Co-guardians can now update memorials.
--- Previously: USING (user_id = auth.uid())
--- Only the direct owner could update; co-guardians were blocked.
 
+DROP POLICY IF EXISTS "Owners and co-guardians can update memorials" ON memorials;
 DROP POLICY IF EXISTS "Owners can update own memorials" ON memorials;
 
 CREATE POLICY "Owners and co-guardians can update memorials"
   ON memorials FOR UPDATE
   USING (
     user_id = auth.uid()
-    OR id IN (
-      SELECT memorial_id FROM user_memorial_roles
-      WHERE user_id = auth.uid() AND role = 'co_guardian'
-    )
+    OR id IN (SELECT get_co_guardian_memorial_ids(auth.uid()))
+  );
+
+-- FIX the other side of the cycle: user_memorial_roles SELECT was
+-- subquerying memorials directly, now uses the helper function.
+
+DROP POLICY IF EXISTS "Owners can view all roles for their memorials" ON user_memorial_roles;
+
+CREATE POLICY "Owners can view all roles for their memorials"
+  ON user_memorial_roles FOR SELECT
+  USING (
+    memorial_id IN (SELECT get_owned_memorial_ids(auth.uid()))
   );
 
 -- BUG 4 FIX (part 1): Allow users to insert their own role row.
--- Needed so the autosave route can insert the owner role on creation.
+
+DROP POLICY IF EXISTS "Users can insert own role" ON user_memorial_roles;
 
 CREATE POLICY "Users can insert own role"
   ON user_memorial_roles FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
 -- BUG 4 FIX (part 2): Backfill existing memorials with owner roles.
--- Ensures all existing memorial owners have a row in user_memorial_roles.
 
 INSERT INTO user_memorial_roles (user_id, memorial_id, role, joined_at)
 SELECT user_id, id, 'owner', created_at
@@ -1515,7 +1545,6 @@ WHERE user_id IS NOT NULL
 ON CONFLICT (user_id, memorial_id) DO NOTHING;
 
 -- BUG 5 FIX: Enable realtime for contributions table.
--- Required for Supabase real-time subscriptions to fire on changes.
 
 ALTER PUBLICATION supabase_realtime ADD TABLE memorial_contributions;
 
