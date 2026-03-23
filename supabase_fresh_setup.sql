@@ -1545,8 +1545,15 @@ WHERE user_id IS NOT NULL
 ON CONFLICT (user_id, memorial_id) DO NOTHING;
 
 -- BUG 5 FIX: Enable realtime for contributions table.
+-- Wrapped in DO block to avoid error if already a member.
 
-ALTER PUBLICATION supabase_realtime ADD TABLE memorial_contributions;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE memorial_contributions;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END;
+$$;
 
 -- ============================================================
 -- Done
