@@ -223,7 +223,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-5 py-3 flex items-center gap-3 animate-fade-in-up">
                     <CheckCircle size={16} className="text-aurora-emerald flex-shrink-0" />
                     <div>
-                        <p className="text-sm text-white font-sans">Dead Man&apos;s Switch reset</p>
+                        <p className="text-sm text-aurora-text font-sans">Dead Man&apos;s Switch reset</p>
                         <p className="text-xs text-aurora-muted font-sans">Timer renewed for another year.</p>
                     </div>
                 </div>
@@ -235,7 +235,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             )}
 
             {/* Top bar */}
-            <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
+            <div className="max-w-5xl mx-auto px-6 pt-10 pb-6">
                 <Link
                     href="/choice-pricing"
                     className="inline-flex items-center gap-2 text-aurora-muted text-xs tracking-wide uppercase hover:text-aurora-text transition-colors font-sans"
@@ -245,7 +245,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 </Link>
             </div>
 
-            <div className="max-w-5xl mx-auto px-6 pb-20">
+            <div className="max-w-5xl mx-auto px-6 pb-24">
                 {loading ? (
                     <div className="text-center py-32">
                         <Loader2 size={32} className="text-aurora-glow/40 animate-spin mx-auto" />
@@ -265,7 +265,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         <div className="w-20 h-20 rounded-full bg-aurora-card border border-aurora-border flex items-center justify-center mx-auto mb-8">
                             <User size={32} className="text-aurora-muted/40" />
                         </div>
-                        <h2 className="font-serif text-4xl text-white mb-3">Begin your archive</h2>
+                        <h2 className="font-serif text-4xl text-aurora-text mb-3">Begin your archive</h2>
                         <p className="text-aurora-muted text-sm mb-10 max-w-sm mx-auto leading-relaxed font-sans">
                             Preserve your life story, memories, and legacy in a permanent digital archive.
                         </p>
@@ -294,7 +294,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     className="glass-card px-5 py-4 flex items-center justify-between"
                                 >
                                     <div>
-                                        <p className="text-sm text-white font-sans">{m.full_name || 'Untitled'}</p>
+                                        <p className="text-sm text-aurora-text font-sans">{m.full_name || 'Untitled'}</p>
                                         <p className="text-xs text-red-400/70 mt-0.5 flex items-center gap-1 font-sans">
                                             <AlertTriangle size={11} />
                                             {getDaysRemaining(m.deleted_at!)} days remaining
@@ -303,7 +303,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => restore(m.id)}
-                                            className="p-2 text-aurora-muted hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                                            className="p-2 text-aurora-muted hover:text-aurora-text rounded-lg hover:bg-white/5 transition-colors"
                                             title="Restore"
                                         >
                                             <RefreshCcw size={15} />
@@ -383,7 +383,7 @@ function ActiveArchiveView({
     const totalContent = stats.photos + stats.videos + stats.memories + stats.chapters;
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-14">
 
             {/* ── Hero ── */}
             <div className="glass-card-hero">
@@ -402,15 +402,15 @@ function ActiveArchiveView({
                             </div>
                         )}
                         {/* Subtle gradient overlay at bottom of photo on mobile */}
-                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0e0e13] to-transparent md:hidden" />
+                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#171c28] to-transparent md:hidden" />
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 p-8 md:p-10 flex flex-col justify-between min-h-[280px]">
+                    <div className="flex-1 p-10 md:p-14 flex flex-col justify-between min-h-[320px]">
                         <div>
                             <div className="flex items-start justify-between gap-6 mb-4">
                                 <div>
-                                    <h1 className="font-serif text-4xl md:text-5xl text-white leading-[1.1] tracking-tight">
+                                    <h1 className="font-serif text-4xl md:text-5xl text-aurora-text leading-[1.1] tracking-tight">
                                         {archive.full_name || 'Unnamed Archive'}
                                     </h1>
                                     {dates && (
@@ -484,7 +484,7 @@ function ActiveArchiveView({
             </div>
 
             {/* ── Inline stats ── */}
-            <div className="grid grid-cols-4 gap-px bg-white/[0.04] rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-4 gap-px bg-white/[0.04] rounded-[20px] overflow-hidden">
                 <InlineStat icon={Image} count={stats.photos} label="Photos" />
                 <InlineStat icon={Video} count={stats.videos} label="Videos" />
                 <InlineStat icon={Heart} count={stats.memories} label="Memories" />
@@ -492,7 +492,7 @@ function ActiveArchiveView({
             </div>
 
             {/* ── Quick actions row ── */}
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-3">
                 <QuickAction
                     href={`/create?id=${archive.id}&mode=personal&step=7`}
                     icon={Plus}
@@ -517,10 +517,10 @@ function ActiveArchiveView({
             </div>
 
             {/* ── Two-column section ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                 {/* Preservation & Succession */}
-                <div className="space-y-6">
+                <div className="space-y-8">
                     <div className="aurora-override-children">
                         <PreservationStatus
                             memorialId={archive.id}
@@ -537,7 +537,7 @@ function ActiveArchiveView({
                 </div>
 
                 {/* Share + Status */}
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {/* Share */}
                     <div className="glass-card p-7">
                         <h3 className="text-[11px] uppercase tracking-[0.15em] text-aurora-muted/50 mb-5 font-sans font-medium">
@@ -620,8 +620,8 @@ function ActiveArchiveView({
 
 function InlineStat({ icon: Icon, count, label }: { icon: any; count: number; label: string }) {
     return (
-        <div className="bg-aurora-surface py-5 px-4 text-center group hover:bg-aurora-card transition-colors">
-            <div className="font-serif text-3xl text-white leading-none mb-1.5 group-hover:text-aurora-glow transition-colors">
+        <div className="bg-aurora-surface py-7 px-5 text-center group hover:bg-aurora-card transition-colors">
+            <div className="font-serif text-3xl text-aurora-text leading-none mb-1.5 group-hover:text-aurora-glow transition-colors">
                 {count}
             </div>
             <div className="text-[10px] text-aurora-muted/50 font-sans uppercase tracking-widest">{label}</div>
