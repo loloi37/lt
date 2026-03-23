@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
     AlertTriangle, CheckCircle, Share2, Image, Video, BookOpen, Heart,
-    Unlock, Clock, Shield,
+    Clock, Shield,
     Archive, Download, Users, Copy, Mail, QrCode, Camera, FileText,
     ChevronRight, ExternalLink
 } from 'lucide-react';
@@ -209,28 +209,28 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         return (
             <div className="aurora-bg min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 size={32} className="text-aurora-glow/50 animate-spin mx-auto mb-4" />
-                    <p className="text-aurora-muted text-xs tracking-widest uppercase font-sans">Verifying access</p>
+                    <Loader2 size={28} className="text-aurora-muted/50 animate-spin mx-auto mb-4" />
+                    <p className="text-aurora-muted text-xs tracking-[0.2em] uppercase font-serif italic">Verifying access</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="aurora-bg text-aurora-text font-sans min-h-screen">
+        <div className="aurora-bg text-aurora-text font-serif min-h-screen">
             {/* Toast notifications */}
             {showCheckinSuccess && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-5 py-3 flex items-center gap-3 animate-fade-in-up">
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-6 py-4 flex items-center gap-3 animate-fade-in-up">
                     <CheckCircle size={16} className="text-aurora-emerald flex-shrink-0" />
                     <div>
-                        <p className="text-sm text-aurora-text font-sans">Dead Man&apos;s Switch reset</p>
-                        <p className="text-xs text-aurora-muted font-sans">Timer renewed for another year.</p>
+                        <p className="text-sm text-aurora-text font-serif">Dead Man&apos;s Switch reset</p>
+                        <p className="text-xs text-aurora-muted font-serif italic">Timer renewed for another year.</p>
                     </div>
                 </div>
             )}
             {showWelcome && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-5 py-3 animate-fade-in-up">
-                    <p className="text-sm text-aurora-muted font-serif italic">When you are ready, everything is here.</p>
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-6 py-4 animate-fade-in-up">
+                    <p className="text-lg text-aurora-script font-script">When you are ready, everything is here.</p>
                 </div>
             )}
 
@@ -238,7 +238,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             <div className="max-w-5xl mx-auto px-6 pt-10 pb-6">
                 <Link
                     href="/choice-pricing"
-                    className="inline-flex items-center gap-2 text-aurora-muted text-xs tracking-wide uppercase hover:text-aurora-text transition-colors font-sans"
+                    className="inline-flex items-center gap-2 text-aurora-muted text-xs tracking-[0.15em] uppercase hover:text-aurora-text transition-colors font-serif italic"
                 >
                     <ArrowLeft size={14} />
                     Back
@@ -248,7 +248,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             <div className="max-w-5xl mx-auto px-6 pb-24">
                 {loading ? (
                     <div className="text-center py-32">
-                        <Loader2 size={32} className="text-aurora-glow/40 animate-spin mx-auto" />
+                        <Loader2 size={28} className="text-aurora-muted/40 animate-spin mx-auto" />
                     </div>
                 ) : activeArchive ? (
                     <ActiveArchiveView
@@ -262,16 +262,16 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 ) : (
                     /* Empty state */
                     <div className="text-center py-32">
-                        <div className="w-20 h-20 rounded-full bg-aurora-card border border-aurora-border flex items-center justify-center mx-auto mb-8">
+                        <div className="w-20 h-20 rounded-full bg-aurora-surface border border-aurora-border flex items-center justify-center mx-auto mb-8">
                             <User size={32} className="text-aurora-muted/40" />
                         </div>
-                        <h2 className="font-serif text-4xl text-aurora-text mb-3">Begin your archive</h2>
-                        <p className="text-aurora-muted text-sm mb-10 max-w-sm mx-auto leading-relaxed font-sans">
-                            Preserve your life story, memories, and legacy in a permanent digital archive.
+                        <h2 className="font-serif text-5xl text-aurora-text mb-4">Begin your archive</h2>
+                        <p className="font-script text-2xl text-aurora-script mb-10">
+                            A place to preserve what matters most
                         </p>
                         <button
                             onClick={handleCreate}
-                            className="inline-flex items-center gap-2 px-8 py-3.5 bg-aurora-glow text-aurora-deep rounded-xl text-sm font-semibold font-sans hover:bg-aurora-accent transition-colors"
+                            className="inline-flex items-center gap-2 px-8 py-3.5 bg-aurora-accent text-white rounded-xl text-sm font-serif tracking-wide hover:bg-aurora-glow transition-colors"
                         >
                             <Plus size={16} />
                             Create archive
@@ -283,7 +283,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 {deletedArchives.length > 0 && (
                     <div className="mt-20">
                         <div className="separator-warm mb-10" />
-                        <h3 className="text-xs uppercase tracking-widest text-aurora-muted/50 mb-6 font-sans flex items-center gap-2">
+                        <h3 className="text-xs uppercase tracking-[0.2em] text-aurora-muted/60 mb-6 font-serif italic flex items-center gap-2">
                             <Archive size={13} />
                             Removed Archives
                         </h3>
@@ -294,8 +294,8 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     className="glass-card px-5 py-4 flex items-center justify-between"
                                 >
                                     <div>
-                                        <p className="text-sm text-aurora-text font-sans">{m.full_name || 'Untitled'}</p>
-                                        <p className="text-xs text-red-400/70 mt-0.5 flex items-center gap-1 font-sans">
+                                        <p className="text-sm text-aurora-text font-serif">{m.full_name || 'Untitled'}</p>
+                                        <p className="text-xs text-red-600/60 mt-0.5 flex items-center gap-1 font-serif italic">
                                             <AlertTriangle size={11} />
                                             {getDaysRemaining(m.deleted_at!)} days remaining
                                         </p>
@@ -303,14 +303,14 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => restore(m.id)}
-                                            className="p-2 text-aurora-muted hover:text-aurora-text rounded-lg hover:bg-white/5 transition-colors"
+                                            className="p-2 text-aurora-muted hover:text-aurora-text rounded-lg hover:bg-aurora-border/30 transition-colors"
                                             title="Restore"
                                         >
                                             <RefreshCcw size={15} />
                                         </button>
                                         <button
                                             onClick={() => permanentDelete(m.id)}
-                                            className="p-2 text-red-400/50 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                                            className="p-2 text-red-400/50 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                                             title="Delete permanently"
                                         >
                                             <Trash2 size={15} />
@@ -327,7 +327,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-/*  Active Archive — the main content                              */
+/*  Active Archive                                                  */
 /* ─────────────────────────────────────────────────────────────── */
 
 function ActiveArchiveView({
@@ -354,7 +354,7 @@ function ActiveArchiveView({
         ? deathYear ? `${birthYear} — ${deathYear}` : `b. ${birthYear}`
         : null;
     const sealedDate = paymentConfirmedAt
-        ? new Date(paymentConfirmedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        ? new Date(paymentConfirmedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : null;
 
     const arweaveTxId = (archive as any).arweave_tx_id || null;
@@ -389,7 +389,7 @@ function ActiveArchiveView({
             <div className="glass-card-hero">
                 <div className="flex flex-col md:flex-row">
                     {/* Photo */}
-                    <div className="md:w-72 lg:w-80 h-64 md:h-auto bg-aurora-card flex-shrink-0 relative">
+                    <div className="md:w-72 lg:w-80 h-64 md:h-auto bg-aurora-surface flex-shrink-0 relative">
                         {archive.profile_photo_url ? (
                             <img
                                 src={archive.profile_photo_url}
@@ -397,33 +397,32 @@ function ActiveArchiveView({
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-aurora-card to-aurora-deep">
+                            <div className="w-full h-full flex items-center justify-center bg-aurora-surface">
                                 <User size={48} className="text-aurora-muted/20" />
                             </div>
                         )}
-                        {/* Subtle gradient overlay at bottom of photo on mobile */}
-                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#171c28] to-transparent md:hidden" />
+                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent md:hidden" />
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 p-10 md:p-14 flex flex-col justify-between min-h-[320px]">
                         <div>
-                            <div className="flex items-start justify-between gap-6 mb-4">
+                            <div className="flex items-start justify-between gap-6 mb-2">
                                 <div>
                                     <h1 className="font-serif text-4xl md:text-5xl text-aurora-text leading-[1.1] tracking-tight">
                                         {archive.full_name || 'Unnamed Archive'}
                                     </h1>
                                     {dates && (
-                                        <p className="text-aurora-muted text-sm font-sans mt-2 tracking-wide">{dates}</p>
+                                        <p className="text-aurora-muted text-base font-serif italic mt-3 tracking-wide">{dates}</p>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0 mt-1">
-                                    <span className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-aurora-emerald/10 text-aurora-emerald border border-aurora-emerald/20 font-medium font-sans">
+                                <div className="flex items-center gap-2 flex-shrink-0 mt-2">
+                                    <span className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-aurora-emerald/10 text-aurora-emerald border border-aurora-emerald/20 font-serif italic">
                                         <span className="w-1.5 h-1.5 rounded-full bg-aurora-emerald badge-live" />
                                         Live
                                     </span>
                                     {isPreserved && (
-                                        <span className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-aurora-glow/8 text-aurora-glow border border-aurora-glow/15 font-medium font-sans badge-glow">
+                                        <span className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-aurora-glow/10 text-aurora-glow border border-aurora-glow/20 font-serif italic badge-glow">
                                             <Shield size={11} />
                                             Preserved
                                         </span>
@@ -431,12 +430,17 @@ function ActiveArchiveView({
                                 </div>
                             </div>
 
-                            {/* Meta line */}
-                            <div className="flex items-center gap-4 text-[11px] text-aurora-muted/60 font-sans mt-1">
+                            {/* Script accent line */}
+                            <p className="font-script text-xl text-aurora-script mt-4">
+                                Permanently preserved
+                            </p>
+
+                            {/* Meta */}
+                            <div className="flex items-center gap-4 text-[11px] text-aurora-muted/60 font-serif italic mt-3">
                                 {sealedDate && (
                                     <span className="flex items-center gap-1">
                                         <Clock size={11} />
-                                        Created {sealedDate}
+                                        {sealedDate}
                                     </span>
                                 )}
                                 <span className="flex items-center gap-1">
@@ -447,24 +451,24 @@ function ActiveArchiveView({
                         </div>
 
                         {/* Actions */}
-                        <div className="flex flex-wrap items-center gap-2.5 mt-8">
+                        <div className="flex flex-wrap items-center gap-2.5 mt-10">
                             <Link
                                 href={`/person/${archive.id}`}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-aurora-glow text-aurora-deep rounded-lg text-sm font-semibold font-sans hover:bg-aurora-accent transition-colors"
+                                className="flex items-center gap-2 px-6 py-2.5 bg-aurora-accent text-white rounded-lg text-sm font-serif tracking-wide hover:bg-aurora-glow transition-colors"
                             >
                                 <Eye size={14} />
                                 View
                             </Link>
                             <Link
                                 href={`/create?id=${archive.id}&mode=personal`}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] text-aurora-text rounded-lg text-sm font-medium font-sans hover:bg-white/[0.07] transition-colors"
+                                className="flex items-center gap-2 px-6 py-2.5 border border-aurora-border text-aurora-text rounded-lg text-sm font-serif italic hover:bg-aurora-surface transition-colors"
                             >
                                 <Edit size={14} />
                                 Edit
                             </Link>
                             <button
                                 onClick={() => onCopyLink(archive.id)}
-                                className="flex items-center gap-2 px-5 py-2.5 bg-white/[0.04] border border-white/[0.08] text-aurora-text rounded-lg text-sm font-medium font-sans hover:bg-white/[0.07] transition-colors"
+                                className="flex items-center gap-2 px-6 py-2.5 border border-aurora-border text-aurora-text rounded-lg text-sm font-serif italic hover:bg-aurora-surface transition-colors"
                             >
                                 <Share2 size={14} />
                                 {copied ? 'Copied!' : 'Share'}
@@ -472,7 +476,7 @@ function ActiveArchiveView({
                             {!isPreserved && (
                                 <button
                                     onClick={() => onDelete(archive.id)}
-                                    className="ml-auto p-2.5 text-aurora-muted/40 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
+                                    className="ml-auto p-2.5 text-aurora-muted/40 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                                     title="Remove archive"
                                 >
                                     <Trash2 size={14} />
@@ -484,7 +488,7 @@ function ActiveArchiveView({
             </div>
 
             {/* ── Inline stats ── */}
-            <div className="grid grid-cols-4 gap-px bg-white/[0.04] rounded-[20px] overflow-hidden">
+            <div className="grid grid-cols-4 gap-px bg-aurora-border/30 rounded-[20px] overflow-hidden">
                 <InlineStat icon={Image} count={stats.photos} label="Photos" />
                 <InlineStat icon={Video} count={stats.videos} label="Videos" />
                 <InlineStat icon={Heart} count={stats.memories} label="Memories" />
@@ -521,29 +525,25 @@ function ActiveArchiveView({
 
                 {/* Preservation & Succession */}
                 <div className="space-y-8">
-                    <div className="aurora-override-children">
-                        <PreservationStatus
-                            memorialId={archive.id}
-                            arweaveTxId={arweaveTxId}
-                            fullName={archive.full_name || ''}
-                            birthDate={archive.birth_date || ''}
-                            deathDate={archive.death_date || null}
-                            planType="personal"
-                        />
-                    </div>
-                    <div className="aurora-override-children">
-                        <SuccessionSetup memorialId={archive.id} />
-                    </div>
+                    <PreservationStatus
+                        memorialId={archive.id}
+                        arweaveTxId={arweaveTxId}
+                        fullName={archive.full_name || ''}
+                        birthDate={archive.birth_date || ''}
+                        deathDate={archive.death_date || null}
+                        planType="personal"
+                    />
+                    <SuccessionSetup memorialId={archive.id} />
                 </div>
 
                 {/* Share + Status */}
                 <div className="space-y-8">
                     {/* Share */}
-                    <div className="glass-card p-7">
-                        <h3 className="text-[11px] uppercase tracking-[0.15em] text-aurora-muted/50 mb-5 font-sans font-medium">
-                            Share
+                    <div className="glass-card p-8">
+                        <h3 className="font-script text-xl text-aurora-script mb-6">
+                            Share with loved ones
                         </h3>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                             <ShareButton
                                 onClick={handleCopyLink}
                                 icon={Copy}
@@ -566,8 +566,8 @@ function ActiveArchiveView({
                     </div>
 
                     {/* Archive status */}
-                    <div className="glass-card p-7">
-                        <h3 className="text-[11px] uppercase tracking-[0.15em] text-aurora-muted/50 mb-5 font-sans font-medium">
+                    <div className="glass-card p-8">
+                        <h3 className="text-xs uppercase tracking-[0.2em] text-aurora-muted/60 mb-5 font-serif italic">
                             Archive Status
                         </h3>
                         <div className="space-y-4">
@@ -589,17 +589,17 @@ function ActiveArchiveView({
                                 action={
                                     <Link
                                         href="/succession/request"
-                                        className="text-[11px] text-aurora-glow hover:text-aurora-accent transition-colors font-sans"
+                                        className="text-[11px] text-aurora-glow hover:text-aurora-accent transition-colors font-serif italic underline underline-offset-2"
                                     >
                                         Set up
                                     </Link>
                                 }
                             />
-                            <div className="pt-2 border-t border-white/[0.04]">
+                            <div className="pt-3 border-t border-aurora-border/40">
                                 <Link
                                     href={`/api/arche/generate?id=${archive.id}`}
                                     target="_blank"
-                                    className="flex items-center gap-2 text-xs text-aurora-muted hover:text-aurora-text transition-colors font-sans py-1"
+                                    className="flex items-center gap-2 text-xs text-aurora-muted hover:text-aurora-text transition-colors font-serif italic py-1"
                                 >
                                     <Download size={13} />
                                     Download portable archive
@@ -620,11 +620,11 @@ function ActiveArchiveView({
 
 function InlineStat({ icon: Icon, count, label }: { icon: any; count: number; label: string }) {
     return (
-        <div className="bg-aurora-surface py-7 px-5 text-center group hover:bg-aurora-card transition-colors">
+        <div className="bg-white py-7 px-5 text-center group hover:bg-aurora-surface transition-colors">
             <div className="font-serif text-3xl text-aurora-text leading-none mb-1.5 group-hover:text-aurora-glow transition-colors">
                 {count}
             </div>
-            <div className="text-[10px] text-aurora-muted/50 font-sans uppercase tracking-widest">{label}</div>
+            <div className="text-[10px] text-aurora-muted/60 font-serif italic uppercase tracking-[0.2em]">{label}</div>
         </div>
     );
 }
@@ -633,10 +633,10 @@ function QuickAction({ href, icon: Icon, label, accent }: { href: string; icon: 
     return (
         <Link
             href={href}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium font-sans transition-all ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-serif italic transition-all ${
                 accent
-                    ? 'bg-aurora-glow/10 text-aurora-glow border border-aurora-glow/15 hover:bg-aurora-glow/20'
-                    : 'bg-white/[0.03] text-aurora-text/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-aurora-text'
+                    ? 'bg-aurora-accent/10 text-aurora-accent border border-aurora-accent/20 hover:bg-aurora-accent/20'
+                    : 'bg-white text-aurora-text/70 border border-aurora-border hover:bg-aurora-surface hover:text-aurora-text'
             }`}
         >
             <Icon size={14} />
@@ -659,14 +659,14 @@ function ShareButton({
     return (
         <button
             onClick={onClick}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/[0.04] transition-colors text-left group"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-aurora-surface transition-colors text-left group"
         >
-            <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0 group-hover:bg-white/[0.08] transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-aurora-surface flex items-center justify-center flex-shrink-0 group-hover:bg-aurora-border/30 transition-colors">
                 <Icon size={14} className="text-aurora-muted" />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-sm text-aurora-text font-sans">{label}</p>
-                <p className="text-[11px] text-aurora-muted/50 font-sans">{sublabel}</p>
+                <p className="text-sm text-aurora-text font-serif">{label}</p>
+                <p className="text-[11px] text-aurora-muted/50 font-serif italic">{sublabel}</p>
             </div>
             <ChevronRight size={14} className="text-aurora-muted/30 group-hover:text-aurora-muted/60 transition-colors" />
         </button>
@@ -684,9 +684,9 @@ function StatusRow({
 }) {
     return (
         <div className="flex items-center justify-between gap-4">
-            <span className="text-xs text-aurora-muted/50 font-sans">{label}</span>
+            <span className="text-xs text-aurora-muted/60 font-serif italic">{label}</span>
             <div className="flex items-center gap-2">
-                <span className="text-xs text-aurora-text/80 font-sans">{value}</span>
+                <span className="text-xs text-aurora-text/80 font-serif">{value}</span>
                 {action}
             </div>
         </div>

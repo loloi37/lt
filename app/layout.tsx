@@ -22,11 +22,12 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Pinyon+Script&display=swap" rel="stylesheet" />
         <style>{`
           :root {
             --font-inter: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             --font-cormorant: 'Bodoni Moda', Georgia, Cambria, 'Times New Roman', Times, serif;
+            --font-script: 'Pinyon Script', 'Snell Roundhand', cursive;
           }
         `}</style>
       </head>
