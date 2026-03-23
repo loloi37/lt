@@ -3,9 +3,9 @@ import { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
 import {
     Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
-    AlertTriangle, CheckCircle, Share2, Image, Video, BookOpen, Heart,
+    AlertTriangle, CheckCircle, Share2,
     Clock, Shield,
-    Archive, Download, Users, Copy, Mail, QrCode, Camera, FileText,
+    Archive, Download, Copy, Mail, QrCode, Camera, FileText,
     ChevronRight, ExternalLink
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -230,7 +230,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
             )}
             {showWelcome && (
                 <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 glass-card px-6 py-4 animate-fade-in-up">
-                    <p className="text-lg text-aurora-script font-script">When you are ready, everything is here.</p>
+                    <p className="text-base text-aurora-muted font-serif italic">When you are ready, everything is here.</p>
                 </div>
             )}
 
@@ -266,7 +266,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                             <User size={32} className="text-aurora-muted/40" />
                         </div>
                         <h2 className="font-serif text-5xl text-aurora-text mb-4">Begin your archive</h2>
-                        <p className="font-script text-2xl text-aurora-script mb-10">
+                        <p className="font-serif italic text-lg text-aurora-muted mb-10">
                             A place to preserve what matters most
                         </p>
                         <button
@@ -430,11 +430,6 @@ function ActiveArchiveView({
                                 </div>
                             </div>
 
-                            {/* Script accent line */}
-                            <p className="font-script text-xl text-aurora-script mt-4">
-                                Permanently preserved
-                            </p>
-
                             {/* Meta */}
                             <div className="flex items-center gap-4 text-[11px] text-aurora-muted/60 font-serif italic mt-3">
                                 {sealedDate && (
@@ -487,14 +482,6 @@ function ActiveArchiveView({
                 </div>
             </div>
 
-            {/* ── Inline stats ── */}
-            <div className="grid grid-cols-4 gap-px bg-aurora-border/30 rounded-[20px] overflow-hidden">
-                <InlineStat icon={Image} count={stats.photos} label="Photos" />
-                <InlineStat icon={Video} count={stats.videos} label="Videos" />
-                <InlineStat icon={Heart} count={stats.memories} label="Memories" />
-                <InlineStat icon={BookOpen} count={stats.chapters} label="Chapters" />
-            </div>
-
             {/* ── Quick actions row ── */}
             <div className="flex flex-wrap gap-3">
                 <QuickAction
@@ -540,7 +527,7 @@ function ActiveArchiveView({
                 <div className="space-y-8">
                     {/* Share */}
                     <div className="glass-card p-8">
-                        <h3 className="font-script text-xl text-aurora-script mb-6">
+                        <h3 className="font-serif italic text-lg text-aurora-glow mb-6">
                             Share with loved ones
                         </h3>
                         <div className="space-y-1">
@@ -617,17 +604,6 @@ function ActiveArchiveView({
 /* ─────────────────────────────────────────────────────────────── */
 /*  Small components                                               */
 /* ─────────────────────────────────────────────────────────────── */
-
-function InlineStat({ icon: Icon, count, label }: { icon: any; count: number; label: string }) {
-    return (
-        <div className="bg-white py-7 px-5 text-center group hover:bg-aurora-surface transition-colors">
-            <div className="font-serif text-3xl text-aurora-text leading-none mb-1.5 group-hover:text-aurora-glow transition-colors">
-                {count}
-            </div>
-            <div className="text-[10px] text-aurora-muted/60 font-serif italic uppercase tracking-[0.2em]">{label}</div>
-        </div>
-    );
-}
 
 function QuickAction({ href, icon: Icon, label, accent }: { href: string; icon: any; label: string; accent?: boolean }) {
     return (

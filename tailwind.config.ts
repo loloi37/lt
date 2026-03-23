@@ -43,12 +43,10 @@ const config: Config = {
         'aurora-muted': '#9a9084',
         'aurora-emerald': '#6b8f7a',
         'aurora-lavender': '#a8a0c0',
-        'aurora-script': '#8a7560',
       },
       fontFamily: {
         sans: ['var(--font-inter)'],
         serif: ['var(--font-cormorant)'],
-        script: ['var(--font-script)'],
       },
       animation: {
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
