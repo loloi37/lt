@@ -373,33 +373,35 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Aurora glassmorphic dashboard ── */
+/* ── Vault dashboard — warm dark luxury ── */
 .aurora-bg {
   position: relative;
-  background: linear-gradient(135deg, #0F056B 0%, #07023d 100%);
+  background: #08080c;
   min-height: 100vh;
   overflow-x: hidden;
 }
 
+/* Subtle warm ambient light */
 .aurora-bg::before {
   content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(ellipse at 20% 50%, rgba(124, 111, 247, 0.2) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 20%, rgba(52, 211, 153, 0.12) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(210, 208, 255, 0.08) 0%, transparent 50%);
-  animation: auroraDrift 15s ease-in-out infinite alternate;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(201, 168, 76, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 100%, rgba(109, 184, 143, 0.04) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
 }
 
-@keyframes auroraDrift {
-  0% { transform: translateX(-20%) translateY(-10%) rotate(0deg); }
-  100% { transform: translateX(-10%) translateY(-5%) rotate(5deg); }
+/* Film grain texture overlay */
+.aurora-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
 }
 
 .aurora-bg > * {
@@ -407,54 +409,63 @@
   z-index: 1;
 }
 
+/* ── Card system ── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 1.5rem;
+  background: #111116;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
 }
 
-.glass-card-premium {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 2.5rem;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 20px 50px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+.glass-card-hero {
+  background: #0e0e13;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 20px 60px rgba(0, 0, 0, 0.5);
+  transition: box-shadow 0.4s ease;
+  overflow: hidden;
 }
 
-.glass-card-premium:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 30px 60px rgba(0, 0, 0, 0.4), 0 0 20px rgba(210, 208, 255, 0.08);
+.glass-card-hero:hover {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 30px 80px rgba(0, 0, 0, 0.6);
 }
 
-.aurora-live-pulse {
-  animation: pulseSecure 2s ease-in-out infinite;
+/* ── Status badges ── */
+.badge-live {
+  animation: liveDot 3s ease-in-out infinite;
 }
 
-@keyframes pulseSecure {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+@keyframes liveDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
-/* Override child component styles for aurora dark theme */
+.badge-glow {
+  animation: glowWarm 3s ease-in-out infinite;
+}
+
+@keyframes glowWarm {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(201, 168, 76, 0); }
+}
+
+/* ── Separator line with warm gradient ── */
+.separator-warm {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 168, 76, 0.15), transparent);
+}
+
+/* ── Override child component styles for dark theme ── */
 .aurora-override-children > div {
-  background: rgba(255, 255, 255, 0.04) !important;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.10) !important;
-  border-radius: 1.5rem !important;
-  color: #e8e6ff !important;
+  background: #111116 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px !important;
+  color: #e8e5df !important;
 }
 
 .aurora-override-children h3 {
@@ -462,85 +473,85 @@
 }
 
 .aurora-override-children .text-charcoal {
-  color: #e8e6ff !important;
+  color: #e8e5df !important;
 }
 
 .aurora-override-children [class*="text-charcoal/"] {
-  color: rgba(210, 208, 255, 0.5) !important;
+  color: rgba(232, 229, 223, 0.45) !important;
 }
 
 .aurora-override-children .bg-white {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: #18181f !important;
 }
 
 .aurora-override-children [class*="border-sand"] {
-  border-color: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .aurora-override-children .text-mist {
-  color: #34d399 !important;
+  color: #6db88f !important;
 }
 
 .aurora-override-children [class*="bg-mist"] {
-  background: rgba(52, 211, 153, 0.1) !important;
+  background: rgba(109, 184, 143, 0.08) !important;
 }
 
 .aurora-override-children .text-emerald-600 {
-  color: #34d399 !important;
+  color: #6db88f !important;
 }
 
 .aurora-override-children [class*="bg-emerald"] {
-  background: rgba(52, 211, 153, 0.1) !important;
+  background: rgba(109, 184, 143, 0.08) !important;
 }
 
 .aurora-override-children .text-green-600 {
-  color: #34d399 !important;
+  color: #6db88f !important;
 }
 
 .aurora-override-children [class*="bg-green-500"] {
-  background: rgba(52, 211, 153, 0.1) !important;
+  background: rgba(109, 184, 143, 0.08) !important;
 }
 
 .aurora-override-children [class*="bg-charcoal"] {
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 .aurora-override-children .text-amber-600,
 .aurora-override-children .text-amber-700 {
-  color: #fbbf24 !important;
+  color: #c9a84c !important;
 }
 
 .aurora-override-children [class*="bg-amber"] {
-  background: rgba(245, 158, 11, 0.08) !important;
-  border-color: rgba(245, 158, 11, 0.15) !important;
+  background: rgba(201, 168, 76, 0.06) !important;
+  border-color: rgba(201, 168, 76, 0.12) !important;
 }
 
 .aurora-override-children input {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.10) !important;
-  color: #e8e6ff !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e8e5df !important;
 }
 
 .aurora-override-children input::placeholder {
-  color: rgba(210, 208, 255, 0.35) !important;
+  color: rgba(232, 229, 223, 0.25) !important;
 }
 
 .aurora-override-children input:focus {
-  border-color: rgba(210, 208, 255, 0.3) !important;
-  box-shadow: 0 0 0 2px rgba(210, 208, 255, 0.1) !important;
+  border-color: rgba(201, 168, 76, 0.25) !important;
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.08) !important;
 }
 
 .aurora-override-children code {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(210, 208, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: rgba(232, 229, 223, 0.6) !important;
 }
 
 .aurora-override-children a {
-  color: #34d399 !important;
+  color: #c9a84c !important;
 }
 
 .aurora-override-children button {
-  color: #e8e6ff !important;
+  color: #e8e5df !important;
 }
 
 .aurora-override-children button:disabled {
@@ -548,11 +559,11 @@
 }
 
 .aurora-override-children .bg-emerald-600 {
-  background: rgba(52, 211, 153, 0.8) !important;
+  background: rgba(109, 184, 143, 0.7) !important;
 }
 
 .aurora-override-children .bg-emerald-600:hover {
-  background: rgba(52, 211, 153, 0.9) !important;
+  background: rgba(109, 184, 143, 0.85) !important;
 }
 
 /* Preservation status glow */

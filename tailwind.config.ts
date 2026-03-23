@@ -32,12 +32,16 @@ const config: Config = {
         'vault-border': '#2a2d35',
         'vault-text': '#c8ccd4',
         'vault-muted': '#6b7280',
-        // Aurora glassmorphic palette
-        'aurora-deep': '#0F056B',
-        'aurora-glow': '#d2d0ff',
-        'aurora-accent': '#7c6ff7',
-        'aurora-text': '#e8e6ff',
-        'aurora-emerald': '#34d399',
+        // Aurora refined palette
+        'aurora-deep': '#08080c',
+        'aurora-surface': '#111116',
+        'aurora-card': '#18181f',
+        'aurora-border': '#252530',
+        'aurora-glow': '#c9a84c',
+        'aurora-accent': '#d4a574',
+        'aurora-text': '#e8e5df',
+        'aurora-muted': '#7a7670',
+        'aurora-emerald': '#6db88f',
       },
       fontFamily: {
         sans: ['var(--font-inter)'],
@@ -47,8 +51,8 @@ const config: Config = {
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
         'slide-in': 'slideIn 0.3s ease-out forwards',
-        'aurora-drift': 'auroraDrift 15s ease-in-out infinite alternate',
-        'pulse-secure': 'pulseSecure 2s ease-in-out infinite',
+        'breathe': 'breathe 4s ease-in-out infinite',
+        'glow-warm': 'glowWarm 3s ease-in-out infinite',
       },
       keyframes: {
         pulseSubtle: {
@@ -63,13 +67,13 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateX(-8px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
         },
-        auroraDrift: {
-          '0%': { transform: 'translateX(-20%) translateY(-10%) rotate(0deg)', opacity: '0.4' },
-          '100%': { transform: 'translateX(-10%) translateY(-5%) rotate(360deg)', opacity: '0.4' },
+        breathe: {
+          '0%, 100%': { opacity: '0.4' },
+          '50%': { opacity: '0.7' },
         },
-        pulseSecure: {
-          '0%, 100%': { boxShadow: '0 0 0 0 rgba(52, 211, 153, 0.4)' },
-          '50%': { boxShadow: '0 0 0 8px rgba(52, 211, 153, 0)' },
+        glowWarm: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(201, 168, 76, 0.3)' },
+          '50%': { boxShadow: '0 0 0 6px rgba(201, 168, 76, 0)' },
         },
       },
     },
