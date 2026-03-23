@@ -8,6 +8,7 @@ import {
     AlertTriangle, Clock
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useArchiveRole } from '../_hooks/useArchiveRole';
 
 interface PendingContribution {
     id: string;
@@ -44,8 +45,41 @@ export default function StewardPage({
         null
     );
 
+    const { data: roleData, loading: roleLoading } =
+        useArchiveRole(memorialId);
+
+    // Access control: only owners and co-guardians can review
+    useEffect(() => {
+        if (roleLoading || !roleData) return;
+        if (
+            roleData.userRole !== 'owner' &&
+            roleData.userRole !== 'co_guardian'
+        ) {
+            router.push(`/archive/${memorialId}`);
+        }
+    }, [roleData, roleLoading, memorialId, router]);
+
+    // Load pending contributions + subscribe to real-time changes
     useEffect(() => {
         loadPending();
+
+        const channel = supabase
+            .channel(`steward-${memorialId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'memorial_contributions',
+                    filter: `memorial_id=eq.${memorialId}`,
+                },
+                () => { loadPending(); }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [memorialId]);
 
     const loadPending = async () => {
@@ -123,7 +157,7 @@ export default function StewardPage({
 
             <div className="max-w-3xl mx-auto px-6 py-10">
 
-                {loading ? (
+                {(loading || roleLoading) ? (
                     <div className="flex justify-center py-20">
                         <Loader2 size={32}
                             className="text-mist animate-spin" />

@@ -33,20 +33,43 @@ function ArchiveViewContent({
         data?.userRole === 'owner';
 
     // Load pending contributions for
-    // co-guardians and owners
+    // co-guardians and owners + real-time updates
     useEffect(() => {
         if (!canReview) return;
-        supabase
-            .from('memorial_contributions')
-            .select('*')
-            .eq('memorial_id', memorialId)
-            .eq('status', 'pending_approval')
-            .order('created_at', { ascending: true })
-            .then(({ data: contributions }) => {
-                if (contributions) {
-                    setContributions(contributions);
-                }
-            });
+
+        const fetchPending = () => {
+            supabase
+                .from('memorial_contributions')
+                .select('*')
+                .eq('memorial_id', memorialId)
+                .eq('status', 'pending_approval')
+                .order('created_at', { ascending: true })
+                .then(({ data: contributions }) => {
+                    if (contributions) {
+                        setContributions(contributions);
+                    }
+                });
+        };
+
+        fetchPending();
+
+        const channel = supabase
+            .channel(`view-pending-${memorialId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'memorial_contributions',
+                    filter: `memorial_id=eq.${memorialId}`,
+                },
+                () => { fetchPending(); }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [canReview, memorialId]);
 
     if (loading || !data) {

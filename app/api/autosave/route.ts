@@ -47,6 +47,17 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: insertError.message }, { status: 500 });
             }
 
+            // Sync owner identity into user_memorial_roles so RLS policies
+            // that check this table will correctly recognise the owner.
+            await supabase
+                .from('user_memorial_roles')
+                .upsert({
+                    user_id: user.id,
+                    memorial_id: newMemorial.id,
+                    role: 'owner',
+                    joined_at: new Date().toISOString(),
+                }, { onConflict: 'user_id,memorial_id' });
+
             return NextResponse.json({ success: true, memorialId: newMemorial.id });
         }
 
