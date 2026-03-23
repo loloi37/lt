@@ -32,6 +32,12 @@ const config: Config = {
         'vault-border': '#2a2d35',
         'vault-text': '#c8ccd4',
         'vault-muted': '#6b7280',
+        // Aurora glassmorphic palette
+        'aurora-deep': '#0F056B',
+        'aurora-glow': '#d2d0ff',
+        'aurora-accent': '#7c6ff7',
+        'aurora-text': '#e8e6ff',
+        'aurora-emerald': '#34d399',
       },
       fontFamily: {
         sans: ['var(--font-inter)'],
@@ -41,6 +47,8 @@ const config: Config = {
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',
         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
         'slide-in': 'slideIn 0.3s ease-out forwards',
+        'aurora-drift': 'auroraDrift 15s ease-in-out infinite alternate',
+        'pulse-secure': 'pulseSecure 2s ease-in-out infinite',
       },
       keyframes: {
         pulseSubtle: {
@@ -54,6 +62,14 @@ const config: Config = {
         slideIn: {
           from: { opacity: '0', transform: 'translateX(-8px)' },
           to: { opacity: '1', transform: 'translateX(0)' },
+        },
+        auroraDrift: {
+          '0%': { transform: 'translateX(-20%) translateY(-10%) rotate(0deg)', opacity: '0.4' },
+          '100%': { transform: 'translateX(-10%) translateY(-5%) rotate(360deg)', opacity: '0.4' },
+        },
+        pulseSecure: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(52, 211, 153, 0.4)' },
+          '50%': { boxShadow: '0 0 0 8px rgba(52, 211, 153, 0)' },
         },
       },
     },
