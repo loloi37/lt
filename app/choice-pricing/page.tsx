@@ -1,10 +1,72 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FileEdit, User, Users, Sparkles, ArrowRight, Check, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { FileEdit, User, Users, Sparkles, Check, ArrowLeft, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/AuthProvider';
+
+const features = [
+    { label: 'Number of archives', draft: '—', personal: '1', family: 'Unlimited', concierge: 'Unlimited' },
+    { label: 'Structured biography', draft: '—', personal: '✓', family: '✓', concierge: '✓' },
+    { label: 'Photo & video gallery', draft: '—', personal: '✓', family: '✓', concierge: '✓' },
+    { label: 'Witness invitations', draft: '—', personal: '✓', family: '✓', concierge: '✓' },
+    { label: 'Quarterly Ark export', draft: '—', personal: '✓', family: '✓', concierge: '✓' },
+    { label: 'Successor designation', draft: '—', personal: '✓', family: '✓', concierge: '✓' },
+    { label: 'Archive linking', draft: '—', personal: '—', family: '✓', concierge: '✓' },
+    { label: 'Visual family tree', draft: '—', personal: '—', family: '✓', concierge: '✓' },
+    { label: 'Family steward', draft: '—', personal: '—', family: '✓', concierge: '✓' },
+    { label: 'Professional interview', draft: '—', personal: '—', family: '—', concierge: '✓' },
+    { label: 'Document digitization', draft: '—', personal: '—', family: '—', concierge: '✓' },
+    { label: 'Biographical writing', draft: '—', personal: '—', family: '—', concierge: '✓' },
+    { label: 'Physical certificate', draft: '—', personal: 'Optional', family: 'Optional', concierge: 'Included' },
+];
+
+const faqs = [
+    {
+        question: 'Why a one-time payment instead of a subscription?',
+        answer: 'Because subscriptions can be forgotten, canceled, or interrupted. Memory should not depend on a monthly charge.',
+    },
+    {
+        question: 'Does the price include storage?',
+        answer: 'Yes. Unlimited storage for the lifetime of the archive. No additional fees.',
+    },
+    {
+        question: 'What happens if Legacy Vault shuts down?',
+        answer: 'Your data is exportable at any time. In addition, an escrow arrangement guarantees continuity.',
+    },
+    {
+        question: 'Can I upgrade from Personal to Family later?',
+        answer: 'Yes. You only pay the difference ($1,470). Your existing archive is automatically integrated.',
+    },
+    {
+        question: 'Are there hidden fees?',
+        answer: 'No. The displayed price is final. No storage fees. No annual fees. No export fees.',
+    },
+];
+
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="border-b border-sand/20 pb-4">
+            <button
+                onClick={() => setOpen(!open)}
+                className="w-full flex justify-between items-center font-semibold text-left cursor-pointer text-charcoal"
+            >
+                {question}
+                <ChevronDown
+                    size={20}
+                    className={`text-charcoal/50 transition-transform flex-shrink-0 ml-4 ${open ? 'rotate-180' : ''}`}
+                />
+            </button>
+            {open && (
+                <p className="mt-4 text-sm text-charcoal/60 leading-relaxed">
+                    {answer}
+                </p>
+            )}
+        </div>
+    );
+}
 
 export default function ChoicePricingPage() {
     const router = useRouter();
@@ -12,25 +74,19 @@ export default function ChoicePricingPage() {
     const userId = auth.user?.id || null;
     const ready = !auth.loading;
 
-    // If user already has a paid plan, show a banner and redirect options
     const hasPaidPlan = auth.hasPaid;
 
-    // Redirect to signup/login if not authenticated, with ?next to come back
     const requireAuth = (nextPath: string): boolean => {
         if (userId) return true;
         router.push(`/signup?next=${encodeURIComponent(nextPath)}`);
         return false;
     };
 
-    // Draft: free start → dashboard/draft
-    // replace: this is a state transition, back-button should not return here
     const handleDraftStart = () => {
         if (!requireAuth('/choice-pricing')) return;
         router.replace(`/dashboard/draft/${userId}`);
     };
 
-    // Personal or Family: paid → confirmation page
-    // replace: prevents back-button from returning to pricing after choosing a plan
     const handleModeSelection = (mode: 'personal' | 'family') => {
         if (hasPaidPlan && auth.plan === mode) {
             router.replace(`/dashboard/${mode}/${userId}`);
@@ -46,329 +102,326 @@ export default function ChoicePricingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6">
-            <div className="max-w-7xl w-full">
-                {/* Header */}
-                <div className="mb-8">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        <span>Back</span>
-                    </Link>
-                </div>
+        <main className="pt-16 pb-24 px-8 max-w-7xl mx-auto">
+            {/* Header */}
+            <header className="mb-16">
+                <Link
+                    href="/"
+                    className="inline-flex items-center px-4 py-2 bg-sand/20 border border-sand/30 rounded-full text-xs uppercase tracking-widest text-charcoal/60 hover:text-charcoal transition-all mb-8 group hover-grow"
+                >
+                    <ArrowLeft
+                        size={14}
+                        className="mr-2 group-hover:-translate-x-1 transition-transform"
+                    />
+                    Back to Home
+                </Link>
 
-                {/* Active plan banner — reminds user of their current state */}
-                {hasPaidPlan && auth.plan !== 'none' && (
-                    <div className="mb-8 bg-white border border-sage/30 rounded-xl p-5 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-charcoal">
-                                You have an active <strong className="capitalize">{auth.plan}</strong> plan
-                            </p>
-                            <p className="text-xs text-charcoal/50 mt-0.5">
-                                {auth.plan === 'personal'
-                                    ? 'You can upgrade to Family to create additional archives.'
-                                    : auth.plan === 'family'
-                                        ? 'You can upgrade to Concierge for a fully managed experience.'
-                                        : 'You are on the highest plan.'}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => router.replace(`/dashboard/${auth.plan}/${userId}`)}
-                            className="px-4 py-2 bg-charcoal text-ivory text-sm rounded-lg font-medium hover:bg-charcoal/90 transition-colors"
-                        >
-                            Go to Dashboard
-                        </button>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <h1 className="text-6xl md:text-8xl font-serif text-charcoal leading-none mb-4">
+                            Choose Your <br />
+                            <span className="italic text-mist">Experience</span>
+                        </h1>
+                        <p className="max-w-xl text-lg text-charcoal/70 leading-relaxed">
+                            Each path offers a different way to preserve your legacy.
+                            A single payment for permanent memory.
+                        </p>
                     </div>
-                )}
 
-                <div className="text-center mb-12">
-                    <h1 className="font-serif text-5xl text-charcoal mb-4">
-                        Choose Your Experience
-                    </h1>
-                    <p className="text-lg text-charcoal/70">
-                        Each path offers a different way to preserve your legacy
-                    </p>
+                    {/* Active Plan Banner */}
+                    {hasPaidPlan && auth.plan !== 'none' && (
+                        <div className="bg-parchment p-6 flex items-start gap-4 border-l-4 border-sage max-w-sm">
+                            <div>
+                                <p className="text-xs uppercase tracking-widest text-sage font-bold mb-1">
+                                    Current Plan
+                                </p>
+                                <p className="text-sm text-charcoal">
+                                    You have an active <strong className="capitalize">{auth.plan}</strong> plan.{' '}
+                                    {auth.plan === 'personal'
+                                        ? 'You can upgrade to Family to create additional archives.'
+                                        : auth.plan === 'family'
+                                            ? 'You can upgrade to Concierge for a fully managed experience.'
+                                            : 'You are on the highest plan.'}
+                                </p>
+                                <button
+                                    onClick={() => router.replace(`/dashboard/${auth.plan}/${userId}`)}
+                                    className="mt-3 px-4 py-2 glass-btn-primary text-xs uppercase tracking-widest hover-grow"
+                                >
+                                    Go to Dashboard
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+            </header>
 
-                {/* Cards Grid — 4 cards: Draft | Personal | Family | Concierge */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-                    {/* Draft — free, independent plan */}
-                    <button
-                        onClick={handleDraftStart}
-                        disabled={!ready}
-                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-charcoal/30 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
-                    >
-                        <div className="w-16 h-16 bg-gradient-to-br from-charcoal/80 to-charcoal/60 rounded-2xl flex items-center justify-center mb-6">
-                            <FileEdit size={32} className="text-ivory" />
+            {/* Pricing Cards Grid */}
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-32 gap-8">
+                {/* Draft */}
+                <button
+                    onClick={handleDraftStart}
+                    disabled={!ready}
+                    className="bg-white p-8 flex flex-col border border-sand/40 hover:bg-parchment/30 transition-colors text-left disabled:opacity-50 group"
+                >
+                    <div className="mb-12">
+                        <div className="w-14 h-14 bg-gradient-to-br from-charcoal/80 to-charcoal/60 flex items-center justify-center mb-4">
+                            <FileEdit size={28} className="text-ivory" />
                         </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Draft</h2>
+                        <h3 className="font-serif text-3xl text-charcoal mb-1">Draft</h3>
+                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                            Free Start
+                        </p>
+                    </div>
+                    <div className="mb-12">
+                        <span className="font-serif text-5xl text-charcoal">$0</span>
+                        <span className="text-charcoal/50 ml-2">/ forever</span>
+                    </div>
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            Full memorial builder access
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            Save your progress anytime
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            Preview with watermark
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            Upgrade to Personal anytime
+                        </li>
+                    </ul>
+                    <div className="w-full py-4 glass-btn border border-sand/30 text-charcoal text-xs uppercase tracking-widest text-center hover-grow">
+                        Start for Free
+                    </div>
+                </button>
 
-                        {/* Price */}
-                        <div className="mb-4">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-charcoal/70">Free</span>
-                            </div>
+                {/* Personal */}
+                <button
+                    onClick={() => handleModeSelection('personal')}
+                    disabled={!ready}
+                    className="bg-parchment/50 p-8 flex flex-col border border-sand/40 hover:bg-parchment transition-colors text-left disabled:opacity-50 relative group"
+                >
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-mist text-ivory px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
+                        Most Chosen
+                    </div>
+                    <div className="mb-12">
+                        <div className="w-14 h-14 bg-gradient-to-br from-mist to-mist/80 flex items-center justify-center mb-4">
+                            <User size={28} className="text-ivory" />
                         </div>
+                        <h3 className="font-serif text-3xl text-charcoal mb-1">Personal</h3>
+                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                            Dedicated Archive
+                        </p>
+                    </div>
+                    <div className="mb-12">
+                        <span className="font-serif text-5xl text-charcoal">$1,470</span>
+                        <span className="text-charcoal/50 ml-2">/ one time</span>
+                    </div>
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            One complete archive
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            Structured biography & gallery
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            Witness invitations
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            Quarterly Ark export
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            Successor designation
+                        </li>
+                    </ul>
+                    <div className="w-full py-4 glass-btn-primary text-xs uppercase tracking-widest text-center hover-grow">
+                        Select Plan
+                    </div>
+                </button>
 
-                        <p className="text-charcoal/70 mb-6">Build your memorial at your own pace</p>
+                {/* Family */}
+                <button
+                    onClick={() => handleModeSelection('family')}
+                    disabled={!ready}
+                    className="bg-sand/20 p-8 flex flex-col border border-sand/40 hover:bg-sand/40 transition-colors text-left disabled:opacity-50 group"
+                >
+                    <div className="mb-12">
+                        <div className="w-14 h-14 bg-gradient-to-br from-stone to-stone/80 flex items-center justify-center mb-4">
+                            <Users size={28} className="text-ivory" />
+                        </div>
+                        <h3 className="font-serif text-3xl text-charcoal mb-1">Family</h3>
+                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                            Shared Heritage
+                        </p>
+                    </div>
+                    <div className="mb-12">
+                        <span className="font-serif text-5xl text-charcoal">$2,940</span>
+                        <span className="text-charcoal/50 ml-2">/ one time</span>
+                    </div>
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            Unlimited archives
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            Everything in Personal
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            Archive linking & family tree
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            Family steward designation
+                        </li>
+                    </ul>
+                    <div className="w-full py-4 glass-btn-dark text-xs uppercase tracking-widest text-center hover-grow">
+                        Select Plan
+                    </div>
+                </button>
 
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6 text-sm text-charcoal/70">
+                {/* Concierge */}
+                <button
+                    onClick={handleConciergeSelection}
+                    className="bg-parchment p-8 flex flex-col border border-sand/40 hover:bg-sand/30 transition-colors text-left relative group"
+                >
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-charcoal text-ivory px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
+                        Premium
+                    </div>
+                    <div className="mb-12">
+                        <div className="w-14 h-14 bg-gradient-to-br from-mist via-stone to-mist/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Sparkles size={28} className="text-ivory" />
+                        </div>
+                        <h3 className="font-serif text-3xl text-charcoal mb-1">Conciergerie</h3>
+                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                            Estate Preservation
+                        </p>
+                    </div>
+                    <div className="mb-12">
+                        <span className="font-serif text-5xl text-charcoal">$6,300</span>
+                        <span className="text-charcoal/50 ml-2">/ per memorial</span>
+                    </div>
+                    <div className="mb-16 flex-grow text-sm text-charcoal/70">
+                        <p className="mb-4 italic leading-relaxed">
+                            Full curation by our team. We interview, digitize, write, and structure. Delivery within 60 days.
+                        </p>
+                        <ul className="space-y-4">
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
-                                <span>Full memorial builder access</span>
+                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                Everything in Family
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
-                                <span>Save your progress anytime</span>
+                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                Phone/video interview
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
-                                <span>Preview with watermark</span>
+                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                Professional biographical writing
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
-                                <span>Upgrade to Personal anytime</span>
+                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                2 revision cycles included
                             </li>
                         </ul>
+                    </div>
+                    <div className="w-full py-4 glass-btn-primary text-xs uppercase tracking-widest text-center hover-grow">
+                        Enquire Now
+                    </div>
+                </button>
+            </section>
 
-                        <div className="inline-flex items-center gap-2 text-charcoal/60 font-medium group-hover:gap-3 transition-all">
-                            Start for Free <ArrowRight size={18} />
-                        </div>
-                    </button>
-
-                    {/* Personal */}
-                    <button
-                        onClick={() => handleModeSelection('personal')}
-                        disabled={!ready}
-                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-sage/40 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
-                    >
-                        <div className="w-16 h-16 bg-gradient-to-br from-mist to-mist/80 rounded-2xl flex items-center justify-center mb-6">
-                            <User size={32} className="text-ivory" />
-                        </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Personal</h2>
-
-                        {/* Price */}
-                        <div className="mb-4">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-mist">$1,470</span>
-                                <span className="text-sm text-charcoal/60">one time</span>
-                            </div>
-                        </div>
-
-                        <p className="text-charcoal/70 mb-1">A single payment for a permanent archive.</p>
-                        <p className="text-xs text-charcoal/40 mb-6">No monthly fees. No renewals. No surprises.</p>
-
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6 text-sm text-charcoal/70">
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>One complete archive</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Structured biography & gallery</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Witness invitations</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Quarterly Ark export</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Successor designation</span>
-                            </li>
-                        </ul>
-
-                        <div className="inline-flex items-center gap-2 text-mist font-medium group-hover:gap-3 transition-all">
-                            Choose Personal <ArrowRight size={18} />
-                        </div>
-                    </button>
-
-                    {/* Family */}
-                    <button
-                        onClick={() => handleModeSelection('family')}
-                        disabled={!ready}
-                        className="btn-paper p-8 rounded-xl border-2 border-sand/40 bg-white hover:border-terracotta/40 hover:shadow-lg transition-all text-left disabled:opacity-50 group"
-                    >
-                        <div className="w-16 h-16 bg-gradient-to-br from-stone to-stone/80 rounded-2xl flex items-center justify-center mb-6">
-                            <Users size={32} className="text-ivory" />
-                        </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Family</h2>
-
-                        {/* Price */}
-                        <div className="mb-4">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-stone">$2,940</span>
-                                <span className="text-sm text-charcoal/60">one time</span>
-                            </div>
-                        </div>
-
-                        <p className="text-charcoal/70 mb-1">Multiple archives with family links.</p>
-                        <p className="text-xs text-charcoal/40 mb-6">Exactly 2 x Personal. No surprises.</p>
-
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6 text-sm text-charcoal/70">
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
-                                <span>Unlimited archives</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
-                                <span>Everything in Personal</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
-                                <span>Archive linking & family tree</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
-                                <span>Family steward designation</span>
-                            </li>
-                        </ul>
-
-                        <div className="inline-flex items-center gap-2 text-stone font-medium group-hover:gap-3 transition-all">
-                            Choose Family <ArrowRight size={18} />
-                        </div>
-                    </button>
-
-                    {/* Concierge */}
-                    <button
-                        onClick={handleConciergeSelection}
-                        className="btn-paper p-8 rounded-xl border-2 border-sage/40 bg-gradient-to-br from-sage/5 to-terracotta/5 hover:border-sage/60 hover:shadow-xl transition-all text-left relative overflow-hidden group"
-                    >
-                        {/* Premium badge */}
-                        <div className="absolute top-4 right-4 px-3 py-1 bg-mist/20 text-mist text-xs font-semibold rounded-full border border-mist/30">
-                            Premium
-                        </div>
-
-                        <div className="w-16 h-16 bg-gradient-to-br from-mist via-stone to-mist/80 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <Sparkles size={32} className="text-ivory" />
-                        </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Conciergerie</h2>
-
-                        {/* Price */}
-                        <div className="mb-4">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold text-mist">$6,300</span>
-                                <span className="text-sm text-charcoal/60">per memorial</span>
-                            </div>
-                        </div>
-
-                        <p className="text-charcoal/70 mb-1">Full curation by our team. Delivery within 60 days.</p>
-                        <p className="text-xs text-charcoal/40 mb-6">We interview, digitize, write, and structure.</p>
-
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6 text-sm text-charcoal/70">
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Everything in Family</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Phone/video interview</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>Professional biographical writing</span>
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
-                                <span>2 revision cycles included</span>
-                            </li>
-                        </ul>
-
-                        <div className="inline-flex items-center gap-2 text-mist font-medium group-hover:gap-3 transition-all">
-                            Request First Call <ArrowRight size={18} />
-                        </div>
-                    </button>
-                </div>
-
-                {/* Feature Comparison Table */}
-                <div className="mt-16 max-w-4xl mx-auto">
-                    <h2 className="font-serif text-2xl text-charcoal text-center mb-8">Compare Plans</h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="border-b border-sand/30">
-                                    <th className="text-left py-3 px-4 text-charcoal/50 font-medium">Feature</th>
-                                    <th className="text-center py-3 px-4 text-mist font-semibold">Personal</th>
-                                    <th className="text-center py-3 px-4 text-stone font-semibold">Family</th>
-                                    <th className="text-center py-3 px-4 text-mist font-semibold">Concierge</th>
+            {/* Comparison Table */}
+            <section className="mb-32">
+                <h2 className="font-serif text-4xl text-charcoal mb-12 text-center">
+                    Compare Plans
+                </h2>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="uppercase tracking-widest text-[10px] text-charcoal/40 border-b border-sand/20">
+                                <th className="py-6 px-4">Feature</th>
+                                <th className="py-6 px-4">Draft</th>
+                                <th className="py-6 px-4">Personal</th>
+                                <th className="py-6 px-4">Family</th>
+                                <th className="py-6 px-4">Concierge</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-sm text-charcoal/70">
+                            {features.map((f, i) => (
+                                <tr
+                                    key={f.label}
+                                    className={`border-b border-sand/10 ${i % 2 === 0 ? 'bg-sand/5' : ''}`}
+                                >
+                                    <td className="py-6 px-4 font-semibold text-charcoal">{f.label}</td>
+                                    <td className="py-6 px-4">{f.draft}</td>
+                                    <td className="py-6 px-4">{f.personal}</td>
+                                    <td className="py-6 px-4">{f.family}</td>
+                                    <td className="py-6 px-4">{f.concierge}</td>
                                 </tr>
-                            </thead>
-                            <tbody className="text-charcoal/70">
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Number of archives</td><td className="text-center py-3 px-4">1</td><td className="text-center py-3 px-4">Unlimited</td><td className="text-center py-3 px-4">Unlimited</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Structured biography</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Photo & video gallery</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Witness invitations</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Quarterly Ark export</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Successor designation</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Archive linking</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Visual family tree</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Family steward</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Professional interview</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Document digitization</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15 bg-sand/5"><td className="py-3 px-4 font-medium">Biographical writing</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-charcoal/20">&mdash;</td><td className="text-center py-3 px-4 text-sage">&#10003;</td></tr>
-                                <tr className="border-b border-sand/15"><td className="py-3 px-4 font-medium">Physical certificate</td><td className="text-center py-3 px-4 text-charcoal/50 text-xs">Optional</td><td className="text-center py-3 px-4 text-charcoal/50 text-xs">Optional</td><td className="text-center py-3 px-4 text-sage font-medium">Included</td></tr>
-                            </tbody>
-                        </table>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {/* Satisfaction & FAQ */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                <div>
+                    <h3 className="font-serif text-3xl text-charcoal mb-8">Our Guarantee</h3>
+                    <div className="bg-parchment/50 p-10 border-t-8 border-sage relative overflow-hidden">
+                        <p className="text-lg text-charcoal mb-6 italic leading-relaxed">
+                            &ldquo;Independent archive export + 30-day satisfaction guarantee.
+                            If you are not satisfied, contact us within 30 days of payment
+                            for a full refund, as long as the archive has not been published.
+                            Your draft remains accessible.&rdquo;
+                        </p>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-charcoal/80 flex items-center justify-center">
+                                <Sparkles size={20} className="text-ivory" />
+                            </div>
+                            <div>
+                                <p className="text-xs uppercase tracking-widest font-bold text-charcoal">
+                                    Legacy Vault
+                                </p>
+                                <p className="text-xs text-charcoal/50">
+                                    Permanent Digital Memorials
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Satisfaction Guarantee */}
-                <div className="mt-12 max-w-3xl mx-auto text-center">
-                    <div className="bg-white border border-sand/30 rounded-2xl p-8">
-                        <h3 className="font-serif text-xl text-charcoal mb-3">All plans include</h3>
-                        <p className="text-charcoal/70 mb-4">
-                            Independent archive export + 30-day satisfaction guarantee.
-                        </p>
-                        <p className="text-sm text-charcoal/50 leading-relaxed">
-                            If you are not satisfied, contact us within 30 days of payment for a full refund, as long as the archive has not been published. Your draft remains accessible.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Pricing FAQ */}
-                <div className="mt-16 max-w-3xl mx-auto">
-                    <h2 className="font-serif text-2xl text-charcoal text-center mb-10">Frequently Asked Questions</h2>
+                <div>
+                    <h3 className="font-serif text-3xl text-charcoal mb-8">Frequently Asked</h3>
                     <div className="space-y-6">
-                        <div className="border-b border-sand/20 pb-6">
-                            <h4 className="font-semibold text-charcoal mb-2">Why a one-time payment instead of a subscription?</h4>
-                            <p className="text-sm text-charcoal/60 leading-relaxed">Because subscriptions can be forgotten, canceled, or interrupted. Memory should not depend on a monthly charge.</p>
-                        </div>
-                        <div className="border-b border-sand/20 pb-6">
-                            <h4 className="font-semibold text-charcoal mb-2">Does the price include storage?</h4>
-                            <p className="text-sm text-charcoal/60 leading-relaxed">Yes. Unlimited storage for the lifetime of the archive. No additional fees.</p>
-                        </div>
-                        <div className="border-b border-sand/20 pb-6">
-                            <h4 className="font-semibold text-charcoal mb-2">What happens if Legacy Vault shuts down?</h4>
-                            <p className="text-sm text-charcoal/60 leading-relaxed">Your data is exportable at any time. In addition, an escrow arrangement guarantees continuity. <a href="/legal/durability" className="text-charcoal underline">Learn more about our durability</a>.</p>
-                        </div>
-                        <div className="border-b border-sand/20 pb-6">
-                            <h4 className="font-semibold text-charcoal mb-2">Can I upgrade from Personal to Family later?</h4>
-                            <p className="text-sm text-charcoal/60 leading-relaxed">Yes. You only pay the difference ($1,470). Your existing archive is automatically integrated.</p>
-                        </div>
-                        <div className="pb-6">
-                            <h4 className="font-semibold text-charcoal mb-2">Are there hidden fees?</h4>
-                            <p className="text-sm text-charcoal/60 leading-relaxed">No. The displayed price is final. No storage fees. No annual fees. No export fees.</p>
-                        </div>
+                        {faqs.map((faq) => (
+                            <FAQItem
+                                key={faq.question}
+                                question={faq.question}
+                                answer={faq.answer}
+                            />
+                        ))}
                     </div>
                 </div>
+            </section>
 
-                {/* Comparison note */}
-                <div className="mt-12 text-center">
-                    <p className="text-sm text-charcoal/50">
-                        Not sure which to choose? <strong>Draft</strong> is free to start — you can upgrade to Personal at any time. Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
-                    </p>
-                </div>
+            {/* Bottom note */}
+            <div className="mt-16 text-center">
+                <p className="text-sm text-charcoal/50">
+                    Not sure which to choose? <strong>Draft</strong> is free to start — you can upgrade to Personal at any time.
+                    Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
+                </p>
             </div>
-        </div>
+        </main>
     );
 }
