@@ -495,26 +495,26 @@
 
   .glass-btn-primary {
     backdrop-filter: blur(12px);
-    background-color: rgba(90, 107, 120, 0.6);
+    background-color: rgba(91, 106, 49, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fdf6f0;
+    color: #fffbff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-btn-primary:hover {
-    background-color: rgba(90, 107, 120, 0.75);
+    background-color: rgba(91, 106, 49, 0.75);
   }
 
   .glass-btn-dark {
     backdrop-filter: blur(12px);
-    background-color: rgba(90, 107, 120, 0.85);
+    background-color: rgba(57, 56, 48, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fdf6f0;
+    color: #fffbff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-btn-dark:hover {
-    background-color: rgba(90, 107, 120, 0.95);
+    background-color: rgba(57, 56, 48, 0.75);
   }
 
   .hover-grow {

@@ -48,19 +48,19 @@ const faqs = [
 function FAQItem({ question, answer }: { question: string; answer: string }) {
     const [open, setOpen] = useState(false);
     return (
-        <div className="border-b border-sand/20 pb-4">
+        <div className="border-b border-warm-border/30 pb-4">
             <button
                 onClick={() => setOpen(!open)}
-                className="w-full flex justify-between items-center font-semibold text-left cursor-pointer text-charcoal"
+                className="w-full flex justify-between items-center font-semibold text-left cursor-pointer text-warm-dark"
             >
                 {question}
                 <ChevronDown
                     size={20}
-                    className={`text-charcoal/50 transition-transform flex-shrink-0 ml-4 ${open ? 'rotate-180' : ''}`}
+                    className={`text-warm-outline transition-transform flex-shrink-0 ml-4 ${open ? 'rotate-180' : ''}`}
                 />
             </button>
             {open && (
-                <p className="mt-4 text-sm text-charcoal/60 leading-relaxed">
+                <p className="mt-4 text-sm text-warm-muted leading-relaxed">
                     {answer}
                 </p>
             )}
@@ -107,7 +107,7 @@ export default function ChoicePricingPage() {
             <header className="mb-16">
                 <Link
                     href="/"
-                    className="inline-flex items-center px-4 py-2 bg-sand/20 border border-sand/30 rounded-full text-xs uppercase tracking-widest text-charcoal/60 hover:text-charcoal transition-all mb-8 group hover-grow"
+                    className="inline-flex items-center px-4 py-2 bg-surface-mid/50 border border-warm-border/20 rounded-full text-xs uppercase tracking-widest text-warm-muted hover:text-warm-dark transition-all mb-8 group hover-grow"
                 >
                     <ArrowLeft
                         size={14}
@@ -118,11 +118,11 @@ export default function ChoicePricingPage() {
 
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <h1 className="text-6xl md:text-8xl font-serif text-charcoal leading-none mb-4">
+                        <h1 className="text-6xl md:text-8xl font-serif text-warm-dark leading-none mb-4">
                             Choose Your <br />
-                            <span className="italic text-mist">Experience</span>
+                            <span className="italic text-olive">Experience</span>
                         </h1>
-                        <p className="max-w-xl text-lg text-charcoal/70 leading-relaxed">
+                        <p className="max-w-xl text-lg text-warm-muted leading-relaxed">
                             Each path offers a different way to preserve your legacy.
                             A single payment for permanent memory.
                         </p>
@@ -130,12 +130,12 @@ export default function ChoicePricingPage() {
 
                     {/* Active Plan Banner */}
                     {hasPaidPlan && auth.plan !== 'none' && (
-                        <div className="bg-parchment p-6 flex items-start gap-4 border-l-4 border-sage max-w-sm">
+                        <div className="bg-surface-high p-6 flex items-start gap-4 border-l-4 border-warm-brown max-w-sm">
                             <div>
-                                <p className="text-xs uppercase tracking-widest text-sage font-bold mb-1">
+                                <p className="text-xs uppercase tracking-widest text-warm-brown font-bold mb-1">
                                     Current Plan
                                 </p>
-                                <p className="text-sm text-charcoal">
+                                <p className="text-sm text-warm-dark">
                                     You have an active <strong className="capitalize">{auth.plan}</strong> plan.{' '}
                                     {auth.plan === 'personal'
                                         ? 'You can upgrade to Family to create additional archives.'
@@ -161,40 +161,40 @@ export default function ChoicePricingPage() {
                 <button
                     onClick={handleDraftStart}
                     disabled={!ready}
-                    className="bg-white p-8 flex flex-col border border-sand/40 hover:bg-parchment/30 transition-colors text-left disabled:opacity-50 group"
+                    className="bg-white p-8 flex flex-col border border-warm-border/30 hover:bg-surface-low transition-colors text-left disabled:opacity-50 group"
                 >
                     <div className="mb-12">
-                        <div className="w-14 h-14 bg-gradient-to-br from-charcoal/80 to-charcoal/60 flex items-center justify-center mb-4">
-                            <FileEdit size={28} className="text-ivory" />
+                        <div className="w-14 h-14 bg-gradient-to-br from-warm-dark/80 to-warm-dark/60 flex items-center justify-center mb-4">
+                            <FileEdit size={28} className="text-warm-bg" />
                         </div>
-                        <h3 className="font-serif text-3xl text-charcoal mb-1">Draft</h3>
-                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Draft</h3>
+                        <p className="text-xs uppercase tracking-widest text-warm-outline">
                             Free Start
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-charcoal">$0</span>
-                        <span className="text-charcoal/50 ml-2">/ forever</span>
+                        <span className="font-serif text-5xl text-warm-dark">$0</span>
+                        <span className="text-warm-outline ml-2">/ forever</span>
                     </div>
-                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-warm-muted">
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Full memorial builder access
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Save your progress anytime
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Preview with watermark
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-charcoal/50 mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Upgrade to Personal anytime
                         </li>
                     </ul>
-                    <div className="w-full py-4 glass-btn border border-sand/30 text-charcoal text-xs uppercase tracking-widest text-center hover-grow">
+                    <div className="w-full py-4 glass-btn border border-warm-border/30 text-warm-dark text-xs uppercase tracking-widest text-center hover-grow">
                         Start for Free
                     </div>
                 </button>
@@ -203,43 +203,43 @@ export default function ChoicePricingPage() {
                 <button
                     onClick={() => handleModeSelection('personal')}
                     disabled={!ready}
-                    className="bg-parchment/50 p-8 flex flex-col border border-sand/40 hover:bg-parchment transition-colors text-left disabled:opacity-50 relative group"
+                    className="bg-surface-mid p-8 flex flex-col border border-warm-border/30 hover:bg-surface-high transition-colors text-left disabled:opacity-50 relative group"
                 >
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-mist text-ivory px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-plum text-white px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
                         Most Chosen
                     </div>
                     <div className="mb-12">
-                        <div className="w-14 h-14 bg-gradient-to-br from-mist to-mist/80 flex items-center justify-center mb-4">
-                            <User size={28} className="text-ivory" />
+                        <div className="w-14 h-14 bg-gradient-to-br from-olive to-olive/80 flex items-center justify-center mb-4">
+                            <User size={28} className="text-warm-bg" />
                         </div>
-                        <h3 className="font-serif text-3xl text-charcoal mb-1">Personal</h3>
-                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Personal</h3>
+                        <p className="text-xs uppercase tracking-widest text-warm-outline">
                             Dedicated Archive
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-charcoal">$1,470</span>
-                        <span className="text-charcoal/50 ml-2">/ one time</span>
+                        <span className="font-serif text-5xl text-warm-dark">$1,470</span>
+                        <span className="text-warm-outline ml-2">/ one time</span>
                     </div>
-                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-warm-muted">
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             One complete archive
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Structured biography & gallery
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Witness invitations
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Quarterly Ark export
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                             Successor designation
                         </li>
                     </ul>
@@ -252,36 +252,36 @@ export default function ChoicePricingPage() {
                 <button
                     onClick={() => handleModeSelection('family')}
                     disabled={!ready}
-                    className="bg-sand/20 p-8 flex flex-col border border-sand/40 hover:bg-sand/40 transition-colors text-left disabled:opacity-50 group"
+                    className="bg-surface-low p-8 flex flex-col border border-warm-border/30 hover:bg-surface-mid transition-colors text-left disabled:opacity-50 group"
                 >
                     <div className="mb-12">
-                        <div className="w-14 h-14 bg-gradient-to-br from-stone to-stone/80 flex items-center justify-center mb-4">
-                            <Users size={28} className="text-ivory" />
+                        <div className="w-14 h-14 bg-gradient-to-br from-warm-brown to-warm-brown/80 flex items-center justify-center mb-4">
+                            <Users size={28} className="text-warm-bg" />
                         </div>
-                        <h3 className="font-serif text-3xl text-charcoal mb-1">Family</h3>
-                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Family</h3>
+                        <p className="text-xs uppercase tracking-widest text-warm-outline">
                             Shared Heritage
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-charcoal">$2,940</span>
-                        <span className="text-charcoal/50 ml-2">/ one time</span>
+                        <span className="font-serif text-5xl text-warm-dark">$2,940</span>
+                        <span className="text-warm-outline ml-2">/ one time</span>
                     </div>
-                    <ul className="space-y-4 mb-16 flex-grow text-sm text-charcoal/70">
+                    <ul className="space-y-4 mb-16 flex-grow text-sm text-warm-muted">
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-warm-brown mt-0.5 flex-shrink-0" />
                             Unlimited archives
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-warm-brown mt-0.5 flex-shrink-0" />
                             Everything in Personal
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-warm-brown mt-0.5 flex-shrink-0" />
                             Archive linking & family tree
                         </li>
                         <li className="flex items-start gap-2">
-                            <Check size={16} className="text-stone mt-0.5 flex-shrink-0" />
+                            <Check size={16} className="text-warm-brown mt-0.5 flex-shrink-0" />
                             Family steward designation
                         </li>
                     </ul>
@@ -293,43 +293,43 @@ export default function ChoicePricingPage() {
                 {/* Concierge */}
                 <button
                     onClick={handleConciergeSelection}
-                    className="bg-parchment p-8 flex flex-col border border-sand/40 hover:bg-sand/30 transition-colors text-left relative group"
+                    className="bg-surface-highest p-8 flex flex-col border border-warm-border/30 hover:bg-surface-high transition-colors text-left relative group"
                 >
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-charcoal text-ivory px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-warm-dark text-white px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
                         Premium
                     </div>
                     <div className="mb-12">
-                        <div className="w-14 h-14 bg-gradient-to-br from-mist via-stone to-mist/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <Sparkles size={28} className="text-ivory" />
+                        <div className="w-14 h-14 bg-gradient-to-br from-olive via-warm-brown to-olive/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Sparkles size={28} className="text-warm-bg" />
                         </div>
-                        <h3 className="font-serif text-3xl text-charcoal mb-1">Conciergerie</h3>
-                        <p className="text-xs uppercase tracking-widest text-charcoal/40">
+                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Conciergerie</h3>
+                        <p className="text-xs uppercase tracking-widest text-warm-outline">
                             Estate Preservation
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-charcoal">$6,300</span>
-                        <span className="text-charcoal/50 ml-2">/ per memorial</span>
+                        <span className="font-serif text-5xl text-warm-dark">$6,300</span>
+                        <span className="text-warm-outline ml-2">/ per memorial</span>
                     </div>
-                    <div className="mb-16 flex-grow text-sm text-charcoal/70">
+                    <div className="mb-16 flex-grow text-sm text-warm-muted">
                         <p className="mb-4 italic leading-relaxed">
                             Full curation by our team. We interview, digitize, write, and structure. Delivery within 60 days.
                         </p>
                         <ul className="space-y-4">
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                                 Everything in Family
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                                 Phone/video interview
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                                 Professional biographical writing
                             </li>
                             <li className="flex items-start gap-2">
-                                <Check size={16} className="text-mist mt-0.5 flex-shrink-0" />
+                                <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
                                 2 revision cycles included
                             </li>
                         </ul>
@@ -342,13 +342,13 @@ export default function ChoicePricingPage() {
 
             {/* Comparison Table */}
             <section className="mb-32">
-                <h2 className="font-serif text-4xl text-charcoal mb-12 text-center">
+                <h2 className="font-serif text-4xl text-warm-dark mb-12 text-center">
                     Compare Plans
                 </h2>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="uppercase tracking-widest text-[10px] text-charcoal/40 border-b border-sand/20">
+                            <tr className="uppercase tracking-widest text-[10px] text-warm-outline border-b border-warm-border/20">
                                 <th className="py-6 px-4">Feature</th>
                                 <th className="py-6 px-4">Draft</th>
                                 <th className="py-6 px-4">Personal</th>
@@ -356,13 +356,13 @@ export default function ChoicePricingPage() {
                                 <th className="py-6 px-4">Concierge</th>
                             </tr>
                         </thead>
-                        <tbody className="text-sm text-charcoal/70">
+                        <tbody className="text-sm text-warm-muted">
                             {features.map((f, i) => (
                                 <tr
                                     key={f.label}
-                                    className={`border-b border-sand/10 ${i % 2 === 0 ? 'bg-sand/5' : ''}`}
+                                    className={`border-b border-warm-border/10 ${i % 2 === 0 ? 'bg-surface-low/30' : ''}`}
                                 >
-                                    <td className="py-6 px-4 font-semibold text-charcoal">{f.label}</td>
+                                    <td className="py-6 px-4 font-semibold text-warm-dark">{f.label}</td>
                                     <td className="py-6 px-4">{f.draft}</td>
                                     <td className="py-6 px-4">{f.personal}</td>
                                     <td className="py-6 px-4">{f.family}</td>
@@ -377,23 +377,23 @@ export default function ChoicePricingPage() {
             {/* Satisfaction & FAQ */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-20">
                 <div>
-                    <h3 className="font-serif text-3xl text-charcoal mb-8">Our Guarantee</h3>
-                    <div className="bg-parchment/50 p-10 border-t-8 border-sage relative overflow-hidden">
-                        <p className="text-lg text-charcoal mb-6 italic leading-relaxed">
+                    <h3 className="font-serif text-3xl text-warm-dark mb-8">Our Guarantee</h3>
+                    <div className="bg-surface-mid p-10 border-t-8 border-olive relative overflow-hidden">
+                        <p className="text-lg text-warm-dark mb-6 italic leading-relaxed">
                             &ldquo;Independent archive export + 30-day satisfaction guarantee.
                             If you are not satisfied, contact us within 30 days of payment
                             for a full refund, as long as the archive has not been published.
                             Your draft remains accessible.&rdquo;
                         </p>
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-charcoal/80 flex items-center justify-center">
-                                <Sparkles size={20} className="text-ivory" />
+                            <div className="w-12 h-12 bg-warm-outline flex items-center justify-center">
+                                <Sparkles size={20} className="text-warm-bg" />
                             </div>
                             <div>
-                                <p className="text-xs uppercase tracking-widest font-bold text-charcoal">
+                                <p className="text-xs uppercase tracking-widest font-bold text-warm-dark">
                                     Legacy Vault
                                 </p>
-                                <p className="text-xs text-charcoal/50">
+                                <p className="text-xs text-warm-outline">
                                     Permanent Digital Memorials
                                 </p>
                             </div>
@@ -402,7 +402,7 @@ export default function ChoicePricingPage() {
                 </div>
 
                 <div>
-                    <h3 className="font-serif text-3xl text-charcoal mb-8">Frequently Asked</h3>
+                    <h3 className="font-serif text-3xl text-warm-dark mb-8">Frequently Asked</h3>
                     <div className="space-y-6">
                         {faqs.map((faq) => (
                             <FAQItem
@@ -417,7 +417,7 @@ export default function ChoicePricingPage() {
 
             {/* Bottom note */}
             <div className="mt-16 text-center">
-                <p className="text-sm text-charcoal/50">
+                <p className="text-sm text-warm-outline">
                     Not sure which to choose? <strong>Draft</strong> is free to start — you can upgrade to Personal at any time.
                     Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
                 </p>
