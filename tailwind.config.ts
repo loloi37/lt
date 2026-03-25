@@ -24,7 +24,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-inter)'],
-        serif: ['var(--font-cormorant)'],
+        serif: ['SerifDual', 'var(--font-serif-alpha)', 'Georgia', 'serif'],
       },
       animation: {
         'pulse-subtle': 'pulseSubtle 3s ease-in-out infinite',

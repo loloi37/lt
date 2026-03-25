@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Dual-font serif system ──
+   Cinzel Bold  → alphabetic characters (A-Z, sharp Roman serifs)
+   Bodoni Moda  → numeric characters (0-9) and symbols (high contrast, thin hairlines)
+   The browser picks the right face per character via unicode-range. */
+
+@font-face {
+  font-family: 'SerifDual';
+  src: local('Cinzel');
+  font-weight: 100 900;
+  font-display: swap;
+  /* Latin uppercase + lowercase + accented letters */
+  unicode-range: U+0041-005A, U+0061-007A, U+00C0-00FF, U+0100-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: 'SerifDual';
+  src: local('Bodoni Moda');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  /* Digits, punctuation, symbols, currency, math, and everything else */
+  unicode-range: U+0020-0040, U+005B-0060, U+007B-00BF, U+0250-1DFF, U+2000-2BFF, U+FB00-FB06, U+FEFF, U+FF01-FF5E;
+}
+
+@font-face {
+  font-family: 'SerifDual';
+  src: local('Bodoni Moda');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+0020-0040, U+005B-0060, U+007B-00BF, U+0250-1DFF, U+2000-2BFF;
+}
+
+@font-face {
+  font-family: 'SerifDual';
+  src: local('Bodoni Moda');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+  /* Italic text falls back entirely to Bodoni Moda (Cinzel has no italic) */
+  unicode-range: U+0041-005A, U+0061-007A, U+00C0-00FF, U+0100-024F, U+1E00-1EFF;
+}
+
 /* ── Keyframe animations ── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -194,7 +237,7 @@
 
 @layer components {
   .font-sans { font-family: var(--font-inter), system-ui, sans-serif; }
-  .font-serif { font-family: var(--font-cormorant), Georgia, serif; }
+  .font-serif { font-family: 'SerifDual', var(--font-serif-alpha), Georgia, serif; }
 
   /* ── Card system ── */
   .glass-card {

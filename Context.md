@@ -30,7 +30,12 @@
 ### Design Tokens
 - **Colors**: warm-dark (#393830), warm-muted (#66645b), warm-outline (#838176), warm-border (#bdb9ae), olive (#5b6a31), warm-brown (#7b5e52), plum (#695e88), warm-bg (#fffbff)
 - **Surfaces**: surface-low (#fdf9f0), surface-mid (#f8f3e9), surface-high (#f2eee3), surface-highest (#ece8dc)
-- **Typography**: Serif=Bodoni Moda, Sans=Inter/system, Labels=`text-xs uppercase tracking-widest`
+- **Typography**: Dual-font serif system (`SerifDual`), Sans=Inter/system, Labels=`text-xs uppercase tracking-widest`
+  - **Alphabetic (A-Z)**: Cinzel Bold — sharp, Roman-inspired serif forms (Google Fonts)
+  - **Numeric (0-9) & symbols**: Bodoni Moda — high contrast, thin hairlines (Google Fonts)
+  - Implemented via `@font-face` with `unicode-range` splitting in `globals.css`
+  - Italic text falls back entirely to Bodoni Moda (Cinzel has no italic variant)
+  - CSS class: `.font-serif` → `font-family: 'SerifDual', ...`
 - **Buttons**: `.glass-btn`, `.glass-btn-primary`, `.glass-btn-dark`, `.glass-btn-danger`
 - **Cards**: `border border-warm-border/30 rounded-xl/2xl`
 - **Forms**: `.glass-input` (surface-mid bg, olive focus ring)
@@ -124,3 +129,4 @@
 - **Session 1** (2026-03-24): Created design system, migrated globals/tailwind/layout + all pages listed above
 - **Session 2** (2026-03-25): Migrated create page, legal pages (partial), all wizard steps, all components. Hit rate limit before fixing remaining old refs in admin/legal/authorization pages.
 - **Session 3** (2026-03-25): Fixed remaining old color refs in 6 files, committed, pushed.
+- **Session 4** (2026-03-25): Implemented dual-font serif system — Cinzel Bold for letters (A-Z), Bodoni Moda for numbers/symbols. Uses `@font-face` + `unicode-range` in globals.css. No per-component changes needed (transparent via `font-serif` class).
