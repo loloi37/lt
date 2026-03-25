@@ -71,10 +71,10 @@ export default function Step10Review({
     <div className="max-w-4xl mx-auto px-6 py-12">
       <div className="mb-12">
         {/* Step 1.3.2: "Review & Seal" instead of "Review & Publish" */}
-        <h2 className="font-serif text-4xl text-charcoal mb-3">
+        <h2 className="font-serif text-4xl text-warm-dark mb-3">
           Review & Seal
         </h2>
-        <p className="text-charcoal/50 text-lg">
+        <p className="text-warm-dark/50 text-lg">
           Look over what you have built. When you are ready, seal the archive.
         </p>
       </div>
@@ -85,10 +85,10 @@ export default function Step10Review({
       {/* ========================================= */}
       <div className={`mb-10 p-6 rounded-xl border ${
         completion.status === 'complete' || completion.status === 'complete_solo'
-          ? 'bg-ivory border-sand/30'
-          : 'bg-sand/5 border-sand/20'
+          ? 'bg-surface-low border-warm-border/30'
+          : 'bg-warm-border/5 border-warm-border/20'
       }`}>
-        <p className="text-sm text-charcoal/60 leading-relaxed">
+        <p className="text-sm text-warm-dark/60 leading-relaxed">
           {completion.message}
         </p>
 
@@ -109,10 +109,10 @@ export default function Step10Review({
             return (
               <div key={pathName} className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${
-                  pathCompleted ? 'bg-charcoal/40' : pathStarted ? 'bg-charcoal/15' : 'bg-sand/40'
+                  pathCompleted ? 'bg-warm-dark/40' : pathStarted ? 'bg-warm-dark/15' : 'bg-warm-border/40'
                 }`} />
                 <span className={`text-xs ${
-                  pathCompleted ? 'text-charcoal/50' : 'text-charcoal/25'
+                  pathCompleted ? 'text-warm-dark/50' : 'text-warm-dark/25'
                 }`}>
                   {pathName}{pathCompleted ? ' — traveled' : pathStarted ? ' — begun' : ''}
                 </span>
@@ -124,20 +124,20 @@ export default function Step10Review({
 
       {/* SELF-ARCHIVE SUCCESSOR WARNING */}
       {isBlockedBySuccessor && (
-        <div className="mb-10 p-6 bg-sand/5 border border-stone/20 rounded-xl">
+        <div className="mb-10 p-6 bg-warm-border/5 border border-warm-brown/20 rounded-xl">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-stone/10 rounded-full text-stone shrink-0">
+            <div className="p-3 bg-warm-brown/10 rounded-full text-warm-brown shrink-0">
               <Shield size={24} />
             </div>
             <div>
-              <h3 className="font-serif text-xl text-charcoal mb-2">Successor Designation Required</h3>
-              <p className="text-charcoal/60 text-sm mb-4 leading-relaxed">
+              <h3 className="font-serif text-xl text-warm-dark mb-2">Successor Designation Required</h3>
+              <p className="text-warm-dark/60 text-sm mb-4 leading-relaxed">
                 Since this is your own archive, you must designate an Archive Steward before sealing.
                 This ensures your archive is not lost. Your steward will only gain access after verification.
               </p>
               <button
                 onClick={() => setShowSuccessorModal(true)}
-                className="px-6 py-3 bg-stone text-ivory rounded-lg font-medium hover:bg-stone/90 transition-all flex items-center gap-2"
+                className="px-6 py-3 bg-warm-brown text-surface-low rounded-lg font-medium hover:bg-warm-brown/90 transition-all flex items-center gap-2"
               >
                 <Users size={18} />
                 Designate a Successor
@@ -151,7 +151,7 @@ export default function Step10Review({
       {/* CORE SECTIONS — Step 1.3.2: "Paths"       */}
       {/* ========================================= */}
       <div className="mb-4">
-        <h3 className="text-xs font-medium text-charcoal/30 uppercase tracking-wider">
+        <h3 className="text-xs font-medium text-warm-dark/30 uppercase tracking-wider">
           Core Paths
         </h3>
       </div>
@@ -164,27 +164,27 @@ export default function Step10Review({
               <div
                 key={section.step}
                 className={`p-5 rounded-xl border transition-all ${section.completed
-                  ? 'bg-white border-sand/20'
-                  : 'bg-sand/5 border-sand/15'
+                  ? 'bg-white border-warm-border/20'
+                  : 'bg-warm-border/5 border-warm-border/15'
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-sand/10 flex items-center justify-center">
-                    <Icon size={20} className="text-charcoal/30" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-warm-border/10 flex items-center justify-center">
+                    <Icon size={20} className="text-warm-dark/30" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div>
-                        <h4 className="font-medium text-charcoal text-sm">{section.title}</h4>
-                        <p className="text-xs text-charcoal/40 mt-0.5">{section.summary}</p>
+                        <h4 className="font-medium text-warm-dark text-sm">{section.title}</h4>
+                        <p className="text-xs text-warm-dark/40 mt-0.5">{section.summary}</p>
                       </div>
                       <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                        section.completed ? 'bg-charcoal/30' : 'bg-sand/30'
+                        section.completed ? 'bg-warm-dark/30' : 'bg-warm-border/30'
                       }`} />
                     </div>
                     <button
                       onClick={() => onJumpToStep(section.step)}
-                      className="text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors flex items-center gap-1.5 mt-1"
+                      className="text-xs text-warm-dark/30 hover:text-warm-dark/50 transition-colors flex items-center gap-1.5 mt-1"
                     >
                       <Edit size={12} />
                       {section.completed ? 'Revisit this path' : 'Explore this path'}
@@ -200,11 +200,11 @@ export default function Step10Review({
       {/* ENRICHMENT SECTIONS                       */}
       {/* ========================================= */}
       <div className="mb-4">
-        <h3 className="text-xs font-medium text-charcoal/30 uppercase tracking-wider flex items-center gap-2">
+        <h3 className="text-xs font-medium text-warm-dark/30 uppercase tracking-wider flex items-center gap-2">
           <Gift size={12} />
           Optional Enrichments
         </h3>
-        <p className="text-[11px] text-charcoal/20 mt-1">
+        <p className="text-[11px] text-warm-dark/20 mt-1">
           These paths are not required. Add them at any time.
         </p>
       </div>
@@ -217,27 +217,27 @@ export default function Step10Review({
               <div
                 key={section.step}
                 className={`p-5 rounded-xl border transition-all ${section.completed
-                  ? 'bg-white border-sand/20'
-                  : 'bg-ivory border-dashed border-sand/20'
+                  ? 'bg-white border-warm-border/20'
+                  : 'bg-surface-low border-dashed border-warm-border/20'
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-sand/10 flex items-center justify-center">
-                    <Icon size={20} className="text-charcoal/25" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-warm-border/10 flex items-center justify-center">
+                    <Icon size={20} className="text-warm-dark/25" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
                       <div>
-                        <h4 className="font-medium text-charcoal text-sm">{section.title}</h4>
-                        <p className="text-xs text-charcoal/40 mt-0.5">{section.summary}</p>
+                        <h4 className="font-medium text-warm-dark text-sm">{section.title}</h4>
+                        <p className="text-xs text-warm-dark/40 mt-0.5">{section.summary}</p>
                       </div>
                       <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                        section.completed ? 'bg-charcoal/20' : 'bg-transparent border border-sand/30'
+                        section.completed ? 'bg-warm-dark/20' : 'bg-transparent border border-warm-border/30'
                       }`} />
                     </div>
                     <button
                       onClick={() => onJumpToStep(section.step)}
-                      className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors flex items-center gap-1.5 mt-1"
+                      className="text-xs text-warm-dark/25 hover:text-warm-dark/40 transition-colors flex items-center gap-1.5 mt-1"
                     >
                       <Edit size={12} />
                       {section.completed ? 'Revisit' : 'Add this enrichment'}
@@ -255,7 +255,7 @@ export default function Step10Review({
       <div className="space-y-4">
         <button
           onClick={() => setShowPreview(true)}
-          className="w-full py-4 px-6 bg-white border border-sand/30 rounded-xl text-charcoal/60 font-medium hover:bg-sand/5 transition-all flex items-center justify-center gap-2"
+          className="w-full py-4 px-6 bg-white border border-warm-border/30 rounded-xl text-warm-dark/60 font-medium hover:bg-warm-border/5 transition-all flex items-center justify-center gap-2"
         >
           <Eye size={20} />
           Preview the Archive
@@ -265,13 +265,13 @@ export default function Step10Review({
           onClick={handlePublish}
           disabled={isPublishing || !completion.canPublish || isBlockedBySuccessor}
           className={`w-full py-5 px-6 rounded-xl font-medium transition-all flex items-center justify-center gap-2 text-lg ${isPublishing || !completion.canPublish || isBlockedBySuccessor
-            ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-            : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+            ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
+            : 'bg-warm-dark hover:bg-warm-dark/90 text-surface-low'
           }`}
         >
           {isPublishing ? (
             <>
-              <div className="w-5 h-5 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-surface-low/30 border-t-warm-bg rounded-full animate-spin" />
               Sealing...
             </>
           ) : (
@@ -283,20 +283,20 @@ export default function Step10Review({
         </button>
 
         {!completion.canPublish && (
-          <p className="text-xs text-center text-charcoal/30">
+          <p className="text-xs text-center text-warm-dark/30">
             Begin with the Facts before sealing the archive
           </p>
         )}
 
         {isBlockedBySuccessor && (
-          <p className="text-xs text-center text-stone/60 font-medium">
+          <p className="text-xs text-center text-warm-brown/60 font-medium">
             You must designate a successor before sealing
           </p>
         )}
 
         <button
           onClick={onBack}
-          className="w-full py-3 px-6 border border-sand/20 rounded-xl hover:bg-sand/5 transition-all flex items-center justify-center gap-2 text-charcoal/40 text-sm"
+          className="w-full py-3 px-6 border border-warm-border/20 rounded-xl hover:bg-warm-border/5 transition-all flex items-center justify-center gap-2 text-warm-dark/40 text-sm"
         >
           <ArrowLeft size={16} />
           Back
@@ -304,8 +304,8 @@ export default function Step10Review({
       </div>
 
       {/* Step 1.1.3: Silent auto-save note */}
-      <div className="mt-8 p-4 bg-sand/5 rounded-lg text-center">
-        <p className="text-xs text-charcoal/25">
+      <div className="mt-8 p-4 bg-warm-border/5 rounded-lg text-center">
+        <p className="text-xs text-warm-dark/25">
           Your work is automatically saved. You can close this page and return anytime.
         </p>
       </div>
@@ -318,13 +318,13 @@ export default function Step10Review({
       )}
 
       {showSuccessorModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-warm-dark/80 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl relative">
             <button
               onClick={() => setShowSuccessorModal(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-sand/20 rounded-full transition-colors z-10"
+              className="absolute top-4 right-4 p-2 hover:bg-warm-border/20 rounded-full transition-colors z-10"
             >
-              <X size={20} className="text-charcoal/60" />
+              <X size={20} className="text-warm-dark/60" />
             </button>
             <div className="max-h-[90vh] overflow-y-auto">
               <SuccessorSettings userId={userId} />

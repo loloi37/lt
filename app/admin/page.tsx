@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
 import type { ConciergeProject } from '@/types/concierge';
 
 const STATUS_CONFIG = {
-    requested: { label: 'Requested', color: 'text-stone', bg: 'bg-parchment', icon: Clock },
+    requested: { label: 'Requested', color: 'text-warm-brown', bg: 'bg-surface-high', icon: Clock },
     in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50', icon: Edit },
     in_review: { label: 'In Review', color: 'text-purple-600', bg: 'bg-purple-50', icon: Eye },
-    finalized: { label: 'Finalized', color: 'text-mist', bg: 'bg-mist/10', icon: CheckCircle }
+    finalized: { label: 'Finalized', color: 'text-olive', bg: 'bg-olive/10', icon: CheckCircle }
 };
 
 export default function AdminDashboard() {
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                                                 <td className="px-6 py-4">
                                                     <Link
                                                         href={`/admin/${project.id}`}
-                                                        className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 inline-flex"
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2 inline-flex"
                                                     >
                                                         <Edit size={16} />
                                                         Manage

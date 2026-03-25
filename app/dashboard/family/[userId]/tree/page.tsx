@@ -31,7 +31,7 @@ import {
 // 1. CUSTOM NODE COMPONENT (4 Handles, visible only on hover)
 // ============================================================================
 const MemorialNode = ({ data, id }: any) => {
-    const handleClasses = "!w-3.5 !h-3.5 !bg-white !border-2 !border-mist !opacity-0 group-hover:!opacity-100 !transition-all !duration-200 hover:!scale-150 hover:!bg-mist/20 cursor-crosshair z-50";
+    const handleClasses = "!w-3.5 !h-3.5 !bg-white !border-2 !border-olive !opacity-0 group-hover:!opacity-100 !transition-all !duration-200 hover:!scale-150 hover:!bg-olive/20 cursor-crosshair z-50";
 
     return (
         <div
@@ -43,16 +43,16 @@ const MemorialNode = ({ data, id }: any) => {
             <Handle type="source" position={Position.Left} id="left" className={handleClasses} />
             <Handle type="source" position={Position.Right} id="right" className={handleClasses} />
 
-            <div className="ft-node-avatar bg-sand/10 border-r border-sand/30 flex items-center justify-center">
+            <div className="ft-node-avatar bg-warm-border/10 border-r border-warm-border/30 flex items-center justify-center">
                 {data.image ? (
                     <img src={data.image} alt={data.label} className="w-full h-full object-cover pointer-events-none" />
                 ) : (
-                    <User className="text-charcoal/20 pointer-events-none" size={24} />
+                    <User className="text-warm-dark/20 pointer-events-none" size={24} />
                 )}
             </div>
             <div className="ft-node-body flex-1 overflow-hidden pointer-events-none">
-                <p className="text-sm font-serif font-bold text-charcoal truncate">{data.label || 'Unknown'}</p>
-                <p className="text-[10px] text-charcoal/50 tracking-wide mt-0.5">{data.dates || 'Dates unknown'}</p>
+                <p className="text-sm font-serif font-bold text-warm-dark truncate">{data.label || 'Unknown'}</p>
+                <p className="text-[10px] text-warm-dark/50 tracking-wide mt-0.5">{data.dates || 'Dates unknown'}</p>
             </div>
         </div>
     );
@@ -70,7 +70,7 @@ function computeFamilyLayout(nodes: Node[], edges: Edge[]) {
 
     // Since we removed types visually, we treat all connections similarly for layout
     edges.forEach(edge => {
-        // If you want to refine this later, you can parse the labels, but for now we 
+        // If you want to refine this later, you can parse the labels, but for now we
         // will just assign levels based on connections.
         if (!levels.has(edge.source)) levels.set(edge.source, 0);
         if (!levels.has(edge.target)) levels.set(edge.target, (levels.get(edge.source) || 0) + 1);
@@ -338,10 +338,10 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
     };
 
     return (
-        <div className="w-full h-[calc(100vh-85px)] relative bg-ivory">
+        <div className="w-full h-[calc(100vh-85px)] relative bg-surface-low">
             {loading && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-ivory/50 backdrop-blur-sm">
-                    <Loader2 className="animate-spin text-mist" size={32} />
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-low/50 backdrop-blur-sm">
+                    <Loader2 className="animate-spin text-olive" size={32} />
                 </div>
             )}
 
@@ -349,9 +349,9 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
             <div className="absolute top-4 right-4 z-40 flex gap-2">
                 <button
                     onClick={() => loadGraph(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-sand/40 rounded-xl shadow-sm text-sm font-medium text-charcoal hover:bg-sand/10 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-warm-border/40 rounded-xl shadow-sm text-sm font-medium text-warm-dark hover:bg-warm-border/10 transition-all"
                 >
-                    <LayoutTemplate size={16} className="text-mist" />
+                    <LayoutTemplate size={16} className="text-olive" />
                     Auto-Arrange
                 </button>
             </div>
@@ -376,11 +376,11 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
             {/* NEW CONNECTION POPUP */}
             {pendingConnection && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-warm-dark/40 backdrop-blur-sm p-4">
                     <div className="ft-popup w-full max-w-sm p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-serif text-xl text-charcoal">Define Relationship</h3>
-                            <button onClick={() => setPendingConnection(null)} className="text-charcoal/40 hover:text-charcoal"><X size={20} /></button>
+                            <h3 className="font-serif text-xl text-warm-dark">Define Relationship</h3>
+                            <button onClick={() => setPendingConnection(null)} className="text-warm-dark/40 hover:text-warm-dark"><X size={20} /></button>
                         </div>
 
                         <form onSubmit={(e) => {
@@ -390,7 +390,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                         }}>
                             <div className="space-y-4 mb-6">
                                 <div>
-                                    <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">
+                                    <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2">
                                         Relationship Name
                                     </label>
                                     <input
@@ -398,12 +398,12 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                                         type="text"
                                         required
                                         placeholder="e.g. Mother, Best Friend, Husband"
-                                        className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:ring-2 focus:ring-mist/30 outline-none text-charcoal"
+                                        className="glass-input w-full px-3 py-2 border border-warm-border/40 rounded-lg focus:ring-2 focus:ring-olive/30 outline-none text-warm-dark"
                                         autoFocus
                                     />
                                 </div>
                             </div>
-                            <button type="submit" disabled={saving} className="w-full py-3 bg-charcoal text-ivory rounded-lg font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2">
+                            <button type="submit" disabled={saving} className="glass-btn-dark w-full py-3 bg-warm-dark text-surface-low rounded-lg font-medium hover:bg-warm-dark/90 transition-all flex items-center justify-center gap-2">
                                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Create Link
                             </button>
                         </form>
@@ -413,40 +413,40 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
             {/* NODE INFO POPUP */}
             {selectedNodeData && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-warm-dark/40 backdrop-blur-sm p-4">
                     <div className="ft-popup w-full max-w-md p-6 relative">
-                        <button onClick={() => setSelectedNodeData(null)} className="absolute top-4 right-4 p-2 bg-sand/10 hover:bg-sand/30 rounded-full transition-all">
-                            <X size={16} className="text-charcoal" />
+                        <button onClick={() => setSelectedNodeData(null)} className="absolute top-4 right-4 p-2 bg-warm-border/10 hover:bg-warm-border/30 rounded-full transition-all">
+                            <X size={16} className="text-warm-dark" />
                         </button>
 
                         <div className="flex flex-col items-center text-center mt-2">
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-ivory shadow-lg bg-sand/10 flex items-center justify-center mb-4">
+                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-surface-low shadow-lg bg-warm-border/10 flex items-center justify-center mb-4">
                                 {selectedNodeData.image ? (
                                     <img src={selectedNodeData.image} alt={selectedNodeData.label} className="w-full h-full object-cover" />
                                 ) : (
-                                    <User className="text-charcoal/20" size={48} />
+                                    <User className="text-warm-dark/20" size={48} />
                                 )}
                             </div>
-                            <h2 className="font-serif text-3xl text-charcoal mb-1">{selectedNodeData.label}</h2>
-                            <p className="text-sm font-medium text-charcoal/50 uppercase tracking-wider mb-4">{selectedNodeData.dates}</p>
+                            <h2 className="font-serif text-3xl text-warm-dark mb-1">{selectedNodeData.label}</h2>
+                            <p className="text-sm font-medium text-warm-dark/50 uppercase tracking-wider mb-4">{selectedNodeData.dates}</p>
 
                             {selectedNodeData.raw.birth_place && (
-                                <div className="flex items-center gap-2 text-sm text-charcoal/70 mb-4 bg-sand/10 px-3 py-1.5 rounded-full">
-                                    <MapPin size={14} className="text-stone" /> {selectedNodeData.raw.birth_place}
+                                <div className="flex items-center gap-2 text-sm text-warm-dark/70 mb-4 bg-warm-border/10 px-3 py-1.5 rounded-full">
+                                    <MapPin size={14} className="text-warm-muted" /> {selectedNodeData.raw.birth_place}
                                 </div>
                             )}
 
                             {selectedNodeData.raw.step1?.epitaph && (
-                                <div className="relative py-4 px-6 mt-2 mb-6 border-y border-sand/30 w-full">
-                                    <Quote size={24} className="text-mist/20 absolute top-2 left-2" />
-                                    <p className="font-serif italic text-charcoal/80">"{selectedNodeData.raw.step1.epitaph}"</p>
+                                <div className="relative py-4 px-6 mt-2 mb-6 border-y border-warm-border/30 w-full">
+                                    <Quote size={24} className="text-olive/20 absolute top-2 left-2" />
+                                    <p className="font-serif italic text-warm-dark/80">"{selectedNodeData.raw.step1.epitaph}"</p>
                                 </div>
                             )}
 
                             <Link
                                 href={`/person/${selectedNodeData.raw.id}`}
                                 target="_blank"
-                                className="w-full py-3 bg-mist text-ivory rounded-lg font-medium hover:bg-mist/90 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-3 bg-olive text-surface-low rounded-lg font-medium hover:bg-olive/90 transition-all flex items-center justify-center gap-2"
                             >
                                 Open Full Archive
                             </Link>
@@ -457,11 +457,11 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 
             {/* EDGE EDIT POPUP */}
             {selectedEdgeData && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center bg-charcoal/40 backdrop-blur-sm p-4">
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-warm-dark/40 backdrop-blur-sm p-4">
                     <div className="ft-popup w-full max-w-sm p-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-serif text-xl text-charcoal flex items-center gap-2"><Settings2 size={20} className="text-stone" /> Edit Connection</h3>
-                            <button onClick={() => setSelectedEdgeData(null)} className="text-charcoal/40 hover:text-charcoal"><X size={20} /></button>
+                            <h3 className="font-serif text-xl text-warm-dark flex items-center gap-2"><Settings2 size={20} className="text-warm-muted" /> Edit Connection</h3>
+                            <button onClick={() => setSelectedEdgeData(null)} className="text-warm-dark/40 hover:text-warm-dark"><X size={20} /></button>
                         </div>
 
                         <form onSubmit={(e) => {
@@ -469,18 +469,18 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                             updateEdge(new FormData(e.currentTarget).get('label') as string);
                         }}>
                             <div className="mb-6">
-                                <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">Relationship Name</label>
+                                <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2">Relationship Name</label>
                                 <input
                                     name="label"
                                     type="text"
                                     required
                                     defaultValue={(selectedEdgeData.data?.description as string) || ''}
                                     placeholder="e.g. Mother, Best Friend"
-                                    className="w-full px-3 py-2 border border-sand/40 rounded-lg focus:ring-2 focus:ring-mist/30 outline-none text-charcoal"
+                                    className="glass-input w-full px-3 py-2 border border-warm-border/40 rounded-lg focus:ring-2 focus:ring-olive/30 outline-none text-warm-dark"
                                 />
                             </div>
                             <div className="flex gap-3">
-                                <button type="submit" disabled={saving} className="flex-1 py-3 bg-charcoal text-ivory rounded-lg font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2">
+                                <button type="submit" disabled={saving} className="glass-btn-dark flex-1 py-3 bg-warm-dark text-surface-low rounded-lg font-medium hover:bg-warm-dark/90 transition-all flex items-center justify-center gap-2">
                                     <Save size={16} /> Save
                                 </button>
                                 <button type="button" onClick={deleteEdge} disabled={saving} className="px-4 py-3 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-all flex items-center justify-center">
@@ -502,21 +502,21 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
     const unwrappedParams = use(params);
 
     return (
-        <div className="min-h-screen flex flex-col bg-ivory">
+        <div className="min-h-screen flex flex-col bg-surface-low">
             {/* Header */}
-            <div className="bg-white border-b border-sand/30 shadow-sm flex-none z-50 relative">
+            <div className="bg-white border-b border-warm-border/30 shadow-sm flex-none z-50 relative">
                 <div className="max-w-[1920px] mx-auto px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Link
                             href={`/dashboard/family/${unwrappedParams.userId}`}
-                            className="p-2 hover:bg-sand/10 rounded-lg transition-colors border border-sand/20"
+                            className="p-2 hover:bg-warm-border/10 rounded-lg transition-colors border border-warm-border/20"
                             title="Back to Dashboard"
                         >
-                            <ArrowLeft size={18} className="text-charcoal/60" />
+                            <ArrowLeft size={18} className="text-warm-dark/60" />
                         </Link>
                         <div>
-                            <h1 className="font-serif text-2xl text-charcoal leading-none">Family Constellation</h1>
-                            <p className="text-xs text-charcoal/50 mt-1">Drag nodes to organize. Hover over a card to reveal connection points.</p>
+                            <h1 className="font-serif text-2xl text-warm-dark leading-none">Family Constellation</h1>
+                            <p className="text-xs text-warm-dark/50 mt-1">Drag nodes to organize. Hover over a card to reveal connection points.</p>
                         </div>
                     </div>
                 </div>

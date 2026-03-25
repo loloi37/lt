@@ -137,10 +137,10 @@ export default function InvitePage({
     // Loading state
     if (step === 'loading') {
         return (
-            <div className="min-h-screen bg-ivory flex 
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center">
-                <div className="w-10 h-10 border-2 
-          border-sand/30 border-t-charcoal/40 
+                <div className="w-10 h-10 border-2
+          border-warm-border/30 border-t-warm-dark/40
           rounded-full animate-spin" />
             </div>
         );

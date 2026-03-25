@@ -100,12 +100,12 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
         loadData();
     };
 
-    if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin inline text-mist" /></div>;
+    if (loading) return <div className="p-4 text-center"><Loader2 className="animate-spin inline text-olive" /></div>;
 
     return (
-        <div className="bg-sand/10 rounded-xl p-6 border border-sand/30">
-            <h3 className="font-serif text-xl text-charcoal mb-4 flex items-center gap-2">
-                <Link2 size={20} className="text-stone" />
+        <div className="bg-warm-border/10 rounded-xl p-6 border border-warm-border/30">
+            <h3 className="font-serif text-xl text-warm-dark mb-4 flex items-center gap-2">
+                <Link2 size={20} className="text-warm-brown" />
                 Family Connections
             </h3>
 
@@ -113,37 +113,37 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
             {relations.length > 0 ? (
                 <div className="space-y-3 mb-6">
                     {relations.map(rel => (
-                        <div key={rel.id} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-sand/20">
+                        <div key={rel.id} className="flex items-center justify-between bg-white p-3 rounded-lg shadow-sm border border-warm-border/20">
                             <div className="flex items-center gap-3">
                                 {rel.target_photo ? (
                                     <img src={rel.target_photo} alt="" className="w-10 h-10 rounded-full object-cover" />
                                 ) : (
-                                    <div className="w-10 h-10 bg-mist/10 rounded-full flex items-center justify-center">
-                                        <User size={16} className="text-mist" />
+                                    <div className="w-10 h-10 bg-olive/10 rounded-full flex items-center justify-center">
+                                        <User size={16} className="text-olive" />
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-sm font-medium text-charcoal">{rel.target_name}</p>
-                                    <p className="text-xs text-charcoal/60 capitalize">{rel.relationship_type}</p>
+                                    <p className="text-sm font-medium text-warm-dark">{rel.target_name}</p>
+                                    <p className="text-xs text-warm-muted capitalize">{rel.relationship_type}</p>
                                 </div>
                             </div>
-                            <button onClick={() => unlink(rel.id)} className="text-charcoal/40 hover:text-stone p-2">
+                            <button onClick={() => unlink(rel.id)} className="text-warm-outline hover:text-warm-brown p-2">
                                 <X size={16} />
                             </button>
                         </div>
                     ))}
                 </div>
             ) : (
-                <p className="text-sm text-charcoal/50 italic mb-6">No connections yet. Link this memorial to others in your family plan.</p>
+                <p className="text-sm text-warm-outline italic mb-6">No connections yet. Link this memorial to others in your family plan.</p>
             )}
 
             {/* Add New Link Form */}
             {candidates.length > 0 ? (
                 <div className="flex flex-col gap-3">
-                    <p className="text-xs font-medium text-charcoal/70 uppercase tracking-wider">Add Connection</p>
+                    <p className="text-xs font-medium text-warm-muted uppercase tracking-wider">Add Connection</p>
                     <div className="flex gap-2">
                         <select
-                            className="flex-1 p-2 rounded-lg border border-sand/30 text-sm focus:ring-mist"
+                            className="flex-1 p-2 rounded-lg border border-warm-border/30 text-sm focus:ring-olive"
                             value={selectedCandidate}
                             onChange={(e) => setSelectedCandidate(e.target.value)}
                         >
@@ -153,10 +153,10 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                             ))}
                         </select>
 
-                        <span className="self-center text-charcoal/40 font-serif italic">is</span>
+                        <span className="self-center text-warm-outline font-serif italic">is</span>
 
                         <select
-                            className="w-32 p-2 rounded-lg border border-sand/30 text-sm focus:ring-mist"
+                            className="w-32 p-2 rounded-lg border border-warm-border/30 text-sm focus:ring-olive"
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
                         >
@@ -169,15 +169,15 @@ export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinker
                     <button
                         onClick={handleLink}
                         disabled={!selectedCandidate || linking}
-                        className="w-full py-2 bg-charcoal text-ivory rounded-lg text-sm font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full py-2 bg-warm-dark text-surface-low rounded-lg text-sm font-medium hover:bg-warm-dark/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {linking ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                         Connect Memorials
                     </button>
                 </div>
             ) : (
-                <div className="p-3 bg-white/50 rounded-lg text-center border border-dashed border-sand/30">
-                    <p className="text-xs text-charcoal/60">Create more memorials to start linking them.</p>
+                <div className="p-3 bg-white/50 rounded-lg text-center border border-dashed border-warm-border/30">
+                    <p className="text-xs text-warm-muted">Create more memorials to start linking them.</p>
                 </div>
             )}
         </div>

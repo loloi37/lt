@@ -34,10 +34,10 @@ function DashboardRedirectContent() {
   }, [auth.loading, auth.authenticated, auth.archives, auth.user, searchParams, router]);
 
   return (
-    <div className="min-h-screen bg-ivory flex items-center justify-center">
+    <div className="min-h-screen bg-surface-low flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-charcoal/60">Redirecting to dashboard...</p>
+        <div className="w-16 h-16 border-4 border-warm-border/30 border-t-olive rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-warm-muted">Redirecting to dashboard...</p>
       </div>
     </div>
   );
@@ -46,8 +46,8 @@ function DashboardRedirectContent() {
 export default function DashboardRedirect() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-ivory flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin mx-auto" />
+      <div className="min-h-screen bg-surface-low flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-warm-border/30 border-t-olive rounded-full animate-spin mx-auto" />
       </div>
     }>
       <DashboardRedirectContent />

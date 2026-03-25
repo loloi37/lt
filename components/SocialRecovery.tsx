@@ -51,29 +51,29 @@ export default function SocialRecovery({
     };
 
     return (
-        <div className="dark-card p-6">
+        <div className="bg-surface-mid rounded-xl border border-warm-border p-6">
             <div className="flex items-center gap-3 mb-5">
                 <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
                     <Key size={16} className="text-purple-400" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-semibold text-vault-text font-sans">Social Recovery</h3>
-                    <p className="text-xs text-vault-muted font-sans">Protect access with trusted contacts</p>
+                    <h3 className="text-sm font-semibold text-warm-dark font-sans">Social Recovery</h3>
+                    <p className="text-xs text-warm-muted font-sans">Protect access with trusted contacts</p>
                 </div>
             </div>
 
             {/* How it works */}
-            <div className="bg-vault-dark/30 rounded-lg p-4 mb-5">
-                <p className="text-xs text-vault-muted font-sans leading-relaxed">
+            <div className="bg-surface-high/30 rounded-lg p-4 mb-5">
+                <p className="text-xs text-warm-muted font-sans leading-relaxed">
                     Your memorial is encrypted with a unique key. To prevent permanent lockout,
                     the key is split among your trusted contacts using Shamir&apos;s Secret Sharing.
-                    Any <strong className="text-vault-text">3 of 5</strong> contacts can recover access.
+                    Any <strong className="text-warm-dark">3 of 5</strong> contacts can recover access.
                 </p>
             </div>
 
             {/* Backup method selector */}
             <div className="mb-5">
-                <p className="text-xs text-vault-muted font-sans mb-3">Key backup method</p>
+                <p className="text-xs text-warm-muted font-sans mb-3">Key backup method</p>
                 <div className="space-y-2">
                     {KEY_BACKUP_METHODS.map(method => {
                         const icons = { family_recovery: Users, paper_backup: FileText, lawyer_executor: Shield };
@@ -85,13 +85,13 @@ export default function SocialRecovery({
                                 className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors text-left ${
                                     selectedMethod === method.type
                                         ? 'border-purple-500/40 bg-purple-500/5'
-                                        : 'border-vault-border hover:border-vault-muted/30'
+                                        : 'border-warm-border hover:border-warm-muted/30'
                                 }`}
                             >
-                                <Icon size={16} className={selectedMethod === method.type ? 'text-purple-400 mt-0.5' : 'text-vault-muted mt-0.5'} />
+                                <Icon size={16} className={selectedMethod === method.type ? 'text-purple-400 mt-0.5' : 'text-warm-muted mt-0.5'} />
                                 <div>
-                                    <p className="text-sm font-sans font-medium text-vault-text">{method.label}</p>
-                                    <p className="text-xs text-vault-muted font-sans">{method.description}</p>
+                                    <p className="text-sm font-sans font-medium text-warm-dark">{method.label}</p>
+                                    <p className="text-xs text-warm-muted font-sans">{method.description}</p>
                                 </div>
                                 {selectedMethod === method.type && (
                                     <Check size={14} className="text-purple-400 ml-auto mt-0.5" />
@@ -106,7 +106,7 @@ export default function SocialRecovery({
             {selectedMethod === 'family_recovery' && (
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs text-vault-muted font-sans">
+                        <p className="text-xs text-warm-muted font-sans">
                             Recovery contacts ({contacts.length}/5)
                         </p>
                         {contacts.length < 5 && (
@@ -120,9 +120,9 @@ export default function SocialRecovery({
                     </div>
 
                     {contacts.length === 0 && !showAddForm && (
-                        <div className="text-center py-6 border border-dashed border-vault-border rounded-lg">
-                            <Users size={24} className="text-vault-muted mx-auto mb-2" />
-                            <p className="text-sm text-vault-muted font-sans">No recovery contacts yet</p>
+                        <div className="text-center py-6 border border-dashed border-warm-border rounded-lg">
+                            <Users size={24} className="text-warm-muted mx-auto mb-2" />
+                            <p className="text-sm text-warm-muted font-sans">No recovery contacts yet</p>
                             <button
                                 onClick={() => setShowAddForm(true)}
                                 className="text-xs text-purple-400 font-sans mt-1 hover:text-purple-300"
@@ -133,10 +133,10 @@ export default function SocialRecovery({
                     )}
 
                     {contacts.map(contact => (
-                        <div key={contact.id} className="flex items-center justify-between bg-vault-dark/30 rounded-lg p-3 mb-2">
+                        <div key={contact.id} className="flex items-center justify-between bg-surface-high/30 rounded-lg p-3 mb-2">
                             <div>
-                                <p className="text-sm font-sans text-vault-text">{contact.name}</p>
-                                <p className="text-xs text-vault-muted font-sans">{contact.email} · {contact.relationship}</p>
+                                <p className="text-sm font-sans text-warm-dark">{contact.name}</p>
+                                <p className="text-xs text-warm-muted font-sans">{contact.email} · {contact.relationship}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={`text-xs font-sans px-2 py-0.5 rounded-full ${
@@ -146,7 +146,7 @@ export default function SocialRecovery({
                                 }`}>
                                     {contact.status}
                                 </span>
-                                <button onClick={() => handleRemoveContact(contact.id)} className="text-vault-muted hover:text-red-400">
+                                <button onClick={() => handleRemoveContact(contact.id)} className="text-warm-muted hover:text-red-400">
                                     <X size={14} />
                                 </button>
                             </div>
@@ -154,27 +154,27 @@ export default function SocialRecovery({
                     ))}
 
                     {showAddForm && (
-                        <div className="bg-vault-dark/50 rounded-lg p-4 mt-2 space-y-3">
+                        <div className="bg-surface-high/50 rounded-lg p-4 mt-2 space-y-3">
                             <input
                                 type="text"
                                 placeholder="Full name"
                                 value={newContact.name}
                                 onChange={e => setNewContact(prev => ({ ...prev, name: e.target.value }))}
-                                className="w-full px-3 py-2 bg-vault-dark border border-vault-border rounded-lg text-sm font-sans text-vault-text placeholder:text-vault-muted/50 focus:outline-none focus:border-purple-500/40"
+                                className="w-full px-3 py-2 bg-surface-high border border-warm-border rounded-lg text-sm font-sans text-warm-dark placeholder:text-warm-muted/50 focus:outline-none focus:border-purple-500/40"
                             />
                             <input
                                 type="email"
                                 placeholder="Email address"
                                 value={newContact.email}
                                 onChange={e => setNewContact(prev => ({ ...prev, email: e.target.value }))}
-                                className="w-full px-3 py-2 bg-vault-dark border border-vault-border rounded-lg text-sm font-sans text-vault-text placeholder:text-vault-muted/50 focus:outline-none focus:border-purple-500/40"
+                                className="w-full px-3 py-2 bg-surface-high border border-warm-border rounded-lg text-sm font-sans text-warm-dark placeholder:text-warm-muted/50 focus:outline-none focus:border-purple-500/40"
                             />
                             <input
                                 type="text"
                                 placeholder="Relationship (e.g. Sister, Attorney)"
                                 value={newContact.relationship}
                                 onChange={e => setNewContact(prev => ({ ...prev, relationship: e.target.value }))}
-                                className="w-full px-3 py-2 bg-vault-dark border border-vault-border rounded-lg text-sm font-sans text-vault-text placeholder:text-vault-muted/50 focus:outline-none focus:border-purple-500/40"
+                                className="w-full px-3 py-2 bg-surface-high border border-warm-border rounded-lg text-sm font-sans text-warm-dark placeholder:text-warm-muted/50 focus:outline-none focus:border-purple-500/40"
                             />
                             <div className="flex gap-2">
                                 <button
@@ -185,7 +185,7 @@ export default function SocialRecovery({
                                 </button>
                                 <button
                                     onClick={() => setShowAddForm(false)}
-                                    className="px-4 py-2 text-vault-muted text-xs font-sans rounded-lg hover:bg-vault-dark"
+                                    className="px-4 py-2 text-warm-muted text-xs font-sans rounded-lg hover:bg-surface-high"
                                 >
                                     Cancel
                                 </button>

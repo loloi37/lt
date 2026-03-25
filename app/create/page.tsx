@@ -256,10 +256,10 @@ function CreateMemorialPageContent() {
   // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
     <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
-      ? 'bg-stone/10 text-stone border-stone/20'
+      ? 'bg-warm-brown/10 text-warm-brown border-warm-brown/20'
       : mode === 'draft'
-        ? 'bg-sand/10 text-charcoal/60 border-sand/30'
-        : 'bg-mist/10 text-mist border-mist/20'
+        ? 'bg-warm-border/10 text-warm-muted border-warm-border/30'
+        : 'bg-olive/10 text-olive border-olive/20'
       }`}>
       {mode === 'family' ? <Users size={12} /> : <User size={12} />}
       <span className="uppercase tracking-wider">
@@ -272,9 +272,9 @@ function CreateMemorialPageContent() {
   const DraftBanner = () => {
     if (hasFullAccess) return null;
     return (
-      <div className="bg-sand/15 border border-sand/25 rounded-xl px-5 py-3 flex items-start gap-3 max-w-2xl mx-auto mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-charcoal/40 mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
-        <p className="text-xs text-charcoal/50 leading-relaxed">
+      <div className="bg-warm-border/15 border border-warm-border/25 rounded-xl px-5 py-3 flex items-start gap-3 max-w-2xl mx-auto mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-warm-outline mt-0.5 flex-shrink-0"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+        <p className="text-xs text-warm-outline leading-relaxed">
           This is a draft. The archive will remain private and incomplete until you choose to finalize it. Take all the time you need.
         </p>
       </div>
@@ -798,10 +798,10 @@ function CreateMemorialPageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-ivory flex items-center justify-center">
+      <div className="min-h-screen bg-surface-low flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-charcoal/60">Loading memorial...</p>
+          <div className="w-16 h-16 border-4 border-olive/30 border-t-olive rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-warm-muted">Loading memorial...</p>
         </div>
       </div>
     );
@@ -879,7 +879,7 @@ function CreateMemorialPageContent() {
   );
 
   return (
-    <div className="min-h-screen bg-ivory relative">
+    <div className="min-h-screen bg-surface-low relative">
       {viewMode === 'hub' ? (
         /* --- THE HUB VIEW (The Crossroads) — Step 1.3.3: Contemplation Space --- */
         <div className="max-w-6xl mx-auto px-6 py-20">
@@ -887,7 +887,7 @@ function CreateMemorialPageContent() {
           <div className="mb-6">
             <button
               onClick={() => router.replace(dashboardPath)}
-              className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm"
+              className="inline-flex items-center gap-2 text-warm-outline hover:text-warm-dark transition-colors text-sm"
             >
               <ArrowLeft size={16} />
               <span>Back to Dashboard</span>
@@ -906,7 +906,7 @@ function CreateMemorialPageContent() {
             {/* PRIVATE STATUS BADGE */}
             {memorialData.step1.privateUntilDeath && (
               <div className="flex justify-center mb-6 animate-fadeIn">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal text-ivory rounded-full text-xs font-bold tracking-wide shadow-md border border-ivory/20">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-warm-dark text-warm-bg rounded-full text-xs font-bold tracking-wide shadow-md border border-surface-low/20">
                   <Lock size={12} />
                   LOCKED: PRIVATE UNTIL DEATH
                 </div>
@@ -914,7 +914,7 @@ function CreateMemorialPageContent() {
             )}
 
             {/* Dynamic Header */}
-            <h1 className="font-serif text-5xl text-charcoal mb-4">
+            <h1 className="font-serif text-5xl text-warm-dark mb-4">
               {texts.header}
             </h1>
 
@@ -924,7 +924,7 @@ function CreateMemorialPageContent() {
               <>
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 btn-paper border border-sand/40 rounded-lg hover:bg-sand/10 transition-all text-xs text-charcoal/60"
+                  className="flex items-center gap-2 px-3 py-1.5 border border-warm-border/30 rounded-lg hover:bg-warm-border/10 transition-all text-xs text-warm-muted"
                 >
                   <History size={14} />
                   <span className="hidden sm:inline">History</span>
@@ -933,7 +933,7 @@ function CreateMemorialPageContent() {
                 {/* NEW ARCHE PREVIEW BUTTON */}
                 <button
                   onClick={() => window.open(`/api/arche/preview-html?id=${currentMemorialId}`, '_blank')}
-                  className="flex items-center gap-2 px-3 py-1.5 btn-paper bg-charcoal text-ivory border border-charcoal rounded-lg hover:opacity-90 transition-all text-xs"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-warm-dark text-warm-bg border border-warm-dark rounded-lg hover:opacity-90 transition-all text-xs"
                   title="Preview the offline export HTML"
                 >
                   <EthernetPort size={14} />
@@ -976,7 +976,7 @@ function CreateMemorialPageContent() {
                 }
               }}
               id="btn-export-zip"
-              className="flex items-center gap-2 px-3 py-1.5 btn-paper bg-sage text-ivory border border-sage rounded-lg hover:opacity-90 transition-all text-xs ml-2"
+              className="flex items-center gap-2 px-3 py-1.5 bg-olive text-warm-bg border border-olive rounded-lg hover:opacity-90 transition-all text-xs ml-2"
               title="Download the full offline archive (ZIP)"
             >
               <span className="hidden sm:inline">📦 Export ZIP</span>
@@ -992,22 +992,22 @@ function CreateMemorialPageContent() {
               return (
                 <>
                   {!isPresenceUnlocked && (
-                    <p className="text-xs text-charcoal/40 tracking-wide mb-6">
+                    <p className="text-xs text-warm-outline tracking-wide mb-6">
                       The Presence awaits. Explore two other paths to reveal it.
                     </p>
                   )}
                   {isPresenceUnlocked && !allPathsTraveled && (
-                    <p className="text-xs text-mist/70 tracking-wide mb-6">
+                    <p className="text-xs text-olive/70 tracking-wide mb-6">
                       The Presence is open. Continue when you are ready.
                     </p>
                   )}
 
-                  <p className="text-lg text-charcoal/60 max-w-xl mx-auto">
+                  <p className="text-lg text-warm-muted max-w-xl mx-auto">
                     {texts.subHeader}
                     {mode === 'family' && !isSelf && (
                       <>
                         <br />
-                        <span className="text-sm mt-2 block text-stone">
+                        <span className="text-sm mt-2 block text-warm-brown">
                           Designed for collaboration. You will invite members in the Witnesses section.
                         </span>
                       </>
@@ -1015,7 +1015,7 @@ function CreateMemorialPageContent() {
                     {!isSelf && mode !== 'family' && (
                       <>
                         <br />
-                        <span className="text-sm mt-2 block text-mist">
+                        <span className="text-sm mt-2 block text-olive">
                           You are the sole guardian. Sharing is optional and controlled by you.
                         </span>
                       </>
@@ -1058,21 +1058,21 @@ function CreateMemorialPageContent() {
             <div className="hidden lg:flex items-center justify-center">
               {allPathsTraveled && memorialData.step1.fullName ? (
                 <div className="text-center animate-fadeIn">
-                  <p className="font-serif text-3xl text-charcoal/70 italic">
+                  <p className="font-serif text-3xl text-warm-muted italic">
                     {memorialData.step1.fullName}
                   </p>
-                  <p className="text-xs text-charcoal/30 mt-2 tracking-wide">is taking shape.</p>
+                  <p className="text-xs text-warm-outline mt-2 tracking-wide">is taking shape.</p>
                 </div>
               ) : somePathsTraveled ? (
                 <div className="text-center">
-                  <div className="w-px h-12 bg-sand/40 mx-auto mb-3" />
-                  <p className="text-xs text-charcoal/25 italic max-w-[140px]">
+                  <div className="w-px h-12 bg-warm-border/40 mx-auto mb-3" />
+                  <p className="text-xs text-warm-outline italic max-w-[140px]">
                     What has not yet been said
                   </p>
-                  <div className="w-px h-12 bg-sand/40 mx-auto mt-3" />
+                  <div className="w-px h-12 bg-warm-border/40 mx-auto mt-3" />
                 </div>
               ) : (
-                <div className="w-px h-16 bg-sand/20 mx-auto" />
+                <div className="w-px h-16 bg-warm-border/20 mx-auto" />
               )}
             </div>
 
@@ -1102,18 +1102,18 @@ function CreateMemorialPageContent() {
                   setMemorialData(prev => ({ ...prev, currentStep: 7 }));
                   setViewMode('path');
                 }}
-                className="w-full p-8 rounded-2xl border-2 border-mist bg-white hover:shadow-xl transition-all text-left flex items-center justify-between group"
+                className="w-full p-8 rounded-2xl border-2 border-olive bg-surface-low hover:shadow-xl transition-all text-left flex items-center justify-between group"
               >
                 <div className="flex items-center gap-6">
-                  <div className="p-4 bg-mist/10 rounded-2xl text-mist group-hover:scale-110 transition-transform">
+                  <div className="p-4 bg-olive/10 rounded-2xl text-olive group-hover:scale-110 transition-transform">
                     <Users size={32} />
                   </div>
                   <div>
-                    <h3 className="font-serif text-2xl text-charcoal">Invite Witnesses</h3>
-                    <p className="text-sm text-charcoal/60">Invite family and friends to add their own stories and shared memories.</p>
+                    <h3 className="font-serif text-2xl text-warm-dark">Invite Witnesses</h3>
+                    <p className="text-sm text-warm-muted">Invite family and friends to add their own stories and shared memories.</p>
                   </div>
                 </div>
-                <div className="px-6 py-2 bg-sage text-ivory rounded-lg btn-paper text-sm font-bold">
+                <div className="px-6 py-2 bg-olive text-warm-bg rounded-lg text-sm font-bold">
                   Open for Contributions
                 </div>
               </button>
@@ -1121,12 +1121,12 @@ function CreateMemorialPageContent() {
           )}
 
           {hasFullAccess ? (
-            <div className="mt-12 p-10 bg-mist/5 border-2 border-mist/20 rounded-3xl text-center animate-fadeIn">
-              <div className="w-16 h-16 bg-mist text-ivory rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <div className="mt-12 p-10 bg-plum/5 border-2 border-plum/20 rounded-3xl text-center animate-fadeIn">
+              <div className="w-16 h-16 bg-plum text-warm-bg rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <CheckCircle size={32} />
               </div>
-              <h3 className="font-serif text-3xl text-charcoal mb-4">This Memory is Now Eternal</h3>
-              <p className="text-charcoal/60 max-w-lg mx-auto mb-8 text-sm">
+              <h3 className="font-serif text-3xl text-warm-dark mb-4">This Memory is Now Eternal</h3>
+              <p className="text-warm-muted max-w-lg mx-auto mb-8 text-sm">
                 The watermark has been removed. Your archive is live at its permanent URL. You can now invite others to share their memories.
               </p>
 
@@ -1134,13 +1134,13 @@ function CreateMemorialPageContent() {
                 <Link
                   href={`/person/${currentMemorialId}`}
                   target="_blank"
-                  className="px-8 py-3 bg-charcoal text-ivory rounded-lg btn-paper font-medium hover:bg-charcoal/90 transition-all"
+                  className="px-8 py-3 bg-warm-dark text-warm-bg rounded-lg font-medium hover:bg-warm-dark/90 transition-all"
                 >
                   View Public Page
                 </Link>
                 <button
                   onClick={() => alert("Invite Witnesses feature coming soon!")}
-                  className="px-8 py-3 border border-sage text-sage rounded-lg btn-paper font-medium hover:bg-sage/5 transition-all"
+                  className="px-8 py-3 border border-olive text-olive rounded-lg font-medium hover:bg-olive/5 transition-all"
                 >
                   Invite Witnesses
                 </button>
@@ -1150,16 +1150,16 @@ function CreateMemorialPageContent() {
             getPathStatus(memorialData, 'facts') === 'completed' && (
               /* Step 2.1.1 + 2.1.2: CTA appears as a revealed path, not a popup */
               <div className="mt-12 max-w-2xl mx-auto animate-fadeIn">
-                <p className="text-xs text-charcoal/25 text-center mb-4 tracking-wide">
+                <p className="text-xs text-warm-outline text-center mb-4 tracking-wide">
                   A new path has opened.
                 </p>
-                <div className="p-10 bg-white border border-sand/30 rounded-2xl text-center">
-                  <h3 className="font-serif text-3xl text-charcoal mb-3">
+                <div className="p-10 bg-surface-low border border-warm-border/30 rounded-2xl text-center">
+                  <h3 className="font-serif text-3xl text-warm-dark mb-3">
                     {memorialData.step1.fullName
                       ? `The archive of ${memorialData.step1.fullName} is ready.`
                       : 'The archive is ready.'}
                   </h3>
-                  <p className="text-charcoal/40 max-w-md mx-auto mb-8 text-sm leading-relaxed">
+                  <p className="text-warm-outline max-w-md mx-auto mb-8 text-sm leading-relaxed">
                     You have built something worth preserving. When you are ready, seal the archive to make it permanent.
                   </p>
 
@@ -1171,12 +1171,12 @@ function CreateMemorialPageContent() {
                         : '/seal-confirmation';
                       router.push(sealUrl);
                     }}
-                    className="px-10 py-4 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-all"
+                    className="px-10 py-4 bg-warm-dark text-warm-bg rounded-xl font-medium hover:bg-warm-dark/90 transition-all"
                   >
                     Seal this archive
                   </button>
                   {/* Step 2.1.1: Subtext below — price context without commercialism */}
-                  <p className="text-xs text-charcoal/25 mt-4">
+                  <p className="text-xs text-warm-outline mt-4">
                     $1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.
                   </p>
                 </div>
@@ -1188,12 +1188,12 @@ function CreateMemorialPageContent() {
           <div className="mt-16 text-center space-y-4">
             <button
               onClick={() => setShowPauseModal(true)}
-              className="text-sm text-charcoal/40 hover:text-charcoal transition-colors border border-sand/30 rounded-xl px-6 py-3 hover:bg-sand/5"
+              className="text-sm text-warm-outline hover:text-warm-dark transition-colors border border-warm-border/30 rounded-xl px-6 py-3 hover:bg-warm-border/5"
             >
               Pause and come back later
             </button>
             <div>
-              <button onClick={() => router.replace(dashboardPath)} className="text-xs text-charcoal/25 hover:text-charcoal/40 transition-colors">
+              <button onClick={() => router.replace(dashboardPath)} className="text-xs text-warm-outline hover:text-warm-outline transition-colors">
                 or return to Dashboard
               </button>
             </div>
@@ -1201,13 +1201,13 @@ function CreateMemorialPageContent() {
         </div>
       ) : (
         /* --- THE PATH EDITOR VIEW --- */
-        <div className="animate-fadeIn h-screen flex flex-col bg-ivory overflow-hidden">
+        <div className="animate-fadeIn h-screen flex flex-col bg-surface-low overflow-hidden">
 
           {/* Top Bar - Fixed at top */}
-          <div className="flex-none bg-white border-b border-sand/20 z-50 px-4 sm:px-8 py-3 flex justify-between items-center">
+          <div className="flex-none bg-surface-low border-b border-warm-border/20 z-50 px-4 sm:px-8 py-3 flex justify-between items-center">
             <button
               onClick={() => setViewMode('hub')}
-              className="flex items-center gap-2 text-sm text-charcoal/60 hover:text-charcoal transition-all"
+              className="flex items-center gap-2 text-sm text-warm-muted hover:text-warm-dark transition-all"
             >
               ← Back to Crossroads
             </button>
@@ -1216,18 +1216,18 @@ function CreateMemorialPageContent() {
               {/* Save Status — Step 1.1.3: Minimal, no anxiety */}
               <div className="flex items-center gap-2">
                 {saveStatus === 'saving' && (
-                  <div className="flex items-center gap-1.5 text-xs text-charcoal/30">
-                    <div className="w-3 h-3 border-1.5 border-charcoal/15 border-t-charcoal/40 rounded-full animate-spin" />
+                  <div className="flex items-center gap-1.5 text-xs text-warm-outline">
+                    <div className="w-3 h-3 border-1.5 border-warm-outline/15 border-t-warm-outline/40 rounded-full animate-spin" />
                   </div>
                 )}
                 {saveStatus === 'saved' && (
-                  <div className="flex items-center gap-1.5 text-xs text-charcoal/30 animate-fadeIn">
+                  <div className="flex items-center gap-1.5 text-xs text-warm-outline animate-fadeIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                     <span>Saved</span>
                   </div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="text-xs text-stone">Save failed</div>
+                  <div className="text-xs text-warm-brown">Save failed</div>
                 )}
               </div>
 
@@ -1239,7 +1239,7 @@ function CreateMemorialPageContent() {
                     const previewUrl = `/api/arche/preview-html?id=${currentMemorialId}`;
                     window.open(previewUrl, '_blank');
                   }}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/50"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-warm-border/30 rounded-lg hover:bg-warm-border/5 transition-all text-xs text-warm-outline"
                   title="View as a visitor will see this archive"
                 >
                   <Eye size={13} />
@@ -1250,7 +1250,7 @@ function CreateMemorialPageContent() {
               {/* Step 1.1.4: Pause button in editor bar */}
               <button
                 onClick={() => setShowPauseModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/40"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-warm-border/30 rounded-lg hover:bg-warm-border/5 transition-all text-xs text-warm-outline"
               >
                 Pause
               </button>
@@ -1259,7 +1259,7 @@ function CreateMemorialPageContent() {
               {currentMemorialId && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-sand/30 rounded-lg hover:bg-sand/5 transition-all text-xs text-charcoal/40"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-warm-border/30 rounded-lg hover:bg-warm-border/5 transition-all text-xs text-warm-outline"
                 >
                   <History size={13} />
                   <span className="hidden sm:inline">History</span>
@@ -1270,8 +1270,8 @@ function CreateMemorialPageContent() {
 
           {/* Step 1.1.2: Contextual emotional message for active path */}
           {activePath && PATH_MESSAGES[activePath] && (
-            <div className="flex-none bg-sand/8 border-b border-sand/15 px-8 py-2.5">
-              <p className="text-xs text-charcoal/35 italic text-center max-w-2xl mx-auto">
+            <div className="flex-none bg-warm-border/8 border-b border-warm-border/15 px-8 py-2.5">
+              <p className="text-xs text-warm-outline italic text-center max-w-2xl mx-auto">
                 {PATH_MESSAGES[activePath]}
               </p>
             </div>
@@ -1284,18 +1284,18 @@ function CreateMemorialPageContent() {
               {/* LEFT PANEL: Forms - Automatically takes 100% on mobile if Right Panel is missing */}
               <Panel defaultSize={50} minSize={30} className="h-full">
                 <div className="h-full overflow-y-auto p-0 lg:p-8 scrollbar-hide">
-                  <div className="bg-white rounded-none lg:rounded-2xl border-x-0 lg:border border-sand/30 shadow-sm overflow-hidden min-h-full">
+                  <div className="bg-white rounded-none lg:rounded-2xl border-x-0 lg:border border-warm-border/30 shadow-sm overflow-hidden min-h-full">
 
                     {/* PATH SUB-NAVIGATION */}
                     {activePath && PATH_CONFIG[activePath].steps.length > 1 && (
-                      <div className="flex border-b border-sand/10 bg-sand/5 sticky top-0 z-10 backdrop-blur-md">
+                      <div className="flex border-b border-warm-border/10 bg-warm-border/5 sticky top-0 z-10 backdrop-blur-md">
                         {PATH_CONFIG[activePath].steps.map((stepNumber, index) => (
                           <button
                             key={stepNumber}
                             onClick={() => setMemorialData(prev => ({ ...prev, currentStep: stepNumber }))}
                             className={`flex-1 py-4 px-2 text-xs font-medium transition-all border-b-2 ${memorialData.currentStep === stepNumber
-                              ? 'border-mist text-mist bg-white'
-                              : 'border-transparent text-charcoal/40 hover:text-charcoal/60'
+                              ? 'border-olive text-olive bg-surface-low'
+                              : 'border-transparent text-warm-outline hover:text-warm-muted'
                               }`}
                           >
                             {PATH_CONFIG[activePath].labels[index]}
@@ -1422,13 +1422,13 @@ function CreateMemorialPageContent() {
               {!isMobile && (
                 <>
                   {/* RESIZE HANDLE */}
-                  <Separator className="w-2 bg-transparent hover:bg-mist/10 transition-colors group flex items-center justify-center cursor-col-resize">
-                    <div className="w-0.5 h-16 bg-sand/40 rounded-full group-hover:bg-mist/50 transition-colors" />
+                  <Separator className="w-2 bg-transparent hover:bg-olive/10 transition-colors group flex items-center justify-center cursor-col-resize">
+                    <div className="w-0.5 h-16 bg-warm-border/40 rounded-full group-hover:bg-olive/50 transition-colors" />
                   </Separator>
 
                   {/* RIGHT PANEL: The Mirror */}
                   <Panel defaultSize={50} minSize={25} className="h-full">
-                    <div className="h-full w-full overflow-hidden p-4 bg-ivory">
+                    <div className="h-full w-full overflow-hidden p-4 bg-surface-low">
                       <MemorialRenderer
                         data={memorialData}
                         isPreview={!hasFullAccess}
@@ -1462,7 +1462,7 @@ function CreateMemorialPageContent() {
           <div className="lg:hidden fixed bottom-6 right-6 z-50 animate-fadeIn">
             <button
               onClick={() => setShowMobilePreview(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-charcoal text-ivory rounded-lg btn-paper shadow-2xl font-serif border border-ivory/20 active:scale-95 transition-transform"
+              className="flex items-center gap-2 px-5 py-3 bg-warm-dark text-warm-bg rounded-lg shadow-2xl font-serif border border-surface-low/20 active:scale-95 transition-transform"
             >
               <Eye size={20} />
               <span className="font-medium">Preview</span>
@@ -1499,30 +1499,30 @@ function CreateMemorialPageContent() {
 
       {/* Step 1.1.4: Pause and come back later modal */}
       {showPauseModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm">
-          <div className="bg-ivory rounded-2xl w-full max-w-md p-8 shadow-2xl border border-sand/30">
-            <h3 className="font-serif text-2xl text-charcoal mb-3 text-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-warm-dark/60 backdrop-blur-sm">
+          <div className="bg-surface-low rounded-2xl w-full max-w-md p-8 shadow-2xl border border-warm-border/30">
+            <h3 className="font-serif text-2xl text-warm-dark mb-3 text-center">
               Your archive is safe
             </h3>
-            <p className="text-sm text-charcoal/50 text-center leading-relaxed mb-8">
+            <p className="text-sm text-warm-outline text-center leading-relaxed mb-8">
               Your archive is saved exactly where you left it. We can send you a gentle reminder in 7 days, unless you&apos;d prefer we don&apos;t.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => handlePauseAndLeave(true)}
-                className="w-full py-3 px-6 bg-white border border-sand/30 rounded-xl text-sm text-charcoal hover:bg-sand/5 transition-all"
+                className="w-full py-3 px-6 bg-white border border-warm-border/30 rounded-xl text-sm text-warm-dark hover:bg-warm-border/5 transition-all"
               >
                 Send a reminder in 7 days
               </button>
               <button
                 onClick={() => handlePauseAndLeave(false)}
-                className="w-full py-3 px-6 bg-white border border-sand/30 rounded-xl text-sm text-charcoal/50 hover:bg-sand/5 transition-all"
+                className="w-full py-3 px-6 bg-white border border-warm-border/30 rounded-xl text-sm text-warm-outline hover:bg-warm-border/5 transition-all"
               >
                 Do not send a reminder
               </button>
               <button
                 onClick={() => setShowPauseModal(false)}
-                className="w-full py-2 text-xs text-charcoal/30 hover:text-charcoal/50 transition-colors"
+                className="w-full py-2 text-xs text-warm-outline hover:text-warm-outline transition-colors"
               >
                 Continue working
               </button>
@@ -1537,8 +1537,8 @@ function CreateMemorialPageContent() {
 export default function CreateMemorialPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-ivory flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-mist/30 border-t-mist rounded-full animate-spin" />
+      <div className="min-h-screen bg-surface-low flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-olive/30 border-t-olive rounded-full animate-spin" />
       </div>
     }>
       <CreateMemorialPageContent />

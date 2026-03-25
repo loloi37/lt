@@ -97,26 +97,26 @@ export default function AnonymousContributePage({
     // Step 1 — Name and email
     if (step === 'form') {
         return (
-            <div className="min-h-screen bg-ivory 
+            <div className="min-h-screen bg-surface-low
         flex items-center justify-center p-6">
                 <div className="max-w-md w-full">
 
                     <button
                         onClick={() => router.back()}
-                        className="inline-flex items-center 
-              gap-2 text-charcoal/40 
-              hover:text-charcoal mb-8 
+                        className="inline-flex items-center
+              gap-2 text-warm-dark/40
+              hover:text-warm-dark mb-8
               transition-colors text-sm"
                     >
                         <ArrowLeft size={16} />
                         Back
                     </button>
 
-                    <h1 className="font-serif text-3xl 
-            text-charcoal mb-2">
+                    <h1 className="font-serif text-3xl
+            text-warm-dark mb-2">
                         Contribute without an account
                     </h1>
-                    <p className="text-charcoal/50 text-sm 
+                    <p className="text-warm-dark/50 text-sm
             mb-8 leading-relaxed">
                         We will send a quick verification code
                         to your email to confirm your identity.
@@ -124,7 +124,7 @@ export default function AnonymousContributePage({
                     </p>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 
+                        <div className="mb-6 p-4 bg-red-50
               border border-red-200 rounded-xl">
                             <p className="text-sm text-red-700">
                                 {error}
@@ -137,16 +137,16 @@ export default function AnonymousContributePage({
                         className="space-y-5"
                     >
                         <div>
-                            <label className="block text-xs 
-                font-medium text-charcoal/50 
+                            <label className="block text-xs
+                font-medium text-warm-dark/50
                 uppercase tracking-wider mb-2">
                                 Your name
                             </label>
                             <div className="relative">
                                 <User size={16}
-                                    className="absolute left-4 
-                    top-1/2 -translate-y-1/2 
-                    text-charcoal/30" />
+                                    className="absolute left-4
+                    top-1/2 -translate-y-1/2
+                    text-warm-dark/30" />
                                 <input
                                     type="text"
                                     value={name}
@@ -154,26 +154,23 @@ export default function AnonymousContributePage({
                                         setName(e.target.value)}
                                     placeholder="e.g. Aunt Margaret"
                                     required
-                                    className="w-full pl-11 pr-4 
-                    py-3 border border-sand/40 
-                    rounded-xl bg-ivory/50 
-                    text-charcoal focus:outline-none 
-                    focus:border-mist transition-all"
+                                    className="w-full pl-11 pr-4
+                    py-3 glass-input"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-xs 
-                font-medium text-charcoal/50 
+                            <label className="block text-xs
+                font-medium text-warm-dark/50
                 uppercase tracking-wider mb-2">
                                 Your email
                             </label>
                             <div className="relative">
                                 <Mail size={16}
-                                    className="absolute left-4 
-                    top-1/2 -translate-y-1/2 
-                    text-charcoal/30" />
+                                    className="absolute left-4
+                    top-1/2 -translate-y-1/2
+                    text-warm-dark/30" />
                                 <input
                                     type="email"
                                     value={email}
@@ -181,15 +178,12 @@ export default function AnonymousContributePage({
                                         setEmail(e.target.value)}
                                     placeholder="you@example.com"
                                     required
-                                    className="w-full pl-11 pr-4 
-                    py-3 border border-sand/40 
-                    rounded-xl bg-ivory/50 
-                    text-charcoal focus:outline-none 
-                    focus:border-mist transition-all"
+                                    className="w-full pl-11 pr-4
+                    py-3 glass-input"
                                 />
                             </div>
-                            <p className="text-xs 
-                text-charcoal/30 mt-1">
+                            <p className="text-xs
+                text-warm-dark/30 mt-1">
                                 Used only to verify your identity
                                 and link your contribution.
                             </p>
@@ -198,12 +192,12 @@ export default function AnonymousContributePage({
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3.5 rounded-xl 
-                font-medium transition-all flex 
-                items-center justify-center gap-2 
+                            className={`w-full py-3.5 rounded-xl
+                font-medium transition-all flex
+                items-center justify-center gap-2
                 ${loading
-                                    ? 'bg-sand/20 text-charcoal/30'
-                                    : 'bg-charcoal text-ivory hover:bg-charcoal/90'
+                                    ? 'bg-warm-border/20 text-warm-dark/30'
+                                    : 'glass-btn-dark'
                                 }`}
                         >
                             {loading
@@ -221,23 +215,23 @@ export default function AnonymousContributePage({
     // Step 2 — OTP verification
     if (step === 'verify') {
         return (
-            <div className="min-h-screen bg-ivory 
+            <div className="min-h-screen bg-surface-low
         flex items-center justify-center p-6">
-                <div className="max-w-md w-full 
+                <div className="max-w-md w-full
           text-center">
 
-                    <div className="w-16 h-16 bg-mist/10 
-            rounded-full flex items-center 
+                    <div className="w-16 h-16 bg-olive/10
+            rounded-full flex items-center
             justify-center mx-auto mb-6">
                         <Mail size={32}
-                            className="text-mist" />
+                            className="text-olive" />
                     </div>
 
-                    <h1 className="font-serif text-3xl 
-            text-charcoal mb-3">
+                    <h1 className="font-serif text-3xl
+            text-warm-dark mb-3">
                         Check your email
                     </h1>
-                    <p className="text-charcoal/50 text-sm 
+                    <p className="text-warm-dark/50 text-sm
             mb-8 leading-relaxed">
                         We sent a 6-digit code to{' '}
                         <strong>{email}</strong>.
@@ -245,8 +239,8 @@ export default function AnonymousContributePage({
                     </p>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 
-              border border-red-200 rounded-xl 
+                        <div className="mb-6 p-4 bg-red-50
+              border border-red-200 rounded-xl
               text-left">
                             <p className="text-sm text-red-700">
                                 {error}
@@ -270,21 +264,21 @@ export default function AnonymousContributePage({
                             placeholder="000000"
                             maxLength={6}
                             required
-                            className="w-full py-4 text-center 
-                text-3xl tracking-[0.5em] border 
-                border-sand/40 rounded-xl 
-                bg-ivory/50 text-charcoal 
-                focus:outline-none focus:border-mist 
+                            className="w-full py-4 text-center
+                text-3xl tracking-[0.5em] border
+                border-warm-border/40 rounded-xl
+                bg-surface-low/50 text-warm-dark
+                focus:outline-none focus:border-olive
                 transition-all font-mono"
                         />
 
                         <button
                             type="submit"
                             disabled={loading || code.length < 6}
-                            className={`w-full py-3.5 rounded-xl font-medium transition-all 
+                            className={`w-full py-3.5 rounded-xl font-medium transition-all
                 ${loading || code.length < 6
-                                    ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                                    : 'bg-charcoal text-ivory hover:bg-charcoal/90'
+                                    ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
+                                    : 'glass-btn-dark'
                                 }`}
                         >
                             {loading
@@ -300,8 +294,8 @@ export default function AnonymousContributePage({
                             setCode('');
                             setError(null);
                         }}
-                        className="mt-4 text-sm 
-              text-charcoal/30 hover:text-charcoal 
+                        className="mt-4 text-sm
+              text-warm-dark/30 hover:text-warm-dark
               transition-colors"
                     >
                         Use a different email
@@ -313,22 +307,22 @@ export default function AnonymousContributePage({
 
     // Step 3 — Success
     return (
-        <div className="min-h-screen bg-ivory flex 
+        <div className="min-h-screen bg-surface-low flex
       items-center justify-center p-6">
             <div className="max-w-md w-full text-center">
 
-                <div className="w-16 h-16 bg-sage/10 
-          rounded-full flex items-center 
+                <div className="w-16 h-16 bg-olive/10
+          rounded-full flex items-center
           justify-center mx-auto mb-6">
                     <CheckCircle size={32}
-                        className="text-sage" />
+                        className="text-olive" />
                 </div>
 
-                <h1 className="font-serif text-3xl 
-          text-charcoal mb-3">
+                <h1 className="font-serif text-3xl
+          text-warm-dark mb-3">
                     Identity verified
                 </h1>
-                <p className="text-charcoal/50 text-sm 
+                <p className="text-warm-dark/50 text-sm
           leading-relaxed mb-8">
                     You are now ready to contribute. The
                     archive owner will review your submission
@@ -338,7 +332,7 @@ export default function AnonymousContributePage({
 
                 <a
                     href={`/invite/${token}/contribute?anonymous=true&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`}
-                    className="inline-block w-full py-4 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-all"
+                    className="inline-block w-full py-4 glass-btn-dark rounded-xl font-medium transition-all"
                 >
                     Share your memory →
                 </a>

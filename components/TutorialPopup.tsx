@@ -38,20 +38,20 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-100 bg-black/20">
             <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
                 {/* Popup card */}
-                <div className="bg-white rounded-2xl shadow-2xl p-6 w-full animate-fadeIn border border-sand/20">
+                <div className="bg-white rounded-2xl shadow-2xl p-6 w-full animate-fadeIn border border-warm-border/20">
 
 
                     {/* Content */}
                     <div className="mb-6">
                         <div className="flex items-center gap-2 mb-3">
-                            <div className="w-8 h-8 bg-mist/10 rounded-full flex items-center justify-center">
-                                <span className="text-mist font-semibold text-sm">
+                            <div className="w-8 h-8 bg-olive/10 rounded-full flex items-center justify-center">
+                                <span className="text-olive font-semibold text-sm">
                                     {currentStep + 1}
                                 </span>
                             </div>
-                            <h3 className="font-serif text-xl text-charcoal">{step.title}</h3>
+                            <h3 className="font-serif text-xl text-warm-dark">{step.title}</h3>
                         </div>
-                        <p className="text-charcoal/70 leading-relaxed">
+                        <p className="text-warm-muted leading-relaxed">
                             {step.description}
                         </p>
                     </div>
@@ -62,10 +62,10 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                             <div
                                 key={idx}
                                 className={`h-1.5 rounded-full transition-all ${idx === currentStep
-                                    ? 'w-8 bg-mist'
+                                    ? 'w-8 bg-olive'
                                     : idx < currentStep
-                                        ? 'w-1.5 bg-mist/50'
-                                        : 'w-1.5 bg-sand/40'
+                                        ? 'w-1.5 bg-olive/50'
+                                        : 'w-1.5 bg-warm-border/40'
                                     }`}
                             />
                         ))}
@@ -76,7 +76,7 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                         {currentStep > 0 && (
                             <button
                                 onClick={goToPrevious}
-                                className="flex-1 py-2.5 border border-sand/40 rounded-xl hover:bg-sand/10 transition-all flex items-center justify-center gap-2 font-medium text-charcoal"
+                                className="flex-1 py-2.5 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all flex items-center justify-center gap-2 font-medium text-warm-dark"
                             >
                                 <ArrowLeft size={18} />
                                 Back
@@ -84,7 +84,7 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                         )}
                         <button
                             onClick={goToNext}
-                            className="flex-1 py-2.5 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center justify-center gap-2 font-medium"
+                            className="flex-1 py-2.5 bg-olive hover:bg-olive/90 text-surface-low rounded-xl transition-all flex items-center justify-center gap-2 font-medium"
                         >
                             {currentStep < steps.length - 1 ? 'Next' : 'Got it!'}
                             {currentStep < steps.length - 1 && <ArrowRight size={18} />}
@@ -94,7 +94,7 @@ export default function TutorialPopup({ steps, onComplete, onSkip }: TutorialPop
                     {/* Skip button */}
                     <button
                         onClick={onSkip}
-                        className="w-full mt-3 text-sm text-charcoal/60 hover:text-charcoal transition-colors"
+                        className="w-full mt-3 text-sm text-warm-muted hover:text-warm-dark transition-colors"
                     >
                         Skip tutorial
                     </button>

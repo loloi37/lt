@@ -17,9 +17,9 @@ function formatBytes(bytes: number): string {
 
 function DeviceIcon({ browser }: { browser: string }) {
     if (browser.includes('Safari') || browser.includes('iPad')) {
-        return <Smartphone size={16} className="text-vault-muted" />;
+        return <Smartphone size={16} className="text-warm-muted" />;
     }
-    return <Monitor size={16} className="text-vault-muted" />;
+    return <Monitor size={16} className="text-warm-muted" />;
 }
 
 function StatusBadge({ status }: { status: AnchorDevice['status'] }) {
@@ -67,10 +67,10 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
 
     if (loading) {
         return (
-            <div className="dark-card p-6">
+            <div className="bg-surface-mid rounded-xl border border-warm-border p-6">
                 <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-vault-border rounded w-1/3" />
-                    <div className="h-3 bg-vault-border rounded w-2/3" />
+                    <div className="h-4 bg-warm-border rounded w-1/3" />
+                    <div className="h-3 bg-warm-border rounded w-2/3" />
                 </div>
             </div>
         );
@@ -83,18 +83,18 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
             : 'ZIP Download';
 
     return (
-        <div className="dark-card p-6">
+        <div className="bg-surface-mid rounded-xl border border-warm-border p-6">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
                         <HardDrive size={16} className="text-blue-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-vault-text font-sans">Family Sync Status</h3>
-                        <p className="text-xs text-vault-muted font-sans">{devices.length} device{devices.length !== 1 ? 's' : ''} anchored</p>
+                        <h3 className="text-sm font-semibold text-warm-dark font-sans">Family Sync Status</h3>
+                        <p className="text-xs text-warm-muted font-sans">{devices.length} device{devices.length !== 1 ? 's' : ''} anchored</p>
                     </div>
                 </div>
-                <span className="text-xs text-vault-muted font-sans px-2 py-1 bg-vault-dark/50 rounded">
+                <span className="text-xs text-warm-muted font-sans px-2 py-1 bg-surface-high/50 rounded">
                     {tierLabel}
                 </span>
             </div>
@@ -110,29 +110,29 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
                         : 'Never';
 
                     return (
-                        <div key={device.id} className="bg-vault-dark/30 rounded-lg p-3">
+                        <div key={device.id} className="bg-surface-high/30 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <DeviceIcon browser={device.browser} />
                                     <div>
-                                        <p className="text-sm font-sans font-medium text-vault-text">{device.deviceName}</p>
-                                        <p className="text-xs text-vault-muted font-sans">{device.location}</p>
+                                        <p className="text-sm font-sans font-medium text-warm-dark">{device.deviceName}</p>
+                                        <p className="text-xs text-warm-muted font-sans">{device.location}</p>
                                     </div>
                                 </div>
                                 <StatusBadge status={device.status} />
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className="flex-1 h-1.5 bg-vault-border rounded-full overflow-hidden">
+                                <div className="flex-1 h-1.5 bg-warm-border rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-blue-400/60 rounded-full transition-all"
                                         style={{ width: `${syncPercent}%` }}
                                     />
                                 </div>
-                                <span className="text-xs text-vault-muted font-sans w-20 text-right">
+                                <span className="text-xs text-warm-muted font-sans w-20 text-right">
                                     {formatBytes(device.syncProgressBytes)}
                                 </span>
                             </div>
-                            <p className="text-xs text-vault-muted font-sans mt-1">Last seen: {lastSeen}</p>
+                            <p className="text-xs text-warm-muted font-sans mt-1">Last seen: {lastSeen}</p>
                         </div>
                     );
                 })}
@@ -145,7 +145,7 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
                         <Download size={14} className="text-blue-400 animate-pulse" />
                         <span className="text-sm font-sans text-blue-300">{progress.message}</span>
                     </div>
-                    <div className="w-full h-1.5 bg-vault-border rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-warm-border rounded-full overflow-hidden">
                         <div
                             className="h-full bg-blue-400 rounded-full transition-all duration-500"
                             style={{ width: `${progress.progress}%` }}
@@ -159,27 +159,27 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
                 <button
                     onClick={handleAnchor}
                     disabled={anchoring}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-vault-text bg-vault-dark/50 rounded-lg hover:bg-vault-dark transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-warm-dark bg-surface-high/50 rounded-lg hover:bg-surface-high transition-colors disabled:opacity-50"
                 >
                     <Download size={12} />
                     Anchor to This Device
                 </button>
-                <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-vault-text bg-vault-dark/50 rounded-lg hover:bg-vault-dark transition-colors">
+                <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-warm-dark bg-surface-high/50 rounded-lg hover:bg-surface-high transition-colors">
                     <UserPlus size={12} />
                     Invite Family Member
                 </button>
-                <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-vault-muted bg-vault-dark/50 rounded-lg hover:bg-vault-dark transition-colors">
+                <button className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-warm-muted bg-surface-high/50 rounded-lg hover:bg-surface-high transition-colors">
                     <Settings size={12} />
                 </button>
             </div>
 
             {/* Offline Guarantee */}
-            <div className="mt-5 pt-4 border-t border-vault-border">
+            <div className="mt-5 pt-4 border-t border-warm-border">
                 <div className="flex items-start gap-2">
-                    <Wifi size={14} className="text-vault-muted mt-0.5" />
+                    <Wifi size={14} className="text-warm-muted mt-0.5" />
                     <div>
-                        <p className="text-xs font-sans font-medium text-vault-text mb-1">Offline Access Guarantee</p>
-                        <p className="text-xs text-vault-muted font-sans leading-relaxed">
+                        <p className="text-xs font-sans font-medium text-warm-dark mb-1">Offline Access Guarantee</p>
+                        <p className="text-xs text-warm-muted font-sans leading-relaxed">
                             Anchored devices retain a complete, verified copy of your memorial data.
                             Access remains available even without an internet connection.
                         </p>

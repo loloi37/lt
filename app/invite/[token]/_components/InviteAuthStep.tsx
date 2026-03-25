@@ -118,46 +118,46 @@ export default function InviteAuthStep({
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br 
-      from-mist/10 via-ivory to-stone/10">
+        <div className="min-h-screen bg-gradient-to-br
+      from-olive/10 via-surface-low to-warm-muted/10">
 
             {/* Minimal header */}
-            <div className="border-b border-sand/20 
+            <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
-                <div className="max-w-2xl mx-auto px-6 
+                <div className="max-w-2xl mx-auto px-6
           py-4 flex items-center justify-between">
                     <button
                         onClick={onBack}
-                        className="inline-flex items-center 
-              gap-2 text-charcoal/40 
-              hover:text-charcoal transition-colors 
+                        className="inline-flex items-center
+              gap-2 text-warm-dark/40
+              hover:text-warm-dark transition-colors
               text-sm"
                     >
                         <ArrowLeft size={16} />
                         Back
                     </button>
-                    <span className="text-xs tracking-widest 
-            uppercase text-charcoal/30 font-sans">
+                    <span className="text-xs tracking-widest
+            uppercase text-warm-dark/30 font-sans">
                         Legacy Vault
                     </span>
                 </div>
             </div>
 
-            <div className="max-w-md mx-auto px-6 
+            <div className="max-w-md mx-auto px-6
         py-16">
 
                 {/* Context header — keeps user grounded */}
                 <div className="text-center mb-10">
-                    <h1 className="font-serif text-3xl 
-            text-charcoal mb-3">
+                    <h1 className="font-serif text-3xl
+            text-warm-dark mb-3">
                         {mode === 'signup'
-                            ? `Create your space to join 
+                            ? `Create your space to join
                  ${invitation.memorial.fullName}
                  's archive`
                             : 'Welcome back'
                         }
                     </h1>
-                    <p className="text-charcoal/50 text-sm">
+                    <p className="text-warm-dark/50 text-sm">
                         {mode === 'signup'
                             ? 'A free account keeps your contributions linked to you over time.'
                             : `Log in to continue to ${invitation.memorial.fullName}'s archive.`
@@ -167,10 +167,10 @@ export default function InviteAuthStep({
 
                 {/* Email differs warning */}
                 {emailDiffers && (
-                    <div className="mb-6 p-4 bg-sand/20 
-            border border-sand/40 rounded-xl">
-                        <p className="text-xs 
-              text-charcoal/60 leading-relaxed">
+                    <div className="mb-6 p-4 bg-warm-border/20
+            border border-warm-border/40 rounded-xl">
+                        <p className="text-xs
+              text-warm-dark/60 leading-relaxed">
                             This invitation was sent to{' '}
                             <strong>
                                 {invitation.inviteeEmail}
@@ -186,7 +186,7 @@ export default function InviteAuthStep({
 
                 {/* Error message */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 
+                    <div className="mb-6 p-4 bg-red-50
             border border-red-200 rounded-xl">
                         <p className="text-sm text-red-700">
                             {error}
@@ -202,15 +202,15 @@ export default function InviteAuthStep({
                     {/* Name field — signup only */}
                     {mode === 'signup' && (
                         <div>
-                            <label className="block text-xs 
-                font-medium text-charcoal/50 
+                            <label className="block text-xs
+                font-medium text-warm-dark/50
                 uppercase tracking-wider mb-2">
                                 Your name
                             </label>
                             <div className="relative">
-                                <User size={16} className="absolute 
-                  left-4 top-1/2 -translate-y-1/2 
-                  text-charcoal/30" />
+                                <User size={16} className="absolute
+                  left-4 top-1/2 -translate-y-1/2
+                  text-warm-dark/30" />
                                 <input
                                     type="text"
                                     value={name}
@@ -218,12 +218,8 @@ export default function InviteAuthStep({
                                         setName(e.target.value)}
                                     placeholder="e.g. Margaret Chen"
                                     required
-                                    className="w-full pl-11 pr-4 
-                    py-3 border border-sand/40 
-                    rounded-xl bg-ivory/50 
-                    text-charcoal focus:outline-none 
-                    focus:border-mist focus:ring-2 
-                    focus:ring-mist/10 transition-all"
+                                    className="w-full pl-11 pr-4
+                    py-3 glass-input"
                                 />
                             </div>
                         </div>
@@ -231,15 +227,15 @@ export default function InviteAuthStep({
 
                     {/* Email field */}
                     <div>
-                        <label className="block text-xs 
-              font-medium text-charcoal/50 
+                        <label className="block text-xs
+              font-medium text-warm-dark/50
               uppercase tracking-wider mb-2">
                             Email address
                         </label>
                         <div className="relative">
-                            <Mail size={16} className="absolute 
-                left-4 top-1/2 -translate-y-1/2 
-                text-charcoal/30" />
+                            <Mail size={16} className="absolute
+                left-4 top-1/2 -translate-y-1/2
+                text-warm-dark/30" />
                             <input
                                 type="email"
                                 value={email}
@@ -249,20 +245,20 @@ export default function InviteAuthStep({
                                 readOnly={emailIsLocked}
                                 placeholder="you@example.com"
                                 required
-                                className={`w-full pl-11 pr-4 
-                  py-3 border border-sand/40 
-                  rounded-xl text-charcoal 
-                  focus:outline-none focus:border-mist 
-                  focus:ring-2 focus:ring-mist/10 
+                                className={`w-full pl-11 pr-4
+                  py-3 border border-warm-border/40
+                  rounded-xl text-warm-dark
+                  focus:outline-none focus:border-olive
+                  focus:ring-2 focus:ring-olive/10
                   transition-all ${emailIsLocked
-                                        ? 'bg-sand/10 cursor-not-allowed text-charcoal /60'
-                                        : 'bg-ivory/50'
+                                        ? 'bg-warm-border/10 cursor-not-allowed text-warm-dark /60'
+                                        : 'bg-surface-low/50'
                                     }`}
                             />
                         </div>
                         {emailIsLocked && (
-                            <p className="text-xs 
-                text-charcoal/30 mt-1">
+                            <p className="text-xs
+                text-warm-dark/30 mt-1">
                                 Pre-filled from your invitation.
                             </p>
                         )}
@@ -270,15 +266,15 @@ export default function InviteAuthStep({
 
                     {/* Password field */}
                     <div>
-                        <label className="block text-xs 
-              font-medium text-charcoal/50 
+                        <label className="block text-xs
+              font-medium text-warm-dark/50
               uppercase tracking-wider mb-2">
                             Password
                         </label>
                         <div className="relative">
-                            <Lock size={16} className="absolute 
-                left-4 top-1/2 -translate-y-1/2 
-                text-charcoal/30" />
+                            <Lock size={16} className="absolute
+                left-4 top-1/2 -translate-y-1/2
+                text-warm-dark/30" />
                             <input
                                 type={
                                     showPassword ? 'text' : 'password'
@@ -292,21 +288,17 @@ export default function InviteAuthStep({
                                         : 'Your password'
                                 }
                                 required
-                                className="w-full pl-11 pr-12 
-                  py-3 border border-sand/40 
-                  rounded-xl bg-ivory/50 
-                  text-charcoal focus:outline-none 
-                  focus:border-mist focus:ring-2 
-                  focus:ring-mist/10 transition-all"
+                                className="w-full pl-11 pr-12
+                  py-3 glass-input"
                             />
                             <button
                                 type="button"
                                 onClick={() =>
                                     setShowPassword(p => !p)}
-                                className="absolute right-4 
-                  top-1/2 -translate-y-1/2 
-                  text-charcoal/30 
-                  hover:text-charcoal/60"
+                                className="absolute right-4
+                  top-1/2 -translate-y-1/2
+                  text-warm-dark/30
+                  hover:text-warm-dark/60"
                             >
                                 {showPassword
                                     ? <EyeOff size={16} />
@@ -320,12 +312,12 @@ export default function InviteAuthStep({
                     <button
                         type="submit"
                         disabled={loading}
-                        className={`w-full py-3.5 rounded-xl 
-              font-medium transition-all flex 
-              items-center justify-center gap-2 
+                        className={`w-full py-3.5 rounded-xl
+              font-medium transition-all flex
+              items-center justify-center gap-2
               ${loading
-                                ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                                : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                                ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
+                                : 'glass-btn-dark'
                             }`}
                     >
                         {loading
@@ -347,28 +339,28 @@ export default function InviteAuthStep({
                 {/* Mode toggle */}
                 <div className="mt-6 text-center">
                     {mode === 'signup' ? (
-                        <p className="text-sm text-charcoal/50">
+                        <p className="text-sm text-warm-dark/50">
                             Already have an account?{' '}
                             <button
                                 onClick={() => {
                                     setMode('login');
                                     setError(null);
                                 }}
-                                className="text-mist font-medium 
+                                className="text-olive font-medium
                   hover:underline"
                             >
                                 Log in instead
                             </button>
                         </p>
                     ) : (
-                        <p className="text-sm text-charcoal/50">
+                        <p className="text-sm text-warm-dark/50">
                             Don't have an account?{' '}
                             <button
                                 onClick={() => {
                                     setMode('signup');
                                     setError(null);
                                 }}
-                                className="text-mist font-medium 
+                                className="text-olive font-medium
                   hover:underline"
                             >
                                 Create one
@@ -378,15 +370,15 @@ export default function InviteAuthStep({
                 </div>
 
                 {/* Anonymous option — the key addition */}
-                <div className="mt-8 pt-6 border-t 
-          border-sand/20 text-center">
-                    <p className="text-xs text-charcoal/30 mb-3">
+                <div className="mt-8 pt-6 border-t
+          border-warm-border/20 text-center">
+                    <p className="text-xs text-warm-dark/30 mb-3">
                         Prefer not to create an account?
                     </p>
 
                     <a
                         href={`/invite/${invitation.id}/anonymous`}
-                        className="text-sm text-charcoal/40 hover:text-charcoal transition-colors underline underline-offset-4"
+                        className="text-sm text-warm-dark/40 hover:text-warm-dark transition-colors underline underline-offset-4"
                     >
                         Contribute without an account
                     </a>

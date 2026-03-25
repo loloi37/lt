@@ -31,7 +31,7 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body className="bg-ivory text-charcoal">
+      <body className="bg-surface-low text-warm-dark">
         <AuthProvider>
           {children}
           <Footer />
@@ -43,53 +43,52 @@ export default function RootLayout({
 
 function Footer() {
   return (
-    <footer className="border-t border-sand/40 bg-ivory/95">
+    <footer className="border-t border-warm-border/30 bg-surface-low">
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-3">
           <div className="space-y-2">
-            <p className="font-serif text-lg text-charcoal">
+            <p className="font-serif text-lg text-warm-dark">
               Legacy Vault
             </p>
-            <p className="text-xs text-charcoal/70">
+            <p className="text-xs text-warm-muted">
               Architecture of a lasting memory.
             </p>
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.18em] text-charcoal/60">
+            <p className="text-xs uppercase tracking-widest text-warm-outline">
               Navigation
             </p>
-            <div className="mt-1 flex flex-col gap-1 text-sm text-charcoal/80">
-              <a href="/process" className="hover:text-stone">
+            <div className="mt-1 flex flex-col gap-1 text-sm text-warm-muted">
+              <a href="/process" className="hover:text-warm-dark transition-colors">
                 Process
               </a>
-              <a href="/plans" className="hover:text-stone">
+              <a href="/plans" className="hover:text-warm-dark transition-colors">
                 Plans
               </a>
-              <a href="/advisor" className="hover:text-stone">
+              <a href="/advisor" className="hover:text-warm-dark transition-colors">
                 Advisor
               </a>
             </div>
           </div>
 
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.18em] text-charcoal/60">
+            <p className="text-xs uppercase tracking-widest text-warm-outline">
               Contact
             </p>
-            <p className="text-sm text-charcoal/80">
+            <p className="text-sm text-warm-muted">
               First conversation offered, discreet and without obligation.
             </p>
-            {/* remplace l’email par le tien */}
             <a
               href="mailto:contact@legacyvault.example"
-              className="text-sm text-charcoal/80 underline underline-offset-4 hover:text-stone"
+              className="text-sm text-warm-muted underline underline-offset-4 hover:text-warm-dark transition-colors"
             >
               contact@legacyvault.example
             </a>
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-between text-[11px] text-charcoal/60">
+        <div className="mt-8 flex items-center justify-between text-[11px] text-warm-outline">
           <span>© {new Date().getFullYear()} Legacy Vault</span>
           <span className="hidden md:inline">
             Transmission is not an instant act. It is a process.

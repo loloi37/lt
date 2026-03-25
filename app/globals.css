@@ -2,126 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Keyframe animations ── */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
-}
+.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
 @keyframes ping {
-
-  75%,
-  100% {
-    transform: scale(1.05);
-    opacity: 0;
-  }
+  75%, 100% { transform: scale(1.05); opacity: 0; }
 }
+.animate-ping { animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
-.animate-ping {
-  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* Threshold page — organic light pulse (digital candle effect) */
 @keyframes organicLight {
-
-  0%,
-  100% {
-    opacity: 0.12;
-    transform: scale(1);
-  }
-
-  40% {
-    opacity: 0.28;
-    transform: scale(1.06);
-  }
-
-  70% {
-    opacity: 0.18;
-    transform: scale(1.03);
-  }
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  40%      { opacity: 0.28; transform: scale(1.06); }
+  70%      { opacity: 0.18; transform: scale(1.03); }
 }
+.animate-organic-light { animation: organicLight 7s ease-in-out infinite; }
 
-.animate-organic-light {
-  animation: organicLight 7s ease-in-out infinite;
-}
-
-/* Threshold button — fades in gently over 1 second */
 @keyframes fadeInGentle {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-
-.animate-fade-in-gentle {
-  animation: fadeInGentle 1s ease-in-out forwards;
-}
+.animate-fade-in-gentle { animation: fadeInGentle 1s ease-in-out forwards; }
 
 @keyframes tutorialGlow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(137, 184, 150, 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 30px rgba(137, 184, 150, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(91, 106, 49, 0.3); }
+  50%      { box-shadow: 0 0 30px rgba(91, 106, 49, 0.6); }
 }
-
-[data-tutorial] {
-  position: relative;
-  z-index: 101;
-}
-
-[data-tutorial]:focus-within {
-  animation: tutorialGlow 2s ease-in-out infinite;
-}
+[data-tutorial] { position: relative; z-index: 101; }
+[data-tutorial]:focus-within { animation: tutorialGlow 2s ease-in-out infinite; }
 
 /* ── Family Tree Visualization ── */
 @keyframes ftNodeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
 @keyframes ftPopupIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ── Node card ── */
 .ft-node {
   animation: ftNodeIn 0.45s ease-out both;
   position: relative;
   background: #fff;
-  border: 1.5px solid #e8ddd4;
+  border: 1.5px solid rgba(189, 185, 174, 0.4);
   border-radius: 12px;
   padding: 0;
   width: 180px;
@@ -130,369 +57,175 @@
   align-items: stretch;
   overflow: visible;
   box-shadow:
-    0 1px 2px rgba(90, 107, 120, 0.05),
-    0 4px 14px rgba(90, 107, 120, 0.04);
+    0 1px 2px rgba(57, 56, 48, 0.05),
+    0 4px 14px rgba(57, 56, 48, 0.04);
   transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
-
 .ft-node:hover {
   transform: translateY(-2px);
-  border-color: #d4c4b5;
+  border-color: rgba(189, 185, 174, 0.6);
   box-shadow:
-    0 6px 20px rgba(90, 107, 120, 0.1),
-    0 2px 6px rgba(90, 107, 120, 0.05);
+    0 6px 20px rgba(57, 56, 48, 0.1),
+    0 2px 6px rgba(57, 56, 48, 0.05);
   z-index: 10;
 }
-
-/* Avatar area (left side) */
 .ft-node-avatar {
-  width: 56px;
-  min-height: 56px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: 11px 0 0 11px;
+  width: 56px; min-height: 56px; flex-shrink: 0;
+  overflow: hidden; border-radius: 11px 0 0 11px;
 }
-
-/* Info area (right side) */
 .ft-node-body {
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
+  padding: 10px 12px; display: flex; flex-direction: column;
+  justify-content: center; min-width: 0;
 }
 
 /* ── Handle dots ── */
-/* Base: invisible, centered on each edge by React Flow positioning */
 .react-flow__handle.ft-handle {
-  width: 12px !important;
-  height: 12px !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
+  width: 12px !important; height: 12px !important;
+  min-width: 0 !important; min-height: 0 !important;
   background: transparent !important;
   border: 2px solid transparent !important;
   border-radius: 50% !important;
-  opacity: 0 !important;
-  z-index: 20 !important;
+  opacity: 0 !important; z-index: 20 !important;
   pointer-events: none;
   transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease,
     box-shadow 0.2s ease, transform 0.2s ease;
-  /* Reset any margin/transform that could offset the dot from the edge center */
-  margin: 0 !important;
-  padding: 0 !important;
+  margin: 0 !important; padding: 0 !important;
 }
-
-/* Only the nearest handle (JS-controlled) becomes visible */
 .react-flow__handle.ft-handle-visible {
   opacity: 1 !important;
-  background: #7c5bf0 !important;
+  background: #695e88 !important;
   border-color: #fff !important;
-  box-shadow: 0 0 0 2px #7c5bf0, 0 0 8px rgba(124, 91, 240, 0.35) !important;
-  pointer-events: all;
-  cursor: crosshair;
+  box-shadow: 0 0 0 2px #695e88, 0 0 8px rgba(105, 94, 136, 0.35) !important;
+  pointer-events: all; cursor: crosshair;
 }
-
 .react-flow__handle.ft-handle-visible:hover {
-  background: #6a4de0 !important;
+  background: #5a5078 !important;
   border-color: #fff !important;
   transform: scale(1.35);
-  box-shadow: 0 0 0 3px #6a4de0, 0 0 12px rgba(124, 91, 240, 0.45) !important;
+  box-shadow: 0 0 0 3px #5a5078, 0 0 12px rgba(105, 94, 136, 0.45) !important;
 }
-
-/* Target handles — invisible but large enough to drop onto easily */
 .react-flow__handle.ft-handle-target {
-  opacity: 0 !important;
-  background: transparent !important;
+  opacity: 0 !important; background: transparent !important;
   border: none !important;
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 50% !important;
-  pointer-events: all;
-  margin: 0 !important;
-  padding: 0 !important;
+  width: 40px !important; height: 40px !important;
+  border-radius: 50% !important; pointer-events: all;
+  margin: 0 !important; padding: 0 !important;
 }
-
-/* During active connection drag, all handles become visible drop targets */
 .react-flow__handle.ft-handle-connectable {
   opacity: 1 !important;
-  background: rgba(124, 91, 240, 0.25) !important;
-  border: 2px solid rgba(124, 91, 240, 0.55) !important;
-  pointer-events: all;
-  cursor: crosshair;
+  background: rgba(105, 94, 136, 0.25) !important;
+  border: 2px solid rgba(105, 94, 136, 0.55) !important;
+  pointer-events: all; cursor: crosshair;
 }
-
 .react-flow__handle.ft-handle-connectable:hover {
-  background: #7c5bf0 !important;
+  background: #695e88 !important;
   border-color: #fff !important;
-  box-shadow: 0 0 0 3px #7c5bf0, 0 0 10px rgba(124, 91, 240, 0.4) !important;
+  box-shadow: 0 0 0 3px #695e88, 0 0 10px rgba(105, 94, 136, 0.4) !important;
   transform: scale(1.35);
 }
 
-/* ── Popups ── */
 .ft-popup {
   animation: ftPopupIn 0.2s ease-out;
   background: #fff;
-  border: 1px solid #e8ddd4;
+  border: 1px solid rgba(189, 185, 174, 0.4);
   border-radius: 14px;
   box-shadow:
-    0 12px 40px rgba(90, 107, 120, 0.14),
-    0 4px 12px rgba(90, 107, 120, 0.06);
+    0 12px 40px rgba(57, 56, 48, 0.14),
+    0 4px 12px rgba(57, 56, 48, 0.06);
   overflow: hidden;
 }
-
-/* ── Controls ── */
 .ft-controls {
   background: #fff !important;
-  border: 1px solid #e8ddd4 !important;
+  border: 1px solid rgba(189, 185, 174, 0.4) !important;
   border-radius: 10px !important;
-  box-shadow: 0 2px 10px rgba(90, 107, 120, 0.07) !important;
+  box-shadow: 0 2px 10px rgba(57, 56, 48, 0.07) !important;
   overflow: hidden !important;
 }
-
 .ft-controls button {
   background: transparent !important;
-  border-bottom: 1px solid #f0e6dd !important;
-  color: #8a96a0 !important;
-  width: 28px !important;
-  height: 28px !important;
+  border-bottom: 1px solid rgba(189, 185, 174, 0.2) !important;
+  color: #838176 !important;
+  width: 28px !important; height: 28px !important;
 }
-
 .ft-controls button:hover {
-  background: #faf7f4 !important;
-  color: #5a6b78 !important;
+  background: #f8f3e9 !important;
+  color: #393830 !important;
 }
+.ft-controls button svg { width: 14px !important; height: 14px !important; }
 
-.ft-controls button svg {
-  width: 14px !important;
-  height: 14px !important;
-}
-
-/* ── MiniMap ── */
 .ft-minimap {
   background: #fff !important;
-  border: 1px solid #e8ddd4 !important;
+  border: 1px solid rgba(189, 185, 174, 0.4) !important;
   border-radius: 10px !important;
-  box-shadow: 0 2px 10px rgba(90, 107, 120, 0.07) !important;
+  box-shadow: 0 2px 10px rgba(57, 56, 48, 0.07) !important;
   overflow: hidden !important;
 }
 
-/* ── Edge styles ── */
 .react-flow__edge-path {
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: round; stroke-linejoin: round;
   transition: stroke-width 0.2s ease, stroke 0.2s ease;
 }
-
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 2.5;
-  filter: drop-shadow(0 0 2px rgba(125, 143, 130, 0.25));
+  filter: drop-shadow(0 0 2px rgba(91, 106, 49, 0.25));
 }
-
 .react-flow__edge-textbg {
-  rx: 6;
-  ry: 6;
-  stroke: #e8ddd4;
-  stroke-width: 0.5;
+  rx: 6; ry: 6;
+  stroke: rgba(189, 185, 174, 0.4); stroke-width: 0.5;
 }
-
-.react-flow__edge-text {
-  font-size: 10px !important;
-  font-weight: 500;
-}
-
-/* Connection line (while dragging) */
+.react-flow__edge-text { font-size: 10px !important; font-weight: 500; }
 .react-flow__connection-path {
-  stroke: #7c5bf0 !important;
-  stroke-width: 2 !important;
-  stroke-linecap: round !important;
-  stroke-dasharray: 6 4;
+  stroke: #695e88 !important; stroke-width: 2 !important;
+  stroke-linecap: round !important; stroke-dasharray: 6 4;
 }
+.react-flow__attribution { opacity: 0.25 !important; font-size: 9px !important; }
 
-/* ── React Flow attribution ── */
-.react-flow__attribution {
-  opacity: 0.25 !important;
-  font-size: 9px !important;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
+/* ── Utilities ── */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 
 @layer base {
-  :root {
-    --color-ivory: #fdf6f0;
-    --color-charcoal: #5a6b78;
-    --color-sand: #e8d8cc;
-    --color-terracotta: #d4958a;
-    --color-sage: #89b896;
-    --color-lavender: #b5a7c7;
-    --color-blush: #f0c4c8;
-    --color-peach: #f0c4a8;
-  }
-
-  .dark {
-    --color-bg: #111318;
-    --color-card: #1a1d24;
-    --color-border: #2a2d35;
-    --color-text: #c8ccd4;
-    --color-muted: #6b7280;
-    --color-gold: #c9a84c;
-    --color-amber: #d4a574;
-  }
-
   body {
-    @apply bg-ivory text-charcoal overflow-x-hidden;
+    @apply bg-surface-low text-warm-dark overflow-x-hidden;
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
-/* Dark dashboard utilities */
-.dark-dashboard {
-  background: #111318;
-  color: #c8ccd4;
-  min-height: 100vh;
-}
-
-.dark-card {
-  background: #1a1d24;
-  border: 1px solid #2a2d35;
-  border-radius: 12px;
-}
-
-.dark-card-hover:hover {
-  border-color: #3a3d45;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
-}
-
-/* ── Memorial dashboard — warm cream, Bodoni ── */
-.aurora-bg {
-  background: #eae2d6;
-  min-height: 100vh;
-}
-
-/* ── Card system — light ── */
-.glass-card {
-  background: #fff;
-  border: 1px solid rgba(138, 117, 96, 0.12);
-  border-radius: 20px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.glass-card:hover {
-  border-color: rgba(138, 117, 96, 0.20);
-  box-shadow: 0 8px 30px rgba(138, 117, 96, 0.08);
-}
-
-.glass-card-hero {
-  background: #fff;
-  border: 1px solid rgba(138, 117, 96, 0.10);
-  border-radius: 24px;
-  box-shadow: 0 4px 40px rgba(138, 117, 96, 0.08);
-  transition: box-shadow 0.4s ease;
-  overflow: hidden;
-}
-
-.glass-card-hero:hover {
-  box-shadow: 0 8px 50px rgba(138, 117, 96, 0.12);
-}
-
-/* ── Status badges ── */
-.badge-live {
-  animation: liveDot 3s ease-in-out infinite;
-}
-
-@keyframes liveDot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
-}
-
-.badge-glow {
-  animation: glowWarm 3s ease-in-out infinite;
-}
-
-@keyframes glowWarm {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(138, 117, 96, 0.2); }
-  50% { box-shadow: 0 0 0 4px rgba(138, 117, 96, 0); }
-}
-
-/* ── Separator line ── */
-.separator-warm {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(138, 117, 96, 0.20), transparent);
-}
-
-/* Preservation status glow */
-.preservation-glow {
-  box-shadow: 0 0 20px rgba(138, 117, 96, 0.06), 0 0 40px rgba(138, 117, 96, 0.03);
-}
-
-/* Live badge pulse */
-@keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.live-badge {
-  animation: livePulse 2s ease-in-out infinite;
+  html { scroll-behavior: smooth; }
 }
 
 @layer components {
-  .font-sans {
-    font-family: var(--font-inter), system-ui, sans-serif;
+  .font-sans { font-family: var(--font-inter), system-ui, sans-serif; }
+  .font-serif { font-family: var(--font-cormorant), Georgia, serif; }
+
+  /* ── Card system ── */
+  .glass-card {
+    background: #fff;
+    border: 1px solid rgba(189, 185, 174, 0.3);
+    border-radius: 20px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .glass-card:hover {
+    border-color: rgba(189, 185, 174, 0.45);
+    box-shadow: 0 8px 30px rgba(57, 56, 48, 0.08);
+  }
+  .glass-card-hero {
+    background: #fff;
+    border: 1px solid rgba(189, 185, 174, 0.25);
+    border-radius: 24px;
+    box-shadow: 0 4px 40px rgba(57, 56, 48, 0.08);
+    transition: box-shadow 0.4s ease;
+    overflow: hidden;
+  }
+  .glass-card-hero:hover {
+    box-shadow: 0 8px 50px rgba(57, 56, 48, 0.12);
   }
 
-  .font-serif {
-    font-family: var(--font-cormorant), Georgia, serif;
-  }
-
-
-
-  .btn-paper {
-    border-radius: 8px;
-    box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.05),
-      0 1px 2px rgba(0, 0, 0, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    background-image: linear-gradient(135deg,
-        rgba(255, 255, 255, 0.2) 0%,
-        transparent 50%,
-        rgba(0, 0, 0, 0.02) 100%);
-    position: relative;
-    transition: all 0.2s ease;
-  }
-
-  .btn-paper:hover {
-    box-shadow:
-      0 4px 8px rgba(0, 0, 0, 0.07),
-      0 2px 4px rgba(0, 0, 0, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    transform: translateY(-1px);
-  }
-
-  .btn-paper:active {
-    transform: translateY(0);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.06),
-      inset 0 1px 3px rgba(0, 0, 0, 0.06);
-  }
-
-  /* Glass button variants for pricing page */
+  /* ── Button system ── */
   .glass-btn {
     backdrop-filter: blur(12px);
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
   .glass-btn-primary {
     backdrop-filter: blur(12px);
     background-color: rgba(91, 106, 49, 0.6);
@@ -500,10 +233,7 @@
     color: #fffbff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  .glass-btn-primary:hover {
-    background-color: rgba(91, 106, 49, 0.75);
-  }
+  .glass-btn-primary:hover { background-color: rgba(91, 106, 49, 0.75); }
 
   .glass-btn-dark {
     backdrop-filter: blur(12px);
@@ -512,16 +242,75 @@
     color: #fffbff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  .glass-btn-dark:hover { background-color: rgba(57, 56, 48, 0.75); }
 
-  .glass-btn-dark:hover {
-    background-color: rgba(57, 56, 48, 0.75);
+  .glass-btn-danger {
+    backdrop-filter: blur(12px);
+    background-color: rgba(168, 80, 68, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fffbff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glass-btn-danger:hover { background-color: rgba(168, 80, 68, 0.75); }
+
+  .hover-grow { transition: transform 0.2s ease; }
+  .hover-grow:hover { transform: scale(1.05); }
+
+  /* ── Form inputs ── */
+  .glass-input {
+    background: #f8f3e9;
+    border: 1px solid rgba(189, 185, 174, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #393830;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glass-input:focus {
+    outline: none;
+    border-color: rgba(91, 106, 49, 0.5);
+    box-shadow: 0 0 0 3px rgba(91, 106, 49, 0.1);
+  }
+  .glass-input::placeholder { color: #838176; }
+
+  /* ── Modal system ── */
+  .glass-modal-overlay {
+    background: rgba(57, 56, 48, 0.6);
+    backdrop-filter: blur(8px);
+  }
+  .glass-modal {
+    background: #fdf9f0;
+    border: 1px solid rgba(189, 185, 174, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(57, 56, 48, 0.2);
   }
 
-  .hover-grow {
-    transition: transform 0.2s ease;
+  /* ── Status badges ── */
+  .badge-live { animation: liveDot 3s ease-in-out infinite; }
+  .badge-glow { animation: glowWarm 3s ease-in-out infinite; }
+  .live-badge { animation: livePulse 2s ease-in-out infinite; }
+
+  /* ── Separator ── */
+  .separator-warm {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(189, 185, 174, 0.3), transparent);
   }
 
-  .hover-grow:hover {
-    transform: scale(1.05);
+  /* ── Glow effects ── */
+  .preservation-glow {
+    box-shadow: 0 0 20px rgba(91, 106, 49, 0.06), 0 0 40px rgba(91, 106, 49, 0.03);
   }
+}
+
+@keyframes liveDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@keyframes glowWarm {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 106, 49, 0.2); }
+  50% { box-shadow: 0 0 0 4px rgba(91, 106, 49, 0); }
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

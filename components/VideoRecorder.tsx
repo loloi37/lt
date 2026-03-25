@@ -103,15 +103,15 @@ export default function VideoRecorder({ fullName, deceasedName, onComplete }: Vi
     return (
         <div className="space-y-6">
             {/* The Script Prompt - CRITICAL for legal validity */}
-            <div className="bg-charcoal text-ivory p-4 rounded-xl text-center border-2 border-mist/40">
+            <div className="bg-warm-dark text-surface-low p-4 rounded-xl text-center border-2 border-olive/40">
                 <p className="text-[10px] uppercase tracking-widest opacity-50 mb-2">Read this aloud:</p>
                 <p className="font-serif italic text-lg leading-relaxed">
-                    "I am <span className="text-mist not-italic font-bold">{fullName || '[Name]'}</span>. I authorize the creation of this archive for <span className="text-mist not-italic font-bold">{deceasedName}</span> on <span className="text-mist not-italic font-bold">{today}</span>. This is my video signature."
+                    "I am <span className="text-olive not-italic font-bold">{fullName || '[Name]'}</span>. I authorize the creation of this archive for <span className="text-olive not-italic font-bold">{deceasedName}</span> on <span className="text-olive not-italic font-bold">{today}</span>. This is my video signature."
                 </p>
             </div>
 
             {/* Video Preview */}
-            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border-2 border-sand/40 shadow-inner">
+            <div className="relative aspect-video bg-black rounded-xl overflow-hidden border-2 border-warm-border/40 shadow-inner">
                 {!recordedBlob ? (
                     <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover mirror" />
                 ) : (
@@ -141,7 +141,7 @@ export default function VideoRecorder({ fullName, deceasedName, onComplete }: Vi
                         className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
                             isRecording 
                             ? 'bg-red-600 text-white hover:bg-red-700' 
-                            : 'bg-mist text-ivory hover:shadow-lg scale-105'
+                            : 'bg-olive text-surface-low hover:shadow-lg scale-105'
                         }`}
                     >
                         {isRecording ? <Square size={18} /> : <Video size={18} />}
@@ -150,7 +150,7 @@ export default function VideoRecorder({ fullName, deceasedName, onComplete }: Vi
                 ) : (
                     <button
                         onClick={resetRecording}
-                        className="px-6 py-3 bg-white border-2 border-sand/40 text-charcoal rounded-xl font-medium hover:bg-sand/10 transition-all flex items-center gap-2"
+                        className="px-6 py-3 bg-white border-2 border-warm-border/40 text-warm-dark rounded-xl font-medium hover:bg-warm-border/10 transition-all flex items-center gap-2"
                     >
                         <RotateCcw size={18} />
                         Re-record Video

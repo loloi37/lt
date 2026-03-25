@@ -41,7 +41,7 @@ export default function AbandonedArchivesPage() {
     const getRiskColor = (level: string) => {
         switch (level) {
             case 'critical': return 'bg-red-100 text-red-700 border-red-200';
-            case 'high': return 'bg-parchment text-stone border-stone/30';
+            case 'high': return 'bg-surface-high text-warm-brown border-warm-brown/30';
             default: return 'bg-yellow-50 text-yellow-700 border-yellow-200';
         }
     };
@@ -113,7 +113,7 @@ export default function AbandonedArchivesPage() {
                                                 </a>
                                                 {record.riskLevel === 'critical' && (
                                                     <button
-                                                        className="p-2 text-slate-600 hover:text-mist hover:bg-mist/10 rounded-lg transition-colors"
+                                                        className="p-2 text-slate-600 hover:text-olive hover:bg-olive/10 rounded-lg transition-colors"
                                                         title="Schedule Support Call"
                                                         onClick={() => alert('Feature: Integrate Calendly link sending here')}
                                                     >

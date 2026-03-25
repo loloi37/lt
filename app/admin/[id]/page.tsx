@@ -142,7 +142,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
     const getFileIcon = (mimeType: string) => {
         if (mimeType.startsWith('image/')) return <Image size={20} className="text-blue-600" />;
         if (mimeType.startsWith('video/')) return <Film size={20} className="text-purple-600" />;
-        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-mist" />;
+        if (mimeType.startsWith('audio/')) return <Music size={20} className="text-olive" />;
         return <FileText size={20} className="text-slate-600" />;
     };
 
@@ -176,7 +176,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowSettings(!showSettings)}
-                                className="btn-paper px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2"
+                                className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2"
                             >
                                 <Settings size={18} />
                                 Settings
@@ -185,7 +185,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="btn-paper px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all flex items-center gap-2 disabled:opacity-50"
                             >
                                 {saving ? (
                                     <>
@@ -379,7 +379,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                     className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
                                     defaultValue={JSON.stringify(project.content_preview, null, 2)}
                                 />
-                                <button className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
+                                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">
                                     Update Preview
                                 </button>
                             </div>
@@ -446,7 +446,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                 {notes.map(note => (
                                     <div
                                         key={note.id}
-                                        className={`p-4 rounded-lg ${note.from_user ? 'bg-blue-50 border border-blue-200' : 'bg-parchment border border-sand'}`}
+                                        className={`p-4 rounded-lg ${note.from_user ? 'bg-blue-50 border border-blue-200' : 'bg-surface-high border border-warm-border/30'}`}
                                     >
                                         <div className="flex items-start justify-between mb-2">
                                             <span className="text-xs font-medium text-slate-600">
@@ -472,7 +472,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                 <button
                                     onClick={handleSendMessage}
                                     disabled={!newMessage.trim()}
-                                    className="btn-paper px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all disabled:opacity-50"
                                 >
                                     Send Message
                                 </button>
@@ -503,7 +503,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                                         <h4 className="font-semibold text-slate-900 mb-4">What We're Building</h4>
                                         {project.content_preview.structure.map((item: any, idx: number) => (
                                             <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg mb-2">
-                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-mist' :
+                                                <div className={`w-2 h-2 rounded-full ${item.status === 'complete' ? 'bg-olive' :
                                                         item.status === 'in_progress' ? 'bg-blue-500' : 'bg-slate-300'
                                                     }`} />
                                                 <span className="text-slate-700">{item.section}</span>

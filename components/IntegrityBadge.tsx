@@ -19,14 +19,14 @@ export default function IntegrityBadge({ hash, className = '' }: IntegrityBadgeP
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setShowTooltip(!showTooltip); }}
-                className="bg-white/90 backdrop-blur-sm text-mist p-1.5 rounded-full shadow-sm border border-mist/20 cursor-pointer transition-transform hover:scale-110"
+                className="bg-white/90 backdrop-blur-sm text-plum p-1.5 rounded-full shadow-sm border border-plum/20 cursor-pointer transition-transform hover:scale-110"
             >
                 <ShieldCheck size={14} />
             </button>
 
             {/* The Tooltip (appears on click) */}
             {showTooltip && (
-                <div className="absolute top-0 left-8 w-64 bg-charcoal text-ivory text-xs p-3 rounded-lg shadow-xl animate-fadeIn">
+                <div className="absolute top-0 left-8 w-64 bg-warm-dark text-surface-low text-xs p-3 rounded-lg shadow-xl animate-fadeIn">
                     <p className="font-semibold mb-1 flex items-center gap-1">
                         <ShieldCheck size={12} /> Authenticity Verified
                     </p>

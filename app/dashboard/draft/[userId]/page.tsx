@@ -133,32 +133,32 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     const hasDraftAccess = !auth.loading && auth.authenticated && !auth.hasPaid;
     if (!hasDraftAccess) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-charcoal/5 via-ivory to-sand/20 flex items-center justify-center">
+            <div className="min-h-screen bg-gradient-to-br from-warm-dark/5 via-surface-low to-warm-border/20 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-charcoal/50 text-sm">Verifying access...</p>
+                    <div className="w-12 h-12 border-2 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-warm-dark/50 text-sm">Verifying access...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-charcoal/5 via-ivory to-sand/20">
-            <div className="bg-white border-b border-sand/30 shadow-sm">
+        <div className="min-h-screen bg-gradient-to-br from-warm-dark/5 via-surface-low to-warm-border/20">
+            <div className="bg-white border-b border-warm-border/30 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <Link href="/choice-pricing" className="p-2 hover:bg-sand/10 rounded-lg">
-                                    <ArrowLeft size={20} className="text-charcoal/60" />
+                                <Link href="/choice-pricing" className="p-2 hover:bg-warm-border/10 rounded-lg">
+                                    <ArrowLeft size={20} className="text-warm-dark/60" />
                                 </Link>
-                                <h1 className="font-serif text-4xl text-charcoal">My Drafts</h1>
-                                <span className="px-3 py-1 bg-charcoal/10 text-charcoal/60 text-xs font-semibold rounded-full uppercase tracking-wide">
+                                <h1 className="font-serif text-4xl text-warm-dark">My Drafts</h1>
+                                <span className="px-3 py-1 bg-warm-dark/10 text-warm-dark/60 text-xs font-semibold rounded-full uppercase tracking-wide">
                                     Free Plan
                                 </span>
                             </div>
-                            <p className="text-charcoal/60">Your draft memorials — upgrade to Personal to publish</p>
-                            <p className="text-xs text-charcoal/40 mt-1">ID: {userId.slice(0, 8)}...</p>
+                            <p className="text-warm-dark/60">Your draft memorials — upgrade to Personal to publish</p>
+                            <p className="text-xs text-warm-dark/40 mt-1">ID: {userId.slice(0, 8)}...</p>
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -171,7 +171,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                         : '/seal-confirmation';
                                     router.push(sealUrl);
                                 }}
-                                className="btn-paper px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 border-2 border-sage text-sage hover:bg-sage/10 transition-all text-sm"
+                                className="glass-btn-primary px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 border-2 border-olive text-olive hover:bg-olive/10 transition-all text-sm"
                             >
                                 <ArrowUpCircle size={18} />
                                 Upgrade to Personal
@@ -179,7 +179,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
 
                             <button
                                 onClick={handleCreate}
-                                className="btn-paper px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-charcoal/80 to-charcoal hover:shadow-lg text-ivory"
+                                className="glass-btn-dark px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-warm-dark/80 to-warm-dark hover:shadow-lg text-surface-low"
                             >
                                 <Plus size={20} />
                                 New Draft
@@ -192,18 +192,18 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {loading ? (
                     <div className="text-center py-20">
-                        <Loader2 size={48} className="text-charcoal/30 animate-spin mx-auto mb-4" />
+                        <Loader2 size={48} className="text-warm-dark/30 animate-spin mx-auto mb-4" />
                     </div>
                 ) : memorials.length === 0 ? (
                     <div className="text-center py-20">
-                        <div className="w-24 h-24 bg-charcoal/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <FileEdit size={48} className="text-charcoal/30" />
+                        <div className="w-24 h-24 bg-warm-dark/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <FileEdit size={48} className="text-warm-dark/30" />
                         </div>
-                        <h2 className="font-serif text-3xl text-charcoal mb-3">Start Your First Draft</h2>
-                        <p className="text-charcoal/50 mb-6 max-w-sm mx-auto">
+                        <h2 className="font-serif text-3xl text-warm-dark mb-3">Start Your First Draft</h2>
+                        <p className="text-warm-dark/50 mb-6 max-w-sm mx-auto">
                             Build your memorial at your own pace. No payment required to get started.
                         </p>
-                        <button onClick={handleCreate} className="btn-paper inline-flex items-center gap-2 px-6 py-3 bg-charcoal/80 hover:bg-charcoal text-ivory rounded-lg font-semibold">
+                        <button onClick={handleCreate} className="glass-btn-dark inline-flex items-center gap-2 px-6 py-3 bg-warm-dark/80 hover:bg-warm-dark text-surface-low rounded-lg font-semibold">
                             <Plus size={20} />
                             Create Draft
                         </button>
@@ -211,43 +211,43 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {memorials.map((memorial) => (
-                            <div key={memorial.id} className="bg-white rounded-xl shadow-sm border border-sand/30 overflow-hidden">
+                            <div key={memorial.id} className="bg-white rounded-xl shadow-sm border border-warm-border/30 overflow-hidden">
                                 {/* Draft watermark overlay on thumbnail */}
-                                <div className="relative h-48 bg-gradient-to-br from-charcoal/5 to-charcoal/10">
+                                <div className="relative h-48 bg-gradient-to-br from-warm-dark/5 to-warm-dark/10">
                                     {memorial.profile_photo_url ? (
                                         <>
                                             <img src={memorial.profile_photo_url} alt="" className="w-full h-full object-cover opacity-60" />
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <span className="text-charcoal/40 font-bold text-xl tracking-widest rotate-[-20deg] select-none pointer-events-none">
+                                                <span className="text-warm-dark/40 font-bold text-xl tracking-widest rotate-[-20deg] select-none pointer-events-none">
                                                     DRAFT
                                                 </span>
                                             </div>
                                         </>
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
-                                            <FileEdit size={64} className="text-charcoal/20" />
+                                            <FileEdit size={64} className="text-warm-dark/20" />
                                         </div>
                                     )}
                                     {/* Draft badge */}
-                                    <div className="absolute top-3 left-3 px-2 py-1 bg-charcoal/70 text-ivory text-xs font-semibold rounded-md">
+                                    <div className="absolute top-3 left-3 px-2 py-1 bg-warm-dark/70 text-surface-low text-xs font-semibold rounded-md">
                                         DRAFT
                                     </div>
                                 </div>
                                 <div className="p-6">
-                                    <h3 className="font-serif text-2xl text-charcoal mb-2">{memorial.full_name || 'Untitled Draft'}</h3>
-                                    <p className="text-xs text-charcoal/40 mb-4">
+                                    <h3 className="font-serif text-2xl text-warm-dark mb-2">{memorial.full_name || 'Untitled Draft'}</h3>
+                                    <p className="text-xs text-warm-dark/40 mb-4">
                                         Last edited: {new Date(memorial.updated_at).toLocaleDateString()}
                                     </p>
                                     <div className="flex gap-2">
                                         <Link
                                             href={`/create?id=${memorial.id}&mode=draft`}
-                                            className="btn-paper flex-1 py-2 px-3 bg-charcoal/10 hover:bg-charcoal/20 text-charcoal rounded-lg font-medium text-center text-sm"
+                                            className="glass-btn-primary flex-1 py-2 px-3 bg-warm-dark/10 hover:bg-warm-dark/20 text-warm-dark rounded-lg font-medium text-center text-sm"
                                         >
                                             <Edit size={16} className="inline mr-1" />Edit
                                         </Link>
                                         <button
                                             onClick={() => softDeleteMemorial(memorial.id)}
-                                            className="btn-paper py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
+                                            className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
                                             title="Delete draft"
                                         >
                                             <Trash2 size={16} />
@@ -261,19 +261,19 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
 
                 {/* Removed Drafts */}
                 {deletedMemorials.length > 0 && (
-                    <div className="mt-16 pt-10 border-t border-sand/30">
-                        <h3 className="text-xl font-serif text-charcoal mb-2 flex items-center gap-2">
-                            <Trash2 size={20} className="text-charcoal/40" />
+                    <div className="mt-16 pt-10 border-t border-warm-border/30">
+                        <h3 className="text-xl font-serif text-warm-dark mb-2 flex items-center gap-2">
+                            <Trash2 size={20} className="text-warm-dark/40" />
                             Removed Drafts
                         </h3>
-                        <p className="text-sm text-charcoal/40 mb-6">
+                        <p className="text-sm text-warm-dark/40 mb-6">
                             Drafts are kept for 30 days before permanent deletion.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (
-                                <div key={memorial.id} className="bg-sand/10 rounded-xl border border-sand/30 p-4 flex items-center justify-between">
+                                <div key={memorial.id} className="bg-warm-border/10 rounded-xl border border-warm-border/30 p-4 flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-charcoal">{memorial.full_name || 'Untitled Draft'}</p>
+                                        <p className="font-medium text-warm-dark">{memorial.full_name || 'Untitled Draft'}</p>
                                         <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                                             <AlertTriangle size={12} />
                                             {getDaysRemaining(memorial.deleted_at!)} days until permanent deletion
@@ -282,7 +282,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => restoreMemorial(memorial.id)}
-                                            className="p-2 bg-white border border-charcoal/20 text-charcoal/60 rounded-lg hover:bg-charcoal/10 transition-colors"
+                                            className="p-2 bg-white border border-warm-dark/20 text-warm-dark/60 rounded-lg hover:bg-warm-dark/10 transition-colors"
                                             title="Restore"
                                         >
                                             <RefreshCcw size={18} />

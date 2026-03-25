@@ -30,7 +30,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
         // Style
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-        ctx.strokeStyle = '#5a6b78'; // Charcoal color
+        ctx.strokeStyle = '#5a6b78'; // warm-dark color
     }, []);
 
     const getCoords = (e: React.MouseEvent | React.TouchEvent) => {
@@ -96,7 +96,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
 
     return (
         <div className="w-full">
-            <div className="relative border-2 border-sand/40 rounded-xl bg-white overflow-hidden shadow-inner touch-none">
+            <div className="relative border-2 border-warm-border/40 rounded-xl bg-white overflow-hidden shadow-inner touch-none">
                 <canvas
                     ref={canvasRef}
                     className="w-full h-48 cursor-crosshair block"
@@ -110,7 +110,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
                 />
 
                 {!hasSignature && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-charcoal/20">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-warm-outline">
                         <div className="flex items-center gap-2 text-sm font-handwriting">
                             <PenTool size={16} /> Sign here
                         </div>
@@ -121,7 +121,7 @@ export default function SignaturePad({ onEnd }: SignaturePadProps) {
             <div className="flex justify-end mt-2">
                 <button
                     onClick={clear}
-                    className="text-xs flex items-center gap-1 text-charcoal/50 hover:text-stone transition-colors"
+                    className="text-xs flex items-center gap-1 text-warm-outline hover:text-warm-brown transition-colors"
                 >
                     <Eraser size={14} /> Clear Signature
                 </button>

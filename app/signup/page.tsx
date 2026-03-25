@@ -55,24 +55,24 @@ function SignupForm() {
 
   if (confirmationSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-surface-mid via-surface-low to-surface-high flex items-center justify-center p-6">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-2xl shadow-xl border border-sand/30 p-8 md:p-10 text-center">
-            <div className="w-16 h-16 bg-mist/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check size={32} className="text-mist" />
+          <div className="bg-white rounded-2xl shadow-xl border border-warm-border/30 p-8 md:p-10 text-center">
+            <div className="w-16 h-16 bg-olive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Check size={32} className="text-olive" />
             </div>
-            <h1 className="font-serif text-3xl text-charcoal mb-3">Check Your Email</h1>
-            <p className="text-charcoal/60 mb-6">
+            <h1 className="font-serif text-3xl text-warm-dark mb-3">Check Your Email</h1>
+            <p className="text-warm-muted mb-6">
               We sent a confirmation link to{' '}
-              <strong className="text-charcoal">{email}</strong>.
+              <strong className="text-warm-dark">{email}</strong>.
               <br />
               Click the link to activate your account.
             </p>
-            <p className="text-xs text-charcoal/40">
+            <p className="text-xs text-warm-outline">
               Didn&apos;t receive it? Check your spam folder, or{' '}
               <button
                 onClick={() => setConfirmationSent(false)}
-                className="text-mist underline"
+                className="text-olive underline"
               >
                 try again
               </button>
@@ -85,22 +85,22 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-surface-mid via-surface-low to-surface-high flex items-center justify-center p-6">
       <div className="max-w-md w-full">
         <div className="mb-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
+            className="inline-flex items-center gap-2 text-warm-muted hover:text-warm-dark transition-colors"
           >
             <ArrowLeft size={20} />
             <span>Back</span>
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl border border-sand/30 p-8 md:p-10">
+        <div className="bg-white rounded-2xl shadow-xl border border-warm-border/30 p-8 md:p-10">
           <div className="text-center mb-8">
-            <h1 className="font-serif text-3xl text-charcoal mb-2">Create Your Account</h1>
-            <p className="text-charcoal/60 text-sm">
+            <h1 className="font-serif text-3xl text-warm-dark mb-2">Create Your Account</h1>
+            <p className="text-warm-muted text-sm">
               Begin preserving your legacy
             </p>
           </div>
@@ -113,28 +113,28 @@ function SignupForm() {
 
           <form onSubmit={handleSignup} className="space-y-5">
             <div>
-              <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-medium text-warm-outline uppercase tracking-widest mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/30" />
+                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-border" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="you@example.com"
-                  className="w-full pl-11 pr-4 py-3 border border-sand/40 rounded-xl bg-ivory/50 text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-mist focus:ring-2 focus:ring-mist/10 transition-all"
+                  className="w-full pl-11 pr-4 py-3 glass-input rounded-xl"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-medium text-warm-outline uppercase tracking-widest mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/30" />
+                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-border" />
                 <input
                   type="password"
                   value={password}
@@ -142,24 +142,24 @@ function SignupForm() {
                   required
                   minLength={6}
                   placeholder="At least 6 characters"
-                  className="w-full pl-11 pr-4 py-3 border border-sand/40 rounded-xl bg-ivory/50 text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-mist focus:ring-2 focus:ring-mist/10 transition-all"
+                  className="w-full pl-11 pr-4 py-3 glass-input rounded-xl"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-medium text-warm-outline uppercase tracking-widest mb-2">
                 Confirm Password
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/30" />
+                <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-border" />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="Confirm your password"
-                  className="w-full pl-11 pr-4 py-3 border border-sand/40 rounded-xl bg-ivory/50 text-charcoal placeholder:text-charcoal/30 focus:outline-none focus:border-mist focus:ring-2 focus:ring-mist/10 transition-all"
+                  className="w-full pl-11 pr-4 py-3 glass-input rounded-xl"
                 />
               </div>
             </div>
@@ -169,8 +169,8 @@ function SignupForm() {
               disabled={loading}
               className={`w-full py-3.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
                 loading
-                  ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                  : 'bg-charcoal hover:bg-charcoal/90 text-ivory'
+                  ? 'bg-surface-high text-warm-outline cursor-not-allowed'
+                  : 'glass-btn-primary'
               }`}
             >
               {loading ? (
@@ -185,11 +185,11 @@ function SignupForm() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-charcoal/50">
+            <p className="text-sm text-warm-muted">
               Already have an account?{' '}
               <Link
                 href={`/login${next !== '/dashboard' ? `?next=${encodeURIComponent(next)}` : ''}`}
-                className="text-mist font-medium hover:underline"
+                className="text-olive font-medium hover:underline"
               >
                 Sign in
               </Link>
@@ -205,8 +205,8 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-ivory flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+        <div className="min-h-screen bg-surface-low flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-warm-border/30 border-t-olive rounded-full animate-spin" />
         </div>
       }
     >

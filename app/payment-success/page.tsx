@@ -171,12 +171,12 @@ function PaymentSuccessContent() {
     // ── Error state ───────────────────────────────────────────────────────────
     if (error) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+            <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
                 <div className="max-w-md text-center">
-                    <p className="text-charcoal/60 mb-6 leading-relaxed">{error}</p>
+                    <p className="text-warm-dark/60 mb-6 leading-relaxed">{error}</p>
                     <a
                         href="mailto:support@legacyvault.com"
-                        className="text-sm text-charcoal/40 underline hover:text-charcoal transition-colors"
+                        className="text-sm text-warm-dark/40 underline hover:text-warm-dark transition-colors"
                     >
                         Contact support@legacyvault.com
                     </a>
@@ -188,10 +188,10 @@ function PaymentSuccessContent() {
     // ── Phase: finalizing ─────────────────────────────────────────────────────
     if (phase === 'finalizing') {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
+            <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
                 <div className="text-center max-w-md animate-fadeIn">
-                    <div className="w-16 h-16 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin mx-auto mb-8" />
-                    <p className="text-charcoal/40 text-sm">Sealing the archive...</p>
+                    <div className="w-16 h-16 border-2 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin mx-auto mb-8" />
+                    <p className="text-warm-dark/40 text-sm">Sealing the archive...</p>
                 </div>
             </div>
         );
@@ -436,8 +436,8 @@ export default function PaymentSuccessPage() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen bg-ivory flex items-center justify-center">
-                    <div className="w-12 h-12 border-2 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+                <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                    <div className="w-12 h-12 border-2 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin" />
                 </div>
             }
         >

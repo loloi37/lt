@@ -85,8 +85,8 @@ function SealConfirmationContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <div className="w-12 h-12 border-3 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <div className="w-12 h-12 border-3 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin" />
             </div>
         );
     }
@@ -99,13 +99,13 @@ function SealConfirmationContent() {
         : memorialId;
 
     return (
-        <div className="min-h-screen bg-ivory">
+        <div className="min-h-screen bg-surface-low">
             {/* Header */}
-            <div className="border-b border-sand/20 bg-white/60 backdrop-blur-sm">
+            <div className="border-b border-warm-border/20 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-3xl mx-auto px-6 py-5">
                     <button
                         onClick={handleGoBack}
-                        className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm"
+                        className="inline-flex items-center gap-2 text-warm-dark/40 hover:text-warm-dark transition-colors text-sm"
                     >
                         <ArrowLeft size={16} />
                         Return to draft
@@ -116,13 +116,13 @@ function SealConfirmationContent() {
             <div className="max-w-3xl mx-auto px-6 py-16">
                 {/* Step 2.1.3: Archive declaration */}
                 <div className="text-center mb-12">
-                    <h1 className="font-serif text-4xl text-charcoal mb-4">
+                    <h1 className="font-serif text-4xl text-warm-dark mb-4">
                         You are about to seal the archive
                     </h1>
-                    <div className="text-lg text-charcoal/50">
+                    <div className="text-lg text-warm-dark/50">
                         <span className="font-serif italic">{fullName}</span>
                         {birthDate && (
-                            <span className="text-charcoal/30">
+                            <span className="text-warm-dark/30">
                                 {' '}({birthDate}{deathDate ? ` — ${deathDate}` : ''})
                             </span>
                         )}
@@ -130,77 +130,77 @@ function SealConfirmationContent() {
                 </div>
 
                 {/* Archive contents summary */}
-                <div className="bg-white rounded-2xl border border-sand/25 p-8 mb-8">
-                    <h2 className="text-sm font-medium text-charcoal/40 uppercase tracking-wider mb-6">
+                <div className="bg-white rounded-2xl border border-warm-border/25 p-8 mb-8">
+                    <h2 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-6">
                         What this archive contains
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div className="text-center">
-                            <div className="w-10 h-10 bg-sand/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <ImageIcon size={18} className="text-charcoal/30" />
+                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <ImageIcon size={18} className="text-warm-dark/30" />
                             </div>
-                            <p className="text-2xl font-serif text-charcoal">{archiveStats.photos}</p>
-                            <p className="text-xs text-charcoal/30">photo{archiveStats.photos !== 1 ? 's' : ''}</p>
+                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.photos}</p>
+                            <p className="text-xs text-warm-dark/30">photo{archiveStats.photos !== 1 ? 's' : ''}</p>
                         </div>
                         <div className="text-center">
-                            <div className="w-10 h-10 bg-sand/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <Film size={18} className="text-charcoal/30" />
+                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <Film size={18} className="text-warm-dark/30" />
                             </div>
-                            <p className="text-2xl font-serif text-charcoal">{archiveStats.videos}</p>
-                            <p className="text-xs text-charcoal/30">video{archiveStats.videos !== 1 ? 's' : ''}</p>
+                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.videos}</p>
+                            <p className="text-xs text-warm-dark/30">video{archiveStats.videos !== 1 ? 's' : ''}</p>
                         </div>
                         <div className="text-center">
-                            <div className="w-10 h-10 bg-sand/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <BookOpen size={18} className="text-charcoal/30" />
+                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <BookOpen size={18} className="text-warm-dark/30" />
                             </div>
-                            <p className="text-2xl font-serif text-charcoal">{archiveStats.biographyWords}</p>
-                            <p className="text-xs text-charcoal/30">words written</p>
+                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.biographyWords}</p>
+                            <p className="text-xs text-warm-dark/30">words written</p>
                         </div>
                         <div className="text-center">
-                            <div className="w-10 h-10 bg-sand/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <MapPin size={18} className="text-charcoal/30" />
+                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <MapPin size={18} className="text-warm-dark/30" />
                             </div>
-                            <p className="text-2xl font-serif text-charcoal">{archiveStats.pathsExplored}</p>
-                            <p className="text-xs text-charcoal/30">paths explored</p>
+                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.pathsExplored}</p>
+                            <p className="text-xs text-warm-dark/30">paths explored</p>
                         </div>
                     </div>
                 </div>
 
                 {/* What sealing means */}
-                <div className="bg-sand/8 rounded-2xl border border-sand/15 p-8 mb-8">
-                    <h2 className="text-sm font-medium text-charcoal/40 uppercase tracking-wider mb-5">
+                <div className="bg-warm-border/8 rounded-2xl border border-warm-border/15 p-8 mb-8">
+                    <h2 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-5">
                         What this means
                     </h2>
-                    <ul className="space-y-3 text-sm text-charcoal/50 leading-relaxed">
+                    <ul className="space-y-3 text-sm text-warm-dark/50 leading-relaxed">
                         <li className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-charcoal/20 mt-2 flex-shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
                             This archive becomes permanent. It will be accessible at
-                            <span className="text-charcoal/70 font-medium ml-1">legacyvault.com/person/{slug}</span>
+                            <span className="text-warm-dark/70 font-medium ml-1">legacyvault.com/person/{slug}</span>
                         </li>
                         <li className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-charcoal/20 mt-2 flex-shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
                             It can be shared, exported, and transmitted to your heirs.
                         </li>
                         <li className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-charcoal/20 mt-2 flex-shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
                             The watermark will be removed. The archive will appear exactly as you have seen it in the preview.
                         </li>
                         <li className="flex items-start gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-charcoal/20 mt-2 flex-shrink-0" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
                             You can continue editing and adding content after sealing.
                         </li>
                     </ul>
                 </div>
 
                 {/* Trust elements */}
-                <div className="flex items-center justify-center gap-6 mb-10 text-xs text-charcoal/25">
+                <div className="flex items-center justify-center gap-6 mb-10 text-xs text-warm-dark/25">
                     <div className="flex items-center gap-1.5">
                         <Shield size={12} />
                         <span>One-time payment</span>
                     </div>
-                    <div className="w-px h-3 bg-sand/30" />
+                    <div className="w-px h-3 bg-warm-border/30" />
                     <span>No subscription</span>
-                    <div className="w-px h-3 bg-sand/30" />
+                    <div className="w-px h-3 bg-warm-border/30" />
                     <span>Lifetime access</span>
                 </div>
 
@@ -208,19 +208,19 @@ function SealConfirmationContent() {
                 <div className="space-y-3 max-w-md mx-auto">
                     <button
                         onClick={handleProceed}
-                        className="w-full py-4 bg-charcoal text-ivory rounded-xl font-medium hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 glass-btn-dark rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                     >
                         I am ready — Proceed
                     </button>
                     <button
                         onClick={handleGoBack}
-                        className="w-full py-4 bg-white border border-sand/30 text-charcoal/50 rounded-xl font-medium hover:bg-sand/5 transition-all"
+                        className="w-full py-4 bg-white border border-warm-border/30 text-warm-dark/50 rounded-xl font-medium hover:bg-warm-border/5 transition-all"
                     >
                         I am not ready yet — Return to draft
                     </button>
                 </div>
 
-                <p className="text-center text-xs text-charcoal/20 mt-6">
+                <p className="text-center text-xs text-warm-dark/20 mt-6">
                     Your draft is saved. You can return to this page at any time.
                 </p>
             </div>
@@ -231,8 +231,8 @@ function SealConfirmationContent() {
 export default function SealConfirmationPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <div className="w-12 h-12 border-3 border-sand/30 border-t-charcoal/40 rounded-full animate-spin" />
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <div className="w-12 h-12 border-3 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin" />
             </div>
         }>
             <SealConfirmationContent />

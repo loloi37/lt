@@ -59,43 +59,43 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-ivory flex items-center justify-center">
-            <Loader2 className="animate-spin text-mist" size={32} />
+        <div className="min-h-screen bg-surface-low flex items-center justify-center">
+            <Loader2 className="animate-spin text-olive" size={32} />
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
+        <div className="min-h-screen bg-surface-low flex items-center justify-center p-6 text-center">
             <div className="max-w-md">
-                <AlertCircle className="mx-auto text-stone mb-4" size={48} />
+                <AlertCircle className="mx-auto text-warm-muted mb-4" size={48} />
                 <h1 className="font-serif text-2xl mb-2">Invitation Invalid</h1>
-                <p className="text-charcoal/60 mb-6">{error}</p>
-                <button onClick={() => router.push('/')} className="text-mist font-medium underline">Return to Home</button>
+                <p className="text-warm-muted mb-6">{error}</p>
+                <button onClick={() => router.push('/')} className="text-olive font-medium underline">Return to Home</button>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-ivory flex items-center justify-center p-6">
-            <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-sand/30">
+        <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
+            <div className="max-w-xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-warm-border/30">
                 <div className="p-8 md:p-12">
-                    <div className="w-16 h-16 bg-charcoal text-mist rounded-full flex items-center justify-center mx-auto mb-8">
+                    <div className="w-16 h-16 bg-warm-dark text-olive rounded-full flex items-center justify-center mx-auto mb-8">
                         <Shield size={32} />
                     </div>
 
-                    <h1 className="font-serif text-3xl text-center text-charcoal mb-4">
+                    <h1 className="font-serif text-3xl text-center text-warm-dark mb-4">
                         Archive Stewardship
                     </h1>
 
-                    <div className="prose prose-sm text-charcoal/80 space-y-4 mb-8 text-center leading-relaxed">
+                    <div className="prose prose-sm text-warm-dark/80 space-y-4 mb-8 text-center leading-relaxed">
                         <p className="text-base">
                             You have been designated as the <strong>Archive Steward</strong> for a Legacy Vault account.
                         </p>
                         <p>
                             This means that in the event of the account owner's passing, you will be entrusted with the management, preservation, and control of all family archives associated with this account.
                         </p>
-                        <div className="bg-sand/10 p-6 rounded-xl border border-sand/20 text-left space-y-3">
-                            <h4 className="font-bold flex items-center gap-2 text-charcoal">
+                        <div className="bg-warm-border/10 p-6 rounded-xl border border-warm-border/20 text-left space-y-3">
+                            <h4 className="font-bold flex items-center gap-2 text-warm-dark">
                                 <Scale size={16} /> Your Commitment:
                             </h4>
                             <ul className="list-disc pl-5 space-y-1 text-xs">
@@ -109,12 +109,12 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
                     <button
                         onClick={handleAccept}
                         disabled={processing}
-                        className="btn-paper w-full py-4 bg-charcoal text-ivory rounded-lg font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 glass-btn-dark rounded-lg font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
                     >
                         {processing ? <Loader2 className="animate-spin" size={20} /> : "I Accept This Responsibility"}
                     </button>
 
-                    <p className="text-center mt-6 text-xs text-charcoal/40">
+                    <p className="text-center mt-6 text-xs text-warm-outline">
                         A confirmation has been sent to the account owner.
                     </p>
                 </div>

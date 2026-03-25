@@ -96,10 +96,10 @@ export default function PersonMemorialPage({ params }: {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 size={48} className="text-sage animate-spin mx-auto mb-4" />
-                    <p className="text-charcoal/60">Loading archive...</p>
+                    <Loader2 size={48} className="text-olive animate-spin mx-auto mb-4" />
+                    <p className="text-warm-dark/60">Loading archive...</p>
                 </div>
             </div>
         );
@@ -108,18 +108,18 @@ export default function PersonMemorialPage({ params }: {
     // Private archive — viewer is not the owner
     if (accessDenied) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center px-6">
+            <div className="min-h-screen bg-surface-low flex items-center justify-center px-6">
                 <div className="text-center max-w-md">
-                    <div className="w-20 h-20 bg-parchment rounded-full flex items-center justify-center mx-auto mb-6 border border-sand">
-                        <Lock size={32} className="text-charcoal/40" />
+                    <div className="w-20 h-20 bg-surface-mid rounded-full flex items-center justify-center mx-auto mb-6 border border-warm-border">
+                        <Lock size={32} className="text-warm-dark/40" />
                     </div>
-                    <h1 className="font-serif text-3xl text-charcoal mb-3">This archive is private</h1>
-                    <p className="text-charcoal/60 mb-8 leading-relaxed">
+                    <h1 className="font-serif text-3xl text-warm-dark mb-3">This archive is private</h1>
+                    <p className="text-warm-dark/60 mb-8 leading-relaxed">
                         This archive has not been published yet. Only its owner can view it.
                     </p>
                     <a
                         href="/"
-                        className="inline-block px-6 py-3 border border-charcoal text-charcoal rounded-full text-sm font-medium hover:bg-charcoal hover:text-ivory transition-all"
+                        className="inline-block px-6 py-3 border border-warm-dark text-warm-dark rounded-full text-sm font-medium hover:bg-warm-dark hover:text-surface-low transition-all"
                     >
                         Return home
                     </a>
@@ -130,14 +130,14 @@ export default function PersonMemorialPage({ params }: {
 
     if (error || !memorialData) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
                 <div className="text-center max-w-md">
                     <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-4xl">😔</span>
                     </div>
-                    <h1 className="font-serif text-3xl text-charcoal mb-3">Memorial Not Found</h1>
-                    <p className="text-charcoal/60 mb-6">{error || 'This memorial does not exist.'}</p>
-                    <a href="/dashboard" className="btn-paper inline-block px-6 py-3 bg-sage hover:bg-sage/90 text-ivory rounded-lg font-medium transition-all">
+                    <h1 className="font-serif text-3xl text-warm-dark mb-3">Memorial Not Found</h1>
+                    <p className="text-warm-dark/60 mb-6">{error || 'This memorial does not exist.'}</p>
+                    <a href="/dashboard" className="glass-btn-primary inline-block px-6 py-3 bg-olive hover:bg-olive/90 text-surface-low rounded-lg font-medium transition-all">
                         Go to Dashboard
                     </a>
                 </div>

@@ -66,45 +66,45 @@ export default function SuccessionRequestPage() {
 
     if (submitted) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center p-6 text-center">
-                <div className="max-w-md bg-white p-10 rounded-2xl shadow-xl border border-sand/30">
-                    <CheckCircle className="mx-auto text-mist mb-6" size={64} />
+            <div className="min-h-screen bg-surface-low flex items-center justify-center p-6 text-center">
+                <div className="max-w-md bg-white p-10 rounded-2xl shadow-xl border border-warm-border/30">
+                    <CheckCircle className="mx-auto text-olive mb-6" size={64} />
                     <h1 className="font-serif text-3xl mb-4">Request Received</h1>
-                    <p className="text-charcoal/70 mb-8">
+                    <p className="text-warm-dark/70 mb-8">
                         The verification process has begun. Our legal team will review the documents within 48 hours.
                         <br /><br />
                         By law, a <strong>30-day notice period</strong> will now follow to allow for any family contestations. You will receive an email once the transfer is complete.
                     </p>
-                    <Link href="/" className="btn-paper bg-charcoal text-ivory px-8 py-3 rounded-lg font-medium block">Return to Home</Link>
+                    <Link href="/" className="glass-btn-dark px-8 py-3 rounded-lg font-medium block">Return to Home</Link>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-ivory py-20 px-6">
+        <div className="min-h-screen bg-surface-low py-20 px-6">
             <div className="max-w-2xl mx-auto">
-                <Link href="/" className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal mb-8 transition-colors">
+                <Link href="/" className="inline-flex items-center gap-2 text-warm-outline hover:text-warm-dark mb-8 transition-colors">
                     <ArrowLeft size={18} /> Back to Home
                 </Link>
 
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-sand/30">
-                    <div className="p-8 bg-stone/10 border-b border-stone/20 flex items-center gap-4">
-                        <ShieldAlert className="text-stone" size={32} />
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-warm-border/30">
+                    <div className="p-8 bg-warm-muted/10 border-b border-warm-muted/20 flex items-center gap-4">
+                        <ShieldAlert className="text-warm-muted" size={32} />
                         <div>
-                            <h1 className="font-serif text-2xl text-charcoal">Account Succession Request</h1>
-                            <p className="text-stone/70 text-sm">Formal activation of Stewardship</p>
+                            <h1 className="font-serif text-2xl text-warm-dark">Account Succession Request</h1>
+                            <p className="text-warm-muted/70 text-sm">Formal activation of Stewardship</p>
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-8 space-y-8">
                         <section>
-                            <h2 className="text-sm font-bold text-charcoal uppercase tracking-widest mb-4">1. Identification</h2>
-                            <label className="block text-xs font-medium text-charcoal/60 mb-2">Your Steward Email Address</label>
+                            <h2 className="text-sm font-bold text-warm-dark uppercase tracking-widest mb-4">1. Identification</h2>
+                            <label className="block text-xs font-medium text-warm-muted mb-2">Your Steward Email Address</label>
                             <input
                                 required
                                 type="email"
-                                className="w-full p-3 rounded-xl border border-sand/30 focus:ring-mist"
+                                className="w-full p-3 rounded-xl border border-warm-border/30 focus:ring-olive"
                                 placeholder="The email where you received the invitation"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -112,12 +112,12 @@ export default function SuccessionRequestPage() {
                         </section>
 
                         <section className="space-y-6">
-                            <h2 className="text-sm font-bold text-charcoal uppercase tracking-widest mb-4">2. Legal Documentation</h2>
+                            <h2 className="text-sm font-bold text-warm-dark uppercase tracking-widest mb-4">2. Legal Documentation</h2>
 
                             {/* Death Certificate */}
-                            <div className="p-4 border-2 border-dashed border-sand/40 rounded-xl">
+                            <div className="p-4 border-2 border-dashed border-warm-border/40 rounded-xl">
                                 <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                                    <FileText size={16} className="text-charcoal/40" />
+                                    <FileText size={16} className="text-warm-outline" />
                                     Official Death Certificate
                                 </p>
                                 <input
@@ -129,16 +129,16 @@ export default function SuccessionRequestPage() {
                                 <button
                                     type="button"
                                     onClick={() => deathCertRef.current?.click()}
-                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-mist/10 text-mist' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-olive/10 text-olive' : 'bg-warm-border/10 text-warm-muted hover:bg-warm-border/20'}`}
                                 >
                                     {files.deathCert ? `Selected: ${files.deathCert.name}` : "Upload Certificate (PDF/JPG)"}
                                 </button>
                             </div>
 
                             {/* ID Proof */}
-                            <div className="p-4 border-2 border-dashed border-sand/40 rounded-xl">
+                            <div className="p-4 border-2 border-dashed border-warm-border/40 rounded-xl">
                                 <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                                    <User size={16} className="text-charcoal/40" />
+                                    <User size={16} className="text-warm-outline" />
                                     Your Government Photo ID
                                 </p>
                                 <input
@@ -150,7 +150,7 @@ export default function SuccessionRequestPage() {
                                 <button
                                     type="button"
                                     onClick={() => idProofRef.current?.click()}
-                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-mist/10 text-mist' : 'bg-sand/10 text-charcoal/60 hover:bg-sand/20'}`}
+                                    className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-olive/10 text-olive' : 'bg-warm-border/10 text-warm-muted hover:bg-warm-border/20'}`}
                                 >
                                     {files.idProof ? `Selected: ${files.idProof.name}` : "Upload ID Proof (PDF/JPG)"}
                                 </button>
@@ -160,12 +160,12 @@ export default function SuccessionRequestPage() {
                         <button
                             disabled={submitting}
                             type="submit"
-                            className="btn-paper w-full py-4 bg-charcoal text-ivory rounded-lg font-semibold shadow-lg hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 glass-btn-dark rounded-lg font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
                         >
                             {submitting ? <Loader2 className="animate-spin" size={20} /> : "Submit Formal Request"}
                         </button>
 
-                        <p className="text-[10px] text-center text-charcoal/40 uppercase tracking-tighter">
+                        <p className="text-[10px] text-center text-warm-outline uppercase tracking-tighter">
                             Legal Verification Process • 30 Day Statutory Wait Period Apply
                         </p>
                     </form>

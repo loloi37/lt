@@ -18,7 +18,7 @@ interface Props {
 const ROLE_CONFIG = {
     witness: {
         label: 'Witness',
-        color: 'bg-mist/10 text-mist border-mist/20',
+        color: 'bg-olive/10 text-olive border-olive/20',
         description:
             'You can share memories and photos. ' +
             'The archive owner reviews all contributions ' +
@@ -45,7 +45,7 @@ const ROLE_CONFIG = {
     },
     co_guardian: {
         label: 'Co-Guardian',
-        color: 'bg-stone/10 text-stone border-stone/20',
+        color: 'bg-warm-muted/10 text-warm-muted border-warm-muted/20',
         description:
             'You share stewardship of this archive. ' +
             'You can review and approve contributions ' +
@@ -184,15 +184,15 @@ export default function InviteAcceptance({
 
     return (
         <div className="min-h-screen bg-gradient-to-br
-      from-mist/10 via-ivory to-stone/10">
+      from-olive/10 via-surface-low to-warm-muted/10">
 
             {/* Minimal header */}
-            <div className="border-b border-sand/20
+            <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
                 <div className="max-w-2xl mx-auto px-6 py-4
           text-center">
                     <span className="text-xs tracking-widest
-            uppercase text-charcoal/30 font-sans">
+            uppercase text-warm-dark/30 font-sans">
                         Legacy Vault
                     </span>
                 </div>
@@ -216,23 +216,23 @@ export default function InviteAcceptance({
                         </div>
                     ) : (
                         <div className="w-24 h-24 rounded-full
-              bg-gradient-to-br from-mist/20
-              to-stone/20 border-4 border-white
+              bg-gradient-to-br from-olive/20
+              to-warm-muted/20 border-4 border-white
               shadow-lg flex items-center
               justify-center mb-6">
                             <User size={36}
-                                className="text-charcoal/20" />
+                                className="text-warm-dark/20" />
                         </div>
                     )}
 
                     <h1 className="font-serif text-4xl
-            text-charcoal mb-2">
+            text-warm-dark mb-2">
                         {invitation.memorial.fullName}
                     </h1>
 
                     {(birthYear || deathYear) && (
                         <p className="font-serif italic
-              text-charcoal/40 text-lg">
+              text-warm-dark/40 text-lg">
                             {birthYear && deathYear
                                 ? `${birthYear} — ${deathYear}`
                                 : birthYear
@@ -244,15 +244,15 @@ export default function InviteAcceptance({
 
                 {/* Main acceptance card */}
                 <div className="bg-white rounded-2xl
-          border border-sand/30 shadow-sm
+          border border-warm-border/30 shadow-sm
           overflow-hidden mb-6">
 
                     {/* Invitation header */}
                     <div className="px-8 pt-8 pb-6
-            border-b border-sand/20">
-                        <p className="text-charcoal/60
+            border-b border-warm-border/20">
+                        <p className="text-warm-dark/60
               text-base leading-relaxed">
-                            <strong className="text-charcoal">
+                            <strong className="text-warm-dark">
                                 {invitation.inviterName}
                             </strong>{' '}
                             has invited you to join this archive
@@ -268,8 +268,8 @@ export default function InviteAcceptance({
 
                     {/* Role explanation */}
                     <div className="px-8 py-6
-            border-b border-sand/20">
-                        <p className="text-sm text-charcoal/50
+            border-b border-warm-border/20">
+                        <p className="text-sm text-warm-dark/50
               leading-relaxed mb-5">
                             {roleConfig.description}
                         </p>
@@ -279,7 +279,7 @@ export default function InviteAcceptance({
               sm:grid-cols-2 gap-4">
                             <div>
                                 <p className="text-xs font-semibold
-                  text-charcoal/40 uppercase
+                  text-warm-dark/40 uppercase
                   tracking-wider mb-3">
                                     As a {roleConfig.label} you can
                                 </p>
@@ -291,9 +291,9 @@ export default function InviteAcceptance({
                                                 <li key={i}
                                                     className="flex items-center
                             gap-2.5 text-sm
-                            text-charcoal/70">
+                            text-warm-dark/70">
                                                     <Icon size={14}
-                                                        className="text-mist
+                                                        className="text-olive
                               flex-shrink-0" />
                                                     {cap.text}
                                                 </li>
@@ -305,7 +305,7 @@ export default function InviteAcceptance({
 
                             <div>
                                 <p className="text-xs font-semibold
-                  text-charcoal/40 uppercase
+                  text-warm-dark/40 uppercase
                   tracking-wider mb-3">
                                     You cannot
                                 </p>
@@ -314,13 +314,13 @@ export default function InviteAcceptance({
                                         <li key={i}
                                             className="flex items-center
                         gap-2.5 text-sm
-                        text-charcoal/40">
+                        text-warm-dark/40">
                                             <div className="w-3.5 h-3.5
                         flex items-center
                         justify-center flex-shrink-0">
                                                 <div className="w-1.5 h-1.5
                           rounded-full
-                          bg-charcoal/20" />
+                          bg-warm-dark/20" />
                                             </div>
                                             {item}
                                         </li>
@@ -337,19 +337,19 @@ export default function InviteAcceptance({
                         <label className={`flex items-start
               gap-4 p-4 rounded-xl border-2
               cursor-pointer transition-all ${checkedModeration
-                                ? 'border-mist/40 bg-mist/5'
-                                : 'border-sand/30 hover:bg-sand/10'
+                                ? 'border-olive/40 bg-olive/5'
+                                : 'border-warm-border/30 hover:bg-warm-border/10'
                             }`}>
                             <div className={`w-5 h-5 rounded
                 border-2 flex items-center
                 justify-center flex-shrink-0 mt-0.5
                 transition-colors ${checkedModeration
-                                    ? 'bg-mist border-mist'
-                                    : 'border-sand/60 bg-white'
+                                    ? 'bg-olive border-olive'
+                                    : 'border-warm-border/60 bg-white'
                                 }`}>
                                 {checkedModeration && (
                                     <Check size={12}
-                                        className="text-ivory"
+                                        className="text-white"
                                         strokeWidth={3} />
                                 )}
                             </div>
@@ -363,12 +363,12 @@ export default function InviteAcceptance({
                             />
                             <div>
                                 <p className="text-sm font-medium
-                  text-charcoal mb-1">
+                  text-warm-dark mb-1">
                                     I understand contributions
                                     are reviewed
                                 </p>
                                 <p className="text-xs
-                  text-charcoal/50 leading-relaxed">
+                  text-warm-dark/50 leading-relaxed">
                                     Everything I share will be reviewed
                                     by the archive owner before it
                                     appears. This protects the dignity
@@ -381,19 +381,19 @@ export default function InviteAcceptance({
                         <label className={`flex items-start
               gap-4 p-4 rounded-xl border-2
               cursor-pointer transition-all ${checkedDignity
-                                ? 'border-charcoal/20 bg-sand/5'
-                                : 'border-sand/30 hover:bg-sand/10'
+                                ? 'border-warm-dark/20 bg-warm-border/5'
+                                : 'border-warm-border/30 hover:bg-warm-border/10'
                             }`}>
                             <div className={`w-5 h-5 rounded
                 border-2 flex items-center
                 justify-center flex-shrink-0 mt-0.5
                 transition-colors ${checkedDignity
-                                    ? 'bg-charcoal border-charcoal'
-                                    : 'border-sand/60 bg-white'
+                                    ? 'bg-warm-dark border-warm-dark'
+                                    : 'border-warm-border/60 bg-white'
                                 }`}>
                                 {checkedDignity && (
                                     <Check size={12}
-                                        className="text-ivory"
+                                        className="text-white"
                                         strokeWidth={3} />
                                 )}
                             </div>
@@ -407,11 +407,11 @@ export default function InviteAcceptance({
                             />
                             <div>
                                 <p className="text-sm font-medium
-                  text-charcoal mb-1">
+                  text-warm-dark mb-1">
                                     I will honour this archive with care
                                 </p>
                                 <p className="text-xs
-                  text-charcoal/50 leading-relaxed">
+                  text-warm-dark/50 leading-relaxed">
                                     I will only share memories that
                                     are truthful and respectful.
                                     I understand this is a permanent
@@ -424,13 +424,13 @@ export default function InviteAcceptance({
                     {/* Anonymous contributor notice */}
                     {anonContributor && (
                         <div className="mx-8 mb-6 p-4
-              bg-sand/10 rounded-xl border
-              border-sand/30 flex items-start gap-3">
+              bg-warm-border/10 rounded-xl border
+              border-warm-border/30 flex items-start gap-3">
                             <Shield size={16}
-                                className="text-charcoal/30
+                                className="text-warm-dark/30
                   mt-0.5 flex-shrink-0" />
                             <p className="text-xs
-                text-charcoal/50 leading-relaxed">
+                text-warm-dark/50 leading-relaxed">
                                 You are joining as{' '}
                                 <strong>{anonContributor.name}</strong>.
                                 Your contributions will be visible
@@ -462,9 +462,9 @@ export default function InviteAcceptance({
                             className={`w-full py-4 rounded-xl
                 font-medium transition-all flex
                 items-center justify-center gap-2
-                btn-paper ${canJoin && !loading
-                                    ? 'bg-charcoal hover:bg-charcoal/90 text-ivory shadow-lg'
-                                    : 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
+                ${canJoin && !loading
+                                    ? 'glass-btn-dark shadow-lg'
+                                    : 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
                                 }`}
                         >
                             {loading ? (
@@ -483,7 +483,7 @@ export default function InviteAcceptance({
 
                         {!canJoin && !loading && (
                             <p className="text-center text-xs
-                text-charcoal/30 mt-3">
+                text-warm-dark/30 mt-3">
                                 Please confirm both statements above
                                 to continue
                             </p>
@@ -498,8 +498,8 @@ export default function InviteAcceptance({
                             onClick={() =>
                                 setShowDeclineConfirm(true)
                             }
-                            className="text-sm text-charcoal/25
-                hover:text-charcoal/50
+                            className="text-sm text-warm-dark/25
+                hover:text-warm-dark/50
                 transition-colors"
                         >
                             I would prefer not to join
@@ -507,8 +507,8 @@ export default function InviteAcceptance({
                     </div>
                 ) : (
                     <div className="bg-white rounded-2xl
-            border border-sand/30 p-6 text-center">
-                        <p className="text-sm text-charcoal/60
+            border border-warm-border/30 p-6 text-center">
+                        <p className="text-sm text-warm-dark/60
               mb-4 leading-relaxed">
                             That is completely fine. You can always
                             ask{' '}
@@ -521,9 +521,9 @@ export default function InviteAcceptance({
                                     setShowDeclineConfirm(false)
                                 }
                                 className="flex-1 py-2.5 border
-                  border-sand/40 rounded-xl text-sm
-                  text-charcoal/60
-                  hover:bg-sand/10 transition-all"
+                  border-warm-border/40 rounded-xl text-sm
+                  text-warm-dark/60
+                  hover:bg-warm-border/10 transition-all"
                             >
                                 Go back
                             </button>
@@ -531,9 +531,9 @@ export default function InviteAcceptance({
                                 onClick={handleDecline}
                                 disabled={declining}
                                 className="flex-1 py-2.5
-                  bg-charcoal/10 rounded-xl
-                  text-sm text-charcoal/60
-                  hover:bg-charcoal/20 transition-all
+                  bg-warm-dark/10 rounded-xl
+                  text-sm text-warm-dark/60
+                  hover:bg-warm-dark/20 transition-all
                   flex items-center justify-center
                   gap-2"
                             >

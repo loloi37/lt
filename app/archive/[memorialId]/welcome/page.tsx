@@ -61,10 +61,10 @@ function WelcomeContent({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-ivory flex
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center">
                 <div className="w-10 h-10 border-2
-          border-sand/30 border-t-charcoal/40
+          border-warm-border/30 border-t-warm-dark/40
           rounded-full animate-spin" />
             </div>
         );
@@ -72,15 +72,15 @@ function WelcomeContent({
 
     if (error || !data) {
         return (
-            <div className="min-h-screen bg-ivory flex
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center p-6">
                 <div className="text-center max-w-md">
-                    <p className="text-charcoal/50 mb-4">
+                    <p className="text-warm-dark/50 mb-4">
                         {error || 'This archive could not be loaded.'}
                     </p>
                     <button
                         onClick={() => router.replace('/')}
-                        className="text-mist underline text-sm"
+                        className="text-olive underline text-sm"
                     >
                         Return home
                     </button>
@@ -104,23 +104,23 @@ function WelcomeContent({
 
     return (
         <div className="min-h-screen bg-gradient-to-br
-      from-mist/10 via-ivory to-stone/10">
+      from-olive/10 via-surface-low to-warm-muted/10">
 
             {/* Minimal header */}
-            <div className="border-b border-sand/20
+            <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
                 <div className="max-w-3xl mx-auto px-6 py-4
           flex items-center justify-between">
                     <span className="text-xs tracking-widest
-            uppercase text-charcoal/30 font-sans">
+            uppercase text-warm-dark/30 font-sans">
                         Legacy Vault
                     </span>
                     {/* Role badge */}
                     <span className={`text-xs px-3 py-1
             rounded-full font-medium border
             font-sans ${role === 'co_guardian'
-                            ? 'bg-stone/10 text-stone border-stone/20'
-                            : 'bg-mist/10 text-mist border-mist/20'
+                            ? 'bg-warm-muted/10 text-warm-muted border-warm-muted/20'
+                            : 'bg-olive/10 text-olive border-olive/20'
                         }`}>
                         {role === 'co_guardian'
                             ? 'Co-Guardian'
@@ -147,8 +147,8 @@ function WelcomeContent({
                     {/* Always: Read the archive */}
                     <ActionCard
                         icon={BookOpen}
-                        iconColor="text-mist"
-                        iconBg="bg-mist/10"
+                        iconColor="text-olive"
+                        iconBg="bg-olive/10"
                         title="Read the archive"
                         description={
                             archiveRichness === 'empty'
@@ -171,8 +171,8 @@ function WelcomeContent({
                     {/* Always: Share a memory */}
                     <ActionCard
                         icon={MessageCircle}
-                        iconColor="text-stone"
-                        iconBg="bg-stone/10"
+                        iconColor="text-warm-muted"
+                        iconBg="bg-warm-muted/10"
                         title="Share a memory"
                         description={
                             role === 'co_guardian'
@@ -192,8 +192,8 @@ function WelcomeContent({
                     {plan === 'family' && (
                         <ActionCard
                             icon={Network}
-                            iconColor="text-charcoal/50"
-                            iconBg="bg-sand/20"
+                            iconColor="text-warm-dark/50"
+                            iconBg="bg-warm-border/20"
                             title="See the family map"
                             description={
                                 linkedCount > 0
@@ -215,8 +215,8 @@ function WelcomeContent({
                     {role === 'co_guardian' && (
                         <ActionCard
                             icon={Shield}
-                            iconColor="text-stone"
-                            iconBg="bg-stone/10"
+                            iconColor="text-warm-muted"
+                            iconBg="bg-warm-muted/10"
                             title="Review contributions"
                             description="See and approve memories submitted by witnesses."
                             ctaLabel="Open steward tools"
@@ -231,8 +231,8 @@ function WelcomeContent({
                     {/* Upload a photo — always shown */}
                     <ActionCard
                         icon={ImageIcon}
-                        iconColor="text-charcoal/40"
-                        iconBg="bg-sand/20"
+                        iconColor="text-warm-dark/40"
+                        iconBg="bg-warm-border/20"
                         title="Share a photo"
                         description="Upload a photo you own. The owner will review it."
                         ctaLabel="Upload photo"
@@ -246,7 +246,7 @@ function WelcomeContent({
 
                 {/* Footer note */}
                 <div className="text-center">
-                    <p className="text-xs text-charcoal/25
+                    <p className="text-xs text-warm-dark/25
             leading-relaxed max-w-md mx-auto">
                         Your contributions are private to this
                         archive. They are reviewed before they
@@ -257,8 +257,8 @@ function WelcomeContent({
                         onClick={() =>
                             router.push(`/archive/${memorialId}`)
                         }
-                        className="mt-4 text-sm text-charcoal/30
-              hover:text-charcoal/50 transition-colors
+                        className="mt-4 text-sm text-warm-dark/30
+              hover:text-warm-dark/50 transition-colors
               flex items-center gap-1.5 mx-auto"
                     >
                         Go to your archive dashboard
@@ -310,24 +310,24 @@ function WelcomeHero({
                     </div>
                 ) : (
                     <div className="w-28 h-28 rounded-full
-            bg-gradient-to-br from-mist/20
-            to-stone/20 border-4 border-white
+            bg-gradient-to-br from-olive/20
+            to-warm-muted/20 border-4 border-white
             shadow-xl flex items-center
             justify-center mx-auto">
                         <User size={40}
-                            className="text-charcoal/20" />
+                            className="text-warm-dark/20" />
                     </div>
                 )}
             </div>
 
             {/* Name + dates */}
             <h1 className="font-serif text-4xl
-        text-charcoal mb-2">
+        text-warm-dark mb-2">
                 {memorial.fullName}
             </h1>
             {(birthYear || deathYear) && (
                 <p className="font-serif italic
-          text-charcoal/40 text-lg mb-8">
+          text-warm-dark/40 text-lg mb-8">
                     {birthYear && deathYear
                         ? `${birthYear} — ${deathYear}`
                         : birthYear
@@ -338,18 +338,18 @@ function WelcomeHero({
 
             {/* Welcome message */}
             <div className="max-w-xl mx-auto
-        bg-white rounded-2xl border border-sand/30
+        bg-white rounded-2xl border border-warm-border/30
         shadow-sm p-8">
-                <div className="w-12 h-12 bg-sage/10
+                <div className="w-12 h-12 bg-olive/10
           rounded-full flex items-center
           justify-center mx-auto mb-5">
-                    <Shield size={24} className="text-sage" />
+                    <Shield size={24} className="text-olive" />
                 </div>
                 <h2 className="font-serif text-2xl
-          text-charcoal mb-3">
+          text-warm-dark mb-3">
                     {headline}
                 </h2>
-                <p className="text-sm text-charcoal/50
+                <p className="text-sm text-warm-dark/50
           leading-relaxed">
                     {subline}
                 </p>
@@ -385,8 +385,8 @@ function ActionCard({
         <div className={`bg-white rounded-2xl
       border shadow-sm p-6 flex flex-col
       transition-all ${primary
-                ? 'border-mist/30 ring-1 ring-mist/10'
-                : 'border-sand/30 hover:border-sand/50'
+                ? 'border-olive/30 ring-1 ring-olive/10'
+                : 'border-warm-border/30 hover:border-warm-border/50'
             }`}>
 
             {/* Icon */}
@@ -398,22 +398,22 @@ function ActionCard({
 
             {/* Title */}
             <h3 className="font-serif text-lg
-        text-charcoal mb-2">
+        text-warm-dark mb-2">
                 {title}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-charcoal/50
+            <p className="text-sm text-warm-dark/50
         leading-relaxed mb-5 flex-1">
                 {description}
             </p>
 
             {/* CTA */}
             {ctaDisabled ? (
-                <div className="text-xs text-charcoal/25
+                <div className="text-xs text-warm-dark/25
           flex items-center gap-1.5">
                     <div className="w-1.5 h-1.5 rounded-full
-            bg-charcoal/20" />
+            bg-warm-dark/20" />
                     {disabledNote}
                 </div>
             ) : (
@@ -422,9 +422,9 @@ function ActionCard({
                     className={`w-full py-2.5 rounded-xl
             text-sm font-medium transition-all
             flex items-center justify-center
-            gap-1.5 btn-paper ${primary
-                            ? 'bg-charcoal text-ivory hover:bg-charcoal/90'
-                            : 'border border-sand/40 text-charcoal/70 hover:bg-sand/10'
+            gap-1.5 ${primary
+                            ? 'glass-btn-dark'
+                            : 'border border-warm-border/40 text-warm-dark/70 hover:bg-warm-border/10'
                         }`}
                 >
                     {ctaLabel}
@@ -446,10 +446,10 @@ export default function WelcomePage({
 
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-ivory
+            <div className="min-h-screen bg-surface-low
         flex items-center justify-center">
                 <div className="w-10 h-10 border-2
-          border-sand/30 border-t-charcoal/40
+          border-warm-border/30 border-t-warm-dark/40
           rounded-full animate-spin" />
             </div>
         }>

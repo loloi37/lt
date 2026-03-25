@@ -47,15 +47,15 @@ export default function SuccessionSetup({
     };
 
     return (
-        <div className="bg-white border border-sand/40 p-6 rounded-xl">
+        <div className="bg-white border border-warm-border/40 p-6 rounded-xl">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
                         <UserCheck size={16} className="text-emerald-600" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-semibold text-charcoal font-sans">Succession Planning</h3>
-                        <p className="text-xs text-charcoal/60 font-sans">
+                        <h3 className="text-sm font-semibold text-warm-dark font-sans">Succession Planning</h3>
+                        <p className="text-xs text-warm-muted font-sans">
                             {isPreservationGate ? 'Required before preservation' : 'Manage access continuity'}
                         </p>
                     </div>
@@ -85,31 +85,31 @@ export default function SuccessionSetup({
             <div className="space-y-4">
                 {/* Successor name */}
                 <div>
-                    <label className="text-xs text-charcoal/60 font-sans mb-1 block">Successor name</label>
+                    <label className="text-xs text-warm-muted font-sans mb-1 block">Successor name</label>
                     <input
                         type="text"
                         value={successor.name}
                         onChange={e => { setSuccessor(prev => ({ ...prev, name: e.target.value })); setSaved(false); }}
                         placeholder="e.g. Sarah Johnson"
-                        className="w-full px-3 py-2 bg-white border border-sand/40 rounded-lg text-sm font-sans text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-emerald-500/40"
+                        className="w-full px-3 py-2 bg-white border border-warm-border/40 rounded-lg text-sm font-sans text-warm-dark placeholder:text-warm-outline focus:outline-none focus:border-emerald-500/40"
                     />
                 </div>
 
                 {/* Successor email */}
                 <div>
-                    <label className="text-xs text-charcoal/60 font-sans mb-1 block">Successor email</label>
+                    <label className="text-xs text-warm-muted font-sans mb-1 block">Successor email</label>
                     <input
                         type="email"
                         value={successor.email}
                         onChange={e => { setSuccessor(prev => ({ ...prev, email: e.target.value })); setSaved(false); }}
                         placeholder="successor@example.com"
-                        className="w-full px-3 py-2 bg-white border border-sand/40 rounded-lg text-sm font-sans text-charcoal placeholder:text-charcoal/40 focus:outline-none focus:border-emerald-500/40"
+                        className="w-full px-3 py-2 bg-white border border-warm-border/40 rounded-lg text-sm font-sans text-warm-dark placeholder:text-warm-outline focus:outline-none focus:border-emerald-500/40"
                     />
                 </div>
 
                 {/* Access level */}
                 <div>
-                    <label className="text-xs text-charcoal/60 font-sans mb-2 block">Access level</label>
+                    <label className="text-xs text-warm-muted font-sans mb-2 block">Access level</label>
                     <div className="space-y-2">
                         {ACCESS_LEVELS.map(level => (
                             <button
@@ -118,12 +118,12 @@ export default function SuccessionSetup({
                                 className={`w-full flex items-center justify-between p-3 rounded-lg border text-left transition-colors ${
                                     successor.accessLevel === level.value
                                         ? 'border-emerald-500/40 bg-emerald-500/5'
-                                        : 'border-sand/40 hover:border-sand/60'
+                                        : 'border-warm-border/40 hover:border-warm-border/60'
                                 }`}
                             >
                                 <div>
-                                    <p className="text-sm font-sans font-medium text-charcoal">{level.label}</p>
-                                    <p className="text-xs text-charcoal/60 font-sans">{level.description}</p>
+                                    <p className="text-sm font-sans font-medium text-warm-dark">{level.label}</p>
+                                    <p className="text-xs text-warm-muted font-sans">{level.description}</p>
                                 </div>
                                 {successor.accessLevel === level.value && (
                                     <div className="w-3 h-3 bg-emerald-600 rounded-full flex-shrink-0" />
@@ -136,8 +136,8 @@ export default function SuccessionSetup({
                 {/* Dead man's switch */}
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Clock size={14} className="text-charcoal/60" />
-                        <label className="text-xs text-charcoal/60 font-sans">Dead man&apos;s switch interval</label>
+                        <Clock size={14} className="text-warm-muted" />
+                        <label className="text-xs text-warm-muted font-sans">Dead man&apos;s switch interval</label>
                     </div>
                     <div className="flex gap-2">
                         {[6, 12, 24].map(months => (
@@ -147,14 +147,14 @@ export default function SuccessionSetup({
                                 className={`flex-1 py-2 text-sm font-sans rounded-lg border transition-colors ${
                                     successor.deadManSwitchMonths === months
                                         ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-600'
-                                        : 'border-sand/40 text-charcoal/60 hover:border-sand/60'
+                                        : 'border-warm-border/40 text-warm-muted hover:border-warm-border/60'
                                 }`}
                             >
                                 {months} months
                             </button>
                         ))}
                     </div>
-                    <p className="text-xs text-charcoal/60 font-sans mt-2">
+                    <p className="text-xs text-warm-muted font-sans mt-2">
                         If you don&apos;t log in for {successor.deadManSwitchMonths} months, your successor will
                         be notified and granted access.
                     </p>

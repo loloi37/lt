@@ -221,20 +221,20 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-ivory flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-mist/30 border-t-mist rounded-full animate-spin" />
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-olive/30 border-t-olive rounded-full animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-ivory text-charcoal font-sans selection:bg-mist/20 pb-20">
-            <header className="border-b border-sand/30 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="min-h-screen bg-surface-low text-warm-dark font-sans selection:bg-olive/20 pb-20">
+            <header className="border-b border-warm-border/30 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
                 <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="text-sm text-charcoal/60 hover:text-charcoal flex items-center gap-2 transition-colors">
+                    <button onClick={() => router.back()} className="text-sm text-warm-muted hover:text-warm-dark flex items-center gap-2 transition-colors">
                         <ArrowLeft size={16} /> Back
                     </button>
-                    <div className="flex items-center gap-2 text-mist font-medium">
+                    <div className="flex items-center gap-2 text-olive font-medium">
                         <Shield size={18} />
                         <span className="text-sm tracking-wide uppercase">
                             {isAccountLevel ? 'Master Account Authorization' : 'Archive Authorization'}
@@ -245,13 +245,13 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
             <main className="max-w-2xl mx-auto px-6 py-12">
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-mist/10 rounded-2xl text-mist mb-6">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-olive/10 rounded-2xl text-olive mb-6">
                         {isAccountLevel ? <Users size={32} /> : <User size={32} />}
                     </div>
-                    <h1 className="font-serif text-3xl md:text-4xl text-charcoal mb-4">
+                    <h1 className="font-serif text-3xl md:text-4xl text-warm-dark mb-4">
                         {isAccountLevel ? 'Master Guardian Declaration' : 'Declaration of Authority'}
                     </h1>
-                    <p className="text-charcoal/60 leading-relaxed">
+                    <p className="text-warm-muted leading-relaxed">
                         {isAccountLevel 
                           ? "As the Master Guardian, you are assuming legal responsibility for all archives created under this Family Account."
                           : `Establishing the permanent archive for ${memorialName}.`
@@ -260,44 +260,44 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 </div>
 
                 {/* 1. Identity Form */}
-                <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8">
-                    <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">1</span>
+                <div className="bg-white p-8 rounded-2xl border border-warm-border/30 shadow-sm mb-8">
+                    <h2 className="font-serif text-xl text-warm-dark mb-6 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-olive text-warm-bg flex items-center justify-center text-xs font-sans">1</span>
                         Your Identity
                     </h2>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">Full Legal Name</label>
-                            <input 
-                                type="text" 
+                            <label className="block text-xs font-medium text-warm-outline mb-1 uppercase tracking-widest">Full Legal Name</label>
+                            <input
+                                type="text"
                                 value={identity.fullName}
                                 onChange={e => setIdentity({...identity, fullName: e.target.value})}
                                 placeholder="e.g. Eleanor Marie Thompson"
-                                className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30"
+                                className="w-full px-4 py-3 glass-input rounded-lg"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">Email Address</label>
-                                <input 
-                                    type="email" 
+                                <label className="block text-xs font-medium text-warm-outline mb-1 uppercase tracking-widest">Email Address</label>
+                                <input
+                                    type="email"
                                     value={identity.email}
                                     onChange={e => setIdentity({...identity, email: e.target.value})}
                                     placeholder="name@example.com"
-                                    className="w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30"
+                                    className="w-full px-4 py-3 glass-input rounded-lg"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-charcoal/60 mb-1 uppercase tracking-wide">
+                                <label className="block text-xs font-medium text-warm-outline mb-1 uppercase tracking-widest">
                                     {isAccountLevel ? 'Your Role' : 'Relationship to Deceased'}
                                 </label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={identity.relationship}
                                     onChange={e => setIdentity({...identity, relationship: e.target.value})}
                                     placeholder={isAccountLevel ? "Account Holder" : "e.g. Daughter, Executor"}
-                                    disabled={isAccountLevel} // User doesn't need to type it for Account level
-                                    className={`w-full px-4 py-3 rounded-lg border border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30 ${isAccountLevel ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                    disabled={isAccountLevel}
+                                    className={`w-full px-4 py-3 glass-input rounded-lg ${isAccountLevel ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 />
                             </div>
                         </div>
@@ -305,58 +305,58 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                 </div>
 
                 {/* 2. Declarations - Dynamic Wording */}
-                <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!isIdentityComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                    <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">2</span>
+                <div className={`bg-white p-8 rounded-2xl border border-warm-border/30 shadow-sm mb-8 transition-all ${!isIdentityComplete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                    <h2 className="font-serif text-xl text-warm-dark mb-6 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-olive text-warm-bg flex items-center justify-center text-xs font-sans">2</span>
                         Solemn Declarations
                     </h2>
-                    
+
                     <div className="space-y-4">
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.legal_authority ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.legal_authority ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.legal_authority ? 'border-olive/50 bg-olive/5' : 'border-transparent hover:bg-warm-border/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.legal_authority ? 'bg-olive border-olive text-warm-bg' : 'border-warm-border/60 bg-white'}`}>
                                 {agreements.legal_authority && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.legal_authority} onChange={() => toggleAgreement('legal_authority')} />
                             <div>
-                                <p className="font-medium text-sm text-charcoal">I assert legal authority.</p>
-                                <p className="text-xs text-charcoal/60 mt-1">
-                                    {isAccountLevel 
+                                <p className="font-medium text-sm text-warm-dark">I assert legal authority.</p>
+                                <p className="text-xs text-warm-muted mt-1">
+                                    {isAccountLevel
                                       ? "I am responsible for all content created within this Family Account."
                                       : "I am the next of kin, executor, or have explicit consent from the legal representative."}
                                 </p>
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.good_faith ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.good_faith ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.good_faith ? 'border-olive/50 bg-olive/5' : 'border-transparent hover:bg-warm-border/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.good_faith ? 'bg-olive border-olive text-warm-bg' : 'border-warm-border/60 bg-white'}`}>
                                 {agreements.good_faith && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.good_faith} onChange={() => toggleAgreement('good_faith')} />
                             <div>
-                                <p className="font-medium text-sm text-charcoal">I am acting in good faith.</p>
-                                <p className="text-xs text-charcoal/60 mt-1">I will ensure all content is accurate, respectful, and dignified.</p>
+                                <p className="font-medium text-sm text-warm-dark">I am acting in good faith.</p>
+                                <p className="text-xs text-warm-muted mt-1">I will ensure all content is accurate, respectful, and dignified.</p>
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.permanence ? 'border-mist/50 bg-mist/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.permanence ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.permanence ? 'border-olive/50 bg-olive/5' : 'border-transparent hover:bg-warm-border/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.permanence ? 'bg-olive border-olive text-warm-bg' : 'border-warm-border/60 bg-white'}`}>
                                 {agreements.permanence && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.permanence} onChange={() => toggleAgreement('permanence')} />
                             <div>
-                                <p className="font-medium text-sm text-charcoal">I understand the permanence.</p>
-                                <p className="text-xs text-charcoal/60 mt-1">These archives are intended as a permanent historical and family record.</p>
+                                <p className="font-medium text-sm text-warm-dark">I understand the permanence.</p>
+                                <p className="text-xs text-warm-muted mt-1">These archives are intended as a permanent historical and family record.</p>
                             </div>
                         </label>
 
-                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.indemnification ? 'border-stone/50 bg-stone/5' : 'border-transparent hover:bg-sand/10'}`}>
-                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.indemnification ? 'bg-stone border-stone text-ivory' : 'border-sand/60 bg-white'}`}>
+                        <label className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${agreements.indemnification ? 'border-warm-brown/50 bg-warm-brown/5' : 'border-transparent hover:bg-warm-border/10'}`}>
+                            <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${agreements.indemnification ? 'bg-warm-brown border-warm-brown text-warm-bg' : 'border-warm-border/60 bg-white'}`}>
                                 {agreements.indemnification && <Check size={12} strokeWidth={3} />}
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.indemnification} onChange={() => toggleAgreement('indemnification')} />
                             <div>
-                                <p className="font-medium text-sm text-charcoal">I agree to indemnify Legacy Vault.</p>
-                                <p className="text-xs text-charcoal/60 mt-1">I hold Legacy Vault harmless from any claims or family disputes arising from this account.</p>
+                                <p className="font-medium text-sm text-warm-dark">I agree to indemnify Legacy Vault.</p>
+                                <p className="text-xs text-warm-muted mt-1">I hold Legacy Vault harmless from any claims or family disputes arising from this account.</p>
                             </div>
                         </label>
                     </div>
@@ -364,36 +364,35 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
 
                 {/* 2.5 Video Verification (Smarter Logic) */}
-                <div className={`bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 transition-all ${!allAgreed ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                <div className={`bg-white p-8 rounded-2xl border border-warm-border/30 shadow-sm mb-8 transition-all ${!allAgreed ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                     <div className="flex items-start justify-between mb-4">
-                        <h2 className="font-serif text-xl text-charcoal flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">2.5</span>
+                        <h2 className="font-serif text-xl text-warm-dark flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-olive text-warm-bg flex items-center justify-center text-xs font-sans">2.5</span>
                             Video Signature
                         </h2>
                         {isMandatory ? (
-                            <div className="px-3 py-1 bg-charcoal text-ivory text-[10px] font-bold uppercase tracking-widest rounded-full border border-charcoal/20 flex items-center gap-1">
+                            <div className="px-3 py-1 bg-warm-dark text-warm-bg text-[10px] font-bold uppercase tracking-widest rounded-full border border-warm-dark/20 flex items-center gap-1">
                                 <Shield size={10} /> Required
                             </div>
                         ) : (
-                            <div className="px-3 py-1 bg-stone/10 text-stone text-[10px] font-bold uppercase tracking-widest rounded-full border border-stone/20">
+                            <div className="px-3 py-1 bg-warm-brown/10 text-warm-brown text-[10px] font-bold uppercase tracking-widest rounded-full border border-warm-brown/20">
                                 Recommended
                             </div>
                         )}
                     </div>
-                    
-                    <p className="text-sm text-charcoal/60 mb-6 leading-relaxed">
-                        {isMandatory 
+
+                    <p className="text-sm text-warm-muted mb-6 leading-relaxed">
+                        {isMandatory
                             ? "Due to the nature of this archive, a video signature is required to ensure maximum legal protection for the family."
                             : "Adding a video signature provides irrefutable proof of your identity. It is securely stored and only accessed if a legal dispute arises."
                         }
                     </p>
 
-                    {/* The Mandatory Reason Banner */}
                     {isMandatory && (
-                        <div className="mb-6 p-4 bg-mist/5 border border-mist/20 rounded-xl flex items-start gap-3">
-                            <AlertTriangle size={18} className="text-mist flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-charcoal/70 leading-relaxed">
-                                <strong>Why is this required?</strong> {mandatoryReason} 
+                        <div className="mb-6 p-4 bg-olive/5 border border-olive/20 rounded-xl flex items-start gap-3">
+                            <AlertTriangle size={18} className="text-olive flex-shrink-0 mt-0.5" />
+                            <p className="text-xs text-warm-muted leading-relaxed">
+                                <strong>Why is this required?</strong> {mandatoryReason}
                                 <br />
                                 This additional precaution protects everyone—including you—in case of future family conflict or claims regarding the archive's validity.
                             </p>
@@ -401,35 +400,35 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                     )}
 
                     <label className={`flex items-center gap-4 p-4 rounded-xl border-2 border-dashed transition-all ${
-                        isMandatory 
-                        ? 'bg-ivory border-sand/20 opacity-80 cursor-default' 
-                        : 'border-sand/60 hover:border-mist/40 hover:bg-mist/5 cursor-pointer group'
+                        isMandatory
+                        ? 'bg-surface-low border-warm-border/20 opacity-80 cursor-default'
+                        : 'border-warm-border/60 hover:border-olive/40 hover:bg-olive/5 cursor-pointer group'
                     }`}>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${wantsVideo ? 'bg-mist border-mist text-ivory' : 'border-sand/60 bg-white group-hover:border-sand'}`}>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${wantsVideo ? 'bg-olive border-olive text-warm-bg' : 'border-warm-border/60 bg-white group-hover:border-warm-border'}`}>
                             {wantsVideo && <Check size={14} strokeWidth={3} />}
                         </div>
-                        <input 
-                            type="checkbox" 
-                            className="hidden" 
+                        <input
+                            type="checkbox"
+                            className="hidden"
                             checked={wantsVideo}
-                            onChange={() => !isMandatory && setWantsVideo(!wantsVideo)} // Disable toggling if mandatory
+                            onChange={() => !isMandatory && setWantsVideo(!wantsVideo)}
                             disabled={isMandatory}
                         />
-                        <span className="text-sm font-medium text-charcoal">
+                        <span className="text-sm font-medium text-warm-dark">
                             {isMandatory ? "I will record my video signature below." : "Yes, I want to strengthen my authorization with a 10-second video."}
                         </span>
                     </label>
 
                     {wantsVideo && (
-                        <div className="mt-8 p-6 bg-ivory rounded-xl border border-sand/40 animate-fadeIn">
-                            <VideoRecorder 
+                        <div className="mt-8 p-6 bg-surface-low rounded-xl border border-warm-border/30 animate-fadeIn">
+                            <VideoRecorder
                                 fullName={identity.fullName}
                                 deceasedName={memorialName}
                                 onComplete={(blob) => setVideoBlob(blob)}
                             />
-                            
+
                             {videoBlob && (
-                                <div className="mt-4 flex items-center justify-center gap-2 text-mist font-medium text-sm animate-fadeIn">
+                                <div className="mt-4 flex items-center justify-center gap-2 text-olive font-medium text-sm animate-fadeIn">
                                     Video recorded and signed.
                                 </div>
                             )}
@@ -439,17 +438,17 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
                 {/* 3. Signature */}
                 {allAgreed && isIdentityComplete && (
-                    <div className="bg-white p-8 rounded-2xl border border-sand/40 shadow-sm mb-8 animate-fadeIn">
-                        <h2 className="font-serif text-xl text-charcoal mb-6 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-mist text-ivory flex items-center justify-center text-xs font-sans">3</span>
+                    <div className="bg-white p-8 rounded-2xl border border-warm-border/30 shadow-sm mb-8 animate-fadeIn">
+                        <h2 className="font-serif text-xl text-warm-dark mb-6 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-olive text-warm-bg flex items-center justify-center text-xs font-sans">3</span>
                             Digital Signature
                         </h2>
 
-                        <div className="flex gap-2 p-1 bg-sand/10 rounded-xl mb-6">
-                            <button onClick={() => { setSignatureType('typed'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'typed' ? 'bg-white shadow-sm text-charcoal' : 'text-charcoal/50 hover:text-charcoal'}`}>
+                        <div className="flex gap-2 p-1 bg-warm-border/10 rounded-xl mb-6">
+                            <button onClick={() => { setSignatureType('typed'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'typed' ? 'bg-white shadow-sm text-warm-dark' : 'text-warm-outline hover:text-warm-dark'}`}>
                                 <Type size={16} /> Type Name
                             </button>
-                            <button onClick={() => { setSignatureType('drawn'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'drawn' ? 'bg-white shadow-sm text-charcoal' : 'text-charcoal/50 hover:text-charcoal'}`}>
+                            <button onClick={() => { setSignatureType('drawn'); setSignatureValue(''); }} className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all ${signatureType === 'drawn' ? 'bg-white shadow-sm text-warm-dark' : 'text-warm-outline hover:text-warm-dark'}`}>
                                 <PenTool size={16} /> Draw Signature
                             </button>
                         </div>
@@ -457,27 +456,27 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                         <div className="mb-6">
                             {signatureType === 'typed' ? (
                                 <div className="space-y-2">
-                                    <input type="text" placeholder={`Type "${identity.fullName}" to sign`} className="w-full px-4 py-4 rounded-xl border-2 border-sand/40 focus:outline-none focus:ring-2 focus:ring-mist/20 bg-ivory/30 font-serif text-xl text-center" onChange={(e) => handleSignatureInput(e.target.value)} value={signatureValue || ''} />
+                                    <input type="text" placeholder={`Type "${identity.fullName}" to sign`} className="w-full px-4 py-4 rounded-xl border-2 border-warm-border/40 focus:outline-none focus:ring-2 focus:ring-olive/20 bg-surface-low/30 font-serif text-xl text-center" onChange={(e) => handleSignatureInput(e.target.value)} value={signatureValue || ''} />
                                     {signatureValue && !isSignatureValid && <p className="text-xs text-red-500 text-center">Must exactly match your full name.</p>}
                                 </div>
                             ) : ( <SignaturePad onEnd={handleSignatureInput} /> )}
                         </div>
 
                         {isSignatureValid && (
-                            <div className="p-6 bg-sand/5 rounded-xl border border-sand/20 animate-fadeIn">
+                            <div className="p-6 bg-warm-border/5 rounded-xl border border-warm-border/20 animate-fadeIn">
                                 <div className="flex flex-col items-center gap-2">
-                                    {signatureType === 'drawn' ? <img src={signatureValue!} alt="Signature" className="h-16 object-contain" /> : <p className="font-serif text-3xl text-charcoal italic">{signatureValue}</p>}
-                                    <div className="flex items-center gap-1.5 text-xs text-mist font-mono mt-2 bg-white px-3 py-1 rounded-full border border-mist/20">
+                                    {signatureType === 'drawn' ? <img src={signatureValue!} alt="Signature" className="h-16 object-contain" /> : <p className="font-serif text-3xl text-warm-dark italic">{signatureValue}</p>}
+                                    <div className="flex items-center gap-1.5 text-xs text-olive font-mono mt-2 bg-white px-3 py-1 rounded-full border border-olive/20">
                                         <Clock size={12} /> {signatureTimestamp}
                                     </div>
                                 </div>
-                                <div className="mt-6 pt-6 border-t border-sand/20">
+                                <div className="mt-6 pt-6 border-t border-warm-border/20">
                                     <label className="flex items-center justify-center gap-3 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${finalConfirmation ? 'bg-charcoal border-charcoal text-ivory' : 'border-charcoal/30 bg-white group-hover:border-charcoal'}`}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${finalConfirmation ? 'bg-warm-dark border-warm-dark text-warm-bg' : 'border-warm-dark/30 bg-white group-hover:border-warm-dark'}`}>
                                             {finalConfirmation && <Check size={12} strokeWidth={3} />}
                                         </div>
                                         <input type="checkbox" className="hidden" checked={finalConfirmation} onChange={() => setFinalConfirmation(!finalConfirmation)} />
-                                        <span className="text-sm font-medium text-charcoal">I confirm this signature is legally binding.</span>
+                                        <span className="text-sm font-medium text-warm-dark">I confirm this signature is legally binding.</span>
                                     </label>
                                 </div>
                             </div>
@@ -487,55 +486,52 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
 
                 <div className="text-center pb-8">
                     {wantsVideo && !videoBlob && allAgreed && isSignatureValid && (
-                        <p className="text-xs text-stone mb-4 flex items-center justify-center gap-1 animate-pulse">Please complete your 10-second video recording to continue.</p>
+                        <p className="text-xs text-warm-brown mb-4 flex items-center justify-center gap-1 animate-pulse">Please complete your 10-second video recording to continue.</p>
                     )}
-                    <button 
+                    <button
                         onClick={handleAuthorize}
                         disabled={
-                            !allAgreed || 
-                            !isIdentityComplete || 
-                            !isSignatureValid || 
-                            !finalConfirmation || 
-                            isSubmitting || 
-                            (wantsVideo && !videoBlob) // <--- ADD THIS CHECK
+                            !allAgreed ||
+                            !isIdentityComplete ||
+                            !isSignatureValid ||
+                            !finalConfirmation ||
+                            isSubmitting ||
+                            (wantsVideo && !videoBlob)
                         }
-                        className="btn-paper w-full py-4 rounded-lg bg-charcoal text-ivory font-medium shadow-lg hover:bg-charcoal/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 rounded-lg bg-warm-dark text-warm-bg font-medium shadow-lg hover:bg-warm-dark/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Shield size={20} />}
                         {isAccountLevel ? 'Authorize Family Account' : 'Authorize Memorial'}
                     </button>
                 </div>
                 {isSuccess && (
-                    <div className="fixed inset-0 z-[110] bg-ivory/95 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
+                    <div className="fixed inset-0 z-[110] bg-surface-low/95 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn">
                         <div className="max-w-md w-full text-center">
-                            <div className="w-16 h-16 bg-charcoal rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Check className="text-ivory" size={28} strokeWidth={2.5} />
+                            <div className="w-16 h-16 bg-warm-dark rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Check className="text-warm-bg" size={28} strokeWidth={2.5} />
                             </div>
-                            <h2 className="font-serif text-3xl text-charcoal mb-4">Authorization Recorded</h2>
-                            {/* Step 2.3.3: Transition message before payment */}
-                            <p className="text-charcoal/50 mb-8 leading-relaxed">
+                            <h2 className="font-serif text-3xl text-warm-dark mb-4">Authorization Recorded</h2>
+                            <p className="text-warm-outline mb-8 leading-relaxed">
                                 Your authorization has been recorded. You may now proceed to payment.
                             </p>
 
                             {isPopup ? (
-                                /* Popup mode: ask user to close this window */
-                                <div className="bg-parchment border border-sand rounded-2xl p-6">
-                                    <p className="font-medium text-charcoal mb-1">
+                                <div className="bg-surface-high border border-warm-border/30 rounded-2xl p-6">
+                                    <p className="font-medium text-warm-dark mb-1">
                                         You can now close this window.
                                     </p>
-                                    <p className="text-sm text-charcoal/55 mb-5">
+                                    <p className="text-sm text-warm-muted mb-5">
                                         Return to the previous window to proceed with your payment.
                                     </p>
                                     <button
                                         onClick={() => window.close()}
-                                        className="px-6 py-2.5 bg-charcoal text-ivory rounded-full text-sm font-medium hover:bg-charcoal/90 transition-all"
+                                        className="px-6 py-2.5 bg-warm-dark text-warm-bg rounded-full text-sm font-medium hover:bg-warm-dark/90 transition-all"
                                     >
                                         Close this window
                                     </button>
                                 </div>
                             ) : (
-                                /* Normal mode: auto-redirect */
-                                <div className="flex items-center justify-center gap-2 text-charcoal/40 text-sm italic">
+                                <div className="flex items-center justify-center gap-2 text-warm-outline text-sm italic">
                                     <Loader2 size={16} className="animate-spin" />
                                     Returning to your archive…
                                 </div>

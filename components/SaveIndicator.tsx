@@ -21,39 +21,39 @@ export default function SaveIndicator({ status, lastSavedAt, error, onRetry }: S
     return (
         <div className="flex items-center gap-1.5 text-xs">
             {status === 'saving' && (
-                <div className="flex items-center gap-1.5 text-charcoal/25 transition-opacity">
+                <div className="flex items-center gap-1.5 text-warm-outline transition-opacity">
                     <Loader2 size={12} className="animate-spin" />
                 </div>
             )}
 
             {status === 'saved' && (
-                <div className="flex items-center gap-1.5 text-charcoal/30 animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-warm-outline animate-fadeIn">
                     <Check size={12} />
                     <span>Saved</span>
                 </div>
             )}
 
             {status === 'offline' && (
-                <div className="flex items-center gap-1.5 text-charcoal/25">
+                <div className="flex items-center gap-1.5 text-warm-outline">
                     <WifiOff size={12} />
                     <span>Saved locally</span>
                 </div>
             )}
 
             {status === 'reconnected' && (
-                <div className="flex items-center gap-1.5 text-mist/60 animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-olive/60 animate-fadeIn">
                     <Check size={12} />
                     <span>Connection restored. Your changes have been saved.</span>
                 </div>
             )}
 
             {status === 'error' && (
-                <div className="flex items-center gap-1.5 text-stone/60">
+                <div className="flex items-center gap-1.5 text-warm-brown/60">
                     <span>Save failed</span>
                     {onRetry && (
                         <button
                             onClick={onRetry}
-                            className="underline hover:text-stone/80 transition-colors ml-1"
+                            className="underline hover:text-warm-brown/80 transition-colors ml-1"
                         >
                             Retry
                         </button>

@@ -66,11 +66,11 @@ export default function PreservationStatus({
 
     if (loading) {
         return (
-            <div className="bg-white border border-sand/40 p-6 rounded-xl shadow-sm">
+            <div className="bg-white border border-warm-border/40 p-6 rounded-xl shadow-sm">
                 <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-sand/40 rounded w-1/3" />
-                    <div className="h-3 bg-sand/40 rounded w-2/3" />
-                    <div className="h-3 bg-sand/40 rounded w-1/2" />
+                    <div className="h-4 bg-warm-border/40 rounded w-1/3" />
+                    <div className="h-3 bg-warm-border/40 rounded w-2/3" />
+                    <div className="h-3 bg-warm-border/40 rounded w-1/2" />
                 </div>
             </div>
         );
@@ -78,12 +78,12 @@ export default function PreservationStatus({
 
     if (!arweaveTxId || !txData) {
         return (
-            <div className="bg-white border border-dashed border-sand/40 p-6 rounded-xl">
+            <div className="bg-white border border-dashed border-warm-border/40 p-6 rounded-xl">
                 <div className="flex items-center gap-3 mb-3">
-                    <Shield size={18} className="text-charcoal/60" />
-                    <h3 className="text-sm font-semibold text-charcoal font-sans">Preservation Status</h3>
+                    <Shield size={18} className="text-warm-muted" />
+                    <h3 className="text-sm font-semibold text-warm-dark font-sans">Preservation Status</h3>
                 </div>
-                <p className="text-sm text-charcoal/60 font-sans">
+                <p className="text-sm text-warm-muted font-sans">
                     This memorial has not been preserved yet. Preservation permanently stores your memorial on the Arweave network.
                 </p>
             </div>
@@ -96,13 +96,13 @@ export default function PreservationStatus({
         : 'Pending';
 
     return (
-        <div className="bg-white border border-sand/40 p-6 rounded-xl shadow-sm">
+        <div className="bg-white border border-warm-border/40 p-6 rounded-xl shadow-sm">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-mist/10 rounded-lg flex items-center justify-center">
-                        <Shield size={16} className="text-mist" />
+                    <div className="w-8 h-8 bg-olive/10 rounded-lg flex items-center justify-center">
+                        <Shield size={16} className="text-olive" />
                     </div>
-                    <h3 className="text-sm font-semibold text-charcoal font-sans">Preservation Status</h3>
+                    <h3 className="text-sm font-semibold text-warm-dark font-sans">Preservation Status</h3>
                 </div>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 rounded-full">
                     <CheckCircle size={12} className="text-green-600" />
@@ -112,8 +112,8 @@ export default function PreservationStatus({
 
             {/* Transaction ID */}
             <div className="mb-4">
-                <p className="text-xs text-charcoal/60 font-sans mb-1">Arweave Transaction</p>
-                <code className="text-xs text-mist/80 font-mono bg-charcoal/5 px-2 py-1 rounded break-all">
+                <p className="text-xs text-warm-muted font-sans mb-1">Arweave Transaction</p>
+                <code className="text-xs text-olive/80 font-mono bg-warm-dark/5 px-2 py-1 rounded break-all">
                     {txData.txId}
                 </code>
             </div>
@@ -122,38 +122,38 @@ export default function PreservationStatus({
             <div className="grid grid-cols-3 gap-4 mb-5">
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Globe size={12} className="text-charcoal/60" />
-                        <span className="text-xs text-charcoal/60 font-sans">Nodes</span>
+                        <Globe size={12} className="text-warm-muted" />
+                        <span className="text-xs text-warm-muted font-sans">Nodes</span>
                     </div>
-                    <p className="text-sm font-semibold text-charcoal font-sans">847 worldwide</p>
+                    <p className="text-sm font-semibold text-warm-dark font-sans">847 worldwide</p>
                 </div>
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Clock size={12} className="text-charcoal/60" />
-                        <span className="text-xs text-charcoal/60 font-sans">Last verified</span>
+                        <Clock size={12} className="text-warm-muted" />
+                        <span className="text-xs text-warm-muted font-sans">Last verified</span>
                     </div>
-                    <p className="text-sm font-semibold text-charcoal font-sans">{verifiedAgo}</p>
+                    <p className="text-sm font-semibold text-warm-dark font-sans">{verifiedAgo}</p>
                 </div>
                 <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                        <Shield size={12} className="text-charcoal/60" />
-                        <span className="text-xs text-charcoal/60 font-sans">Endowment</span>
+                        <Shield size={12} className="text-warm-muted" />
+                        <span className="text-xs text-warm-muted font-sans">Endowment</span>
                     </div>
-                    <p className="text-sm font-semibold text-charcoal font-sans">200+ years</p>
+                    <p className="text-sm font-semibold text-warm-dark font-sans">200+ years</p>
                 </div>
             </div>
 
             {/* Storage usage */}
             <div className="mb-5">
                 <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-charcoal/60 font-sans">Storage used</span>
-                    <span className="text-xs text-charcoal font-sans">
+                    <span className="text-xs text-warm-muted font-sans">Storage used</span>
+                    <span className="text-xs text-warm-dark font-sans">
                         {formatBytes(storageBytesUsed)} of {formatBytes(storageBytesIncluded)}
                     </span>
                 </div>
-                <div className="w-full h-1.5 bg-charcoal/10 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-warm-dark/10 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-mist/60 rounded-full transition-all"
+                        className="h-full bg-olive/60 rounded-full transition-all"
                         style={{ width: `${usagePercent}%` }}
                     />
                 </div>
@@ -165,14 +165,14 @@ export default function PreservationStatus({
                     href={txData.gatewayUrls[0]}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-charcoal bg-charcoal/5 rounded-lg hover:bg-charcoal/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-warm-dark bg-warm-dark/5 rounded-lg hover:bg-warm-dark/10 transition-colors"
                 >
                     <ExternalLink size={12} />
                     View on Blockchain
                 </a>
                 <button
                     onClick={handleDownloadCertificate}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-mist bg-mist/10 rounded-lg hover:bg-mist/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-sans font-medium text-olive bg-olive/10 rounded-lg hover:bg-olive/20 transition-colors"
                 >
                     <Download size={12} />
                     Download Certificate

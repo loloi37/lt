@@ -74,10 +74,10 @@ function ArchiveViewContent({
 
     if (loading || !data) {
         return (
-            <div className="min-h-screen bg-ivory
+            <div className="min-h-screen bg-surface-low
         flex items-center justify-center">
                 <div className="w-10 h-10 border-2
-          border-sand/30 border-t-charcoal/40
+          border-warm-border/30 border-t-warm-dark/40
           rounded-full animate-spin" />
             </div>
         );
@@ -86,9 +86,9 @@ function ArchiveViewContent({
     const { memorial } = data;
 
     return (
-        <div className="min-h-screen bg-ivory">
+        <div className="min-h-screen bg-surface-low">
             {/* Header */}
-            <div className="border-b border-sand/20
+            <div className="border-b border-warm-border/20
         bg-white sticky top-0 z-30">
                 <div className="max-w-3xl mx-auto
           px-6 py-4 flex items-center gap-4">
@@ -96,19 +96,19 @@ function ArchiveViewContent({
                         onClick={() =>
                             router.push(`/archive/${memorialId}`)
                         }
-                        className="p-2 hover:bg-sand/10
+                        className="p-2 hover:bg-warm-border/10
               rounded-lg transition-colors"
                     >
                         <ArrowLeft size={20}
-                            className="text-charcoal/60" />
+                            className="text-warm-dark/60" />
                     </button>
                     <div className="flex-1 min-w-0">
                         <p className="font-serif text-base
-              text-charcoal truncate">
+              text-warm-dark truncate">
                             {memorial.fullName}
                         </p>
                         <p className="text-xs
-              text-charcoal/40 font-sans">
+              text-warm-dark/40 font-sans">
                             Archive
                         </p>
                     </div>
@@ -203,14 +203,14 @@ function ArchiveSection({
         <section>
             <div className="flex items-center
         gap-3 mb-8">
-                <div className="w-8 h-8 bg-sand/20
+                <div className="w-8 h-8 bg-warm-border/20
           rounded-lg flex items-center
           justify-center">
                     <Icon size={16}
-                        className="text-charcoal/40" />
+                        className="text-warm-dark/40" />
                 </div>
                 <h2 className="font-serif text-2xl
-          text-charcoal">
+          text-warm-dark">
                     {title}
                 </h2>
                 {/* Badge only visible to reviewers */}
@@ -234,9 +234,9 @@ function BiographyBlock({
     // Connect this to your existing memorial
     // step6 biography data
     return (
-        <div className="prose prose-charcoal
+        <div className="prose prose-warm-dark
       font-serif max-w-none">
-            <p className="text-charcoal/60
+            <p className="text-warm-dark/60
         leading-relaxed italic text-sm">
                 Biography content renders here from
                 your existing memorial step data.
@@ -254,10 +254,10 @@ function PhotosBlock({
         <div className="grid grid-cols-2
       sm:grid-cols-3 gap-3">
             <div className="aspect-square
-        bg-sand/20 rounded-xl flex
+        bg-warm-border/20 rounded-xl flex
         items-center justify-center">
                 <p className="text-xs
-          text-charcoal/30 font-sans">
+          text-warm-dark/30 font-sans">
                     Photos from step8 data
                 </p>
             </div>
@@ -272,7 +272,7 @@ function MemoriesBlock({
 }) {
     return (
         <div className="space-y-4">
-            <p className="text-sm text-charcoal/40
+            <p className="text-sm text-warm-dark/40
         font-sans italic">
                 Approved memories render here.
             </p>
@@ -287,7 +287,7 @@ function VideosBlock({
 }) {
     return (
         <div className="space-y-4">
-            <p className="text-sm text-charcoal/40
+            <p className="text-sm text-warm-dark/40
         font-sans italic">
                 Videos from step9 data render here.
             </p>
@@ -306,10 +306,10 @@ export default function ArchiveViewPage({
     return (
         <DrawerProvider>
             <Suspense fallback={
-                <div className="min-h-screen bg-ivory
+                <div className="min-h-screen bg-surface-low
           flex items-center justify-center">
                     <div className="w-10 h-10 border-2
-            border-sand/30 border-t-charcoal/40
+            border-warm-border/30 border-t-warm-dark/40
             rounded-full animate-spin" />
                 </div>
             }>

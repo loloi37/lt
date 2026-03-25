@@ -54,7 +54,7 @@ export default function BioWithLinks({ text, relations, className = '' }: BioWit
                         <Link
                             key={i}
                             href={`/person/${match.to_memorial_id}`}
-                            className="text-mist font-medium hover:underline hover:text-mist/80 transition-colors"
+                            className="text-olive font-medium hover:underline hover:text-olive/80 transition-colors"
                             title={`View ${match.relationship_type}`}
                         >
                             {part}

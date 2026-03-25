@@ -182,21 +182,21 @@ function ContributeContent({
     // Success state
     if (submitted) {
         return (
-            <div className="min-h-screen bg-ivory flex
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center p-6">
                 <div className="max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-sage/10
+                    <div className="w-16 h-16 bg-olive/10
             rounded-full flex items-center
             justify-center mx-auto mb-6">
-                        <Check size={32} className="text-sage" />
+                        <Check size={32} className="text-olive" />
                     </div>
                     <h2 className="font-serif text-3xl
-            text-charcoal mb-3">
+            text-warm-dark mb-3">
                         {type === 'photo'
                             ? 'Photo submitted'
                             : 'Memory submitted'}
                     </h2>
-                    <p className="text-sm text-charcoal/50
+                    <p className="text-sm text-warm-dark/50
             mb-8 leading-relaxed">
                         The archive owner will review your
                         contribution. You can track its status
@@ -215,8 +215,8 @@ function ContributeContent({
                                 setPhotoYear('');
                             }}
                             className="flex-1 py-3 border
-                border-sand/40 rounded-xl text-sm
-                text-charcoal/60 hover:bg-sand/10
+                border-warm-border/40 rounded-xl text-sm
+                text-warm-dark/60 hover:bg-warm-border/10
                 transition-all font-sans"
                         >
                             Share another
@@ -227,10 +227,10 @@ function ContributeContent({
                                     `/archive/${memorialId}`
                                 )
                             }
-                            className="flex-1 py-3 bg-charcoal
-                text-ivory rounded-xl text-sm
-                font-medium hover:bg-charcoal/90
-                transition-all btn-paper font-sans"
+                            className="flex-1 py-3 glass-btn-dark
+                rounded-xl text-sm
+                font-medium
+                transition-all font-sans"
                         >
                             Back to dashboard
                         </button>
@@ -241,10 +241,10 @@ function ContributeContent({
     }
 
     return (
-        <div className="min-h-screen bg-ivory">
+        <div className="min-h-screen bg-surface-low">
 
             {/* Header */}
-            <div className="border-b border-sand/20
+            <div className="border-b border-warm-border/20
         bg-white sticky top-0 z-10">
                 <div className="max-w-2xl mx-auto
           px-6 py-4 flex items-center gap-4">
@@ -252,14 +252,14 @@ function ContributeContent({
                         onClick={() =>
                             router.push(`/archive/${memorialId}`)
                         }
-                        className="p-2 hover:bg-sand/10
+                        className="p-2 hover:bg-warm-border/10
               rounded-lg transition-colors"
                     >
                         <ArrowLeft size={20}
-                            className="text-charcoal/60" />
+                            className="text-warm-dark/60" />
                     </button>
                     <h1 className="font-serif text-xl
-            text-charcoal">
+            text-warm-dark">
                         Share a contribution
                     </h1>
                 </div>
@@ -270,7 +270,7 @@ function ContributeContent({
 
                 {/* Type switcher */}
                 <div className="flex gap-2 p-1
-          bg-sand/20 rounded-xl mb-8">
+          bg-warm-border/20 rounded-xl mb-8">
                     {(['memory', 'photo'] as const).map(t => (
                         <button
                             key={t}
@@ -282,8 +282,8 @@ function ContributeContent({
                 text-sm font-medium transition-all
                 flex items-center justify-center
                 gap-2 font-sans ${type === t
-                                    ? 'bg-white shadow-sm text-charcoal'
-                                    : 'text-charcoal/50 hover:text-charcoal'
+                                    ? 'bg-white shadow-sm text-warm-dark'
+                                    : 'text-warm-dark/50 hover:text-warm-dark'
                                 }`}
                         >
                             {t === 'memory'
@@ -304,7 +304,7 @@ function ContributeContent({
                         <>
                             <div>
                                 <label className="block text-xs
-                  font-medium text-charcoal/50
+                  font-medium text-warm-dark/50
                   uppercase tracking-wider
                   mb-2 font-sans">
                                     What is this memory about?
@@ -316,17 +316,13 @@ function ContributeContent({
                                         setTitle(e.target.value)
                                     }
                                     placeholder="e.g. The summer she taught me to bake"
-                                    className="w-full px-4 py-3 border
-                    border-sand/40 rounded-xl
-                    focus:outline-none focus:ring-2
-                    focus:ring-mist/20 focus:border-mist
-                    transition-all text-sm font-sans"
+                                    className="glass-input"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-xs
-                  font-medium text-charcoal/50
+                  font-medium text-warm-dark/50
                   uppercase tracking-wider
                   mb-2 font-sans">
                                     Tell the story
@@ -339,13 +335,13 @@ function ContributeContent({
                                     placeholder="Write your memory here. There is no right or wrong way — just tell it as you remember it."
                                     rows={7}
                                     className="w-full px-4 py-3 border
-                    border-sand/40 rounded-xl
+                    border-warm-border/40 rounded-xl
                     focus:outline-none focus:ring-2
-                    focus:ring-mist/20 focus:border-mist
+                    focus:ring-olive/20 focus:border-olive
                     transition-all resize-none text-sm
                     font-serif leading-relaxed"
                                 />
-                                <p className="text-xs text-charcoal/30
+                                <p className="text-xs text-warm-dark/30
                   mt-1.5 font-sans text-right">
                                     {content.length} characters
                                 </p>
@@ -362,20 +358,20 @@ function ContributeContent({
                                         photoRef.current?.click()
                                     }
                                     className="border-2 border-dashed
-                    border-sand/40 rounded-xl p-12
+                    border-warm-border/40 rounded-xl p-12
                     text-center cursor-pointer
-                    hover:border-mist/40 hover:bg-mist/5
+                    hover:border-olive/40 hover:bg-olive/5
                     transition-all"
                                 >
                                     <ImageIcon size={40}
-                                        className="text-charcoal/20
+                                        className="text-warm-dark/20
                       mx-auto mb-3" />
                                     <p className="text-sm
-                    text-charcoal/50 font-sans">
+                    text-warm-dark/50 font-sans">
                                         Click to select a photo
                                     </p>
                                     <p className="text-xs
-                    text-charcoal/30 mt-1 font-sans">
+                    text-warm-dark/30 mt-1 font-sans">
                                         JPG, PNG up to 10MB
                                     </p>
                                 </div>
@@ -385,7 +381,7 @@ function ContributeContent({
                                         src={photoPreview}
                                         alt="Preview"
                                         className="w-full rounded-xl
-                      border-2 border-sand/30
+                      border-2 border-warm-border/30
                       max-h-80 object-cover"
                                     />
                                     <button
@@ -394,11 +390,11 @@ function ContributeContent({
                                             setPhotoPreview(null);
                                         }}
                                         className="absolute top-3 right-3
-                      p-2 bg-charcoal/80 rounded-full
-                      hover:bg-charcoal transition-all"
+                      p-2 bg-warm-dark/80 rounded-full
+                      hover:bg-warm-dark transition-all"
                                     >
                                         <X size={14}
-                                            className="text-ivory" />
+                                            className="text-surface-low" />
                                     </button>
                                 </div>
                             )}
@@ -413,7 +409,7 @@ function ContributeContent({
 
                             <div>
                                 <label className="block text-xs
-                  font-medium text-charcoal/50
+                  font-medium text-warm-dark/50
                   uppercase tracking-wider
                   mb-2 font-sans">
                                     Caption (optional)
@@ -425,17 +421,13 @@ function ContributeContent({
                                         setPhotoCaption(e.target.value)
                                     }
                                     placeholder="What is happening in this photo?"
-                                    className="w-full px-4 py-3 border
-                    border-sand/40 rounded-xl
-                    focus:outline-none focus:ring-2
-                    focus:ring-mist/20 focus:border-mist
-                    transition-all text-sm font-sans"
+                                    className="glass-input"
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-xs
-                  font-medium text-charcoal/50
+                  font-medium text-warm-dark/50
                   uppercase tracking-wider
                   mb-2 font-sans">
                                     Approximate year (optional)
@@ -447,11 +439,7 @@ function ContributeContent({
                                         setPhotoYear(e.target.value)
                                     }
                                     placeholder="e.g. 1987"
-                                    className="w-full px-4 py-3 border
-                    border-sand/40 rounded-xl
-                    focus:outline-none focus:ring-2
-                    focus:ring-mist/20 focus:border-mist
-                    transition-all text-sm font-sans"
+                                    className="glass-input"
                                 />
                             </div>
                         </>
@@ -460,10 +448,10 @@ function ContributeContent({
                     {/* Shared fields */}
                     <div className="grid grid-cols-1
             sm:grid-cols-2 gap-4 pt-2 border-t
-            border-sand/20">
+            border-warm-border/20">
                         <div>
                             <label className="block text-xs
-                font-medium text-charcoal/50
+                font-medium text-warm-dark/50
                 uppercase tracking-wider
                 mb-2 font-sans">
                                 Your name (optional)
@@ -475,16 +463,12 @@ function ContributeContent({
                                     setAuthorName(e.target.value)
                                 }
                                 placeholder="How you want to be credited"
-                                className="w-full px-4 py-3 border
-                  border-sand/40 rounded-xl
-                  focus:outline-none focus:ring-2
-                  focus:ring-mist/20 focus:border-mist
-                  transition-all text-sm font-sans"
+                                className="glass-input"
                             />
                         </div>
                         <div>
                             <label className="block text-xs
-                font-medium text-charcoal/50
+                font-medium text-warm-dark/50
                 uppercase tracking-wider
                 mb-2 font-sans">
                                 Your relationship (optional)
@@ -496,11 +480,7 @@ function ContributeContent({
                                     setRelationship(e.target.value)
                                 }
                                 placeholder="e.g. Daughter, Colleague"
-                                className="w-full px-4 py-3 border
-                  border-sand/40 rounded-xl
-                  focus:outline-none focus:ring-2
-                  focus:ring-mist/20 focus:border-mist
-                  transition-all text-sm font-sans"
+                                className="glass-input"
                             />
                         </div>
                     </div>
@@ -521,13 +501,13 @@ function ContributeContent({
                     )}
 
                     {/* Review notice */}
-                    <div className="p-4 bg-sand/10
-            rounded-xl border border-sand/20
+                    <div className="p-4 bg-warm-border/10
+            rounded-xl border border-warm-border/20
             flex items-start gap-3">
                         <AlertCircle size={16}
-                            className="text-charcoal/30 mt-0.5
+                            className="text-warm-dark/30 mt-0.5
                 flex-shrink-0" />
-                        <p className="text-xs text-charcoal/40
+                        <p className="text-xs text-warm-dark/40
               leading-relaxed font-sans">
                             Your contribution will be reviewed
                             by the archive owner before it appears.
@@ -542,9 +522,9 @@ function ContributeContent({
                         className={`w-full py-4 rounded-xl
               font-medium transition-all flex
               items-center justify-center gap-2
-              btn-paper font-sans ${loading
-                                ? 'bg-sand/20 text-charcoal/30 cursor-not-allowed'
-                                : 'bg-charcoal hover:bg-charcoal/90 text-ivory shadow-lg'
+              font-sans ${loading
+                                ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
+                                : 'glass-btn-dark shadow-lg'
                             }`}
                     >
                         {loading ? (
@@ -574,10 +554,10 @@ export default function ContributePage({
     const { memorialId } = use(params);
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-ivory
+            <div className="min-h-screen bg-surface-low
         flex items-center justify-center">
                 <Loader2 size={32}
-                    className="text-mist animate-spin" />
+                    className="text-olive animate-spin" />
             </div>
         }>
             <ContributeContent memorialId={memorialId} />

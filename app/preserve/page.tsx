@@ -9,7 +9,7 @@ import { estimateStorageCost } from '@/lib/arweave/arweaveService';
 
 export default function PreservationGatePage() {
     return (
-        <Suspense fallback={<div className="dark-dashboard min-h-screen" />}>
+        <Suspense fallback={<div className="bg-surface-low min-h-screen" />}>
             <PreservationGateContent />
         </Suspense>
     );
@@ -52,23 +52,23 @@ function PreservationGateContent() {
     };
 
     return (
-        <div className="dark-dashboard min-h-screen">
+        <div className="bg-surface-low min-h-screen">
             {/* Header */}
-            <div className="border-b border-vault-border">
+            <div className="border-b border-warm-border/30">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-vault-muted hover:text-vault-text transition-colors mb-4 text-sm font-sans"
+                        className="flex items-center gap-2 text-warm-muted hover:text-warm-dark transition-colors mb-4 text-sm font-sans"
                     >
                         <ArrowLeft size={16} /> Back to editor
                     </button>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center">
-                            <Shield size={20} className="text-gold" />
+                        <div className="w-10 h-10 bg-olive/10 rounded-xl flex items-center justify-center">
+                            <Shield size={20} className="text-olive" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-serif text-white">Preserve This Memorial</h1>
-                            <p className="text-sm text-vault-muted font-sans">Permanent storage on the Arweave network</p>
+                            <p className="text-sm text-warm-muted font-sans">Permanent storage on the Arweave network</p>
                         </div>
                     </div>
                 </div>
@@ -76,14 +76,14 @@ function PreservationGateContent() {
 
             <div className="max-w-4xl mx-auto px-6 py-10">
                 {/* Current status */}
-                <div className="dark-card p-6 mb-8 border-dashed">
+                <div className="bg-white border border-warm-border/30 rounded-xl p-6 mb-8 border-dashed">
                     <div className="flex items-start gap-3">
                         <Clock size={18} className="text-amber-400 mt-0.5" />
                         <div>
-                            <h3 className="text-sm font-sans font-semibold text-vault-text mb-1">
+                            <h3 className="text-sm font-sans font-semibold text-warm-dark mb-1">
                                 This memorial is private and temporary
                             </h3>
-                            <p className="text-sm text-vault-muted font-sans leading-relaxed">
+                            <p className="text-sm text-warm-muted font-sans leading-relaxed">
                                 Your memorial is saved on our servers but has not been permanently preserved.
                                 It can be edited, deleted, and is not yet accessible to anyone else.
                                 To make it permanent, choose a preservation plan below.
@@ -95,16 +95,16 @@ function PreservationGateContent() {
                 {/* Preservation plans */}
                 <div className="grid md:grid-cols-2 gap-6 mb-8">
                     {/* Personal Archive */}
-                    <div className="dark-card p-6 dark-card-hover transition-all cursor-pointer group" onClick={handlePreservePersonal}>
+                    <div className="bg-white border border-warm-border/30 rounded-xl p-6 hover:border-warm-border/50 hover:shadow-lg transition-all cursor-pointer group" onClick={handlePreservePersonal}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-serif text-white">Personal Archive</h3>
-                            <span className="text-2xl font-sans font-bold text-gold">$1,470</span>
+                            <span className="text-2xl font-sans font-bold text-olive">$1,470</span>
                         </div>
-                        <p className="text-xs text-vault-muted font-sans mb-1">One-time payment</p>
-                        <p className="text-sm text-vault-muted font-sans leading-relaxed mb-5">
+                        <p className="text-xs text-warm-muted font-sans mb-1">One-time payment</p>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
                             Permanently preserve one complete memorial on the Arweave blockchain.
                         </p>
-                        <ul className="space-y-2.5 mb-6 text-sm font-sans text-vault-text/80">
+                        <ul className="space-y-2.5 mb-6 text-sm font-sans text-warm-dark/80">
                             {[
                                 { icon: Shield, text: 'Permanent Arweave preservation' },
                                 { icon: Lock, text: 'Client-side AES-256 encryption' },
@@ -113,27 +113,27 @@ function PreservationGateContent() {
                                 { icon: Users, text: 'Successor designation' },
                             ].map(item => (
                                 <li key={item.text} className="flex items-center gap-2">
-                                    <item.icon size={14} className="text-vault-muted" />
+                                    <item.icon size={14} className="text-warm-muted" />
                                     {item.text}
                                 </li>
                             ))}
                         </ul>
-                        <div className="flex items-center gap-2 text-gold text-sm font-sans font-medium group-hover:gap-3 transition-all">
+                        <div className="flex items-center gap-2 text-olive text-sm font-sans font-medium group-hover:gap-3 transition-all">
                             Preserve as Personal <ArrowRight size={16} />
                         </div>
                     </div>
 
                     {/* Family Legacy Network */}
-                    <div className="dark-card p-6 dark-card-hover transition-all cursor-pointer group border-gold/20" onClick={handlePreserveFamily}>
+                    <div className="bg-white border border-warm-border/30 rounded-xl p-6 hover:border-warm-border/50 hover:shadow-lg transition-all cursor-pointer group border-olive/20" onClick={handlePreserveFamily}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-serif text-white">Family Legacy Network</h3>
-                            <span className="text-2xl font-sans font-bold text-gold">$2,940</span>
+                            <span className="text-2xl font-sans font-bold text-olive">$2,940</span>
                         </div>
-                        <p className="text-xs text-vault-muted font-sans mb-1">One-time payment</p>
-                        <p className="text-sm text-vault-muted font-sans leading-relaxed mb-5">
+                        <p className="text-xs text-warm-muted font-sans mb-1">One-time payment</p>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
                             Unlimited family memorials with local device sync and offline access.
                         </p>
-                        <ul className="space-y-2.5 mb-6 text-sm font-sans text-vault-text/80">
+                        <ul className="space-y-2.5 mb-6 text-sm font-sans text-warm-dark/80">
                             {[
                                 { icon: Shield, text: 'Everything in Personal' },
                                 { icon: Users, text: 'Unlimited linked memorials' },
@@ -142,12 +142,12 @@ function PreservationGateContent() {
                                 { icon: Lock, text: 'Offline access guarantee' },
                             ].map(item => (
                                 <li key={item.text} className="flex items-center gap-2">
-                                    <item.icon size={14} className="text-vault-muted" />
+                                    <item.icon size={14} className="text-warm-muted" />
                                     {item.text}
                                 </li>
                             ))}
                         </ul>
-                        <div className="flex items-center gap-2 text-gold text-sm font-sans font-medium group-hover:gap-3 transition-all">
+                        <div className="flex items-center gap-2 text-olive text-sm font-sans font-medium group-hover:gap-3 transition-all">
                             Preserve as Family <ArrowRight size={16} />
                         </div>
                     </div>
@@ -160,15 +160,15 @@ function PreservationGateContent() {
 
                 {/* Estimated cost */}
                 {estimatedCost && (
-                    <div className="dark-card p-5 mb-8">
+                    <div className="bg-white border border-warm-border/30 rounded-xl p-5 mb-8">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-xs text-vault-muted font-sans mb-0.5">Estimated preservation size</p>
-                                <p className="text-sm font-sans text-vault-text">
+                                <p className="text-xs text-warm-muted font-sans mb-0.5">Estimated preservation size</p>
+                                <p className="text-sm font-sans text-warm-dark">
                                     ~500 MB across {estimatedCost.nodeCount} nodes for {estimatedCost.endowmentYears}+ years
                                 </p>
                             </div>
-                            <p className="text-xs text-vault-muted font-sans">
+                            <p className="text-xs text-warm-muted font-sans">
                                 Included in plan price
                             </p>
                         </div>
@@ -179,12 +179,12 @@ function PreservationGateContent() {
                 <div className="text-center">
                     <button
                         onClick={handleContinueEditing}
-                        className="inline-flex items-center gap-2 text-sm font-sans text-vault-muted hover:text-vault-text transition-colors"
+                        className="inline-flex items-center gap-2 text-sm font-sans text-warm-muted hover:text-warm-dark transition-colors"
                     >
                         <Pencil size={14} />
                         Continue editing without preserving
                     </button>
-                    <p className="text-xs text-vault-muted/60 font-sans mt-2">
+                    <p className="text-xs text-warm-muted/60 font-sans mt-2">
                         Your draft will remain saved on our servers for 30 days.
                     </p>
                 </div>

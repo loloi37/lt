@@ -31,7 +31,7 @@ export default function SuccessPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-mist/10 via-ivory to-stone/10 flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-olive/10 via-surface-low to-warm-muted/10 flex items-center justify-center p-6 relative overflow-hidden">
             {/* Confetti Effect */}
             {showConfetti && (
                 <div className="absolute inset-0 pointer-events-none">
@@ -62,39 +62,39 @@ export default function SuccessPage() {
                 {/* Success Icon */}
                 <div className="flex justify-center mb-6">
                     <div className="relative">
-                        <div className="w-24 h-24 bg-gradient-to-br from-mist to-mist/80 rounded-full flex items-center justify-center shadow-lg">
-                            <CheckCircle size={48} className="text-ivory" strokeWidth={2.5} />
+                        <div className="w-24 h-24 bg-gradient-to-br from-olive to-olive/80 rounded-full flex items-center justify-center shadow-lg">
+                            <CheckCircle size={48} className="text-surface-low" strokeWidth={2.5} />
                         </div>
-                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-stone rounded-full flex items-center justify-center animate-bounce">
-                            <Sparkles size={16} className="text-ivory" />
+                        <div className="absolute -top-2 -right-2 w-8 h-8 bg-warm-muted rounded-full flex items-center justify-center animate-bounce">
+                            <Sparkles size={16} className="text-surface-low" />
                         </div>
                     </div>
                 </div>
 
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="font-serif text-4xl md:text-5xl text-charcoal mb-3">
-                        Memorial Published! 🎉
+                    <h1 className="font-serif text-4xl md:text-5xl text-warm-dark mb-3">
+                        Memorial Published!
                     </h1>
-                    <p className="text-lg text-charcoal/70">
+                    <p className="text-lg text-warm-dark/70">
                         Your beautiful memorial is now live and ready to share with the world.
                     </p>
                 </div>
 
                 {/* Memorial URL Card */}
-                <div className="mb-8 p-6 bg-gradient-to-br from-mist/5 to-stone/5 rounded-xl border-2 border-sand/30">
-                    <label className="block text-sm font-medium text-charcoal/70 mb-2">
+                <div className="mb-8 p-6 bg-gradient-to-br from-olive/5 to-warm-muted/5 rounded-xl border-2 border-warm-border/30">
+                    <label className="block text-sm font-medium text-warm-dark/70 mb-2">
                         Memorial Page URL
                     </label>
                     <div className="flex gap-2">
-                        <div className="flex-1 px-4 py-3 bg-white border border-sand/40 rounded-lg text-sm text-charcoal break-all">
+                        <div className="flex-1 px-4 py-3 bg-white border border-warm-border/40 rounded-lg text-sm text-warm-dark break-all">
                             {memorialUrl}
                         </div>
                         <button
                             onClick={copyToClipboard}
-                            className={`btn-paper px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
-                                ? 'bg-sage text-ivory'
-                                : 'bg-white border border-sand/40 text-charcoal hover:bg-sand/10'
+                            className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${copied
+                                ? 'bg-olive/10 text-olive'
+                                : 'bg-white border border-warm-border/40 text-warm-dark hover:bg-warm-border/10'
                                 }`}
                         >
                             {copied ? (
@@ -116,7 +116,7 @@ export default function SuccessPage() {
                 <div className="space-y-3 mb-8">
                     <Link
                         href={memorialUrl}
-                        className="btn-paper w-full py-4 bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-gradient-to-r from-olive/10 to-olive/10 hover:shadow-lg glass-btn-dark rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
                     >
                         <Eye size={20} />
                         View Memorial Page
@@ -125,7 +125,7 @@ export default function SuccessPage() {
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             onClick={shareViaEmail}
-                            className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-sage hover:bg-sage/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                            className="py-3 bg-white border-2 border-warm-border/40 hover:border-olive hover:bg-olive/5 text-warm-dark rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Mail size={18} />
                             Share via Email
@@ -133,7 +133,7 @@ export default function SuccessPage() {
 
                         <button
                             onClick={copyToClipboard}
-                            className="btn-paper py-3 bg-white border-2 border-sand/40 hover:border-terracotta hover:bg-terracotta/5 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                            className="py-3 bg-white border-2 border-warm-border/40 hover:border-warm-brown hover:bg-warm-brown/5 text-warm-dark rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                         >
                             <Share2 size={18} />
                             Share Link
@@ -143,29 +143,29 @@ export default function SuccessPage() {
 
                 {/* Info Cards */}
                 <div className="space-y-4 mb-8">
-                    <div className="p-4 bg-mist/10 border border-mist/30 rounded-xl">
-                        <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                            <CheckCircle size={18} className="text-mist" />
+                    <div className="p-4 bg-olive/10 border border-olive/30 rounded-xl">
+                        <h3 className="font-semibold text-warm-dark mb-2 flex items-center gap-2">
+                            <CheckCircle size={18} className="text-olive" />
                             What happens next?
                         </h3>
-                        <ul className="text-sm text-charcoal/70 space-y-1.5 ml-6">
-                            <li>• Your memorial is now publicly accessible</li>
-                            <li>• You can edit it anytime from your dashboard</li>
-                            <li>• Share the link with family and friends</li>
-                            <li>• Visitors can leave their own memories</li>
+                        <ul className="text-sm text-warm-dark/70 space-y-1.5 ml-6">
+                            <li>Your memorial is now publicly accessible</li>
+                            <li>You can edit it anytime from your dashboard</li>
+                            <li>Share the link with family and friends</li>
+                            <li>Visitors can leave their own memories</li>
                         </ul>
                     </div>
 
-                    <div className="p-4 bg-stone/10 border border-stone/30 rounded-xl">
-                        <h3 className="font-semibold text-charcoal mb-2 flex items-center gap-2">
-                            <Sparkles size={18} className="text-stone" />
+                    <div className="p-4 bg-warm-muted/10 border border-warm-muted/30 rounded-xl">
+                        <h3 className="font-semibold text-warm-dark mb-2 flex items-center gap-2">
+                            <Sparkles size={18} className="text-warm-muted" />
                             Want to enhance your memorial?
                         </h3>
-                        <ul className="text-sm text-charcoal/70 space-y-1.5 ml-6">
-                            <li>• Add more photos and stories over time</li>
-                            <li>• Invite others to contribute memories</li>
-                            <li>• Customize the design and layout</li>
-                            <li>• Download a PDF version for printing</li>
+                        <ul className="text-sm text-warm-dark/70 space-y-1.5 ml-6">
+                            <li>Add more photos and stories over time</li>
+                            <li>Invite others to contribute memories</li>
+                            <li>Customize the design and layout</li>
+                            <li>Download a PDF version for printing</li>
                         </ul>
                     </div>
                 </div>
@@ -174,7 +174,7 @@ export default function SuccessPage() {
                 <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                         href="/"
-                        className="btn-paper flex-1 py-3 border-2 border-sand/40 hover:bg-sand/10 text-charcoal rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-3 border-2 border-warm-border/40 hover:bg-warm-border/10 text-warm-dark rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                     >
                         <Home size={18} />
                         Back to Home
@@ -182,7 +182,7 @@ export default function SuccessPage() {
 
                     <Link
                         href="/create"
-                        className="btn-paper flex-1 py-3 bg-terracotta/10 border-2 border-terracotta/30 hover:bg-terracotta/20 text-terracotta rounded-lg font-medium transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-3 bg-warm-brown/10 border-2 border-warm-brown/30 hover:bg-warm-brown/20 text-warm-brown rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                     >
                         <Sparkles size={18} />
                         Create Another

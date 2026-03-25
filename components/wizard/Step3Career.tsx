@@ -69,10 +69,10 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
     return (
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
             <div className="mb-12">
-                <h2 className="font-serif text-4xl text-charcoal mb-3">
+                <h2 className="font-serif text-4xl text-warm-dark mb-3">
                     Career & Education
                 </h2>
-                <p className="text-charcoal/60 text-lg">
+                <p className="text-warm-muted text-lg">
                     {isSelfArchive
                         ? "Tell us about your professional life and educational achievements."
                         : "Tell us about their professional life and educational achievements."}
@@ -82,8 +82,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
             <div className="space-y-10">
                 {/* Occupations */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Briefcase size={18} className="text-stone" />
+                    <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-4">
+                        <Briefcase size={18} className="text-warm-brown" />
                         {isSelfArchive ? "What did you do for work?" : "What did they do for work?"}
                     </label>
 
@@ -91,13 +91,13 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                         {data.occupations.map((occupation, index) => (
                             <div
                                 key={occupation.id}
-                                className="p-6 bg-white border border-sand/40 rounded-xl space-y-4 relative"
+                                className="p-6 bg-white border border-warm-border/30 rounded-xl space-y-4 relative"
                             >
                                 {/* Remove button */}
                                 {data.occupations.length > 1 && !readOnly && (
                                     <button
                                         onClick={() => removeOccupation(occupation.id)}
-                                        className="absolute top-4 right-4 p-2 text-charcoal/40 hover:text-stone hover:bg-stone/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                                        className="absolute top-4 right-4 p-2 text-warm-outline hover:text-warm-brown hover:bg-warm-brown/10 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
                                         title="Remove this job"
                                     >
                                         <Trash2 size={18} />
@@ -110,7 +110,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                                         value={occupation.title}
                                         onChange={(e) => updateOccupation(occupation.id, 'title', e.target.value)}
                                         placeholder="Job title (e.g., High School English Teacher)"
-                                        className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                         disabled={readOnly}
                                     />
                                 </div>
@@ -120,30 +120,30 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                                     value={occupation.company}
                                     onChange={(e) => updateOccupation(occupation.id, 'company', e.target.value)}
                                     placeholder="Company/Organization (e.g., Boston Public Schools)"
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={readOnly}
                                 />
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs text-charcoal/60 mb-1">From</label>
+                                        <label className="block text-xs text-warm-muted mb-1">From</label>
                                         <input
                                             type="text"
                                             value={occupation.yearsFrom}
                                             onChange={(e) => updateOccupation(occupation.id, 'yearsFrom', e.target.value)}
                                             placeholder="e.g., 1966"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             disabled={readOnly}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-charcoal/60 mb-1">To</label>
+                                        <label className="block text-xs text-warm-muted mb-1">To</label>
                                         <input
                                             type="text"
                                             value={occupation.yearsTo}
                                             onChange={(e) => updateOccupation(occupation.id, 'yearsTo', e.target.value)}
                                             placeholder="e.g., 2006 or 'Present'"
-                                            className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                             disabled={readOnly}
                                         />
                                     </div>
@@ -154,7 +154,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                                     onChange={(e) => updateOccupation(occupation.id, 'description', e.target.value)}
                                     placeholder={isSelfArchive ? "Brief description of your role and responsibilities..." : "Brief description of their role and responsibilities..."}
                                     rows={3}
-                                    className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={readOnly}
                                 />
                             </div>
@@ -163,7 +163,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                         {!readOnly && (
                             <button
                                 onClick={addOccupation}
-                                className="w-full py-4 border-2 border-dashed border-sand/40 rounded-xl text-sm font-medium text-charcoal/60 hover:border-mist hover:bg-mist/5 hover:text-mist transition-all flex items-center justify-center gap-2"
+                                className="w-full py-4 border-2 border-dashed border-warm-border/30 rounded-xl text-sm font-medium text-warm-muted hover:border-olive hover:bg-olive/5 hover:text-olive transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
                                 Add Another Job
@@ -174,8 +174,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
 
                 {/* Career Highlights */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <Award size={18} className="text-mist" />
+                    <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-4">
+                        <Award size={18} className="text-olive" />
                         Career Highlights & Achievements
                     </label>
 
@@ -183,16 +183,16 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                         {data.careerHighlights.map((highlight, index) => (
                             <div
                                 key={index}
-                                className="flex items-start gap-3 p-4 bg-mist/5 border border-mist/20 rounded-xl group"
+                                className="flex items-start gap-3 p-4 bg-olive/5 border border-olive/20 rounded-xl group"
                             >
-                                <div className="w-2 h-2 rounded-full bg-mist mt-2 flex-shrink-0" />
-                                <p className="flex-1 text-charcoal leading-relaxed">{highlight}</p>
+                                <div className="w-2 h-2 rounded-full bg-olive mt-2 flex-shrink-0" />
+                                <p className="flex-1 text-warm-dark leading-relaxed">{highlight}</p>
                                 {!readOnly && (
                                     <button
                                         onClick={() => removeHighlight(index)}
-                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-mist/20 rounded transition-all"
+                                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1 hover:bg-olive/20 rounded transition-all"
                                     >
-                                        <X size={16} className="text-mist" />
+                                        <X size={16} className="text-olive" />
                                     </button>
                                 )}
                             </div>
@@ -205,13 +205,13 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                                 onChange={(e) => setNewHighlight(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addHighlight())}
                                 placeholder="e.g., Received Teacher of the Year Award..."
-                                className="flex-1 px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={readOnly}
                             />
                             {!readOnly && (
                                 <button
                                     onClick={addHighlight}
-                                    className="px-6 py-3 bg-mist hover:bg-mist/90 text-ivory rounded-xl transition-all flex items-center gap-2"
+                                    className="px-6 py-3 bg-olive hover:bg-olive/90 text-surface-low rounded-xl transition-all flex items-center gap-2"
                                 >
                                     <Plus size={18} />
                                     Add
@@ -219,8 +219,8 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                             )}
                         </div>
 
-                        <div className="p-3 bg-stone/5 rounded-lg border border-stone/20">
-                            <p className="text-xs text-charcoal/60">
+                        <div className="p-3 bg-warm-brown/5 rounded-lg border border-warm-brown/20">
+                            <p className="text-xs text-warm-muted">
                                 💡 Examples: Awards, promotions, major projects, publications, recognitions, certifications
                             </p>
                         </div>
@@ -229,50 +229,50 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
 
                 {/* Education Details */}
                 <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-charcoal mb-4">
-                        <GraduationCap size={18} className="text-stone" />
+                    <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-4">
+                        <GraduationCap size={18} className="text-warm-brown" />
                         Higher Education Details
                     </label>
 
-                    <div className="p-6 bg-white border border-sand/40 rounded-xl space-y-4">
+                    <div className="p-6 bg-white border border-warm-border/30 rounded-xl space-y-4">
                         <div>
-                            <label className="block text-xs text-charcoal/60 mb-2">Major / Field of Study</label>
+                            <label className="block text-xs text-warm-muted mb-2">Major / Field of Study</label>
                             <input
                                 type="text"
                                 value={data.education.major}
                                 onChange={(e) => handleEducationChange('major', e.target.value)}
                                 placeholder="e.g., English Literature, Computer Science"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={readOnly}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs text-charcoal/60 mb-2">Graduation Year</label>
+                            <label className="block text-xs text-warm-muted mb-2">Graduation Year</label>
                             <input
                                 type="text"
                                 value={data.education.graduationYear}
                                 onChange={(e) => handleEducationChange('graduationYear', e.target.value)}
                                 placeholder="e.g., 1964"
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={readOnly}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs text-charcoal/60 mb-2">Special Honors or Achievements</label>
+                            <label className="block text-xs text-warm-muted mb-2">Special Honors or Achievements</label>
                             <textarea
                                 value={data.education.honors}
                                 onChange={(e) => handleEducationChange('honors', e.target.value)}
                                 placeholder="e.g., Summa cum laude, Dean's List, Phi Beta Kappa"
                                 rows={2}
-                                className="w-full px-4 py-3 border border-sand/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-mist/30 focus:border-mist transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full px-4 py-3 border border-warm-border/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/10 focus:border-olive transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={readOnly}
                             />
                         </div>
                     </div>
 
-                    <p className="text-xs text-charcoal/40 mt-2">
+                    <p className="text-xs text-warm-outline mt-2">
                         {isSelfArchive ? "Optional - Fill this in if you pursued higher education" : "Optional - Fill this in if they pursued higher education"}
                     </p>
                 </div>
@@ -282,13 +282,13 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
             <div className="mt-12 flex gap-4">
                 <button
                     onClick={onBack}
-                    className="px-6 py-4 border border-sand/40 rounded-xl hover:bg-sand/10 transition-all font-medium"
+                    className="px-6 py-4 border border-warm-border/30 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
                 >
                     ← Back
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-stone hover:bg-stone/90 text-ivory py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-warm-brownhover:bg-warm-brown/90 text-surface-low py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>
@@ -298,7 +298,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
             <div className="mt-4 text-center">
                 <button
                     onClick={onNext}
-                    className="text-sm text-charcoal/60 hover:text-charcoal transition-colors"
+                    className="text-sm text-warm-muted hover:text-warm-dark transition-colors"
                 >
                     I'll fill this in later →
                 </button>

@@ -16,10 +16,10 @@ export default function PathCard({ id, title, subtitle, description, status, onC
     const isLocked = status === 'locked';
 
     const statusStyles = {
-        locked: "opacity-50 cursor-not-allowed border-sand/20 bg-sand/5",
-        empty: "border-sand/30 bg-white hover:border-charcoal/20 hover:shadow-md",
-        in_progress: "border-mist/30 bg-white hover:border-mist/50 hover:shadow-md",
-        completed: "border-charcoal/15 bg-white hover:shadow-md"
+        locked: "opacity-50 cursor-not-allowed border-warm-border/20 bg-warm-border/5",
+        empty: "border-warm-border/30 bg-white hover:border-warm-dark/20 hover:shadow-md",
+        in_progress: "border-olive/30 bg-white hover:border-olive/50 hover:shadow-md",
+        completed: "border-warm-dark/15 bg-white hover:shadow-md"
     };
 
     // Step 1.3.1: Qualitative status — filled/empty circles, no percentages
@@ -38,12 +38,12 @@ export default function PathCard({ id, title, subtitle, description, status, onC
         >
             {/* Step 1.3.1: Simple circle indicator instead of gamified icons */}
             <div className="flex justify-between items-start mb-6">
-                <div className={`p-2 rounded-full ${isLocked ? 'bg-sand/10' : status === 'completed' ? 'bg-charcoal/5' : 'bg-sand/10'}`}>
+                <div className={`p-2 rounded-full ${isLocked ? 'bg-warm-border/10' : status === 'completed' ? 'bg-warm-dark/5' : 'bg-warm-border/10'}`}>
                     {status === 'locked' ? (
-                        <Lock className="text-charcoal/25" size={18} />
+                        <Lock className="text-warm-dark/25" size={18} />
                     ) : (
                         <Circle
-                            className={status === 'completed' ? 'text-charcoal/40' : status === 'in_progress' ? 'text-mist/50' : 'text-sand/60'}
+                            className={status === 'completed' ? 'text-warm-dark/40' : status === 'in_progress' ? 'text-olive/50' : 'text-warm-border/60'}
                             size={18}
                             fill={status === 'completed' ? 'currentColor' : status === 'in_progress' ? 'currentColor' : 'none'}
                             strokeWidth={status === 'empty' ? 1.5 : 0}
@@ -52,16 +52,16 @@ export default function PathCard({ id, title, subtitle, description, status, onC
                 </div>
             </div>
 
-            <h3 className="font-serif text-2xl text-charcoal mb-1">{title}</h3>
+            <h3 className="font-serif text-2xl text-warm-dark mb-1">{title}</h3>
             {/* Step 1.3.3: Poetic subtitle */}
             {subtitle && (
-                <p className="text-xs text-charcoal/30 italic mb-3 tracking-wide">{subtitle}</p>
+                <p className="text-xs text-warm-dark/30 italic mb-3 tracking-wide">{subtitle}</p>
             )}
-            <p className="text-sm text-charcoal/50 leading-relaxed mb-8 flex-1">{description}</p>
+            <p className="text-sm text-warm-dark/50 leading-relaxed mb-8 flex-1">{description}</p>
 
             {/* Step 1.3.2: "Step inside" instead of gamified language */}
-            <div className="mt-auto pt-4 border-t border-sand/15 flex items-center justify-between">
-                <span className="text-xs text-charcoal/30">
+            <div className="mt-auto pt-4 border-t border-warm-border/15 flex items-center justify-between">
+                <span className="text-xs text-warm-dark/30">
                     {isLocked ? statusLabel.locked : `${statusLabel[status]} \u2192`}
                 </span>
             </div>

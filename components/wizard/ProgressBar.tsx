@@ -16,7 +16,7 @@ export default function ProgressBar({ currentStep, completedSteps, onStepClick }
             <div className="max-w-4xl mx-auto px-6">
                 {/* Step 1.3.1: Current path name instead of "Step X of Y" */}
                 <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-charcoal/50">
+                    <span className="text-sm text-warm-dark/50">
                         {STEP_NAMES[currentStep - 1]}
                     </span>
                 </div>
@@ -38,10 +38,10 @@ export default function ProgressBar({ currentStep, completedSteps, onStepClick }
                                 <div
                                     className={`w-2 h-2 rounded-full transition-all ${
                                         isCompleted
-                                            ? 'bg-charcoal/40'
+                                            ? 'bg-warm-dark/40'
                                             : isCurrent
-                                                ? 'bg-charcoal/25 ring-4 ring-charcoal/5'
-                                                : 'bg-sand/40 group-hover:bg-sand/60'
+                                                ? 'bg-warm-dark/25 ring-4 ring-warm-dark/5'
+                                                : 'bg-warm-border/40 group-hover:bg-warm-border/60'
                                     }`}
                                 />
                             </button>

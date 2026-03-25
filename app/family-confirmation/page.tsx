@@ -194,10 +194,10 @@ export default function FamilyConfirmationPage() {
     const canPay = acceptedTerms && authorizationCompleted && !isProcessing;
 
     return (
-        <div className="min-h-screen bg-ivory">
-            <div className="border-b border-sand/20 bg-white/60 backdrop-blur-sm">
+        <div className="min-h-screen bg-surface-low">
+            <div className="border-b border-warm-border/20 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
-                    <Link href="/choice-pricing" className="inline-flex items-center gap-2 text-charcoal/40 hover:text-charcoal transition-colors text-sm">
+                    <Link href="/choice-pricing" className="inline-flex items-center gap-2 text-warm-dark/40 hover:text-warm-dark transition-colors text-sm">
                         <ArrowLeft size={16} />
                         <span>Back to plans</span>
                     </Link>
@@ -206,13 +206,13 @@ export default function FamilyConfirmationPage() {
 
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <div className="text-center mb-12">
-                    <h1 className="font-serif text-4xl text-charcoal mb-4">Seal the Archive</h1>
-                    <p className="text-lg text-charcoal/50">$2,940 — A single payment for a permanent family archive. No monthly fees. No renewals. No surprises.</p>
+                    <h1 className="font-serif text-4xl text-warm-dark mb-4">Seal the Archive</h1>
+                    <p className="text-lg text-warm-dark/50">$2,940 — A single payment for a permanent family archive. No monthly fees. No renewals. No surprises.</p>
                 </div>
 
                 {/* Steps before payment */}
-                <div className="bg-white rounded-2xl border border-sand/25 p-8 mb-8 max-w-2xl mx-auto">
-                    <h3 className="text-sm font-medium text-charcoal/40 uppercase tracking-wider mb-6">Before Payment</h3>
+                <div className="bg-white rounded-2xl border border-warm-border/25 p-8 mb-8 max-w-2xl mx-auto">
+                    <h3 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-6">Before Payment</h3>
 
                     {/* Step 1 — Accept terms */}
                     <label className="flex items-start gap-4 cursor-pointer group mb-6">
@@ -221,51 +221,51 @@ export default function FamilyConfirmationPage() {
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-5 h-5 border-2 border-sand/40 rounded cursor-pointer accent-charcoal"
+                                className="w-5 h-5 border-2 border-warm-border/40 rounded cursor-pointer accent-warm-dark"
                             />
                         </div>
                         <div className="flex-1">
-                            <p className="text-sm text-charcoal/60 group-hover:text-charcoal/80 transition-colors">
+                            <p className="text-sm text-warm-dark/60 group-hover:text-warm-dark/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-charcoal underline font-medium" target="_blank">General Conditions</Link>
+                                <Link href="/legal/terms" className="text-warm-dark underline font-medium" target="_blank">General Conditions</Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-charcoal underline font-medium" target="_blank">Privacy Policy</Link>
+                                <Link href="/legal/privacy" className="text-warm-dark underline font-medium" target="_blank">Privacy Policy</Link>
                             </p>
                         </div>
                     </label>
 
                     {/* Step 2 — Authorization form */}
-                    <div className={`p-6 rounded-xl border transition-all ${acceptedTerms ? 'border-sand/30 bg-sand/5' : 'border-sand/15 bg-sand/5 opacity-40 pointer-events-none'}`}>
+                    <div className={`p-6 rounded-xl border transition-all ${acceptedTerms ? 'border-warm-border/30 bg-warm-border/5' : 'border-warm-border/15 bg-warm-border/5 opacity-40 pointer-events-none'}`}>
                         <div className="flex items-start gap-3">
                             <div className="flex-shrink-0 mt-0.5">
                                 {authorizationCompleted ? (
-                                    <div className="w-7 h-7 bg-charcoal rounded-full flex items-center justify-center">
-                                        <Check size={14} className="text-ivory" strokeWidth={2.5} />
+                                    <div className="w-7 h-7 bg-warm-dark rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-surface-low" strokeWidth={2.5} />
                                     </div>
                                 ) : (
-                                    <div className="w-7 h-7 bg-sand/20 rounded-full flex items-center justify-center">
-                                        <ExternalLink size={14} className="text-charcoal/30" />
+                                    <div className="w-7 h-7 bg-warm-border/20 rounded-full flex items-center justify-center">
+                                        <ExternalLink size={14} className="text-warm-dark/30" />
                                     </div>
                                 )}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-medium text-charcoal text-sm mb-1">Memorial Authorization</h4>
+                                <h4 className="font-medium text-warm-dark text-sm mb-1">Memorial Authorization</h4>
                                 {authorizationCompleted ? (
-                                    <p className="text-xs text-charcoal/40">
+                                    <p className="text-xs text-warm-dark/40">
                                         Authorization completed. You may now proceed to payment.
                                     </p>
                                 ) : (
                                     <>
-                                        <p className="text-xs text-charcoal/40 mb-4">
+                                        <p className="text-xs text-warm-dark/40 mb-4">
                                             Confirm your legal authority to create this family archive. The form opens in a new window.
                                         </p>
                                         <button
                                             onClick={handleOpenAuthorization}
                                             disabled={isOpeningAuth || !acceptedTerms}
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-charcoal hover:bg-charcoal/90 text-ivory rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                                            className="inline-flex items-center gap-2 px-4 py-2 glass-btn-dark rounded-lg text-xs font-medium transition-all disabled:opacity-50"
                                         >
                                             {isOpeningAuth ? (
-                                                <div className="w-3.5 h-3.5 border-2 border-ivory/40 border-t-ivory rounded-full animate-spin" />
+                                                <div className="w-3.5 h-3.5 border-2 border-surface-low/40 border-t-surface-low rounded-full animate-spin" />
                                             ) : (
                                                 <ExternalLink size={13} />
                                             )}
@@ -275,7 +275,7 @@ export default function FamilyConfirmationPage() {
                                 )}
 
                                 {currentMemorialId && !authorizationCompleted && !isOpeningAuth && (
-                                    <p className="text-[11px] text-charcoal/25 mt-3 flex items-center gap-1.5">
+                                    <p className="text-[11px] text-warm-dark/25 mt-3 flex items-center gap-1.5">
                                         <Loader2 size={10} className="animate-spin" />
                                         Waiting for authorization…
                                     </p>
@@ -291,13 +291,13 @@ export default function FamilyConfirmationPage() {
                         onClick={handlePayment}
                         disabled={!canPay}
                         className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${canPay
-                            ? 'bg-charcoal hover:bg-charcoal/90 text-ivory'
-                            : 'bg-sand/20 text-charcoal/25 cursor-not-allowed'
+                            ? 'glass-btn-dark'
+                            : 'bg-warm-border/20 text-warm-dark/25 cursor-not-allowed'
                             }`}
                     >
                         {isProcessing ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
+                                <div className="w-4 h-4 border-2 border-surface-low/30 border-t-surface-low rounded-full animate-spin" />
                                 Preparing payment...
                             </>
                         ) : (
@@ -306,12 +306,12 @@ export default function FamilyConfirmationPage() {
                     </button>
 
                     {!authorizationCompleted && acceptedTerms && (
-                        <p className="text-center text-[11px] text-charcoal/25 mt-3">
+                        <p className="text-center text-[11px] text-warm-dark/25 mt-3">
                             Complete the authorization form above to enable payment.
                         </p>
                     )}
 
-                    <p className="text-center text-[11px] text-charcoal/20 mt-6">
+                    <p className="text-center text-[11px] text-warm-dark/20 mt-6">
                         Secure payment powered by Stripe. Your information is encrypted.
                     </p>
                 </div>

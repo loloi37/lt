@@ -16,17 +16,17 @@ const STATUS_CONFIG = {
     pending_approval: {
         icon: Clock,
         label: 'Awaiting review',
-        color: 'text-stone bg-stone/10 border-stone/20'
+        color: 'text-warm-muted bg-warm-muted/10 border-warm-muted/20'
     },
     approved: {
         icon: Check,
         label: 'Published',
-        color: 'text-sage bg-sage/10 border-sage/20'
+        color: 'text-olive bg-olive/10 border-olive/20'
     },
     rejected: {
         icon: X,
         label: 'Not published',
-        color: 'text-charcoal/40 bg-sand/20 border-sand/30'
+        color: 'text-warm-dark/40 bg-warm-border/20 border-warm-border/30'
     }
 } as const;
 
@@ -48,25 +48,25 @@ export default function ArchiveDashboard({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-ivory flex
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center">
                 <Loader2 size={32}
-                    className="text-mist animate-spin" />
+                    className="text-olive animate-spin" />
             </div>
         );
     }
 
     if (error || !data) {
         return (
-            <div className="min-h-screen bg-ivory flex
+            <div className="min-h-screen bg-surface-low flex
         items-center justify-center p-6">
                 <div className="text-center max-w-md">
-                    <p className="text-charcoal/50 mb-4">
+                    <p className="text-warm-dark/50 mb-4">
                         {error || 'Archive not found.'}
                     </p>
                     <button
                         onClick={() => router.replace('/')}
-                        className="text-mist underline text-sm"
+                        className="text-olive underline text-sm"
                     >
                         Return home
                     </button>
@@ -85,10 +85,10 @@ export default function ArchiveDashboard({
         userRole === 'owner';
 
     return (
-        <div className="min-h-screen bg-ivory">
+        <div className="min-h-screen bg-surface-low">
 
             {/* Header */}
-            <div className="border-b border-sand/20
+            <div className="border-b border-warm-border/20
         bg-white sticky top-0 z-10 shadow-sm">
                 <div className="max-w-3xl mx-auto
           px-6 py-4 flex items-center
@@ -101,14 +101,14 @@ export default function ArchiveDashboard({
                                 src={memorial.profilePhotoUrl}
                                 alt={memorial.fullName}
                                 className="w-10 h-10 rounded-full
-                  object-cover border-2 border-sand/30"
+                  object-cover border-2 border-warm-border/30"
                             />
                         ) : (
                             <div className="w-10 h-10 rounded-full
-                bg-gradient-to-br from-mist/20
-                to-stone/20 border-2 border-sand/30
+                bg-gradient-to-br from-olive/20
+                to-warm-muted/20 border-2 border-warm-border/30
                 flex items-center justify-center">
-                                <span className="text-charcoal/30
+                                <span className="text-warm-dark/30
                   text-sm font-serif">
                                     {memorial.fullName.charAt(0)}
                                 </span>
@@ -116,10 +116,10 @@ export default function ArchiveDashboard({
                         )}
                         <div>
                             <p className="font-serif text-base
-                text-charcoal leading-none mb-0.5">
+                text-warm-dark leading-none mb-0.5">
                                 {memorial.fullName}
                             </p>
-                            <p className="text-xs text-charcoal/40
+                            <p className="text-xs text-warm-dark/40
                 font-sans">
                                 {userRole === 'co_guardian'
                                     ? 'Co-Guardian'
@@ -137,7 +137,7 @@ export default function ArchiveDashboard({
                     <Link
                         href={`/archive/${memorialId}/view`}
                         className="flex items-center gap-1.5
-              text-sm text-mist hover:text-mist/80
+              text-sm text-olive hover:text-olive/80
               transition-colors font-sans"
                     >
                         <Eye size={16} />
@@ -157,41 +157,41 @@ export default function ArchiveDashboard({
                                     `/archive/${memorialId}/steward`
                                 )
                             }
-                            className="bg-stone/5 border border-stone/20
+                            className="bg-warm-muted/5 border border-warm-muted/20
               rounded-xl p-5 flex items-center
               justify-between cursor-pointer
-              hover:bg-stone/10 transition-all"
+              hover:bg-warm-muted/10 transition-all"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-stone/10
+                                <div className="w-9 h-9 bg-warm-muted/10
                 rounded-lg flex items-center
                 justify-center flex-shrink-0">
                                     <Shield size={18}
-                                        className="text-stone" />
+                                        className="text-warm-muted" />
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium
-                  text-charcoal">
+                  text-warm-dark">
                                         {pendingCount} contribution
                                         {pendingCount !== 1 ? 's' : ''}
                                         {' '}awaiting review
                                     </p>
                                     <p className="text-xs
-                  text-charcoal/50">
+                  text-warm-dark/50">
                                         Witnesses are waiting for
                                         your decision
                                     </p>
                                 </div>
                             </div>
                             <ChevronRight size={18}
-                                className="text-charcoal/30" />
+                                className="text-warm-dark/30" />
                         </div>
                     )}
 
                 {/* Quick actions */}
                 <section>
                     <h2 className="text-xs font-semibold
-            text-charcoal/40 uppercase tracking-wider
+            text-warm-dark/40 uppercase tracking-wider
             mb-4 font-sans">
                         Actions
                     </h2>
@@ -258,7 +258,7 @@ export default function ArchiveDashboard({
                     <div className="flex items-center
             justify-between mb-4">
                         <h2 className="text-xs font-semibold
-              text-charcoal/40 uppercase
+              text-warm-dark/40 uppercase
               tracking-wider font-sans">
                             My Contributions
                         </h2>
@@ -269,7 +269,7 @@ export default function ArchiveDashboard({
                                 )
                             }
                             className="flex items-center gap-1
-                text-xs text-mist hover:text-mist/80
+                text-xs text-olive hover:text-olive/80
                 transition-colors font-sans"
                         >
                             <Plus size={12} />
@@ -322,14 +322,14 @@ function QuickAction({
             onClick={onClick}
             className={`relative p-4 rounded-xl border
         transition-all flex flex-col items-center
-        gap-2 btn-paper font-sans ${primary
-                    ? 'bg-charcoal text-ivory border-charcoal hover:bg-charcoal/90'
-                    : 'bg-white text-charcoal/70 border-sand/30 hover:border-sand/60 hover:bg-sand/5'
+        gap-2 font-sans ${primary
+                    ? 'glass-btn-dark'
+                    : 'bg-white text-warm-dark/70 border-warm-border/30 hover:border-warm-border/60 hover:bg-warm-border/5'
                 }`}
         >
             {badge !== undefined && (
                 <span className="absolute -top-1.5 -right-1.5
-          w-5 h-5 bg-stone text-ivory text-xs
+          w-5 h-5 bg-warm-muted text-white text-xs
           rounded-full flex items-center
           justify-center font-semibold font-sans">
                     {badge}
@@ -373,23 +373,23 @@ function ContributionRow({
     })();
 
     return (
-        <div className="bg-white border border-sand/30
+        <div className="bg-white border border-warm-border/30
       rounded-xl p-4 flex items-center gap-4">
 
             {/* Type icon */}
-            <div className="w-9 h-9 bg-sand/20 rounded-lg
+            <div className="w-9 h-9 bg-warm-border/20 rounded-lg
         flex items-center justify-center flex-shrink-0">
                 <TypeIcon size={16}
-                    className="text-charcoal/40" />
+                    className="text-warm-dark/40" />
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-charcoal
+                <p className="text-sm font-medium text-warm-dark
           truncate font-sans">
                     {contribution.title}
                 </p>
-                <p className="text-xs text-charcoal/40
+                <p className="text-xs text-warm-dark/40
           font-sans mt-0.5">
                     {timeAgo}
                 </p>
@@ -416,13 +416,13 @@ function EmptyContributions({
 }) {
     return (
         <div className="bg-white border-2 border-dashed
-      border-sand/40 rounded-xl p-10 text-center">
-            <div className="w-12 h-12 bg-sand/20 rounded-full
+      border-warm-border/40 rounded-xl p-10 text-center">
+            <div className="w-12 h-12 bg-warm-border/20 rounded-full
         flex items-center justify-center mx-auto mb-4">
                 <MessageCircle size={24}
-                    className="text-charcoal/20" />
+                    className="text-warm-dark/20" />
             </div>
-            <p className="text-sm text-charcoal/40
+            <p className="text-sm text-warm-dark/40
         mb-4 font-sans leading-relaxed">
                 You haven't contributed anything yet.
                 <br />
@@ -431,10 +431,10 @@ function EmptyContributions({
             <button
                 onClick={onAdd}
                 className="inline-flex items-center gap-2
-          px-5 py-2.5 bg-charcoal text-ivory
+          px-5 py-2.5 glass-btn-dark
           rounded-xl text-sm font-medium
-          hover:bg-charcoal/90 transition-all
-          btn-paper font-sans"
+          transition-all
+          font-sans"
             >
                 <Plus size={16} />
                 Share your first memory

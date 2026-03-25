@@ -75,7 +75,7 @@ export default function ContributionDrawer({
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-charcoal/20
+                className={`fixed inset-0 bg-warm-dark/20
           backdrop-blur-sm z-40 transition-opacity
           duration-300 ${isOpen
                         ? 'opacity-100 pointer-events-auto'
@@ -86,8 +86,8 @@ export default function ContributionDrawer({
 
             {/* Drawer panel */}
             <div className={`fixed right-0 top-0 h-full
-        w-full max-w-md bg-ivory border-l
-        border-sand/30 shadow-2xl z-50
+        w-full max-w-md bg-surface-low border-l
+        border-warm-border/30 shadow-2xl z-50
         transition-transform duration-300
         ease-in-out flex flex-col ${isOpen
                     ? 'translate-x-0'
@@ -95,20 +95,20 @@ export default function ContributionDrawer({
                 }`}
             >
                 {/* Drawer header */}
-                <div className="border-b border-sand/20
+                <div className="border-b border-warm-border/20
           bg-white px-6 py-5 flex items-center
           justify-between flex-shrink-0">
                     <div>
                         <div className="flex items-center gap-2">
                             <Shield size={16}
-                                className="text-stone" />
+                                className="text-warm-muted" />
                             <h2 className="font-serif text-lg
-                text-charcoal">
+                text-warm-dark">
                                 Review
                             </h2>
                         </div>
                         {activeSection && (
-                            <p className="text-xs text-charcoal/40
+                            <p className="text-xs text-warm-dark/40
                 font-sans mt-0.5">
                                 {SECTION_LABELS[activeSection]}
                                 {' · '}
@@ -118,11 +118,11 @@ export default function ContributionDrawer({
                     </div>
                     <button
                         onClick={closeDrawer}
-                        className="p-2 hover:bg-sand/10
+                        className="p-2 hover:bg-warm-border/10
               rounded-lg transition-colors"
                     >
                         <X size={20}
-                            className="text-charcoal/50" />
+                            className="text-warm-dark/50" />
                     </button>
                 </div>
 
@@ -143,18 +143,18 @@ export default function ContributionDrawer({
                         <div className="flex flex-col
               items-center justify-center h-full
               text-center py-20">
-                            <div className="w-14 h-14 bg-sage/10
+                            <div className="w-14 h-14 bg-olive/10
                 rounded-full flex items-center
                 justify-center mb-4">
                                 <Check size={28}
-                                    className="text-sage" />
+                                    className="text-olive" />
                             </div>
                             <p className="font-serif text-lg
-                text-charcoal mb-1">
+                text-warm-dark mb-1">
                                 All clear
                             </p>
                             <p className="text-xs
-                text-charcoal/40 font-sans">
+                text-warm-dark/40 font-sans">
                                 No pending contributions here.
                             </p>
                         </div>
@@ -207,7 +207,7 @@ function DrawerCard({
 
     return (
         <div className="bg-white rounded-2xl
-      border border-sand/30 overflow-hidden
+      border border-warm-border/30 overflow-hidden
       shadow-sm">
 
             {/* Card header */}
@@ -215,42 +215,42 @@ function DrawerCard({
                 onClick={() => setExpanded(!expanded)}
                 className="w-full px-5 pt-5 pb-4
           flex items-start justify-between gap-3
-          text-left hover:bg-sand/5 transition-colors"
+          text-left hover:bg-warm-border/5 transition-colors"
             >
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center
             gap-2 mb-1">
                         {c.type === 'memory'
                             ? <MessageCircle size={12}
-                                className="text-charcoal/30" />
+                                className="text-warm-dark/30" />
                             : <ImageIcon size={12}
-                                className="text-charcoal/30" />
+                                className="text-warm-dark/30" />
                         }
                         <span className="text-[10px]
-              text-charcoal/30 uppercase
+              text-warm-dark/30 uppercase
               tracking-wider font-sans">
                             {c.type}
                         </span>
                         <span className="text-[10px]
-              text-charcoal/25 font-sans">
+              text-warm-dark/25 font-sans">
                             · {timeAgo}
                         </span>
                     </div>
                     <p className="font-serif text-base
-            text-charcoal leading-snug truncate">
+            text-warm-dark leading-snug truncate">
                         {c.content.title || 'Untitled'}
                     </p>
-                    <p className="text-xs text-charcoal/40
+                    <p className="text-xs text-warm-dark/40
             font-sans mt-0.5">
                         {c.witness_name}
                         {c.content.relationship && (
-                            <span className="text-charcoal/25">
+                            <span className="text-warm-dark/25">
                                 {' · '}{c.content.relationship}
                             </span>
                         )}
                         {c.is_anonymous && (
                             <span className="ml-1.5 px-1.5 py-0.5
-                bg-sand/30 text-charcoal/30
+                bg-warm-border/30 text-warm-dark/30
                 rounded text-[9px]">
                                 no account
                             </span>
@@ -259,7 +259,7 @@ function DrawerCard({
                 </div>
                 <ChevronDown
                     size={16}
-                    className={`text-charcoal/30 flex-shrink-0
+                    className={`text-warm-dark/30 flex-shrink-0
             mt-1 transition-transform ${expanded
                             ? 'rotate-180' : ''
                         }`}
@@ -271,10 +271,10 @@ function DrawerCard({
                 <div className="px-5 pb-5 space-y-4">
 
                     {/* Content preview */}
-                    <div className="bg-sand/10 rounded-xl p-4">
+                    <div className="bg-warm-border/10 rounded-xl p-4">
                         {c.type === 'memory' && c.content.content && (
                             <p className="font-serif text-sm
-                text-charcoal/70 leading-relaxed
+                text-warm-dark/70 leading-relaxed
                 line-clamp-6">
                                 {c.content.content}
                             </p>
@@ -286,15 +286,15 @@ function DrawerCard({
                                     alt={c.content.caption || 'Photo'}
                                     className="w-full max-h-48
                     object-cover rounded-lg
-                    border border-sand/30"
+                    border border-warm-border/30"
                                 />
                                 {c.content.caption && (
                                     <p className="text-xs italic
-                    text-charcoal/50 font-sans">
+                    text-warm-dark/50 font-sans">
                                         "{c.content.caption}"
                                         {c.content.year && (
                                             <span className="not-italic
-                        text-charcoal/30 ml-1">
+                        text-warm-dark/30 ml-1">
                                                 {c.content.year}
                                             </span>
                                         )}
@@ -311,11 +311,11 @@ function DrawerCard({
                                 onClick={onApprove}
                                 disabled={processing}
                                 className="flex-1 py-2.5
-                  bg-sage hover:bg-sage/90
-                  text-ivory rounded-xl text-sm
+                  bg-olive hover:bg-olive/90
+                  text-white rounded-xl text-sm
                   font-medium transition-all
                   flex items-center justify-center
-                  gap-1.5 btn-paper font-sans
+                  gap-1.5 font-sans
                   disabled:opacity-50"
                             >
                                 {processing
@@ -329,23 +329,23 @@ function DrawerCard({
                                 onClick={() => setConfirmReject(true)}
                                 disabled={processing}
                                 className="px-4 py-2.5 border
-                  border-sand/40 text-charcoal/50
+                  border-warm-border/40 text-warm-dark/50
                   rounded-xl text-sm transition-all
-                  hover:bg-sand/10 font-sans
+                  hover:bg-warm-border/10 font-sans
                   disabled:opacity-50"
                             >
                                 Decline
                             </button>
                         </div>
                     ) : (
-                        <div className="bg-sand/10 rounded-xl
+                        <div className="bg-warm-border/10 rounded-xl
               p-3 space-y-3">
                             <div className="flex items-start gap-2">
                                 <AlertTriangle size={13}
-                                    className="text-stone mt-0.5
+                                    className="text-warm-muted mt-0.5
                   flex-shrink-0" />
                                 <p className="text-xs
-                  text-charcoal/60 font-sans
+                  text-warm-dark/60 font-sans
                   leading-relaxed">
                                     This won't appear in the archive.
                                     The contributor won't be notified.
@@ -357,9 +357,9 @@ function DrawerCard({
                                         setConfirmReject(false)
                                     }
                                     className="flex-1 py-2 border
-                    border-sand/40 rounded-lg
-                    text-xs text-charcoal/50
-                    hover:bg-sand/10 transition-all
+                    border-warm-border/40 rounded-lg
+                    text-xs text-warm-dark/50
+                    hover:bg-warm-border/10 transition-all
                     font-sans"
                                 >
                                     Cancel
@@ -368,9 +368,9 @@ function DrawerCard({
                                     onClick={onReject}
                                     disabled={processing}
                                     className="flex-1 py-2
-                    bg-charcoal/10 rounded-lg
-                    text-xs text-charcoal/60
-                    hover:bg-charcoal/20 transition-all
+                    bg-warm-dark/10 rounded-lg
+                    text-xs text-warm-dark/60
+                    hover:bg-warm-dark/20 transition-all
                     font-sans disabled:opacity-50
                     flex items-center justify-center
                     gap-1.5"

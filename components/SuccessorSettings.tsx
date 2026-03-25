@@ -88,33 +88,33 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
         }
     };
 
-    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline text-mist" /></div>;
+    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin inline text-olive" /></div>;
 
     return (
-        <div className="bg-white rounded-2xl border border-sand/30 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-sand/20 bg-charcoal text-ivory">
+        <div className="bg-white rounded-2xl border border-warm-border/30 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-warm-border/20 bg-warm-dark text-surface-low">
                 <h3 className="font-serif text-xl flex items-center gap-2">
-                    <Shield size={22} className="text-mist" />
+                    <Shield size={22} className="text-olive" />
                     Archive Steward
                 </h3>
-                <p className="text-ivory/60 text-xs mt-1">Designate a successor to manage your family archives if you pass away.</p>
+                <p className="text-surface-low/60 text-xs mt-1">Designate a successor to manage your family archives if you pass away.</p>
             </div>
 
             <div className="p-6">
                 {successor ? (
                     <div className="space-y-6">
-                        <div className={`p-4 rounded-xl border-2 flex items-start gap-4 ${successor.status === 'accepted' ? 'bg-mist/5 border-mist/20' : 'bg-sand/5 border-sand/20'
+                        <div className={`p-4 rounded-xl border-2 flex items-start gap-4 ${successor.status === 'accepted' ? 'bg-olive/5 border-olive/20' : 'bg-warm-border/5 border-warm-border/20'
                             }`}>
                             {successor.status === 'accepted' ? (
-                                <CheckCircle className="text-mist mt-1" size={20} />
+                                <CheckCircle className="text-olive mt-1" size={20} />
                             ) : (
-                                <Clock className="text-charcoal/40 mt-1" size={20} />
+                                <Clock className="text-warm-outline mt-1" size={20} />
                             )}
                             <div className="flex-1">
-                                <p className="font-medium text-charcoal">{successor.successor_name}</p>
-                                <p className="text-sm text-charcoal/60">{successor.successor_email} • {successor.relationship}</p>
+                                <p className="font-medium text-warm-dark">{successor.successor_name}</p>
+                                <p className="text-sm text-warm-muted">{successor.successor_email} • {successor.relationship}</p>
                                 <div className="mt-3">
-                                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${successor.status === 'accepted' ? 'bg-mist text-ivory' : 'bg-sand text-charcoal/60'
+                                    <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${successor.status === 'accepted' ? 'bg-olive text-surface-low' : 'bg-warm-border text-warm-muted'
                                         }`}>
                                         {successor.status === 'accepted' ? 'Steward Active' : 'Waiting for Acceptance'}
                                     </span>
@@ -122,25 +122,25 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                             </div>
                         </div>
 
-                        <p className="text-xs text-charcoal/40 italic">
+                        <p className="text-xs text-warm-outline italic">
                             * To change your steward, please contact support for security verification.
                         </p>
 
                         {/* Dead Man's Switch Toggle */}
-                        <div className="mt-8 pt-6 border-t border-sand/20">
+                        <div className="mt-8 pt-6 border-t border-warm-border/20">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 pr-8">
-                                    <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                                        <Clock size={16} className="text-stone" />
+                                    <h4 className="text-sm font-bold text-warm-dark flex items-center gap-2">
+                                        <Clock size={16} className="text-warm-brown" />
                                         Dead Man's Switch
                                     </h4>
-                                    <p className="text-xs text-charcoal/60 mt-1 leading-relaxed">
+                                    <p className="text-xs text-warm-muted mt-1 leading-relaxed">
                                         If enabled, we will email you once a year to confirm you are still managing the account. If you don't respond within 90 days, we will automatically notify your steward to begin the succession process.
                                     </p>
                                 </div>
                                 <button
                                     onClick={toggleDeadMansSwitch}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isSwitchEnabled ? 'bg-mist' : 'bg-sand'}`}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isSwitchEnabled ? 'bg-olive' : 'bg-warm-border'}`}
                                 >
                                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isSwitchEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                                 </button>
@@ -149,19 +149,19 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                     </div>
                 ) : (
                     <form onSubmit={handleDesignate} className="space-y-4">
-                        <div className="p-4 bg-stone/5 border border-stone/10 rounded-xl flex items-start gap-3 mb-4">
-                            <AlertTriangle className="text-stone shrink-0 mt-0.5" size={16} />
-                            <p className="text-xs text-charcoal/70 leading-relaxed">
+                        <div className="p-4 bg-warm-brown/5 border border-warm-brown/10 rounded-xl flex items-start gap-3 mb-4">
+                            <AlertTriangle className="text-warm-brown shrink-0 mt-0.5" size={16} />
+                            <p className="text-xs text-warm-muted leading-relaxed">
                                 Choose someone you trust implicitly. They will have full access to view, edit, and export all family archives in your account.
                             </p>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Full Name</label>
+                            <label className="block text-xs font-medium text-warm-muted mb-1">Full Name</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
+                                className="w-full p-2.5 rounded-lg border border-warm-border/30 text-sm focus:ring-olive"
                                 placeholder="e.g., Sarah Thompson"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -169,11 +169,11 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Email Address</label>
+                            <label className="block text-xs font-medium text-warm-muted mb-1">Email Address</label>
                             <input
                                 required
                                 type="email"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
+                                className="w-full p-2.5 rounded-lg border border-warm-border/30 text-sm focus:ring-olive"
                                 placeholder="sarah@example.com"
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -181,11 +181,11 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-charcoal/60 mb-1">Relationship</label>
+                            <label className="block text-xs font-medium text-warm-muted mb-1">Relationship</label>
                             <input
                                 required
                                 type="text"
-                                className="w-full p-2.5 rounded-lg border border-sand/30 text-sm focus:ring-mist"
+                                className="w-full p-2.5 rounded-lg border border-warm-border/30 text-sm focus:ring-olive"
                                 placeholder="e.g., Daughter / Attorney"
                                 value={formData.relationship}
                                 onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
@@ -195,7 +195,7 @@ export default function SuccessorSettings({ userId }: SuccessorSettingsProps) {
                         <button
                             disabled={submitting}
                             type="submit"
-                            className="w-full py-3 bg-charcoal text-ivory rounded-xl font-medium text-sm hover:bg-charcoal/90 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-warm-dark text-surface-low rounded-xl font-medium text-sm hover:bg-warm-dark/90 transition-all flex items-center justify-center gap-2"
                         >
                             {submitting ? <Loader2 className="animate-spin" size={16} /> : <Mail size={16} />}
                             Send Stewardship Request

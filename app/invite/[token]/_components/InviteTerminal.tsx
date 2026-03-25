@@ -17,7 +17,7 @@ const TERMINAL_CONTENT: Record<TerminalReason, {
 }> = {
     NOT_FOUND: {
         icon: AlertCircle,
-        iconColor: 'text-stone',
+        iconColor: 'text-warm-muted',
         title: 'Invitation not found',
         message: () =>
             'This invitation link is invalid or does not exist.',
@@ -25,10 +25,10 @@ const TERMINAL_CONTENT: Record<TerminalReason, {
     },
     EXPIRED: {
         icon: Clock,
-        iconColor: 'text-stone',
+        iconColor: 'text-warm-muted',
         title: 'This invitation has expired',
         message: ({ inviterName }) =>
-            `Contact ${inviterName || 'the archive owner'} 
+            `Contact ${inviterName || 'the archive owner'}
        to request a new invitation.`,
         action: ({ inviteeEmail }) =>
             inviteeEmail
@@ -40,10 +40,10 @@ const TERMINAL_CONTENT: Record<TerminalReason, {
     },
     DECLINED: {
         icon: X,
-        iconColor: 'text-charcoal/40',
+        iconColor: 'text-warm-dark/40',
         title: 'You previously declined',
         message: ({ inviterName }) =>
-            `Contact ${inviterName || 'the archive owner'} 
+            `Contact ${inviterName || 'the archive owner'}
        if you would like a new invitation.`,
         action: () => ({
             label: 'Return to home',
@@ -52,21 +52,21 @@ const TERMINAL_CONTENT: Record<TerminalReason, {
     },
     USED_BY_OTHER: {
         icon: AlertCircle,
-        iconColor: 'text-stone',
+        iconColor: 'text-warm-muted',
         title: 'This invitation has already been used',
         message: ({ inviterName }) =>
-            `Someone else has joined using this link. 
-       Ask ${inviterName || 'the owner'} for 
+            `Someone else has joined using this link.
+       Ask ${inviterName || 'the owner'} for
        a new invitation.`,
         action: () => null
     },
     MEMORIAL_DELETED: {
         icon: Trash2,
-        iconColor: 'text-charcoal/30',
+        iconColor: 'text-warm-dark/30',
         title: 'This archive is no longer available',
         message: ({ inviterName }) =>
-            `The owner may have removed it. Contact 
-       ${inviterName || 'the archive owner'} 
+            `The owner may have removed it. Contact
+       ${inviterName || 'the archive owner'}
        for more information.`,
         action: () => ({
             label: 'Return to home',
@@ -75,7 +75,7 @@ const TERMINAL_CONTENT: Record<TerminalReason, {
     },
     ALREADY_JOINED: {
         icon: CheckCircle,
-        iconColor: 'text-sage',
+        iconColor: 'text-olive',
         title: "You've already joined",
         message: () =>
             'Redirecting you to the archive...',
@@ -97,23 +97,23 @@ export default function InviteTerminal({
     const action = content.action?.(meta);
 
     return (
-        <div className="min-h-screen bg-ivory flex 
+        <div className="min-h-screen bg-surface-low flex
       items-center justify-center p-6">
             <div className="max-w-md w-full text-center">
 
-                <div className="w-16 h-16 bg-sand/20 
-          rounded-full flex items-center 
+                <div className="w-16 h-16 bg-warm-border/20
+          rounded-full flex items-center
           justify-center mx-auto mb-6">
                     <Icon size={32}
                         className={content.iconColor} />
                 </div>
 
-                <h1 className="font-serif text-2xl 
-          text-charcoal mb-3">
+                <h1 className="font-serif text-2xl
+          text-warm-dark mb-3">
                     {content.title}
                 </h1>
 
-                <p className="text-charcoal/50 text-sm 
+                <p className="text-warm-dark/50 text-sm
           leading-relaxed mb-8">
                     {content.message(meta)}
                 </p>
@@ -121,10 +121,10 @@ export default function InviteTerminal({
                 {action && (
                     <Link
                         href={action.href}
-                        className="inline-block px-6 py-3 
-              bg-charcoal text-ivory rounded-xl 
-              text-sm font-medium 
-              hover:bg-charcoal/90 transition-all"
+                        className="inline-block px-6 py-3
+              glass-btn-dark rounded-xl
+              text-sm font-medium
+              transition-all"
                     >
                         {action.label}
                     </Link>
