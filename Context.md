@@ -118,10 +118,34 @@
 - [x] SaveIndicator, SignaturePad, SocialRecovery, SuccessionSetup
 - [x] SuccessorSettings, TutorialPopup, VersionHistory, VideoRecorder
 
+### Session 5 — Rebranding & Fixes
+- [x] Rebrand "Legacy Vault" → "ULUMAE" across 49 files (pages, components, lib, legal markdown, API routes, config)
+- [x] Fix Save & Continue button visibility — `bg-warm-brown` → `bg-olive` in all 10 wizard steps
+- [x] Email domain migration — all @legacyvault.com → @ulumae.com
+- [x] package.json name: `legacy-vault-bio` → `ulumae`
+- [x] localStorage key: `legacy-vault-tutorial-completed` → `ulumae-tutorial-completed`
+
 ### Cleanup
-- [ ] Final grep for any remaining old references
+- [x] Final grep for remaining old brand/color references — 0 found
 - [ ] Build verification (`npm run build`)
-- [ ] Commit & push to branch
+- [x] Commit & push to branch
+
+---
+
+## Required Email Addresses (@ulumae.com)
+| Email | Purpose |
+|-------|---------|
+| contact@ulumae.com | General contact (footer, landing) |
+| support@ulumae.com | Customer support |
+| legal@ulumae.com | Legal inquiries |
+| privacy@ulumae.com | Privacy & GDPR requests |
+| refunds@ulumae.com | Refund requests |
+| billing@ulumae.com | Billing issues |
+| disputes@ulumae.com | Family/content disputes |
+| reports@ulumae.com | Content reports |
+| appeals@ulumae.com | Appeal decisions |
+| copyright@ulumae.com | DMCA / copyright claims |
+| authorization@ulumae.com | Authorization document uploads |
 
 ---
 
@@ -130,3 +154,4 @@
 - **Session 2** (2026-03-25): Migrated create page, legal pages (partial), all wizard steps, all components. Hit rate limit before fixing remaining old refs in admin/legal/authorization pages.
 - **Session 3** (2026-03-25): Fixed remaining old color refs in 6 files, committed, pushed.
 - **Session 4** (2026-03-25): Implemented dual-font serif system — Cinzel Bold for letters (A-Z), Bodoni Moda for numbers/symbols. Uses `@font-face` + `unicode-range` in globals.css. No per-component changes needed (transparent via `font-serif` class).
+- **Session 5** (2026-03-26): Rebranded "Legacy Vault" → "ULUMAE" across entire codebase (49 files). Fixed Save button visibility (warm-brown → olive). Migrated all email domains to @ulumae.com. Committed & pushed.
