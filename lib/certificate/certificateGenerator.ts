@@ -102,7 +102,7 @@ export function generateCertificateCanvas(data: CertificateData): HTMLCanvasElem
   // Footer
   ctx.fillStyle = '#3a3d45';
   ctx.font = '300 22px Georgia, serif';
-  ctx.fillText('Legacy Vault — Permanent Digital Preservation', canvas.width / 2, canvas.height - 250);
+  ctx.fillText('ULUMAE — Permanent Digital Preservation', canvas.width / 2, canvas.height - 250);
   ctx.font = '300 18px Georgia, serif';
   ctx.fillStyle = '#4a4d55';
   ctx.fillText(`Memorial ID: ${data.memorialId}`, canvas.width / 2, canvas.height - 200);

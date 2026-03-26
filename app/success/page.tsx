@@ -10,7 +10,7 @@ export default function SuccessPage() {
     const [showConfetti, setShowConfetti] = useState(true);
 
     // Simulated memorial URL (in real app, this would come from database)
-    const memorialUrl = 'https://legacyvault.com/memorial/eleanor-thompson';
+    const memorialUrl = 'https://ulumae.com/memorial/eleanor-thompson';
 
     useEffect(() => {
         // Hide confetti after animation

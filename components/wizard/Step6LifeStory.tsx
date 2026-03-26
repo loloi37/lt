@@ -454,7 +454,7 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-warm-brown hover:bg-warm-brown/90 text-surface-low py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

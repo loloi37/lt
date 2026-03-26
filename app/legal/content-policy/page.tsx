@@ -94,7 +94,7 @@ export default function ContentPolicyPage() {
                                     Found content that violates our policies?
                                 </p>
                                 <a
-                                    href="mailto:reports@legacyvault.com"
+                                    href="mailto:reports@ulumae.com"
                                     className="text-xs text-warm-brown hover:text-warm-brown/80 underline"
                                 >
                                     Report Violation
@@ -217,7 +217,7 @@ export default function ContentPolicyPage() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
-                                    href="mailto:reports@legacyvault.com"
+                                    href="mailto:reports@ulumae.com"
                                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-olive hover:bg-olive/90 text-warm-bg rounded-lg font-medium transition-all"
                                 >
                                     <Mail size={18} />

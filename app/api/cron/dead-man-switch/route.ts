@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
                     // Send Warning to User
                     await sendEmail({
                         to: user.email,
-                        subject: 'Legacy Vault: Annual Verification Required',
+                        subject: 'ULUMAE: Annual Verification Required',
                         html: getProofOfLifeEmail(
                             user.full_name || 'Valued Member',
                             `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?checkin=true`

@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
             amount: amount * 100, // Stripe expects cents
             currency: 'usd',
             description: plan === 'family'
-                ? `Legacy Vault — Family Plan for ${fullName}`
+                ? `ULUMAE — Family Plan for ${fullName}`
                 : isDraft
-                    ? `Legacy Vault — Draft → Personal Upgrade for ${fullName}`
-                    : `Legacy Vault — Permanent Archive for ${fullName}`,
+                    ? `ULUMAE — Draft → Personal Upgrade for ${fullName}`
+                    : `ULUMAE — Permanent Archive for ${fullName}`,
             metadata: {
                 memorialId,
                 plan: planLabel,

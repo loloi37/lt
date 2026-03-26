@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: 'Legacy Vault — Family → Concierge Upgrade (30% deposit)',
+                            name: 'ULUMAE — Family → Concierge Upgrade (30% deposit)',
                             description: `Upgrade deposit. Remaining payments: 40% at draft delivery, 30% at final validation.`,
                         },
                         unit_amount: firstPayment * 100,
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: `Legacy Vault — ${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} → ${targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1)} Upgrade`,
+                        name: `ULUMAE — ${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} → ${targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1)} Upgrade`,
                         description: `Upgrade from ${currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)} ($${currentPrice.toLocaleString()}) to ${targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1)} ($${targetPrice.toLocaleString()}). You pay only the difference.`,
                     },
                     unit_amount: differentialAmount * 100,

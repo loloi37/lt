@@ -37,7 +37,7 @@ export function getWitnessInvitationEmail(
         </div>
 
         <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #999;">
-          <p>This invitation was sent by Legacy Vault on behalf of the family.</p>
+          <p>This invitation was sent by ULUMAE on behalf of the family.</p>
           <p>Preserving the essence of a life, forever.</p>
         </div>
       </div>
@@ -57,7 +57,7 @@ export function getSuccessorInvitationEmail(
         
         <div style="text-align: center; margin-bottom: 40px;">
           <h2 style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 18px; color: #5a6b78; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
-            Legacy Vault Stewardship
+            ULUMAE Stewardship
           </h2>
         </div>
 
@@ -68,7 +68,7 @@ export function getSuccessorInvitationEmail(
         </p>
 
         <p style="font-size: 16px;">
-          This is a position of significant trust. It means that in the event of their passing, you will be granted full control and legal authority over their family archives stored within Legacy Vault.
+          This is a position of significant trust. It means that in the event of their passing, you will be granted full control and legal authority over their family archives stored within ULUMAE.
         </p>
 
         <div style="background-color: #f8f9fa; padding: 20px; margin: 30px 0; font-size: 14px; border-left: 4px solid #5a6b78;">
@@ -100,11 +100,11 @@ export function getProofOfLifeEmail(userName: string, checkInLink: string): stri
     <div style="background-color: #fdf6f0; padding: 40px; font-family: sans-serif; color: #5a6b78;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; border: 1px solid #e8d8cc;">
         <h2 style="font-family: serif; color: #5a6b78; font-size: 24px; margin-bottom: 20px;">
-          Legacy Vault: Annual Verification
+          ULUMAE: Annual Verification
         </h2>
         <p>Dear ${userName},</p>
         <p>
-          This is your annual check-in from Legacy Vault. You have enabled the 
+          This is your annual check-in from ULUMAE. You have enabled the 
           <strong>Dead Man's Switch</strong> for your archive.
         </p>
         <p>
@@ -148,7 +148,7 @@ export function getGentleReminderEmail(
         </div>
 
         <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #bbb;">
-          <p>Legacy Vault. What deserves to be passed on must not be lost.</p>
+          <p>ULUMAE. What deserves to be passed on must not be lost.</p>
         </div>
       </div>
     </div>

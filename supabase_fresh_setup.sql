@@ -1,5 +1,5 @@
 -- ============================================================
--- LEGACY VAULT — COMPLETE SUPABASE SETUP (FRESH PROJECT)
+-- ULUMAE — COMPLETE SUPABASE SETUP (FRESH PROJECT)
 -- ============================================================
 -- Run this ENTIRE file in your Supabase SQL Editor (Dashboard > SQL Editor)
 -- This creates ALL tables, indexes, triggers, RLS policies, and functions

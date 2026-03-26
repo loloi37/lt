@@ -322,7 +322,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => {
-                                                                const note = `[Legacy Vault Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
+                                                                const note = `[ULUMAE Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
                                                                 handleDecision(item, 'approved', note);
                                                             }}
                                                             className="px-3 py-1.5 bg-warm-brown text-surface-low text-xs rounded-lg font-medium hover:bg-warm-brown/90"
@@ -810,7 +810,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                     <div className="w-12 h-12 bg-olive/10 rounded-full flex items-center justify-center mx-auto mb-3">
                                         <Shield size={24} className="text-olive" />
                                     </div>
-                                    <p className="text-xs text-warm-dark/40 uppercase tracking-widest">Legacy Vault</p>
+                                    <p className="text-xs text-warm-dark/40 uppercase tracking-widest">ULUMAE</p>
                                     <p className="text-xs text-warm-dark/40">Memorial Witness Invitation</p>
                                 </div>
 
@@ -864,7 +864,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-warm-brown hover:bg-warm-brown/90 text-surface-low py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

@@ -105,7 +105,7 @@ export default function AbandonedArchivesPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2">
                                                 <a
-                                                    href={`mailto:${record.ownerEmail}?subject=Help with your Legacy Vault archive`}
+                                                    href={`mailto:${record.ownerEmail}?subject=Help with your ULUMAE archive`}
                                                     className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     title="Send Email Nudge"
                                                 >

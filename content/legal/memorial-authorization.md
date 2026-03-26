@@ -1,15 +1,15 @@
 # Memorial Authorization Form
 
 **Version 1.0** | **Effective Date:** February 2, 2026  
-**Required for all memorial creations on Legacy Vault**
+**Required for all memorial creations on ULUMAE**
 
 ---
 
 ## ⚠️ CRITICAL LEGAL NOTICE
 
-**READ CAREFULLY BEFORE SIGNING:** This is a legally binding document. By signing below, you enter into a contractual agreement with Legacy Vault LLC that includes indemnification clauses, representations of legal authority, and waivers of liability. If you do not understand these terms, consult an attorney before proceeding.
+**READ CAREFULLY BEFORE SIGNING:** This is a legally binding document. By signing below, you enter into a contractual agreement with ULUMAE LLC that includes indemnification clauses, representations of legal authority, and waivers of liability. If you do not understand these terms, consult an attorney before proceeding.
 
-**Purpose:** This form establishes your legal authority to create a memorial for a deceased person and protects Legacy Vault from claims by other family members, estates, or third parties.
+**Purpose:** This form establishes your legal authority to create a memorial for a deceased person and protects ULUMAE from claims by other family members, estates, or third parties.
 
 ---
 
@@ -119,7 +119,7 @@ I represent and warrant that:
 - I own or have obtained licenses for all content I upload
 - I understand that **professional photographer portraits** are typically owned by the photographer, not the subject
 - I will not upload **copyrighted music, text, or images** without permission
-- I grant Legacy Vault a license to host and display the content I upload
+- I grant ULUMAE a license to host and display the content I upload
 
 ### 4.3 Privacy and Consent
 I represent and warrant that:
@@ -135,7 +135,7 @@ I represent and warrant that:
 ### 5.1 Indemnification Agreement
 **THIS IS A BINDING INDEMNIFICATION CLAUSE. READ CAREFULLY.**
 
-I agree to **indemnify, defend, and hold harmless** Legacy Vault LLC, its officers, directors, employees, agents, successors, and assigns (collectively, "Legacy Vault") from and against any and all claims, demands, actions, suits, proceedings, damages, liabilities, losses, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to:
+I agree to **indemnify, defend, and hold harmless** ULUMAE LLC, its officers, directors, employees, agents, successors, and assigns (collectively, "ULUMAE") from and against any and all claims, demands, actions, suits, proceedings, damages, liabilities, losses, costs, and expenses (including reasonable attorneys' fees) arising out of or relating to:
 
 **A. Family Disputes:** Any claim by family members, heirs, or other interested parties disputing:
 - My authority to create this memorial
@@ -159,7 +159,7 @@ I agree to **indemnify, defend, and hold harmless** Legacy Vault LLC, its office
 
 ### 5.2 Scope of Protection
 This indemnification applies regardless of:
-- Whether Legacy Vault was negligent (except for gross negligence or willful misconduct)
+- Whether ULUMAE was negligent (except for gross negligence or willful misconduct)
 - Whether the claim has merit
 - Whether I am ultimately found liable
 - The jurisdiction where the claim is brought
@@ -168,8 +168,8 @@ This indemnification applies regardless of:
 I agree to:
 - Cooperate fully in the defense of any claim
 - Provide documents and testimony as requested
-- Not settle any claim without Legacy Vault's consent (if Legacy Vault is named)
-- Reimburse Legacy Vault for legal costs within 30 days of invoice
+- Not settle any claim without ULUMAE's consent (if ULUMAE is named)
+- Reimburse ULUMAE for legal costs within 30 days of invoice
 
 ---
 
@@ -177,13 +177,13 @@ I agree to:
 
 ### 6.1 Family Dispute Resolution
 I understand that if other family members dispute this memorial:
-- Legacy Vault will follow the **Family Dispute Resolution Process** in our Content Policy
+- ULUMAE will follow the **Family Dispute Resolution Process** in our Content Policy
 - I may be required to provide **additional legal documentation** proving my authority
-- Legacy Vault may **temporarily hide** the memorial pending resolution
+- ULUMAE may **temporarily hide** the memorial pending resolution
 - If I cannot prove authority, the memorial may be **permanently removed**
 
 ### 6.2 Immediate Removal Rights
-I acknowledge that Legacy Vault reserves the right to **immediately remove** this memorial if:
+I acknowledge that ULUMAE reserves the right to **immediately remove** this memorial if:
 - We receive a valid court order
 - We determine the memorial violates our Content Policy
 - We determine you lack legal authority
@@ -206,11 +206,11 @@ You expressly warrant that:
 1. You are at least 18 years of age
 2. You have the legal capacity to enter this agreement
 3. All information in this Form is true and accurate
-4. You have read and understand Legacy Vault's Terms of Service, Privacy Policy, and Content Policy
+4. You have read and understand ULUMAE's Terms of Service, Privacy Policy, and Content Policy
 5. You will comply with all applicable laws in creating and maintaining this memorial
 
-### 7.2 Legacy Vault Disclaimers
-I understand that Legacy Vault:
+### 7.2 ULUMAE Disclaimers
+I understand that ULUMAE:
 - **Does not verify** my legal authority independently (we rely on your representations)
 - **Is not responsible** for family disputes or disagreements about content
 - **Does not endorse** the accuracy of any memorial content
@@ -241,10 +241,10 @@ _________________________________________________________________
 
 I, the undersigned, have read, understood, and agree to be bound by:
 - [ ] This Memorial Authorization Form
-- [ ] Legacy Vault Terms of Service
-- [ ] Legacy Vault Privacy Policy  
-- [ ] Legacy Vault Content Policy
-- [ ] Legacy Vault Refund Policy
+- [ ] ULUMAE Terms of Service
+- [ ] ULUMAE Privacy Policy  
+- [ ] ULUMAE Content Policy
+- [ ] ULUMAE Refund Policy
 
 **I understand that creating this memorial without proper authority may result in legal liability to me personally, and I accept full responsibility for any claims arising from this memorial.**
 
@@ -259,13 +259,13 @@ This Form shall be governed by the laws of the State of Delaware, without regard
 If any provision of this Form is found unenforceable, the remaining provisions remain in full force.
 
 ### 9.3 Entire Agreement
-This Form constitutes the entire agreement between me and Legacy Vault regarding memorial authorization and supersedes all prior agreements.
+This Form constitutes the entire agreement between me and ULUMAE regarding memorial authorization and supersedes all prior agreements.
 
 ### 9.4 Modification
-Legacy Vault may update this Form with 30 days notice. Continued use after updates constitutes acceptance.
+ULUMAE may update this Form with 30 days notice. Continued use after updates constitutes acceptance.
 
 ### 9.5 Contact
-Questions about this Form: **legal@legacyvault.com**
+Questions about this Form: **legal@ulumae.com**
 
 ---
 
@@ -282,9 +282,9 @@ Before submitting this Form, ensure you have:
 - [ ] Understand that false statements may constitute fraud
 
 **Submit this Form via:**
-- Upload to: legacyvault.com/authorize
-- Or email to: authorization@legacyvault.com
-- Or mail to: Legacy Vault LLC, Attn: Legal Department, 123 Main St, Wilmington, DE 19801
+- Upload to: ulumae.com/authorize
+- Or email to: authorization@ulumae.com
+- Or mail to: ULUMAE LLC, Attn: Legal Department, 123 Main St, Wilmington, DE 19801
 
 ---
 
@@ -302,7 +302,7 @@ Before submitting this Form, ensure you have:
 
 ---
 
-**Legacy Vault Use Only:**
+**ULUMAE Use Only:**
 
 Authorization ID: ______________________  
 Reviewed By: ______________________  

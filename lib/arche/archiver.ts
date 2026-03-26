@@ -15,7 +15,7 @@ export class ArcheArchiver {
         this.resourceMap = new Map();
         this.memorialData = data;
         this.verificationLog = [
-            `LEGACY VAULT - INTEGRITY VERIFICATION REPORT`,
+            `ULUMAE - INTEGRITY VERIFICATION REPORT`,
             `Generated: ${new Date().toISOString()}`,
             `Subject: ${data.step1.fullName}`,
             `-------------------------------------------------------------------`,

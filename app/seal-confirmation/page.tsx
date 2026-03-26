@@ -175,7 +175,7 @@ function SealConfirmationContent() {
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
                             This archive becomes permanent. It will be accessible at
-                            <span className="text-warm-dark/70 font-medium ml-1">legacyvault.com/person/{slug}</span>
+                            <span className="text-warm-dark/70 font-medium ml-1">ulumae.com/person/{slug}</span>
                         </li>
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />

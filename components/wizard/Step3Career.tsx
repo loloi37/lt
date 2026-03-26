@@ -288,7 +288,7 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                 </button>
                 <button
                     onClick={onNext}
-                    className="flex-1 bg-warm-brownhover:bg-warm-brown/90 text-surface-low py-4 px-6 rounded-xl font-medium transition-all"
+                    className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
                     Save & Continue →
                 </button>

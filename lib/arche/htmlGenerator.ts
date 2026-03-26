@@ -588,8 +588,8 @@ export function generateStandaloneHTML(data: MemorialData, resourceMap?: Resourc
 
     <footer class="footer">
         <div class="container" style="text-align: center;">
-            <p>Memorial preserved with ❤️ by Legacy Vault</p>
-            <div class="credits">© ${new Date().getFullYear()} Legacy Vault. All rights reserved.</div>
+            <p>Memorial preserved with ❤️ by ULUMAE</p>
+            <div class="credits">© ${new Date().getFullYear()} ULUMAE. All rights reserved.</div>
         </div>
     </footer>
 

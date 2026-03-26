@@ -88,10 +88,10 @@ export default function PrivacyPage() {
                                     Contact our Data Protection Officer for privacy-specific inquiries.
                                 </p>
                                 <a
-                                    href="mailto:privacy@legacyvault.com"
+                                    href="mailto:privacy@ulumae.com"
                                     className="text-xs text-olive hover:text-olive/80 underline"
                                 >
-                                    privacy@legacyvault.com
+                                    privacy@ulumae.com
                                 </a>
                             </div>
                         </div>
@@ -195,7 +195,7 @@ export default function PrivacyPage() {
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                                 <a
-                                    href="mailto:privacy@legacyvault.com"
+                                    href="mailto:privacy@ulumae.com"
                                     className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-olive hover:bg-olive/90 text-surface-low rounded-lg font-medium transition-all"
                                 >
                                     <Mail size={18} />

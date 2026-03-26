@@ -470,7 +470,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
         <button
           onClick={onNext}
           disabled={uploading}
-          className="flex-1 bg-warm-brown hover:bg-warm-brown/90 text-surface-low py-4 px-6 rounded-xl font-medium transition-all disabled:opacity-50"
+          className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all disabled:opacity-50"
         >
           {data.videos.length > 0 ? 'Save & Continue to Review →' : 'Skip Videos & Continue →'}
         </button>

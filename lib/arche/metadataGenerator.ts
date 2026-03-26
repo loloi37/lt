@@ -2,7 +2,7 @@
 import { MemorialData } from '@/types/memorial';
 
 export function generateReadme(data: MemorialData): string {
-    return `LEGACY VAULT ARCHIVE
+    return `ULUMAE ARCHIVE
 ================================================================
 ARCHIVE FOR: ${data.step1.fullName}
 GENERATED: ${new Date().toLocaleDateString()}
@@ -28,10 +28,10 @@ guaranteed to be readable by computers for decades to come.
 No proprietary software is needed.
 
 SUPPORT:
-If you have questions, contact: support@legacyvault.com
+If you have questions, contact: support@ulumae.com
 
 ================================================================
-Preserved by Legacy Vault - The echo that never fades.
+Preserved by ULUMAE - The echo that never fades.
 `;
 }
 
@@ -53,7 +53,7 @@ export function generateManifest(data: MemorialData, memorialId: string): string
             completedSteps: data.completedSteps
         },
         // We include the full raw data for potential future re-importing
-        // into Legacy Vault or another system.
+        // into ULUMAE or another system.
         rawData: data
     };
 

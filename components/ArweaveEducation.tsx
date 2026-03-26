@@ -76,7 +76,7 @@ export default function ArweaveEducation() {
                         <p className="text-xs text-warm-muted font-sans leading-relaxed">
                             Cloud storage requires ongoing payment. If you stop paying, your data is deleted.
                             If the company shuts down, your data disappears. Arweave eliminates this dependency.
-                            Your memorial is preserved independently of any company, including Legacy Vault itself.
+                            Your memorial is preserved independently of any company, including ULUMAE itself.
                         </p>
                     </div>
                 </div>

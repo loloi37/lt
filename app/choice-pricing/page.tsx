@@ -32,7 +32,7 @@ const faqs = [
         answer: 'Yes. Unlimited storage for the lifetime of the archive. No additional fees.',
     },
     {
-        question: 'What happens if Legacy Vault shuts down?',
+        question: 'What happens if ULUMAE shuts down?',
         answer: 'Your data is exportable at any time. In addition, an escrow arrangement guarantees continuity.',
     },
     {
@@ -391,7 +391,7 @@ export default function ChoicePricingPage() {
                             </div>
                             <div>
                                 <p className="text-xs uppercase tracking-widest font-bold text-warm-dark">
-                                    Legacy Vault
+                                    ULUMAE
                                 </p>
                                 <p className="text-xs text-warm-outline">
                                     Permanent Digital Memorials

@@ -120,7 +120,7 @@ function PaymentForm({ memorialId, amount, fullName, plan, isPopup }: {
                     </p>
                     <p className="text-xs text-warm-dark/30">
                         Your draft is saved, and you can return at any time.
-                        Need help? Contact us at <a href="mailto:support@legacyvault.com" className="underline hover:text-warm-dark/50">support@legacyvault.com</a>
+                        Need help? Contact us at <a href="mailto:support@ulumae.com" className="underline hover:text-warm-dark/50">support@ulumae.com</a>
                     </p>
                 </div>
             )}

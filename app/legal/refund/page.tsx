@@ -91,10 +91,10 @@ export default function RefundPolicyPage() {
                                     Contact our refunds team for cancellations.
                                 </p>
                                 <a
-                                    href="mailto:refunds@legacyvault.com"
+                                    href="mailto:refunds@ulumae.com"
                                     className="text-xs text-plum hover:text-plum/80 underline font-medium"
                                 >
-                                    refunds@legacyvault.com
+                                    refunds@ulumae.com
                                 </a>
                             </div>
                         </div>
@@ -219,22 +219,22 @@ export default function RefundPolicyPage() {
                                 <div>
                                     <RotateCcw className="mx-auto mb-3 text-plum" size={28} />
                                     <h4 className="font-medium text-warm-dark mb-1">Refund Requests</h4>
-                                    <a href="mailto:refunds@legacyvault.com" className="text-sm text-plum hover:underline">
-                                        refunds@legacyvault.com
+                                    <a href="mailto:refunds@ulumae.com" className="text-sm text-plum hover:underline">
+                                        refunds@ulumae.com
                                     </a>
                                 </div>
                                 <div>
                                     <FileText className="mx-auto mb-3 text-warm-brown" size={28} />
                                     <h4 className="font-medium text-warm-dark mb-1">Family Disputes</h4>
-                                    <a href="mailto:disputes@legacyvault.com" className="text-sm text-warm-brown hover:underline">
-                                        disputes@legacyvault.com
+                                    <a href="mailto:disputes@ulumae.com" className="text-sm text-warm-brown hover:underline">
+                                        disputes@ulumae.com
                                     </a>
                                 </div>
                                 <div>
                                     <CreditCard className="mx-auto mb-3 text-plum" size={28} />
                                     <h4 className="font-medium text-warm-dark mb-1">Billing Issues</h4>
-                                    <a href="mailto:billing@legacyvault.com" className="text-sm text-plum hover:underline">
-                                        billing@legacyvault.com
+                                    <a href="mailto:billing@ulumae.com" className="text-sm text-plum hover:underline">
+                                        billing@ulumae.com
                                     </a>
                                 </div>
                             </div>

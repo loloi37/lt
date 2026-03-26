@@ -113,7 +113,7 @@ function WelcomeContent({
           flex items-center justify-between">
                     <span className="text-xs tracking-widest
             uppercase text-warm-dark/30 font-sans">
-                        Legacy Vault
+                        ULUMAE
                     </span>
                     {/* Role badge */}
                     <span className={`text-xs px-3 py-1

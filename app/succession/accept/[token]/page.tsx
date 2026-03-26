@@ -89,7 +89,7 @@ export default function SuccessorAcceptancePage({ params }: { params: Promise<{ 
 
                     <div className="prose prose-sm text-warm-dark/80 space-y-4 mb-8 text-center leading-relaxed">
                         <p className="text-base">
-                            You have been designated as the <strong>Archive Steward</strong> for a Legacy Vault account.
+                            You have been designated as the <strong>Archive Steward</strong> for a ULUMAE account.
                         </p>
                         <p>
                             This means that in the event of the account owner's passing, you will be entrusted with the management, preservation, and control of all family archives associated with this account.

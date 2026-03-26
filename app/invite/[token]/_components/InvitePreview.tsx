@@ -38,7 +38,7 @@ export default function InvitePreview({
           py-4 text-center">
                     <span className="text-xs tracking-widest
             uppercase text-warm-dark/30 font-sans">
-                        Legacy Vault
+                        ULUMAE
                     </span>
                 </div>
             </div>

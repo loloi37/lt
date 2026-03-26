@@ -163,7 +163,7 @@ function RequestedContent() {
                         </Link>
 
                         <a
-                            href="mailto:contact@legacyvault.com"
+                            href="mailto:contact@ulumae.com"
                             className="flex-1 py-3 bg-olive/10 hover:bg-olive/20 text-olive rounded-lg font-medium transition-all flex items-center justify-center gap-2"
                         >
                             Contact Us Directly

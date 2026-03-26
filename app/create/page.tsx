@@ -433,7 +433,7 @@ function CreateMemorialPageContent() {
   }, [authUserId]);
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('legacy-vault-tutorial-completed');
+    const hasSeenTutorial = localStorage.getItem('ulumae-tutorial-completed');
     if (!memorialId && !hasSeenTutorial) {
       setTimeout(() => {
         setShowTutorial(true);
@@ -478,12 +478,12 @@ function CreateMemorialPageContent() {
   ];
 
   const handleTutorialComplete = () => {
-    localStorage.setItem('legacy-vault-tutorial-completed', 'true');
+    localStorage.setItem('ulumae-tutorial-completed', 'true');
     setShowTutorial(false);
   };
 
   const handleTutorialSkip = () => {
-    localStorage.setItem('legacy-vault-tutorial-completed', 'true');
+    localStorage.setItem('ulumae-tutorial-completed', 'true');
     setShowTutorial(false);
   };
 

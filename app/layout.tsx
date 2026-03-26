@@ -48,7 +48,7 @@ function Footer() {
         <div className="grid gap-8 md:grid-cols-3">
           <div className="space-y-2">
             <p className="font-serif text-lg text-warm-dark">
-              Legacy Vault
+              ULUMAE
             </p>
             <p className="text-xs text-warm-muted">
               Architecture of a lasting memory.
@@ -80,16 +80,16 @@ function Footer() {
               First conversation offered, discreet and without obligation.
             </p>
             <a
-              href="mailto:contact@legacyvault.example"
+              href="mailto:contact@ulumae.com"
               className="text-sm text-warm-muted underline underline-offset-4 hover:text-warm-dark transition-colors"
             >
-              contact@legacyvault.example
+              contact@ulumae.com
             </a>
           </div>
         </div>
 
         <div className="mt-8 flex items-center justify-between text-[11px] text-warm-outline">
-          <span>© {new Date().getFullYear()} Legacy Vault</span>
+          <span>© {new Date().getFullYear()} ULUMAE</span>
           <span className="hidden md:inline">
             Transmission is not an instant act. It is a process.
           </span>

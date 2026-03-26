@@ -106,7 +106,7 @@ export default function LandingPage() {
                             Not a social network.<br />Not a virtual cemetery.
                         </h2>
                         <p className="text-warm-muted leading-relaxed mb-4 font-sans">
-                            Legacy Vault is a space for <em className="text-warm-dark not-italic font-medium">clarity</em> — not
+                            ULUMAE is a space for <em className="text-warm-dark not-italic font-medium">clarity</em> — not
                             entertainment. A place to gather what defines a lineage: decisions, values, sacrifices, the things
                             that must not disappear.
                         </p>
@@ -173,7 +173,7 @@ export default function LandingPage() {
                         Designed to last centuries.
                     </h2>
                     <p className="text-warm-muted font-sans leading-relaxed mb-12 max-w-2xl">
-                        Legacy Vault uses Arweave — a permanent, decentralized storage protocol funded by a 200-year
+                        ULUMAE uses Arweave — a permanent, decentralized storage protocol funded by a 200-year
                         endowment model. Your memorial is not stored on a server you rent. It is preserved in a network
                         you cannot outlive.
                     </p>
@@ -349,8 +349,8 @@ export default function LandingPage() {
                 <div className="max-w-2xl mx-auto">
                     <h2 className="text-3xl font-light mb-10 text-center">Common Questions</h2>
                     <FAQItem
-                        question="What happens if Legacy Vault shuts down?"
-                        answer="Your memorial lives on Arweave, not on our servers. Even if Legacy Vault ceased to exist, your data remains permanently accessible through any Arweave gateway. Additionally, Family plan users have local copies via our Anchor technology."
+                        question="What happens if ULUMAE shuts down?"
+                        answer="Your memorial lives on Arweave, not on our servers. Even if ULUMAE ceased to exist, your data remains permanently accessible through any Arweave gateway. Additionally, Family plan users have local copies via our Anchor technology."
                     />
                     <FAQItem
                         question="Why a one-time payment instead of a subscription?"
@@ -366,7 +366,7 @@ export default function LandingPage() {
                     />
                     <FAQItem
                         question="Is my data private?"
-                        answer="All memorial data is encrypted with AES-256-GCM before leaving your browser. Only you and your designated successors hold the keys. Not even Legacy Vault can read your content."
+                        answer="All memorial data is encrypted with AES-256-GCM before leaving your browser. Only you and your designated successors hold the keys. Not even ULUMAE can read your content."
                     />
                     <FAQItem
                         question="Can I edit after preservation?"
@@ -384,7 +384,7 @@ export default function LandingPage() {
                         Start preserving what matters.
                     </h2>
                     <p className="text-warm-muted font-sans mb-10 leading-relaxed">
-                        Legacy Vault is not for everyone. It is for those who believe
+                        ULUMAE is not for everyone. It is for those who believe
                         that some things must outlast us.
                     </p>
                     <Link

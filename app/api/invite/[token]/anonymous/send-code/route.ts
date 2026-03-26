@@ -50,7 +50,7 @@ export async function POST(
         // Send code via Brevo
         await sendEmail({
             to: email,
-            subject: 'Your verification code — Legacy Vault',
+            subject: 'Your verification code — ULUMAE',
             html: `
                 <div style="font-family: Georgia, serif; 
                   max-width: 400px; margin: 0 auto; 

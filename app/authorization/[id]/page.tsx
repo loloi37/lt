@@ -355,8 +355,8 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                             </div>
                             <input type="checkbox" className="hidden" checked={agreements.indemnification} onChange={() => toggleAgreement('indemnification')} />
                             <div>
-                                <p className="font-medium text-sm text-warm-dark">I agree to indemnify Legacy Vault.</p>
-                                <p className="text-xs text-warm-muted mt-1">I hold Legacy Vault harmless from any claims or family disputes arising from this account.</p>
+                                <p className="font-medium text-sm text-warm-dark">I agree to indemnify ULUMAE.</p>
+                                <p className="text-xs text-warm-muted mt-1">I hold ULUMAE harmless from any claims or family disputes arising from this account.</p>
                             </div>
                         </label>
                     </div>

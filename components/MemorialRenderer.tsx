@@ -573,8 +573,8 @@ export default function MemorialRenderer({
                 {!compact && (
                     <div className="bg-warm-dark text-surface-low py-12">
                         <div className="max-w-7xl mx-auto px-6 md:px-12 text-center">
-                            <p className="text-surface-low/60 mb-4">Memorial created with ❤️ by Legacy Vault</p>
-                            <p className="text-surface-low/40 text-sm">© {new Date().getFullYear()} Legacy Vault. All rights reserved.</p>
+                            <p className="text-surface-low/60 mb-4">Memorial created with ❤️ by ULUMAE</p>
+                            <p className="text-surface-low/40 text-sm">© {new Date().getFullYear()} ULUMAE. All rights reserved.</p>
                         </div>
                     </div>
                 )}

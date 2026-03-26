@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
                         currency: 'usd',
                         product_data: {
                             name: isDraftUpgrade
-                                ? 'Legacy Vault - Draft → Personal Upgrade'
-                                : `Legacy Vault - ${plan} Plan`,
+                                ? 'ULUMAE - Draft → Personal Upgrade'
+                                : `ULUMAE - ${plan} Plan`,
                             description: isDraftUpgrade
                                 ? 'Activate your draft memorial with lifetime hosting and no watermarks'
                                 : 'Permanent archival for your memorial',

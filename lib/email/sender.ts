@@ -16,7 +16,7 @@ export async function sendEmail({
         },
         body: JSON.stringify({
             sender: {
-                name: 'Legacy Vault',
+                name: 'ULUMAE',
                 email: 'jejfhdhf19@gmail.com'
             },
             to: [{ email: to }],

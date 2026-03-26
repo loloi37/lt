@@ -175,10 +175,10 @@ function PaymentSuccessContent() {
                 <div className="max-w-md text-center">
                     <p className="text-warm-dark/60 mb-6 leading-relaxed">{error}</p>
                     <a
-                        href="mailto:support@legacyvault.com"
+                        href="mailto:support@ulumae.com"
                         className="text-sm text-warm-dark/40 underline hover:text-warm-dark transition-colors"
                     >
-                        Contact support@legacyvault.com
+                        Contact support@ulumae.com
                     </a>
                 </div>
             </div>

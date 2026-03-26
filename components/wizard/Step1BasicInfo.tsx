@@ -484,7 +484,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                         type="submit"
                         disabled={!isValid() || checkingDuplicates}
                         className={`flex-1 py-4 px-6 rounded-xl font-medium transition-all ${isValid() && !checkingDuplicates
-                            ? 'bg-warm-brownhover:bg-warm-brown/90 text-surface-low'
+                            ? 'bg-olive hover:bg-olive/90 text-warm-bg'
                             : 'bg-warm-border/30 text-warm-outline cursor-not-allowed'
                             }`}
                     >

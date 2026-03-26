@@ -138,7 +138,7 @@ export default function InviteAuthStep({
                     </button>
                     <span className="text-xs tracking-widest
             uppercase text-warm-dark/30 font-sans">
-                        Legacy Vault
+                        ULUMAE
                     </span>
                 </div>
             </div>
