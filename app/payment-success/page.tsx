@@ -99,7 +99,7 @@ function PaymentSuccessContent() {
                     return;
                 }
 
-                // STANDARD (non-upgrade) FLOW: Show threshold experience in this window
+                // STANDARD (non-upgrade) FLOW: Check if memorial has content
                 const supabase = createClient();
                 const { data, error: fetchError } = await supabase
                     .from('memorials')
@@ -107,6 +107,16 @@ function PaymentSuccessContent() {
                     .eq('id', memorialId)
                     .single();
 
+                // FRESH PURCHASE (no content yet): Go straight to dashboard
+                // This handles the choice-pricing → pay → empty dashboard flow
+                if (!data?.full_name) {
+                    const uid = data?.user_id || '';
+                    const dashMode = planParam === 'family' ? 'family' : 'personal';
+                    window.location.replace(`/dashboard/${dashMode}/${uid}?welcome=true`);
+                    return;
+                }
+
+                // DRAFT→PERSONAL SEAL FLOW (has content): Show threshold experience
                 if (!fetchError && data) {
                     setMemorial(data as ThresholdMemorial);
                 }

@@ -77,7 +77,8 @@ function SealConfirmationContent() {
 
     const handleGoBack = () => {
         if (memorialId) {
-            router.push(`/create?id=${memorialId}`);
+            const memorialMode = memorial?.mode || 'draft';
+            router.push(`/create?id=${memorialId}&mode=${memorialMode}`);
         } else {
             router.back();
         }

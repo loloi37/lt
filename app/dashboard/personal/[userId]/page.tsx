@@ -250,7 +250,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                     <div className="text-center py-32">
                         <Loader2 size={28} className="text-warm-muted/40 animate-spin mx-auto" />
                     </div>
-                ) : activeArchive ? (
+                ) : activeArchive && activeArchive.full_name ? (
                     <ActiveArchiveView
                         archive={activeArchive}
                         onDelete={softDelete}
@@ -260,21 +260,32 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         paymentConfirmedAt={activeArchive.payment_confirmed_at ?? null}
                     />
                 ) : (
-                    /* Empty state */
+                    /* Empty state — either no archive or paid but unfilled archive */
                     <div className="text-center py-32">
                         <div className="w-20 h-20 rounded-full bg-surface-mid border border-warm-border/30 flex items-center justify-center mx-auto mb-8">
                             <User size={32} className="text-warm-muted/40" />
                         </div>
-                        <h2 className="font-serif text-5xl text-warm-dark mb-4">Begin your archive</h2>
+                        <h2 className="font-serif text-5xl text-warm-dark mb-4">
+                            {activeArchive ? 'Create your memorial' : 'Begin your archive'}
+                        </h2>
                         <p className="font-serif italic text-lg text-warm-muted mb-10">
-                            A place to preserve what matters most
+                            {activeArchive
+                                ? 'Your plan is active. Create your first memorial to get started.'
+                                : 'A place to preserve what matters most'}
                         </p>
                         <button
-                            onClick={handleCreate}
+                            onClick={() => {
+                                if (activeArchive) {
+                                    // Reuse the existing empty paid memorial
+                                    window.location.href = `/create?id=${activeArchive.id}&mode=personal`;
+                                } else {
+                                    handleCreate();
+                                }
+                            }}
                             className="inline-flex items-center gap-2 px-8 py-3.5 glass-btn-primary rounded-xl text-sm font-serif tracking-wide"
                         >
                             <Plus size={16} />
-                            Create archive
+                            Create memorial
                         </button>
                     </div>
                 )}

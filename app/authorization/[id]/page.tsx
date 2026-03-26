@@ -201,7 +201,7 @@ export default function AuthorizationPage({ params }: { params: Promise<{ id: st
                     } else if (isAccountLevel) {
                         router.push('/family-confirmation?authorized=true');
                     } else {
-                        router.push(`/create?id=${memorialId}&authorized=true`);
+                        router.push(`/create?id=${memorialId}&mode=draft&authorized=true`);
                     }
                 }, 3000);
             }

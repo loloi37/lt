@@ -94,7 +94,13 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     };
 
     const handleCreate = () => {
-        window.location.href = '/create?mode=family';
+        // Reuse an existing empty paid memorial (plan marker) if available
+        const emptyPaid = memorials.find(m => !m.full_name && m.paid);
+        if (emptyPaid) {
+            window.location.href = `/create?id=${emptyPaid.id}&mode=family`;
+        } else {
+            window.location.href = '/create?mode=family';
+        }
     };
 
     // Soft Delete with Contributor Check — blocks preserved archives
@@ -171,8 +177,9 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         return diff > 0 ? diff : 0;
     };
 
-    // Filter Active Memorials
-    const filteredMemorials = memorials.filter(m => {
+    // Filter Active Memorials — exclude empty plan markers (no full_name)
+    const realMemorials = memorials.filter(m => m.full_name);
+    const filteredMemorials = realMemorials.filter(m => {
         const matchesSearch = (m.full_name || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterStatus === 'all'
             ? true
@@ -268,7 +275,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
             <div className="max-w-7xl mx-auto px-6 py-12">
                 {/* SEARCH & FILTER TOOLBAR */}
-                {!loading && memorials.length > 0 && (
+                {!loading && realMemorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
                         <div className="flex-1 relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-outline" size={20} />
@@ -299,7 +306,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     <div className="text-center py-20">
                         <Loader2 size={48} className="text-olive animate-spin mx-auto mb-4" />
                     </div>
-                ) : memorials.length === 0 && deletedMemorials.length === 0 ? (
+                ) : realMemorials.length === 0 ? (
                     <div className="text-center py-20">
                         <div className="w-24 h-24 bg-surface-mid rounded-full flex items-center justify-center mx-auto mb-6">
                             <User size={48} className="text-warm-muted" />

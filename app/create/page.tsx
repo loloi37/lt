@@ -241,29 +241,29 @@ function CreateMemorialPageContent() {
     createEmptyMemorial();
   }, [authUserId, currentMemorialId]);
 
-  // 1. CAPTURE THE MODE
+  // 1. CAPTURE THE MODE — use DB mode when available (prevents URL param spoofing)
   const mode = searchParams.get('mode') || 'personal';
+  const effectiveMode = dbMode || mode;
   // Personal & Family modes = user already paid for the plan → full access
-  const isPaidMode = mode === 'personal' || mode === 'family';
+  const isPaidMode = effectiveMode === 'personal' || effectiveMode === 'family';
   const hasFullAccess = isPaidMode || memorialData.paid;
 
   // Determine the correct dashboard path based on the memorial's actual mode
-  const effectiveMode = dbMode || mode;
   const dashboardPath = authUserId
     ? `/dashboard/${effectiveMode === 'family' ? 'family' : effectiveMode === 'draft' ? 'draft' : 'personal'}/${authUserId}`
     : '/dashboard';
 
   // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
-    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${mode === 'family'
+    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${effectiveMode === 'family'
       ? 'bg-warm-brown/10 text-warm-brown border-warm-brown/20'
-      : mode === 'draft'
+      : effectiveMode === 'draft'
         ? 'bg-warm-border/10 text-warm-muted border-warm-border/30'
         : 'bg-olive/10 text-olive border-olive/20'
       }`}>
-      {mode === 'family' ? <Users size={12} /> : <User size={12} />}
+      {effectiveMode === 'family' ? <Users size={12} /> : <User size={12} />}
       <span className="uppercase tracking-wider">
-        {mode === 'family' ? 'Family Archive' : mode === 'draft' ? 'Draft' : 'Personal Archive'}
+        {effectiveMode === 'family' ? 'Family Archive' : effectiveMode === 'draft' ? 'Draft' : 'Personal Archive'}
       </span>
     </div>
   );
@@ -986,8 +986,8 @@ function CreateMemorialPageContent() {
 
             {/* Step 1.3.1: Qualitative indicator instead of numerical */}
             {(() => {
-              const isPaidMode = mode === 'personal' || mode === 'family';
-              const isPresenceUnlocked = isPaidMode || memorialData.paid || completedPathsCount >= 2;
+              const isPaidModeLocal = effectiveMode === 'personal' || effectiveMode === 'family';
+              const isPresenceUnlocked = isPaidModeLocal || memorialData.paid || completedPathsCount >= 2;
 
               return (
                 <>

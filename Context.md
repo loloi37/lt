@@ -149,6 +149,61 @@
 
 ---
 
+## Session 6 — Bug Fix: Draft→Personal mode leak + Direct Payment Flow
+
+### Bug 1: Draft archive becomes "Personal" after Seal→Back→Return flow
+
+**The problem:**
+When a user follows: Create Draft → Save & Continue → Seal this archive → "I am ready" → Back → "I am not ready yet - Return to draft", the archive switches from "Draft" to "Personal Archive" and gains full paid access (e.g. 11+ images).
+
+**Root cause (3 issues in `app/create/page.tsx`):**
+1. `seal-confirmation/page.tsx` line 80: `handleGoBack()` pushes `/create?id=${memorialId}` WITHOUT `&mode=draft`. The create page defaults `mode` to `'personal'` when no URL param exists (line 245).
+2. `app/create/page.tsx` line 245-248: `isPaidMode` and `hasFullAccess` are derived from the URL `mode` param (`searchParams.get('mode') || 'personal'`), NOT from the DB-loaded `dbMode`. So even though the DB still says `mode='draft'`, the UI grants full paid access.
+3. The `ModeBadge` component (line 258-268) also uses the URL `mode`, showing "Personal Archive" instead of "Draft".
+
+**Fix plan:**
+- **`app/create/page.tsx`**: Change `isPaidMode`, `hasFullAccess`, and `ModeBadge` to use `effectiveMode` (which is `dbMode || mode`) instead of raw URL `mode`. This ensures DB mode always takes priority over URL params.
+- **`app/seal-confirmation/page.tsx`**: Pass the memorial's mode in `handleGoBack()` URL: `/create?id=${memorialId}&mode=${memorial.mode}`.
+- **`app/authorization/[id]/page.tsx`** line 204: Same — include mode when redirecting back to create.
+
+**Files to modify:**
+- `app/create/page.tsx` (lines 245-248, 258-268)
+- `app/seal-confirmation/page.tsx` (line 80)
+- `app/authorization/[id]/page.tsx` (line 204 — fallback redirect)
+
+### Task 2: Direct payment from choice-pricing → empty dashboard → user creates memorial
+
+**The problem:**
+Currently, when a user pays from choice-pricing (Personal or Family), a memorial is auto-created at the confirmation page BEFORE payment. After payment, the user lands on a dashboard with an empty "Untitled" archive. The user wants: pay → empty dashboard → click "Create Memorial" to start.
+
+**Current flow:**
+1. choice-pricing → personal-confirmation → `ensureMemorial()` creates empty memorial → payment → finalize-payment marks it paid → dashboard shows empty archive
+
+**Desired flow:**
+1. choice-pricing → personal-confirmation → payment (NO memorial created) → dashboard is empty → user clicks "Create Memorial" → creates first memorial with correct mode
+
+**Implementation (simplified approach — keep memorial creation, change post-payment UX):**
+Instead of fully decoupling payment from memorial creation (too invasive), we keep the existing payment pipeline intact but change what happens AFTER payment:
+
+1. **Memorial still created at confirmation** (needed for authorization + Stripe PaymentIntent metadata)
+2. **`app/payment-success/page.tsx`**: Detect if memorial is empty (no `full_name`). If empty → redirect straight to dashboard. If has content (seal/upgrade flow) → show threshold ceremony.
+3. **`app/dashboard/personal/[userId]/page.tsx`**: When archive exists but has no `full_name` → show "Create Your Memorial" card with link to `/create?id={id}&mode=personal` (reuses the paid memorial).
+4. **`app/dashboard/family/[userId]/page.tsx`**: Filter out empty plan markers. Show "Create Your First Memorial" when no real (named) memorials exist. `handleCreate()` reuses empty paid memorial if one exists.
+
+**Files modified:**
+- `app/payment-success/page.tsx` (redirect to dashboard for empty memorials)
+- `app/dashboard/personal/[userId]/page.tsx` (empty-memorial detection + "Create memorial" CTA)
+- `app/dashboard/family/[userId]/page.tsx` (filter plan markers + reuse in handleCreate)
+
+### Progress
+- [x] Analyzed seal flow bug — root cause identified
+- [x] Analyzed payment flow — plan written
+- [x] Fix Bug 1: Draft→Personal mode leak (3 files)
+- [x] Implement Task 2: Empty dashboard with "Create Memorial" after direct payment
+- [ ] Commit & push
+
+---
+
 ## Session Log
 - **Session 1** (2026-03-24): Created design system, migrated globals/tailwind/layout + all pages listed above
 - **Session 2** (2026-03-25): Migrated create page, legal pages (partial), all wizard steps, all components. Hit rate limit before fixing remaining old refs in admin/legal/authorization pages.
