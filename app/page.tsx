@@ -31,8 +31,8 @@ export default function LandingPage() {
             {/* NAV */}
             <nav className="sticky top-0 z-50 bg-surface-low/95 backdrop-blur-sm border-b border-warm-border/30">
                 <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <span className="font-sans font-bold text-lg tracking-[0.08em] text-warm-dark">
-                        LEGACY VAULT
+                    <span className="font-sans font-bold text-lg tracking-[0.08em] text-warm-dark uppercase">
+                        ULUMAE — Every life, an indelible mark
                     </span>
                     <div className="flex items-center gap-3">
                         <Link

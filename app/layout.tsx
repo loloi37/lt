@@ -4,7 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'Legacy Vault — Permanent Digital Memorials',
+  title: 'ULUMAE — Every life, an indelible mark',
   description:
     'Permanent memorials for generations. Preserve life stories, photos, and memories on the Arweave blockchain with a 200-year endowment. Not a social network — a legacy.',
   keywords: ['digital memorial', 'legacy', 'permanent preservation', 'Arweave', 'family archive', 'estate planning', 'digital legacy'],
