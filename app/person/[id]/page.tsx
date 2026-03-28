@@ -66,11 +66,13 @@ export default function PersonMemorialPage({ params }: {
                 step9: data.step9 || { videos: [] },
             });
 
-            // Fetch relations
-            const { data: rels } = await supabase
-                .from('memorial_relations')
-                .select('*')
-                .eq('from_memorial_id', memorialId);
+            // Fetch relations — only for family-mode memorials
+            const { data: rels } = data.mode === 'family'
+                ? await supabase
+                    .from('memorial_relations')
+                    .select('*')
+                    .eq('from_memorial_id', memorialId)
+                : { data: null };
 
             if (rels && rels.length > 0) {
                 const targetIds = rels.map((r: any) => r.to_memorial_id);

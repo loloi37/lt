@@ -204,6 +204,104 @@ Instead of fully decoupling payment from memorial creation (too invasive), we ke
 
 ---
 
+## Session 7 — Enforce mode-based isolation: Personal = isolated, Family = relational
+
+### Problem
+Family-only features (relationships, graph, linked memorials) are globally accessible regardless of `memorial.mode`. A personal memorial can create relationships, appear in a graph, and call family endpoints. This creates data inconsistency.
+
+### Core Rule
+> `memorial.mode === 'personal'` → NO relationships, NO graph, NO family endpoints
+> `memorial.mode === 'family'` → relationships allowed, graph allowed, family features enabled
+
+### Audit: All critical points where family logic exists
+
+| # | File | What it does | Mode check? |
+|---|------|-------------|-------------|
+| 1 | `app/api/family/link/route.ts` | Creates relationships (forward + reverse) in `memorial_relations` | **NO** — only checks ownership |
+| 2 | `app/api/archive/[memorialId]/family-map/route.ts` | Returns linked memorials for a memorial | **NO** |
+| 3 | `app/api/archive/[memorialId]/welcome-data/route.ts` | Returns linkedCount for family plan | **YES** — only fetches relations if `plan === 'family'` |
+| 4 | `app/api/archive/[memorialId]/promote/route.ts` | Promotes witness → co_guardian in `user_memorial_roles` | **NO** |
+| 5 | `app/api/archive/[memorialId]/role-data/route.ts` | Returns user role + plan info | OK — read-only |
+| 6 | `app/dashboard/family/[userId]/tree/page.tsx` | ReactFlow constellation graph | **NO** — loads all relations, should be family-only page |
+| 7 | `app/dashboard/family/[userId]/page.tsx` | Family dashboard with FamilyLinker | OK — guarded by `auth.plan === 'family'` |
+| 8 | `components/FamilyLinker.tsx` | UI to create/view relationships | **NO** — no mode check |
+| 9 | `app/person/[id]/page.tsx` | Public memorial view — fetches relations | **NO** — fetches for all memorials |
+| 10 | `supabase_fresh_setup.sql` — `memorial_relations` table | Stores relationships | **NO constraint** — any memorial can have relations |
+| 11 | `supabase_fresh_setup.sql` — RLS on `memorial_relations` | INSERT/UPDATE/DELETE policies | **NO mode check** — only ownership |
+
+### Implementation Plan (ordered, non-breaking)
+
+**Step 1 — Database: SQL trigger to block relations on non-family memorials**
+Add a BEFORE INSERT trigger on `memorial_relations` that rejects inserts where either `from_memorial_id` or `to_memorial_id` references a memorial with `mode != 'family'`.
+
+```sql
+CREATE OR REPLACE FUNCTION enforce_family_mode_relations()
+RETURNS TRIGGER AS $$
+DECLARE
+  from_mode TEXT;
+  to_mode TEXT;
+BEGIN
+  SELECT mode INTO from_mode FROM memorials WHERE id = NEW.from_memorial_id;
+  SELECT mode INTO to_mode FROM memorials WHERE id = NEW.to_memorial_id;
+
+  IF from_mode != 'family' OR to_mode != 'family' THEN
+    RAISE EXCEPTION 'Relations are only allowed between family-mode memorials. from_mode=%, to_mode=%', from_mode, to_mode;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_enforce_family_mode_relations
+  BEFORE INSERT ON memorial_relations
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_family_mode_relations();
+```
+
+Also add a trigger to prevent downgrading a memorial from `family` to `personal`/`draft` if it has existing relations.
+
+**Step 2 — API: Guard `app/api/family/link/route.ts`**
+After authenticating + checking ownership, verify that BOTH memorials are in `mode='family'` before creating the relation. Return 403 if not.
+
+**Step 3 — API: Guard `app/api/archive/[memorialId]/family-map/route.ts`**
+Check memorial mode before fetching relations. Return empty `{ linked: [] }` for non-family memorials.
+
+**Step 4 — API: Guard `app/api/archive/[memorialId]/promote/route.ts`**
+Check memorial mode. Promoting to co_guardian should only work for family memorials.
+
+**Step 5 — Frontend: Guard `components/FamilyLinker.tsx`**
+FamilyLinker is only rendered on family dashboard, but add a mode prop and early return for non-family.
+
+**Step 6 — Frontend: Guard `app/person/[id]/page.tsx`**
+Only fetch/display relations if `memorial.mode === 'family'`.
+
+**Step 7 — Frontend: Guard tree page**
+`app/dashboard/family/[userId]/tree/page.tsx` is already behind family dashboard routing but verify auth.plan check.
+
+**Step 8 — Data migration: Clean up invalid relations**
+Write a migration query to find and delete any existing `memorial_relations` rows where either memorial has `mode != 'family'`.
+
+```sql
+DELETE FROM memorial_relations
+WHERE from_memorial_id IN (SELECT id FROM memorials WHERE mode != 'family')
+   OR to_memorial_id IN (SELECT id FROM memorials WHERE mode != 'family');
+```
+
+### Progress
+- [x] Audit complete — all critical points identified
+- [x] Plan written
+- [x] Step 1: SQL trigger + migration query (`migrations/007_enforce_family_mode_relations.sql`)
+- [x] Step 2: Guard family/link API — checks both from/to are `mode='family'`
+- [x] Step 3: Guard family-map API — returns empty for non-family
+- [x] Step 4: Guard promote API — only family memorials can promote to co_guardian
+- [x] Step 5: Guard FamilyLinker component — accepts `mode` prop, returns null if not family
+- [x] Step 6: Guard person/[id] page — only fetches relations if `mode === 'family'`
+- [x] Step 7: Guard tree page — added auth guard (redirects non-family users) + filters query to `mode='family'`
+- [x] Step 8: Data cleanup included in migration SQL
+- [ ] Commit & push
+
+---
+
 ## Session Log
 - **Session 1** (2026-03-24): Created design system, migrated globals/tailwind/layout + all pages listed above
 - **Session 2** (2026-03-25): Migrated create page, legal pages (partial), all wizard steps, all components. Hit rate limit before fixing remaining old refs in admin/legal/authorization pages.

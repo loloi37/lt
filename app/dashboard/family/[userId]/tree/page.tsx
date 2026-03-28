@@ -26,6 +26,7 @@ import {
     ArrowLeft, User, LayoutTemplate, Save, Trash2,
     X, MapPin, Quote, Settings2, Loader2
 } from 'lucide-react';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 // ============================================================================
 // 1. CUSTOM NODE COMPONENT (4 Handles, visible only on hover)
@@ -125,6 +126,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                 .from('memorials')
                 .select('*')
                 .eq('user_id', userId)
+                .eq('mode', 'family')
                 .eq('deleted', false);
 
             setRawMemorials(memorials || []);
@@ -500,6 +502,28 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
 // ============================================================================
 export default function FamilyTreePage({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
+    const auth = useAuth();
+    const router = useRouter();
+
+    // Auth guard: only family plan users can access the constellation
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.plan !== 'family' && auth.plan !== 'concierge') {
+            router.replace(`/dashboard`);
+        }
+    }, [auth.loading, auth.authenticated, auth.plan, router]);
+
+    if (auth.loading || auth.plan !== 'family') {
+        return (
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <Loader2 size={28} className="text-warm-muted/40 animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col bg-surface-low">

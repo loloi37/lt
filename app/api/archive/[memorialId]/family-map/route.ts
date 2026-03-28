@@ -23,7 +23,18 @@ export async function GET(
             );
         }
 
-        // 1. Fetch all linked memorials
+        // 1. Check memorial mode — only family memorials have relations
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('mode')
+            .eq('id', memorialId)
+            .single();
+
+        if (!memorial || memorial.mode !== 'family') {
+            return NextResponse.json({ linked: [] });
+        }
+
+        // 2. Fetch all linked memorials
         const { data: relations } = await supabaseAdmin
             .from('memorial_relations')
             .select(`
@@ -43,7 +54,7 @@ export async function GET(
             return NextResponse.json({ linked: [] });
         }
 
-        // 2. Check which ones this user has access to
+        // 3. Check which ones this user has access to
         const linkedIds = relations.map(
             r => r.to_memorial_id
         );
@@ -58,7 +69,7 @@ export async function GET(
             (userRoles || []).map(r => r.memorial_id)
         );
 
-        // 3. Shape the response
+        // 4. Shape the response
         const linked = relations.map(r => {
             const m = (r as any).memorials;
             return {

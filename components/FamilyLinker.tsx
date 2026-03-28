@@ -8,9 +8,14 @@ import { Link2, Plus, X, Loader2, User, ArrowRight } from 'lucide-react';
 interface FamilyLinkerProps {
     currentMemorialId: string;
     userId: string;
+    mode?: string;
 }
 
-export default function FamilyLinker({ currentMemorialId, userId }: FamilyLinkerProps) {
+export default function FamilyLinker({ currentMemorialId, userId, mode }: FamilyLinkerProps) {
+    // Family linking is only available for family-mode memorials
+    if (mode && mode !== 'family') {
+        return null;
+    }
     const [relations, setRelations] = useState<MemorialRelation[]>([]);
     const [candidates, setCandidates] = useState<any[]>([]);
     const [selectedCandidate, setSelectedCandidate] = useState('');

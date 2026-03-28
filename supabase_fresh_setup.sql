@@ -547,6 +547,59 @@ CREATE POLICY "Service role full access to relations"
     ON memorial_relations FOR ALL
     USING (auth.role() = 'service_role');
 
+-- ── Mode enforcement: Only family-mode memorials can have relations ──────────
+
+CREATE OR REPLACE FUNCTION enforce_family_mode_relations()
+RETURNS TRIGGER AS $$
+DECLARE
+  from_mode TEXT;
+  to_mode TEXT;
+BEGIN
+  SELECT mode INTO from_mode FROM memorials WHERE id = NEW.from_memorial_id;
+  SELECT mode INTO to_mode FROM memorials WHERE id = NEW.to_memorial_id;
+  IF from_mode IS NULL THEN
+    RAISE EXCEPTION 'Source memorial not found: %', NEW.from_memorial_id;
+  END IF;
+  IF to_mode IS NULL THEN
+    RAISE EXCEPTION 'Target memorial not found: %', NEW.to_memorial_id;
+  END IF;
+  IF from_mode != 'family' OR to_mode != 'family' THEN
+    RAISE EXCEPTION 'Relations are only allowed between family-mode memorials. from_mode=%, to_mode=%', from_mode, to_mode;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_enforce_family_mode_relations
+  BEFORE INSERT ON memorial_relations
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_family_mode_relations();
+
+-- ── Prevent downgrading mode if relations exist ─────────────────────────────
+
+CREATE OR REPLACE FUNCTION prevent_mode_downgrade_with_relations()
+RETURNS TRIGGER AS $$
+DECLARE
+  relation_count INTEGER;
+BEGIN
+  IF OLD.mode = 'family' AND NEW.mode != 'family' THEN
+    SELECT COUNT(*) INTO relation_count
+    FROM memorial_relations
+    WHERE from_memorial_id = NEW.id OR to_memorial_id = NEW.id;
+    IF relation_count > 0 THEN
+      RAISE EXCEPTION 'Cannot change mode from family to % — this memorial has % active relation(s). Remove all relations first.', NEW.mode, relation_count;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tr_prevent_mode_downgrade_with_relations
+  BEFORE UPDATE ON memorials
+  FOR EACH ROW
+  WHEN (OLD.mode IS DISTINCT FROM NEW.mode)
+  EXECUTE FUNCTION prevent_mode_downgrade_with_relations();
+
 
 -- ============================================================
 -- SECTION 9: USER SUCCESSORS

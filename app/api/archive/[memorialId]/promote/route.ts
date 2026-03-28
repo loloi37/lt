@@ -13,15 +13,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mem
         const { witnessUserId } = await req.json(); // The ID of the person to promote
         const { user } = await createAuthenticatedClient();
 
-        // 1. Check if the requester is the OWNER
+        // 1. Check if the requester is the OWNER + mode check
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
-            .select('user_id')
+            .select('user_id, mode')
             .eq('id', memorialId)
             .single();
 
         if (memorial?.user_id !== user?.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        if (memorial.mode !== 'family') {
+            return NextResponse.json({ error: 'Co-guardian promotion is only available for Family plan archives' }, { status: 403 });
         }
 
         // 2. Promote the user to co_guardian

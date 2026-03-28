@@ -21,15 +21,30 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing IDs or type' }, { status: 400 });
         }
 
-        // 2. VERIFY OWNERSHIP OF THE SOURCE MEMORIAL
+        // 2. VERIFY OWNERSHIP OF THE SOURCE MEMORIAL + MODE CHECK
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
-            .select('user_id')
+            .select('user_id, mode')
             .eq('id', fromId)
             .single();
 
         if (!memorial || memorial.user_id !== user.id) {
             return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
+        }
+
+        if (memorial.mode !== 'family') {
+            return NextResponse.json({ error: 'Relations are only available for Family plan archives' }, { status: 403 });
+        }
+
+        // 2b. VERIFY TARGET MEMORIAL IS ALSO FAMILY MODE
+        const { data: targetMemorial } = await supabaseAdmin
+            .from('memorials')
+            .select('mode')
+            .eq('id', toId)
+            .single();
+
+        if (!targetMemorial || targetMemorial.mode !== 'family') {
+            return NextResponse.json({ error: 'Target archive must also be a Family plan archive' }, { status: 403 });
         }
 
         // 3. Create the forward link (A -> B)
