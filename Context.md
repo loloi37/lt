@@ -298,7 +298,7 @@ WHERE from_memorial_id IN (SELECT id FROM memorials WHERE mode != 'family')
 - [x] Step 6: Guard person/[id] page — only fetches relations if `mode === 'family'`
 - [x] Step 7: Guard tree page — added auth guard (redirects non-family users) + filters query to `mode='family'`
 - [x] Step 8: Data cleanup included in migration SQL
-- [ ] Commit & push
+- [x] Commit & push
 
 ---
 
@@ -309,3 +309,4 @@ WHERE from_memorial_id IN (SELECT id FROM memorials WHERE mode != 'family')
 - **Session 4** (2026-03-25): Implemented dual-font serif system — Cinzel Bold for letters (A-Z), Bodoni Moda for numbers/symbols. Uses `@font-face` + `unicode-range` in globals.css. No per-component changes needed (transparent via `font-serif` class).
 - **Session 5** (2026-03-26): Rebranded "Legacy Vault" → "ULUMAE" across entire codebase (49 files). Fixed Save button visibility (warm-brown → olive). Migrated all email domains to @ulumae.com. Committed & pushed.
 - **Session 6** (2026-03-26): Fixed Draft→Personal mode leak (3 files: create, seal-confirmation, authorization). Implemented empty dashboard flow for direct payments — payment-success redirects to dashboard for empty memorials, dashboards show "Create Your Memorial" CTA for paid-but-unnamed archives. No SQL changes needed.
+- **Session 7** (2026-03-28): Enforced family-mode isolation across entire stack. DB triggers block relations on non-family memorials + prevent mode downgrade. APIs guarded (family/link, family-map, promote). Frontend guarded (FamilyLinker, person page, tree page). Migration 007 cleans invalid data. **SQL migration required.**
