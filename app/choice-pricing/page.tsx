@@ -138,10 +138,10 @@ export default function ChoicePricingPage() {
                                 <p className="text-sm text-warm-dark">
                                     You have an active <strong className="capitalize">{auth.plan}</strong> plan.{' '}
                                     {auth.plan === 'personal'
-                                        ? 'You can upgrade to Family to create additional archives.'
+                                        ? 'Secure their legacy for future generations by expanding to Family.'
                                         : auth.plan === 'family'
-                                            ? 'You can upgrade to Concierge for a fully managed experience.'
-                                            : 'You are on the highest plan.'}
+                                            ? 'Ensure every memory endures with our fully managed Concierge preservation.'
+                                            : 'You are on the highest level of preservation.'}
                                 </p>
                                 <button
                                     onClick={() => router.replace(`/dashboard/${auth.plan}/${userId}`)}
@@ -191,7 +191,7 @@ export default function ChoicePricingPage() {
                         </li>
                         <li className="flex items-start gap-2">
                             <Check size={16} className="text-olive mt-0.5 flex-shrink-0" />
-                            Upgrade to Personal anytime
+                            Secure as Personal anytime
                         </li>
                     </ul>
                     <div className="w-full py-4 glass-btn border border-warm-border/30 text-warm-dark text-xs uppercase tracking-widest text-center hover-grow">
@@ -296,7 +296,7 @@ export default function ChoicePricingPage() {
                     className="bg-surface-highest p-8 flex flex-col border border-warm-border/30 hover:bg-surface-high transition-colors text-left relative group"
                 >
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-warm-dark text-white px-3 py-1 text-[10px] uppercase tracking-widest whitespace-nowrap">
-                        Premium
+                        Full Preservation
                     </div>
                     <div className="mb-12">
                         <div className="w-14 h-14 bg-gradient-to-br from-olive via-warm-brown to-olive/80 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">

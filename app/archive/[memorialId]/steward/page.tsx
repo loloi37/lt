@@ -351,7 +351,7 @@ function ContributionCard({
                             ) : (
                                 <Check size={16} />
                             )}
-                            Approve & publish
+                            Honor this contribution
                         </button>
                         <button
                             onClick={() =>
@@ -364,7 +364,7 @@ function ContributionCard({
                 hover:bg-warm-border/10 font-sans
                 disabled:opacity-50"
                         >
-                            Don't publish
+                            Set aside with care
                         </button>
                     </div>
                 ) : (
@@ -409,7 +409,7 @@ function ContributionCard({
                                 ) : (
                                     <X size={14} />
                                 )}
-                                Confirm
+                                I understand
                             </button>
                         </div>
                     </div>

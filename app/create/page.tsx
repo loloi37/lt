@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eye, Save, Sparkles, CheckCircle, Users, User, EthernetPort, History, Lock } from 'lucide-react';
+import { ArrowLeft, Eye, Save, Sparkles, Shield, Users, User, EthernetPort, History, Lock } from 'lucide-react';
 import PreviewModal from '@/components/wizard/PreviewModal';
 import { Panel, Group, Separator } from 'react-resizable-panels';
 import PathCard from '@/components/wizard/PathCard';
@@ -38,6 +38,7 @@ import {
 import { PathId } from '@/types/paths';
 import { createClient } from '@/utils/supabase/client';
 import { createVersion } from '@/lib/versionService';
+import { calculateEmotionalState, getPathDepth } from '@/lib/emotionalState';
 
 const PATH_CONFIG: Record<PathId, { steps: number[]; labels: string[] }> = {
   facts: {
@@ -471,8 +472,8 @@ function CreateMemorialPageContent() {
     },
     {
       target: '[data-tutorial="save-continue"]',
-      title: 'Save Your Progress',
-      description: 'Click "Save & Continue" at the bottom to save your work and move to the next step. Your progress is automatically saved!',
+      title: 'Preserve Your Work',
+      description: 'Click "Preserve & continue" at the bottom to move to the next step. Your work is automatically preserved.',
       position: 'top' as const,
     },
   ];
@@ -801,7 +802,7 @@ function CreateMemorialPageContent() {
       <div className="min-h-screen bg-surface-low flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-olive/30 border-t-olive rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-warm-muted">Loading memorial...</p>
+          <p className="text-warm-muted">Loading archive...</p>
         </div>
       </div>
     );
@@ -810,6 +811,9 @@ function CreateMemorialPageContent() {
   const completedPathsCount = ['facts', 'body', 'soul'].filter(
     id => getPathStatus(memorialData, id as PathId) === 'completed'
   ).length;
+
+  // Emotional state engine — drives ambient messaging, visual tone, and seal gating
+  const emotionalResult = calculateEmotionalState(memorialData);
 
   const submitContribution = async (type: 'memory' | 'photo' | 'video', content: any) => {
     // Security check
@@ -829,11 +833,11 @@ function CreateMemorialPageContent() {
         }]);
 
       if (error) throw error;
-      alert("Contribution submitted! The archive owner will review it shortly.");
+      alert("Contribution offered. The archive guardian will review it shortly.");
 
     } catch (err: any) {
       console.error("Error submitting contribution:", err);
-      alert("Failed to submit: " + err.message);
+      alert("Could not offer contribution: " + err.message);
     }
   };
 
@@ -1026,7 +1030,19 @@ function CreateMemorialPageContent() {
             })()}
           </div>
 
-          {/* Step 1.3.3: Organic path layout with poetic descriptions */}
+          {/* Ambient whisper: emotional state message */}
+          {emotionalResult.state !== 'void' && emotionalResult.missingDimensions.length > 0 && (
+            <div className="max-w-2xl mx-auto mb-10 text-center animate-fadeIn">
+              <p className="text-xs text-warm-dark/30 italic leading-relaxed">
+                {emotionalResult.ambientMessage}
+                {emotionalResult.missingDimensions.length > 0 && emotionalResult.state !== 'eternal' && (
+                  <> {emotionalResult.missingDimensions[0].whisper}</>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Organic path layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Row 1: Facts + Body */}
             <PathCard
@@ -1036,6 +1052,8 @@ function CreateMemorialPageContent() {
               description={texts.cards.facts}
               status={getPathStatus(memorialData, 'facts')}
               onClick={handlePathClick}
+              emotionalState={emotionalResult.state}
+              depth={getPathDepth(memorialData, 'facts')}
             />
             <PathCard
               id="body"
@@ -1044,6 +1062,8 @@ function CreateMemorialPageContent() {
               description={texts.cards.body}
               status={getPathStatus(memorialData, 'body')}
               onClick={handlePathClick}
+              emotionalState={emotionalResult.state}
+              depth={getPathDepth(memorialData, 'body')}
             />
             <PathCard
               id="soul"
@@ -1052,6 +1072,8 @@ function CreateMemorialPageContent() {
               description={texts.cards.soul}
               status={getPathStatus(memorialData, 'soul')}
               onClick={handlePathClick}
+              emotionalState={emotionalResult.state}
+              depth={getPathDepth(memorialData, 'soul')}
             />
 
             {/* Step 1.3.3: The center space — what has not yet been said */}
@@ -1083,6 +1105,8 @@ function CreateMemorialPageContent() {
               description={texts.cards.witnesses}
               status={getPathStatus(memorialData, 'witnesses')}
               onClick={handlePathClick}
+              emotionalState={emotionalResult.state}
+              depth={getPathDepth(memorialData, 'witnesses')}
             />
             <PathCard
               id="presence"
@@ -1091,6 +1115,8 @@ function CreateMemorialPageContent() {
               description={texts.cards.presence}
               status={getPathStatus(memorialData, 'presence', mode)}
               onClick={handlePathClick}
+              emotionalState={emotionalResult.state}
+              depth={getPathDepth(memorialData, 'presence')}
             />
           </div>
 
@@ -1123,11 +1149,11 @@ function CreateMemorialPageContent() {
           {hasFullAccess ? (
             <div className="mt-12 p-10 bg-plum/5 border-2 border-plum/20 rounded-3xl text-center animate-fadeIn">
               <div className="w-16 h-16 bg-plum text-warm-bg rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <CheckCircle size={32} />
+                <Shield size={32} />
               </div>
-              <h3 className="font-serif text-3xl text-warm-dark mb-4">This Memory is Now Eternal</h3>
+              <h3 className="font-serif text-3xl text-warm-dark mb-4">This Memory is Protected</h3>
               <p className="text-warm-muted max-w-lg mx-auto mb-8 text-sm">
-                The watermark has been removed. Your archive is live at its permanent URL. You can now invite others to share their memories.
+                The archive is preserved at its permanent address. You can now invite others to bear witness and add their memories.
               </p>
 
               <div className="flex justify-center gap-4">
@@ -1136,7 +1162,7 @@ function CreateMemorialPageContent() {
                   target="_blank"
                   className="px-8 py-3 bg-warm-dark text-warm-bg rounded-lg font-medium hover:bg-warm-dark/90 transition-all"
                 >
-                  View Public Page
+                  Visit the Archive
                 </Link>
                 <button
                   onClick={() => alert("Invite Witnesses feature coming soon!")}
@@ -1209,7 +1235,7 @@ function CreateMemorialPageContent() {
               onClick={() => setViewMode('hub')}
               className="flex items-center gap-2 text-sm text-warm-muted hover:text-warm-dark transition-all"
             >
-              ← Back to Crossroads
+              ← Return to Crossroads
             </button>
             <div className="flex items-center gap-3">
 
@@ -1223,11 +1249,11 @@ function CreateMemorialPageContent() {
                 {saveStatus === 'saved' && (
                   <div className="flex items-center gap-1.5 text-xs text-warm-outline animate-fadeIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                    <span>Saved</span>
+                    <span>Preserved</span>
                   </div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="text-xs text-warm-brown">Save failed</div>
+                  <div className="text-xs text-warm-brown">Could not preserve</div>
                 )}
               </div>
 
@@ -1502,10 +1528,10 @@ function CreateMemorialPageContent() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-warm-dark/60 backdrop-blur-sm">
           <div className="bg-surface-low rounded-2xl w-full max-w-md p-8 shadow-2xl border border-warm-border/30">
             <h3 className="font-serif text-2xl text-warm-dark mb-3 text-center">
-              Your archive is safe
+              Everything is preserved
             </h3>
             <p className="text-sm text-warm-outline text-center leading-relaxed mb-8">
-              Your archive is saved exactly where you left it. We can send you a gentle reminder in 7 days, unless you&apos;d prefer we don&apos;t.
+              Preserving a life is not easy. Your work is held safely, exactly where you left it. We can send a gentle reminder in 7 days to help you return.
             </p>
             <div className="space-y-3">
               <button

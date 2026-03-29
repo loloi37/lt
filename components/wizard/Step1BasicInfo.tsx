@@ -344,7 +344,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 >
                                     <Upload className="mx-auto mb-3 text-warm-outline" size={32} />
                                     <p className="text-sm text-warm-muted mb-1">
-                                        Click to upload or drag and drop
+                                        Choose a photo or drag and drop
                                     </p>
                                     <p className="text-xs text-warm-outline">
                                         PNG, JPG up to 10MB
@@ -352,7 +352,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 </div>
                             ) : (
                                 <div className="border-2 border-dashed border-warm-border/30 rounded-xl p-8 text-center bg-warm-border/5">
-                                    <p className="text-sm text-warm-outline">Photo upload disabled</p>
+                                    <p className="text-sm text-warm-outline">Photo cannot be added yet</p>
                                 </div>
                             )
                         ) : (
@@ -488,7 +488,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                             : 'bg-warm-border/30 text-warm-outline cursor-not-allowed'
                             }`}
                     >
-                        {checkingDuplicates ? 'Checking...' : 'Save & Continue →'}
+                        {checkingDuplicates ? 'Checking...' : 'Preserve & continue →'}
                     </button>
                 </div>
 

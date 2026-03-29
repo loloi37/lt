@@ -155,7 +155,7 @@ export default function InvitePreview({
                         <ul className="space-y-2 text-sm
                 text-warm-dark/70">
                             <li>Share memories & stories</li>
-                            <li>Upload photos you own</li>
+                            <li>Share photos you own</li>
                             <li>Suggest corrections</li>
                         </ul>
                     </div>

@@ -305,7 +305,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             >
                                 <Upload className="mx-auto mb-3 text-warm-outline" size={32} />
                                 <p className="text-sm text-warm-muted mb-1">
-                                    Click to upload childhood photos
+                                    Choose childhood photos
                                 </p>
                                 <p className="text-xs text-warm-outline">
                                     You can select multiple photos
@@ -388,13 +388,13 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                     onClick={onBack}
                     className="px-6 py-4 border border-warm-border/30 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
                 >
-                    ← Back
+                    ← Return
                 </button>
                 <button
                     onClick={onNext}
                     className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
-                    Save & Continue →
+                    Preserve & continue →
                 </button>
             </div>
 
@@ -404,7 +404,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                     onClick={onNext}
                     className="text-sm text-warm-muted hover:text-warm-dark transition-colors"
                 >
-                    I'll fill this in later →
+                    I'll return to this →
                 </button>
             </div>
         </div>

@@ -1,11 +1,12 @@
 // components/wizard/PreviewModal.tsx
-// Step 1.2.1: Full-fidelity preview — identical to published version
-// Step 1.2.2: Elegant watermark, not intrusive
+// Preview as mirror: reveals both beauty and absence
 'use client';
 
 import { X } from 'lucide-react';
 import { MemorialData } from '@/types/memorial';
 import MemorialRenderer from '@/components/MemorialRenderer';
+import GhostPresence from './GhostPresence';
+import { calculateEmotionalState } from '@/lib/emotionalState';
 
 interface PreviewModalProps {
     data: MemorialData;
@@ -13,6 +14,8 @@ interface PreviewModalProps {
 }
 
 export default function PreviewModal({ data, onClose }: PreviewModalProps) {
+    const { missingDimensions, fragmentCount, state } = calculateEmotionalState(data);
+
     return (
         <div className="fixed inset-0 bg-warm-dark/90 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="min-h-screen py-12 px-4">
@@ -21,7 +24,11 @@ export default function PreviewModal({ data, onClose }: PreviewModalProps) {
                     <div className="flex items-center justify-between mb-6 px-4">
                         <div>
                             <h2 className="text-2xl font-semibold text-surface-low mb-1">Archive Preview</h2>
-                            <p className="text-surface-low/50 text-sm">This is how your archive will appear to visitors. The final version will be identical.</p>
+                            <p className="text-surface-low/50 text-sm">
+                                {state === 'eternal'
+                                    ? 'This is how their archive will appear — complete and luminous.'
+                                    : 'A mirror of what you\u2019ve built so far — and what still waits.'}
+                            </p>
                         </div>
                         <button
                             onClick={onClose}
@@ -31,7 +38,7 @@ export default function PreviewModal({ data, onClose }: PreviewModalProps) {
                         </button>
                     </div>
 
-                    {/* Step 1.2.1: Preview Container — uses SAME renderer as published page */}
+                    {/* Preview Container */}
                     <div className="rounded-2xl shadow-2xl overflow-hidden">
                         <MemorialRenderer
                             data={data}
@@ -40,13 +47,33 @@ export default function PreviewModal({ data, onClose }: PreviewModalProps) {
                         />
                     </div>
 
+                    {/* Ghost Presence: show what's missing below the preview */}
+                    {missingDimensions.length > 0 && state !== 'eternal' && (
+                        <div className="mt-8 p-6 rounded-xl bg-surface-low/5 border border-surface-low/10">
+                            <p className="text-surface-low/40 text-xs uppercase tracking-wider mb-4">
+                                What remains to be preserved
+                            </p>
+                            <div className="space-y-3">
+                                {missingDimensions.slice(0, 4).map((dim) => (
+                                    <div key={dim.key} className="flex items-start gap-3">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-surface-low/15 mt-1.5 flex-shrink-0" />
+                                        <p className="text-sm text-surface-low/35 italic">{dim.whisper}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-surface-low/20 text-xs mt-4">
+                                {fragmentCount} fragments gathered so far.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Footer */}
                     <div className="mt-8 text-center">
                         <button
                             onClick={onClose}
                             className="px-8 py-3 bg-surface-low hover:bg-surface-low/90 text-warm-dark rounded-xl font-medium transition-all shadow-lg"
                         >
-                            Close Preview
+                            Return to the archive
                         </button>
                     </div>
                 </div>

@@ -447,13 +447,13 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                     onClick={onBack}
                     className="px-6 py-4 border border-warm-border/30 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
                 >
-                    ← Back
+                    ← Return
                 </button>
                 <button
                     onClick={onNext}
                     className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
-                    Save & Continue →
+                    Preserve & continue →
                 </button>
             </div>
 
@@ -463,7 +463,7 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                     onClick={onNext}
                     className="text-sm text-warm-muted hover:text-warm-dark transition-colors"
                 >
-                    I'll fill this in later →
+                    I'll return to this →
                 </button>
             </div>
         </div>

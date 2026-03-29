@@ -131,7 +131,7 @@ export default function SuccessionRequestPage() {
                                     onClick={() => deathCertRef.current?.click()}
                                     className={`w-full py-3 rounded-lg text-sm transition-all ${files.deathCert ? 'bg-olive/10 text-olive' : 'bg-warm-border/10 text-warm-muted hover:bg-warm-border/20'}`}
                                 >
-                                    {files.deathCert ? `Selected: ${files.deathCert.name}` : "Upload Certificate (PDF/JPG)"}
+                                    {files.deathCert ? `Selected: ${files.deathCert.name}` : "Provide Certificate (PDF/JPG)"}
                                 </button>
                             </div>
 
@@ -152,7 +152,7 @@ export default function SuccessionRequestPage() {
                                     onClick={() => idProofRef.current?.click()}
                                     className={`w-full py-3 rounded-lg text-sm transition-all ${files.idProof ? 'bg-olive/10 text-olive' : 'bg-warm-border/10 text-warm-muted hover:bg-warm-border/20'}`}
                                 >
-                                    {files.idProof ? `Selected: ${files.idProof.name}` : "Upload ID Proof (PDF/JPG)"}
+                                    {files.idProof ? `Selected: ${files.idProof.name}` : "Provide ID Proof (PDF/JPG)"}
                                 </button>
                             </div>
                         </section>

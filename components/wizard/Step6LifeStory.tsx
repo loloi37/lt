@@ -450,13 +450,13 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                     onClick={onBack}
                     className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
                 >
-                    ← Back
+                    ← Return
                 </button>
                 <button
                     onClick={onNext}
                     className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
-                    Save & Continue →
+                    Preserve & continue →
                 </button>
             </div>
         </div>

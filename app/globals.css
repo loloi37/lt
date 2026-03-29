@@ -357,3 +357,47 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ── Emotional State Theming ── */
+
+/* Seal ritual: golden border sweep when finalization is ready */
+@keyframes sealRitual {
+  0%   { border-color: rgba(91, 106, 49, 0.2); box-shadow: 0 0 0 0 rgba(91, 106, 49, 0); }
+  50%  { border-color: rgba(91, 106, 49, 0.5); box-shadow: 0 0 30px rgba(91, 106, 49, 0.08); }
+  100% { border-color: rgba(91, 106, 49, 0.2); box-shadow: 0 0 0 0 rgba(91, 106, 49, 0); }
+}
+.seal-ready {
+  animation: sealRitual 3s ease-in-out infinite;
+}
+
+/* Presence glow: warm pulsing glow for the Eternal state */
+@keyframes presenceGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(91, 106, 49, 0.04), 0 0 60px rgba(91, 106, 49, 0.02); }
+  50%      { box-shadow: 0 0 30px rgba(91, 106, 49, 0.08), 0 0 80px rgba(91, 106, 49, 0.04); }
+}
+.presence-eternal {
+  animation: presenceGlow 5s ease-in-out infinite;
+}
+
+/* Ghost presence: subtle breathing for absent content placeholders */
+@keyframes ghostBreathe {
+  0%, 100% { opacity: 0.06; }
+  50%      { opacity: 0.12; }
+}
+.ghost-breathe {
+  animation: ghostBreathe 4s ease-in-out infinite;
+}
+
+/* Ritual fade: intentional, slow fade for ceremonial moments */
+@keyframes ritualFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-ritual-fade {
+  animation: ritualFade 1.2s ease-out forwards;
+}
+
+/* State transitions: smooth color shifts between emotional states */
+.state-transition {
+  transition: background-color 1.5s ease, border-color 1.5s ease, box-shadow 1.5s ease;
+}

@@ -492,7 +492,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         onClick={handleWitnessSubmit}
                                         className="flex-1 py-3 bg-olive text-surface-low rounded-xl font-medium hover:bg-olive/90 transition-all"
                                     >
-                                        Submit for Approval
+                                        Offer for Approval
                                     </button>
                                     <button
                                         onClick={() => setIsAddingNew(false)}
@@ -508,7 +508,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                 className="w-full py-4 border-2 border-dashed border-warm-border/40 rounded-xl text-sm font-medium text-warm-dark/60 hover:border-olive hover:bg-olive/5 hover:text-olive transition-all flex items-center justify-center gap-2"
                             >
                                 <Plus size={18} />
-                                {userRole === 'owner' ? 'Add Shared Memory' : 'Submit a Memory'}
+                                {userRole === 'owner' ? 'Add Shared Memory' : 'Offer a Memory'}
                             </button>
                         )}
                     </div>
@@ -860,13 +860,13 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                     onClick={onBack}
                     className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
                 >
-                    ← Back
+                    ← Return
                 </button>
                 <button
                     onClick={onNext}
                     className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
                 >
-                    Save & Continue →
+                    Preserve & continue →
                 </button>
             </div>
 
@@ -876,7 +876,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                     onClick={onNext}
                     className="text-sm text-warm-dark/60 hover:text-warm-dark transition-colors"
                 >
-                    I'll fill this in later →
+                    I'll return to this →
                 </button>
             </div>
         </div>

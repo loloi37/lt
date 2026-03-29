@@ -59,7 +59,7 @@ function PaymentSuccessContent() {
 
         const run = async () => {
             if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
-                setError('Payment successful, but no archive was found. Please contact support with your payment confirmation.');
+                setError('Their legacy is now protected, but no archive was found. Please contact support with your payment confirmation.');
                 return;
             }
 
@@ -107,7 +107,7 @@ function PaymentSuccessContent() {
                     .eq('id', memorialId)
                     .single();
 
-                // FRESH PURCHASE (no content yet): Go straight to dashboard
+                // FRESH PROTECTION (no content yet): Go straight to dashboard
                 // This handles the choice-pricing → pay → empty dashboard flow
                 if (!data?.full_name) {
                     const uid = data?.user_id || '';
@@ -132,7 +132,7 @@ function PaymentSuccessContent() {
             } catch (err: any) {
                 console.error('Finalization failed:', err);
                 setError(
-                    `Payment successful, but finalization encountered an issue: ${err.message}. ` +
+                    `Their legacy is now protected, but finalization encountered an issue: ${err.message}. ` +
                     `Your archive is safe. Please contact support.`
                 );
             }
@@ -201,7 +201,7 @@ function PaymentSuccessContent() {
             <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
                 <div className="text-center max-w-md animate-fadeIn">
                     <div className="w-16 h-16 border-2 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin mx-auto mb-8" />
-                    <p className="text-warm-dark/40 text-sm">Sealing the archive...</p>
+                    <p className="text-warm-dark/40 text-sm">Consecrating the archive...</p>
                 </div>
             </div>
         );

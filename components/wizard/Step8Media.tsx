@@ -75,7 +75,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       }
     } catch (error) {
       console.error('Cover photo upload failed', error);
-      alert('Failed to upload cover photo');
+      alert('Could not add cover photo');
     }
   };
 
@@ -373,7 +373,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               className={`relative h-64 border-2 border-dashed border-warm-border/40 rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-olive/40 hover:bg-olive/5'}`}
             >
               <Upload className="mb-3 text-warm-dark/40" size={32} />
-              <p className="text-sm text-warm-dark/60 mb-1">Click to upload cover photo</p>
+              <p className="text-sm text-warm-dark/60 mb-1">Choose a cover photo</p>
               <p className="text-xs text-warm-dark/40">Recommended: Wide landscape photo (1920x1080)</p>
             </div>
           ) : (
@@ -413,7 +413,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
             Photo Gallery
           </label>
           <p className="text-xs text-warm-dark/40 mb-4">
-            Upload photos from throughout their life
+            Gather photos from throughout their life
           </p>
 
           <div className="">
@@ -484,7 +484,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                 className={`border-2 border-dashed border-warm-border/40 rounded-xl p-8 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-olive/40 hover:bg-olive/5'}`}
               >
                 <Upload className="mx-auto mb-3 text-warm-dark/40" size={32} />
-                <p className="text-sm text-warm-dark/60 mb-1">Click to upload photos</p>
+                <p className="text-sm text-warm-dark/60 mb-1">Choose photos to gather</p>
                 <p className="text-xs text-warm-dark/40">You can select multiple photos</p>
               </div>
             )}
@@ -601,7 +601,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               <p className="text-base font-medium text-warm-dark/70 mb-2">Create Interactive Photo Stories</p>
               {!isPaid && <Lock className="mx-auto text-warm-dark/20 mb-2" size={20} />}
               <p className="text-sm text-warm-dark/50 max-w-md mx-auto">
-                Upload photos where visitors can move their cursor to reveal hidden stories - a magical way to share memories!
+                Choose photos where visitors can move their cursor to reveal hidden stories — a meaningful way to share memories.
               </p>
             </div>
           )}
@@ -706,13 +706,13 @@ What did they stand for? How did they make the world better? What will their mem
           onClick={onBack}
           className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
         >
-          ← Back
+          ← Return
         </button>
         <button
           onClick={onNext}
           className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
         >
-          Save & Continue →
+          Preserve & continue →
         </button>
       </div>
 

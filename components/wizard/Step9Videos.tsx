@@ -285,7 +285,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
           <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
             <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-800 mb-1">Upload Error</p>
+              <p className="text-sm font-medium text-red-800 mb-1">Could not be gathered</p>
               <p className="text-sm text-red-700">{uploadError}</p>
             </div>
             <button
@@ -323,7 +323,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
         {data.videos.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold text-warm-dark mb-4">
-              Uploaded Videos ({data.videos.length} / {maxVideos})
+              Gathered Videos ({data.videos.length} / {maxVideos})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {data.videos.map((video) => (
@@ -433,7 +433,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                   </div>
                 </div>
                 <h3 className="text-xl font-semibold text-warm-dark mb-2">
-                  {data.videos.length === 0 ? "Upload Your First Video" : "Add More Videos"}
+                  {data.videos.length === 0 ? "Gather Your First Video" : "Gather More Videos"}
                 </h3>
                 <p className="text-warm-dark/60 mb-6 max-w-md mx-auto">
                   Click here to upload video files. You can select multiple videos at once.
@@ -465,14 +465,14 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
           disabled={uploading}
           className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium disabled:opacity-50"
         >
-          ← Back
+          ← Return
         </button>
         <button
           onClick={onNext}
           disabled={uploading}
           className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all disabled:opacity-50"
         >
-          {data.videos.length > 0 ? 'Save & Continue to Review →' : 'Skip Videos & Continue →'}
+          {data.videos.length > 0 ? 'Preserve & continue to Review →' : 'Continue without — their presence awaits →'}
         </button>
       </div>
 

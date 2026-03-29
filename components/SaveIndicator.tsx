@@ -29,33 +29,33 @@ export default function SaveIndicator({ status, lastSavedAt, error, onRetry }: S
             {status === 'saved' && (
                 <div className="flex items-center gap-1.5 text-warm-outline animate-fadeIn">
                     <Check size={12} />
-                    <span>Saved</span>
+                    <span>Preserved</span>
                 </div>
             )}
 
             {status === 'offline' && (
                 <div className="flex items-center gap-1.5 text-warm-outline">
                     <WifiOff size={12} />
-                    <span>Saved locally</span>
+                    <span>Held safely</span>
                 </div>
             )}
 
             {status === 'reconnected' && (
                 <div className="flex items-center gap-1.5 text-olive/60 animate-fadeIn">
                     <Check size={12} />
-                    <span>Connection restored. Your changes have been saved.</span>
+                    <span>Reconnected. Everything is preserved.</span>
                 </div>
             )}
 
             {status === 'error' && (
                 <div className="flex items-center gap-1.5 text-warm-brown/60">
-                    <span>Save failed</span>
+                    <span>Could not preserve</span>
                     {onRetry && (
                         <button
                             onClick={onRetry}
                             className="underline hover:text-warm-brown/80 transition-colors ml-1"
                         >
-                            Retry
+                            Try again
                         </button>
                     )}
                 </div>

@@ -536,7 +536,7 @@ function ContributeContent({
                         ) : (
                             <>
                                 <Send size={18} />
-                                Submit for review
+                                Offer for review
                             </>
                         )}
                     </button>

@@ -211,7 +211,7 @@ export default function ArchiveDashboard({
 
                         <QuickAction
                             icon={ImageIcon}
-                            label="Upload photo"
+                            label="Add a photo"
                             onClick={() =>
                                 router.push(
                                     `/archive/${memorialId}/contribute?type=photo`

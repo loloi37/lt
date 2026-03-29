@@ -234,8 +234,8 @@ function WelcomeContent({
                         iconColor="text-warm-dark/40"
                         iconBg="bg-warm-border/20"
                         title="Share a photo"
-                        description="Upload a photo you own. The owner will review it."
-                        ctaLabel="Upload photo"
+                        description="Share a photo you own. The guardian will review it."
+                        ctaLabel="Share a photo"
                         onClick={() =>
                             router.push(
                                 `/archive/${memorialId}/contribute?type=photo`
