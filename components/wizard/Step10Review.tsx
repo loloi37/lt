@@ -22,6 +22,7 @@ interface Step10Props {
   isSelfArchive?: boolean;
   hasSuccessor?: boolean;
   userId?: string;
+  isPaid?: boolean;
 }
 
 const STEP_ICONS: Record<number, any> = {
@@ -36,7 +37,8 @@ export default function Step10Review({
   onJumpToStep,
   isSelfArchive = false,
   hasSuccessor = false,
-  userId = ''
+  userId = '',
+  isPaid = false
 }: Step10Props) {
   const [isSealing, setIsSealing] = useState(false);
   const [sealPhase, setSealPhase] = useState<'idle' | 'review' | 'pause' | 'sealing' | 'sealed'>('idle');
@@ -82,7 +84,17 @@ export default function Step10Review({
     await new Promise(resolve => setTimeout(resolve, 1500));
     setSealPhase('sealed');
     await new Promise(resolve => setTimeout(resolve, 800));
-    window.location.href = '/success';
+
+    if (isPaid) {
+      // Already paid — go directly to success
+      window.location.href = '/success';
+    } else {
+      // Draft — proceed to payment to protect the archive
+      const sealUrl = memorialId
+        ? `/seal-confirmation?memorialId=${memorialId}`
+        : '/seal-confirmation';
+      window.location.href = sealUrl;
+    }
   };
 
   // Depth labels for paths

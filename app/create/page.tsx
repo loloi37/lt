@@ -689,6 +689,13 @@ function CreateMemorialPageContent() {
 
   const goToStep = (step: number) => {
     if (step >= 1 && step <= TOTAL_STEPS) {
+      // Map step number to its parent path
+      const stepToPath: Record<number, PathId> = {
+        1: 'facts', 2: 'body', 3: 'body', 4: 'body',
+        5: 'soul', 6: 'soul', 7: 'witnesses', 8: 'presence', 9: 'presence',
+      };
+      const targetPath = stepToPath[step] || null;
+
       setMemorialData(prev => ({
         ...prev,
         currentStep: step,
@@ -696,6 +703,13 @@ function CreateMemorialPageContent() {
           completedStep => completedStep < step
         ),
       }));
+
+      // If jumping from Step 10, navigate into the correct path
+      if (targetPath) {
+        setActivePath(targetPath);
+        setViewMode('path');
+      }
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -903,8 +917,21 @@ function CreateMemorialPageContent() {
 
           <div className="text-center mb-16">
             {/* Badge */}
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-center gap-3 mb-4">
               <ModeBadge />
+              {emotionalResult.state !== 'void' && (
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-all duration-1000 ${
+                  emotionalResult.state === 'eternal'
+                    ? 'bg-olive/10 text-olive border-olive/20'
+                    : emotionalResult.state === 'substantial'
+                      ? 'bg-warm-dark/5 text-warm-dark/50 border-warm-dark/10'
+                      : emotionalResult.state === 'emerging'
+                        ? 'bg-olive/5 text-olive/60 border-olive/10'
+                        : 'bg-warm-border/10 text-warm-muted border-warm-border/20'
+                }`}>
+                  <span className="uppercase tracking-wider">{emotionalResult.state}</span>
+                </div>
+              )}
             </div>
 
             {/* PRIVATE STATUS BADGE */}
@@ -1171,40 +1198,74 @@ function CreateMemorialPageContent() {
                   Invite Witnesses
                 </button>
               </div>
+
+              {/* Review & Seal — always accessible for paid users to re-review */}
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    setMemorialData(prev => ({ ...prev, currentStep: 10 }));
+                    setActivePath(null);
+                    setViewMode('path');
+                  }}
+                  className="text-sm text-warm-muted hover:text-warm-dark transition-colors underline underline-offset-4"
+                >
+                  Review the archive
+                </button>
+              </div>
             </div>
           ) : (
             getPathStatus(memorialData, 'facts') === 'completed' && (
-              /* Step 2.1.1 + 2.1.2: CTA appears as a revealed path, not a popup */
               <div className="mt-12 max-w-2xl mx-auto animate-fadeIn">
                 <p className="text-xs text-warm-outline text-center mb-4 tracking-wide">
-                  A new path has opened.
+                  {emotionalResult.state === 'eternal'
+                    ? 'The final path awaits.'
+                    : 'A new path has opened.'}
                 </p>
-                <div className="p-10 bg-surface-low border border-warm-border/30 rounded-2xl text-center">
+                <div className={`p-10 bg-surface-low border rounded-2xl text-center transition-all duration-700 ${
+                  emotionalResult.canSeal
+                    ? 'border-olive/30 seal-ready'
+                    : 'border-warm-border/30'
+                }`}>
                   <h3 className="font-serif text-3xl text-warm-dark mb-3">
-                    {memorialData.step1.fullName
-                      ? `The archive of ${memorialData.step1.fullName} is ready.`
-                      : 'The archive is ready.'}
+                    Review & Seal
                   </h3>
-                  <p className="text-warm-outline max-w-md mx-auto mb-8 text-sm leading-relaxed">
-                    You have built something worth preserving. When you are ready, seal the archive to make it permanent.
+                  <p className="text-warm-outline max-w-md mx-auto mb-4 text-sm leading-relaxed">
+                    {emotionalResult.canSeal
+                      ? 'You have built something worth preserving. Review what you\u2019ve gathered, then seal the archive to protect it forever.'
+                      : 'Look over what you\u2019ve built so far. See what still needs to be strengthened before the archive can be sealed.'}
                   </p>
 
-                  {/* Step 2.1.1: "Seal this archive" — no price on button */}
+                  {/* Emotional state indicator */}
+                  {emotionalResult.state !== 'void' && (
+                    <p className="text-[10px] text-warm-dark/25 uppercase tracking-[0.2em] mb-6">
+                      {emotionalResult.state}
+                    </p>
+                  )}
+
+                  {/* Navigate to Step 10 — the review & ritual */}
                   <button
                     onClick={() => {
-                      const sealUrl = currentMemorialId
-                        ? `/seal-confirmation?memorialId=${currentMemorialId}`
-                        : '/seal-confirmation';
-                      router.push(sealUrl);
+                      setMemorialData(prev => ({ ...prev, currentStep: 10 }));
+                      setActivePath(null);
+                      setViewMode('path');
                     }}
-                    className="px-10 py-4 bg-warm-dark text-warm-bg rounded-xl font-medium hover:bg-warm-dark/90 transition-all"
+                    className={`px-10 py-4 rounded-xl font-medium transition-all ${
+                      emotionalResult.canSeal
+                        ? 'bg-warm-dark text-warm-bg hover:bg-warm-dark/90'
+                        : 'bg-warm-border/20 text-warm-dark/60 hover:bg-warm-border/30'
+                    }`}
                   >
-                    Seal this archive
+                    {emotionalResult.canSeal
+                      ? 'Review & Seal the Archive'
+                      : 'Review what you\u2019ve built'}
                   </button>
-                  {/* Step 2.1.1: Subtext below — price context without commercialism */}
-                  <p className="text-xs text-warm-outline mt-4">
-                    $1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.
-                  </p>
+
+                  {/* Missing dimensions hint */}
+                  {!emotionalResult.canSeal && emotionalResult.sealBlockReasons.length > 0 && (
+                    <p className="text-xs text-warm-dark/30 mt-4 italic">
+                      {emotionalResult.sealBlockReasons[0]}
+                    </p>
+                  )}
                 </div>
               </div>
             )
@@ -1432,11 +1493,12 @@ function CreateMemorialPageContent() {
                         <Step10Review
                           data={memorialData}
                           memorialId={currentMemorialId}
-                          onBack={goToPreviousStep}
+                          onBack={() => setViewMode('hub')}
                           onJumpToStep={goToStep}
                           isSelfArchive={memorialData.step1.isSelfArchive}
                           hasSuccessor={hasSuccessor}
                           userId={authUserId || ''}
+                          isPaid={hasFullAccess}
                         />
                       )}
                     </div>
