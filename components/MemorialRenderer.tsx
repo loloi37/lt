@@ -304,7 +304,7 @@ export default function MemorialRenderer({
                     ) : null}
 
                     {/* Early Life */}
-                    {(data.step2?.childhoodHome || data.step2?.familyBackground) ? (
+                    {(data.step2?.childhoodHome || data.step2?.familyBackground || data.step2?.schools?.elementary || data.step2?.schools?.highSchool || data.step2?.schools?.college || data.step2?.schools?.additionalEducation || data.step2?.earlyInterests?.length > 0 || data.step2?.childhoodPhotos?.length > 0) ? (
                         <section className={`bg-gradient-to-br from-olive/5 to-warm-brown/5 rounded-2xl ${s.sectionPadding} border border-warm-border/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -325,11 +325,76 @@ export default function MemorialRenderer({
                                         <p className={`text-warm-muted leading-relaxed ${compact ? 'text-xs' : ''}`}>{data.step2.familyBackground}</p>
                                     </div>
                                 )}
+                                {/* Schools / Education */}
+                                {(data.step2?.schools?.elementary || data.step2?.schools?.highSchool || data.step2?.schools?.college || data.step2?.schools?.additionalEducation) && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+                                            <GraduationCap size={compact ? 14 : 18} className="text-olive" />
+                                            Education
+                                        </h3>
+                                        <div className={`grid grid-cols-1 ${compact ? '' : 'sm:grid-cols-2'} gap-${compact ? '2' : '3'}`}>
+                                            {data.step2.schools.elementary && (
+                                                <div className={`bg-white/60 rounded-lg ${compact ? 'p-2' : 'p-4'} border border-warm-border/20`}>
+                                                    <p className={`text-warm-dark/40 ${compact ? 'text-[10px]' : 'text-xs'} font-medium mb-0.5`}>Elementary / Primary</p>
+                                                    <p className={`text-warm-dark font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{data.step2.schools.elementary}</p>
+                                                </div>
+                                            )}
+                                            {data.step2.schools.highSchool && (
+                                                <div className={`bg-white/60 rounded-lg ${compact ? 'p-2' : 'p-4'} border border-warm-border/20`}>
+                                                    <p className={`text-warm-dark/40 ${compact ? 'text-[10px]' : 'text-xs'} font-medium mb-0.5`}>High School</p>
+                                                    <p className={`text-warm-dark font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{data.step2.schools.highSchool}</p>
+                                                </div>
+                                            )}
+                                            {data.step2.schools.college && (
+                                                <div className={`bg-white/60 rounded-lg ${compact ? 'p-2' : 'p-4'} border border-warm-border/20`}>
+                                                    <p className={`text-warm-dark/40 ${compact ? 'text-[10px]' : 'text-xs'} font-medium mb-0.5`}>College / University</p>
+                                                    <p className={`text-warm-dark font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{data.step2.schools.college}</p>
+                                                </div>
+                                            )}
+                                            {data.step2.schools.additionalEducation && (
+                                                <div className={`bg-white/60 rounded-lg ${compact ? 'p-2' : 'p-4'} border border-warm-border/20`}>
+                                                    <p className={`text-warm-dark/40 ${compact ? 'text-[10px]' : 'text-xs'} font-medium mb-0.5`}>Additional Education</p>
+                                                    <p className={`text-warm-dark font-medium ${compact ? 'text-xs' : 'text-sm'}`}>{data.step2.schools.additionalEducation}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                                 {data.step2?.childhoodPersonality?.length > 0 && (
                                     <div className="flex flex-wrap gap-2">
                                         {data.step2.childhoodPersonality.map((trait: string) => (
                                             <span key={trait} className={`px-3 py-1.5 bg-olive/10 text-olive rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{trait}</span>
                                         ))}
+                                    </div>
+                                )}
+                                {/* Early Interests */}
+                                {data.step2?.earlyInterests?.length > 0 && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-2 ${compact ? 'text-sm' : ''}`}>Early Interests</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.step2.earlyInterests.map((interest: string) => (
+                                                <span key={interest} className={`px-3 py-1.5 bg-warm-brown/10 text-warm-brown rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{interest}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Childhood Photos */}
+                                {data.step2?.childhoodPhotos?.length > 0 && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 ${compact ? 'text-sm' : ''}`}>Childhood Photos</h3>
+                                        <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'} gap-${compact ? '2' : '3'}`}>
+                                            {data.step2.childhoodPhotos.map((photo: any, index: number) => (
+                                                <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-warm-border/20 shadow-sm">
+                                                    <img src={photo.preview} alt={photo.caption || 'Childhood photo'} className="w-full h-full object-cover" />
+                                                    {(photo.caption || photo.year) && (
+                                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-warm-dark/70 to-transparent p-2">
+                                                            {photo.caption && <p className="text-surface-low text-xs">{photo.caption}</p>}
+                                                            {photo.year && <p className="text-surface-low/70 text-[10px]">{photo.year}</p>}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -339,7 +404,7 @@ export default function MemorialRenderer({
                     ) : null}
 
                     {/* Career & Education */}
-                    {data.step3?.occupations?.length > 0 ? (
+                    {(data.step3?.occupations?.length > 0 || data.step3?.careerHighlights?.length > 0 || data.step3?.education?.major) ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -348,7 +413,7 @@ export default function MemorialRenderer({
                                 Career & Achievements
                             </h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
-                                {data.step3.occupations.map((job: any) => (
+                                {data.step3?.occupations?.map((job: any) => (
                                     <div key={job.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-warm-border/30`}>
                                         <h4 className={`font-semibold ${compact ? 'text-sm' : 'text-xl'} text-warm-dark`}>{job.title}</h4>
                                         <p className={`text-warm-muted ${compact ? 'text-xs' : ''} mb-2`}>{job.company}</p>
@@ -358,6 +423,43 @@ export default function MemorialRenderer({
                                         {job.description && <p className={`text-warm-muted leading-relaxed mt-3 ${compact ? 'text-xs' : ''}`}>{job.description}</p>}
                                     </div>
                                 ))}
+                                {/* Career Highlights */}
+                                {data.step3?.careerHighlights?.length > 0 && (
+                                    <div className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-warm-border/30`}>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+                                            <Award size={compact ? 14 : 18} className="text-warm-brown" />
+                                            Career Highlights
+                                        </h3>
+                                        <ul className={`space-y-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+                                            {data.step3.careerHighlights.map((highlight: string, i: number) => (
+                                                <li key={i} className="flex items-start gap-2 text-warm-muted">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-warm-brown/40 mt-2 flex-shrink-0" />
+                                                    {highlight}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {/* Education */}
+                                {(data.step3?.education?.major || data.step3?.education?.graduationYear || data.step3?.education?.honors) && (
+                                    <div className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-warm-border/30`}>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+                                            <GraduationCap size={compact ? 14 : 18} className="text-olive" />
+                                            Higher Education
+                                        </h3>
+                                        <div className={`space-y-1 ${compact ? 'text-xs' : 'text-sm'}`}>
+                                            {data.step3.education.major && (
+                                                <p className="text-warm-muted"><span className="text-warm-dark font-medium">Major:</span> {data.step3.education.major}</p>
+                                            )}
+                                            {data.step3.education.graduationYear && (
+                                                <p className="text-warm-muted"><span className="text-warm-dark font-medium">Graduated:</span> {data.step3.education.graduationYear}</p>
+                                            )}
+                                            {data.step3.education.honors && (
+                                                <p className="text-warm-muted"><span className="text-warm-dark font-medium">Honors:</span> {data.step3.education.honors}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
                     ) : isPreview ? (
@@ -365,7 +467,7 @@ export default function MemorialRenderer({
                     ) : null}
 
                     {/* Family & Relationships */}
-                    {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0)) ? (
+                    {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0) || (data.step4?.majorLifeEvents?.length > 0)) ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-olive/10 rounded-xl flex items-center justify-center`}>
@@ -377,22 +479,73 @@ export default function MemorialRenderer({
                                 <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'} mb-6`}>
                                     {data.step4.partners.map((partner: any) => (
                                         <div key={partner.id} className={`bg-white rounded-xl ${compact ? 'p-4' : 'p-6'} shadow-sm border border-warm-border/30`}>
-                                            <h4 className={`font-semibold text-warm-dark mb-1 ${compact ? 'text-sm' : ''}`}>{partner.name}</h4>
-                                            <p className={`text-warm-muted mb-2 ${compact ? 'text-[10px]' : 'text-sm'}`}>{partner.relationshipType}</p>
-                                            <p className={`text-warm-muted ${compact ? 'text-[10px]' : 'text-sm'}`}>{partner.yearsFrom} - {partner.yearsTo}</p>
-                                            {partner.description && <p className={`text-warm-muted mt-2 ${compact ? 'text-xs' : 'text-sm'}`}>{partner.description}</p>}
+                                            <div className={`flex ${compact ? 'gap-3' : 'gap-4'} items-start`}>
+                                                {partner.photoPreview && (
+                                                    <div className={`${compact ? 'w-12 h-12' : 'w-16 h-16'} rounded-xl overflow-hidden flex-shrink-0 border border-warm-border/20`}>
+                                                        <img src={partner.photoPreview} alt={partner.name} className="w-full h-full object-cover" />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1">
+                                                    <h4 className={`font-semibold text-warm-dark mb-1 ${compact ? 'text-sm' : ''}`}>{partner.name}</h4>
+                                                    <p className={`text-warm-muted mb-1 ${compact ? 'text-[10px]' : 'text-sm'}`}>{partner.relationshipType}</p>
+                                                    <p className={`text-warm-muted ${compact ? 'text-[10px]' : 'text-sm'}`}>{partner.yearsFrom} - {partner.yearsTo}</p>
+                                                    {partner.description && <p className={`text-warm-muted mt-2 ${compact ? 'text-xs' : 'text-sm'}`}>{partner.description}</p>}
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                             {data.step4?.children?.length > 0 && (
-                                <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '2' : '4'}`}>
+                                <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '2' : '4'} ${data.step4?.majorLifeEvents?.length > 0 ? 'mb-6' : ''}`}>
                                     {data.step4.children.map((child: any) => (
                                         <div key={child.id} className={`bg-white rounded-xl ${compact ? 'p-3' : 'p-6'} shadow-sm border border-warm-border/30`}>
                                             <h4 className={`font-semibold text-warm-dark mb-1 ${compact ? 'text-sm' : ''}`}>{child.name}</h4>
                                             <p className={`text-warm-muted ${compact ? 'text-[10px]' : 'text-sm'}`}>Born {child.birthYear}</p>
+                                            {child.description && <p className={`text-warm-muted mt-1 ${compact ? 'text-xs' : 'text-sm'}`}>{child.description}</p>}
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                            {/* Major Life Events Timeline */}
+                            {data.step4?.majorLifeEvents?.length > 0 && (
+                                <div className={`mt-${compact ? '3' : '6'}`}>
+                                    <h3 className={`font-semibold text-warm-dark mb-4 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+                                        <Calendar size={compact ? 14 : 18} className="text-olive" />
+                                        Major Life Events
+                                    </h3>
+                                    <div className="relative">
+                                        <div className={`absolute left-${compact ? '2' : '3'} top-0 bottom-0 w-px bg-warm-border/30`} />
+                                        <div className={`space-y-${compact ? '3' : '4'}`}>
+                                            {data.step4.majorLifeEvents.map((event: any) => (
+                                                <div key={event.id} className={`relative pl-${compact ? '7' : '10'}`}>
+                                                    <div className={`absolute left-${compact ? '0.5' : '1'} top-1 ${compact ? 'w-3 h-3' : 'w-4 h-4'} rounded-full border-2 border-surface-low shadow-sm ${
+                                                        event.category === 'marriage' ? 'bg-pink-400' :
+                                                        event.category === 'birth' ? 'bg-blue-400' :
+                                                        event.category === 'career' ? 'bg-purple-400' :
+                                                        event.category === 'achievement' ? 'bg-olive' :
+                                                        event.category === 'loss' ? 'bg-gray-400' :
+                                                        'bg-warm-brown'
+                                                    }`} />
+                                                    <div className={`bg-white rounded-lg ${compact ? 'p-3' : 'p-4'} border border-warm-border/20 shadow-sm`}>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className={`px-2 py-0.5 rounded-full ${compact ? 'text-[9px]' : 'text-xs'} font-medium ${
+                                                                event.category === 'marriage' ? 'bg-pink-50 text-pink-600' :
+                                                                event.category === 'birth' ? 'bg-blue-50 text-blue-600' :
+                                                                event.category === 'career' ? 'bg-purple-50 text-purple-600' :
+                                                                event.category === 'achievement' ? 'bg-olive/10 text-olive' :
+                                                                event.category === 'loss' ? 'bg-gray-100 text-gray-500' :
+                                                                'bg-warm-brown/10 text-warm-brown'
+                                                            }`}>{event.category}</span>
+                                                            {event.year && <span className={`text-warm-dark/40 ${compact ? 'text-[10px]' : 'text-xs'}`}>{event.year}</span>}
+                                                        </div>
+                                                        <h4 className={`font-medium text-warm-dark ${compact ? 'text-xs' : 'text-sm'}`}>{event.title}</h4>
+                                                        {event.description && <p className={`text-warm-muted mt-1 ${compact ? 'text-[10px]' : 'text-xs'}`}>{event.description}</p>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </section>
@@ -401,7 +554,7 @@ export default function MemorialRenderer({
                     ) : null}
 
                     {/* Personality & Values */}
-                    {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy) ? (
+                    {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy || data.step5?.passions?.length > 0 || data.step5?.favoriteQuotes?.length > 0 || data.step5?.memorableSayings?.length > 0 || data.step5?.coreValues?.length > 0) ? (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-warm-border/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -411,22 +564,70 @@ export default function MemorialRenderer({
                             </h2>
                             <div className={`space-y-${compact ? '4' : '8'}`}>
                                 {data.step5?.personalityTraits?.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {data.step5.personalityTraits.map((trait: string) => (
-                                            <span key={trait} className={`px-3 py-1.5 bg-olive/10 text-olive rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{trait}</span>
-                                        ))}
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 ${compact ? 'text-sm' : ''}`}>Personality Traits</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.step5.personalityTraits.map((trait: string) => (
+                                                <span key={trait} className={`px-3 py-1.5 bg-olive/10 text-olive rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{trait}</span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                                 {data.step5?.coreValues?.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {data.step5.coreValues.map((value: string) => (
-                                            <span key={value} className={`px-3 py-1.5 bg-warm-brown/10 text-warm-brown rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{value}</span>
-                                        ))}
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 ${compact ? 'text-sm' : ''}`}>Core Values</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.step5.coreValues.map((value: string) => (
+                                                <span key={value} className={`px-3 py-1.5 bg-warm-brown/10 text-warm-brown rounded-full ${compact ? 'text-[10px]' : 'text-sm'}`}>{value}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Passions */}
+                                {data.step5?.passions?.length > 0 && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 ${compact ? 'text-sm' : ''}`}>Passions & Interests</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {data.step5.passions.map((passion: string) => (
+                                                <span key={passion} className={`px-3 py-1.5 bg-olive/10 text-olive rounded-full ${compact ? 'text-[10px]' : 'text-sm'} font-medium`}>{passion}</span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                                 {data.step5?.lifePhilosophy && (
                                     <div className="bg-gradient-to-br from-olive/5 to-warm-brown/5 rounded-xl p-6 border border-warm-border/20">
+                                        <h3 className={`font-semibold text-warm-dark mb-2 ${compact ? 'text-sm' : ''}`}>Life Philosophy</h3>
                                         <p className={`text-warm-dark/80 leading-relaxed italic ${compact ? 'text-xs' : ''}`}>{data.step5.lifePhilosophy}</p>
+                                    </div>
+                                )}
+                                {/* Favorite Quotes */}
+                                {data.step5?.favoriteQuotes?.length > 0 && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 ${compact ? 'text-sm' : ''}`}>Favorite Quotes</h3>
+                                        <div className={`space-y-${compact ? '2' : '4'}`}>
+                                            {data.step5.favoriteQuotes.map((quote: any) => (
+                                                <div key={quote.id} className={`border-l-3 border-warm-brown/30 pl-${compact ? '3' : '5'} py-1`}>
+                                                    <p className={`text-warm-dark/80 italic font-serif ${compact ? 'text-xs' : 'text-base'} leading-relaxed`}>"{quote.text}"</p>
+                                                    {quote.context && <p className={`text-warm-muted mt-1 ${compact ? 'text-[10px]' : 'text-xs'}`}>— {quote.context}</p>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Memorable Sayings */}
+                                {data.step5?.memorableSayings?.length > 0 && (
+                                    <div>
+                                        <h3 className={`font-semibold text-warm-dark mb-3 flex items-center gap-2 ${compact ? 'text-sm' : ''}`}>
+                                            <MessageCircle size={compact ? 14 : 18} className="text-olive" />
+                                            Things They Used to Say
+                                        </h3>
+                                        <div className={`space-y-${compact ? '2' : '3'}`}>
+                                            {data.step5.memorableSayings.map((saying: string, i: number) => (
+                                                <div key={i} className={`bg-olive/5 rounded-lg ${compact ? 'px-3 py-2' : 'px-5 py-3'} border border-olive/10`}>
+                                                    <p className={`text-warm-dark/70 italic font-serif ${compact ? 'text-xs' : 'text-sm'}`}>"{saying}"</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
