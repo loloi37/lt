@@ -132,6 +132,9 @@ export default function Step4Relationships({ data, onUpdate, onNext, onBack, rea
                         ? "Tell us about the important people in your life and major life events."
                         : "Tell us about the important people in their life and major life events."}
                 </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    The bonds that shaped a life — so future generations may know who mattered.
+                </p>
             </div>
 
             <div className="space-y-10">

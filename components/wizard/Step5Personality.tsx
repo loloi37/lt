@@ -130,6 +130,9 @@ export default function Step5Personality({ data, onUpdate, onNext, onBack, readO
                         ? "Help us understand who you are at your core."
                         : "Help us understand who they were at their core."}
                 </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    Capturing who they truly were — so their essence endures.
+                </p>
             </div>
 
             <div className="space-y-10">

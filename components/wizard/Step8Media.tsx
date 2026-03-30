@@ -97,14 +97,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 photos. ${!isPaid ? 'Activate your archive to upload unlimited photos.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 photos. ${!isPaid ? 'Activate your archive to gather unlimited photos.' : ''}`);
       return;
     }
 
     const filesToUpload = isPaid ? files : files.slice(0, remaining);
 
     if (!isPaid && files.length > remaining) {
-      alert(`You tried to upload ${files.length} photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
+      alert(`You selected ${files.length} photos, but only ${remaining} slot(s) remaining. Gathering ${remaining} photo(s).`);
     }
 
     // Process all uploads concurrently
@@ -185,14 +185,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 interactive photos. ${!isPaid ? 'Activate your archive to upload unlimited interactive photos.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 interactive photos. ${!isPaid ? 'Activate your archive to gather unlimited interactive photos.' : ''}`);
       return;
     }
 
     const filesToUpload = isPaid ? files : files.slice(0, remaining);
 
     if (!isPaid && files.length > remaining) {
-      alert(`You tried to upload ${files.length} interactive photos, but only ${remaining} slot(s) remaining. Uploading ${remaining} photo(s).`);
+      alert(`You selected ${files.length} interactive photos, but only ${remaining} slot(s) remaining. Gathering ${remaining} photo(s).`);
     }
 
     // Process all uploads concurrently
@@ -283,14 +283,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 voice recordings. ${!isPaid ? 'Activate your archive to upload unlimited recordings.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 voice recordings. ${!isPaid ? 'Activate your archive to gather unlimited recordings.' : ''}`);
       return;
     }
 
     const filesToUpload = isPaid ? files : files.slice(0, remaining);
 
     if (!isPaid && files.length > remaining) {
-      alert(`You tried to upload ${files.length} recordings, but only ${remaining} slot(s) remaining. Uploading ${remaining} recording(s).`);
+      alert(`You selected ${files.length} recordings, but only ${remaining} slot(s) remaining. Gathering ${remaining} recording(s).`);
     }
 
     for (const file of filesToUpload) {
@@ -350,7 +350,10 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           Photos & Legacy
         </h2>
         <p className="text-warm-dark/60 text-lg">
-          Add photos, voice recordings, and your final legacy statement.
+          Gather photos, voice recordings, and your final legacy statement.
+        </p>
+        <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+          Each image and sound you gather becomes an eternal fragment.
         </p>
       </div>
 
@@ -373,7 +376,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               className={`relative h-64 border-2 border-dashed border-warm-border/40 rounded-xl flex flex-col items-center justify-center transition-all overflow-hidden ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-olive/40 hover:bg-olive/5'}`}
             >
               <Upload className="mb-3 text-warm-dark/40" size={32} />
-              <p className="text-sm text-warm-dark/60 mb-1">Choose a cover photo</p>
+              <p className="text-sm text-warm-dark/60 mb-1">Select a cover photo</p>
               <p className="text-xs text-warm-dark/40">Recommended: Wide landscape photo (1920x1080)</p>
             </div>
           ) : (
@@ -484,7 +487,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                 className={`border-2 border-dashed border-warm-border/40 rounded-xl p-8 text-center transition-all ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:border-olive/40 hover:bg-olive/5'}`}
               >
                 <Upload className="mx-auto mb-3 text-warm-dark/40" size={32} />
-                <p className="text-sm text-warm-dark/60 mb-1">Choose photos to gather</p>
+                <p className="text-sm text-warm-dark/60 mb-1">Select photos to gather</p>
                 <p className="text-xs text-warm-dark/40">You can select multiple photos</p>
               </div>
             )}
@@ -601,7 +604,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               <p className="text-base font-medium text-warm-dark/70 mb-2">Create Interactive Photo Stories</p>
               {!isPaid && <Lock className="mx-auto text-warm-dark/20 mb-2" size={20} />}
               <p className="text-sm text-warm-dark/50 max-w-md mx-auto">
-                Choose photos where visitors can move their cursor to reveal hidden stories — a meaningful way to share memories.
+                Select photos where visitors can move their cursor to reveal hidden stories — a meaningful way to share memories.
               </p>
             </div>
           )}
@@ -659,7 +662,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
               className="w-full py-4 border-2 border-dashed border-warm-border/40 rounded-xl text-sm font-medium text-warm-dark/60 hover:border-olive hover:bg-olive/5 hover:text-olive transition-all flex items-center justify-center gap-2"
             >
               <Upload size={18} />
-              Upload Voice Recording
+              Gather Voice Recording
             </button>
           )}
           <input
@@ -753,6 +756,24 @@ What did they stand for? How did they make the world better? What will their mem
               >
                 I'll keep working on the story for now
               </button>
+
+              {/* Concierge — emotional alternative for fatigue / cognitive load */}
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-warm-border/30" />
+                <span className="text-xs text-warm-dark/25 italic">or</span>
+                <div className="flex-1 h-px bg-warm-border/30" />
+              </div>
+              <div className="bg-gradient-to-br from-olive/5 to-warm-brown/5 rounded-xl p-5 border border-warm-border/20 text-left">
+                <p className="text-sm text-warm-dark/50 mb-3 leading-relaxed">
+                  Feeling overwhelmed? Let a dedicated guardian complete this archive with care and attention on your behalf.
+                </p>
+                <button
+                  onClick={() => { setShowPaywall(false); window.location.href = '/concierge'; }}
+                  className="w-full py-3 border border-olive/30 text-olive rounded-xl font-medium hover:bg-olive/5 transition-all text-sm"
+                >
+                  Let someone help me preserve this life
+                </button>
+              </div>
             </div>
           </div>
         </div>

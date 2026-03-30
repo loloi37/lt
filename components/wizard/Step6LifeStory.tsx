@@ -145,7 +145,10 @@ export default function Step6LifeStory({ data, onUpdate, onNext, onBack, readOnl
                     Full Life Story
                 </h2>
                 <p className="text-warm-dark/60 text-lg">
-                    This is the heart of the memorial. Take your time - you can save and come back anytime.
+                    This is the heart of the memorial. Take your time - you can preserve your progress and come back anytime.
+                </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    The narrative that will carry their voice through time.
                 </p>
             </div>
 

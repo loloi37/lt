@@ -113,7 +113,7 @@ export default function ConciergeSpacePage({ params }: { params: Promise<{ id: s
 
         for (let i = 0; i < filesArray.length; i++) {
             const file = filesArray[i];
-            setUploadProgress(`Uploading ${i + 1} of ${filesArray.length}...`);
+            setUploadProgress(`Gathering ${i + 1} of ${filesArray.length}...`);
 
             try {
                 // Upload to Supabase Storage

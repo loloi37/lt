@@ -94,7 +94,7 @@ function RequestedContent() {
                                 </p>
                                 <p className="flex items-start gap-3">
                                     <span className="text-olive mt-1 flex-shrink-0">2.</span>
-                                    <span>You'll receive a link to your personal space where you can upload materials at your own pace</span>
+                                    <span>You'll receive a link to your personal space where you can gather materials at your own pace</span>
                                 </p>
                                 <p className="flex items-start gap-3">
                                     <span className="text-olive mt-1 flex-shrink-0">3.</span>
@@ -117,7 +117,7 @@ function RequestedContent() {
                                 </p>
                                 <p className="flex items-start gap-3">
                                     <span className="text-olive mt-1 flex-shrink-0">3.</span>
-                                    <span>After our conversation, you'll receive access to your personal space for uploading materials</span>
+                                    <span>After our conversation, you'll receive access to your personal space for gathering materials</span>
                                 </p>
                                 <p className="flex items-start gap-3">
                                     <span className="text-olive mt-1 flex-shrink-0">4.</span>

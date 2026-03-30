@@ -17,6 +17,7 @@ import {
 import ImageViewer from '@/components/ImageViewer';
 import IntegrityBadge from '@/components/IntegrityBadge';
 import BioWithLinks from '@/components/BioWithLinks';
+import GhostPresence from '@/components/wizard/GhostPresence';
 
 
 interface MemorialRendererProps {
@@ -167,14 +168,16 @@ export default function MemorialRenderer({
                 <div className={`${s.maxW} py-${compact ? '6' : '12'} ${s.gap}`}>
 
                     {/* Epitaph */}
-                    {data.step1?.epitaph && (
+                    {data.step1?.epitaph ? (
                         <div className={`text-center py-${compact ? '6' : '12'} border-y border-warm-border/30`}>
                             <Quote size={compact ? 24 : 40} className="text-warm-brown mx-auto mb-4 opacity-50" />
                             <p className={`font-serif ${s.quoteSize} text-warm-dark/80 italic leading-relaxed max-w-4xl mx-auto`}>
                                 "{data.step1.epitaph}"
                             </p>
                         </div>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Their defining words have not yet been spoken." />
+                    ) : null}
 
                     {/* Quick Facts Grid */}
                     <div className={`grid ${s.gridCols} gap-${compact ? '3' : '6'}`}>
@@ -235,7 +238,7 @@ export default function MemorialRenderer({
                     </div>
 
                     {/* Life Story */}
-                    {data.step6?.biography && (
+                    {data.step6?.biography ? (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-warm-border/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-olive/10 rounded-xl flex items-center justify-center`}>
@@ -252,13 +255,30 @@ export default function MemorialRenderer({
                                         }
                                         relations={relations}
                                     />
+                                    {/* Biography Mirror Appendage — contextual trailing for incomplete biographies */}
+                                    {!compact && (() => {
+                                        const bioWordCount = data.step6.biography.trim().split(/\s+/).filter(Boolean).length;
+                                        if (bioWordCount === 0 || bioWordCount >= 500) return null;
+                                        const appendage = data.step1?.isStillLiving
+                                            ? '\u2026And the story continues \u2014 each day adding a new line to a life still being written.'
+                                            : data.step1?.deathDate
+                                                ? '\u2026The story of their final chapter remains unwritten. Perhaps someone, somewhere, still carries the words.'
+                                                : '\u2026There is more to tell. Every life holds stories that have not yet found their way here.';
+                                        return (
+                                            <p className="mt-6 text-warm-dark/30 italic font-serif text-sm leading-relaxed">
+                                                {appendage}
+                                            </p>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Their story remains unwritten." />
+                    ) : null}
 
                     {/* Life Chapters */}
-                    {data.step6?.lifeChapters?.length > 0 && (
+                    {data.step6?.lifeChapters?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'}`}>Life Chapters</h2>
                             <div className={`space-y-${compact ? '3' : '6'}`}>
@@ -279,10 +299,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="The chapters of their life await." />
+                    ) : null}
 
                     {/* Early Life */}
-                    {(data.step2?.childhoodHome || data.step2?.familyBackground) && (
+                    {(data.step2?.childhoodHome || data.step2?.familyBackground) ? (
                         <section className={`bg-gradient-to-br from-olive/5 to-warm-brown/5 rounded-2xl ${s.sectionPadding} border border-warm-border/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -312,10 +334,12 @@ export default function MemorialRenderer({
                                 )}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Where they came from remains untold." />
+                    ) : null}
 
                     {/* Career & Education */}
-                    {data.step3?.occupations?.length > 0 && (
+                    {data.step3?.occupations?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -336,10 +360,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Their life's work has not been recorded." />
+                    ) : null}
 
                     {/* Family & Relationships */}
-                    {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0)) && (
+                    {((data.step4?.partners?.length > 0) || (data.step4?.children?.length > 0)) ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-olive/10 rounded-xl flex items-center justify-center`}>
@@ -370,10 +396,12 @@ export default function MemorialRenderer({
                                 </div>
                             )}
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="The people who shaped their world are unnamed." />
+                    ) : null}
 
                     {/* Personality & Values */}
-                    {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy) && (
+                    {(data.step5?.personalityTraits?.length > 0 || data.step5?.lifePhilosophy) ? (
                         <section className={`bg-white rounded-2xl ${s.sectionPadding} shadow-sm border border-warm-border/30`}>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -403,10 +431,12 @@ export default function MemorialRenderer({
                                 )}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Their character has not yet been captured." />
+                    ) : null}
 
                     {/* Memories & Stories */}
-                    {(data.step7?.sharedMemories?.length > 0 || data.step7?.impactStories?.length > 0) && (
+                    {(data.step7?.sharedMemories?.length > 0 || data.step7?.impactStories?.length > 0) ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-olive/10 rounded-xl flex items-center justify-center`}>
@@ -424,10 +454,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="No one has shared a memory yet." />
+                    ) : null}
 
                     {/* Interactive Photo Stories */}
-                    {data.step8?.interactiveGallery?.length > 0 && (
+                    {data.step8?.interactiveGallery?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-olive/10 rounded-xl flex items-center justify-center`}>
@@ -478,10 +510,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="gallery" whisper="Moments waiting to be revealed." />
+                    ) : null}
 
                     {/* Photo Gallery */}
-                    {data.step8?.gallery?.length > 0 && (
+                    {data.step8?.gallery?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'}`}>Photo Gallery</h2>
                             <div className={`grid ${s.galleryGrid} gap-${compact ? '2' : '4'}`}>
@@ -508,10 +542,12 @@ export default function MemorialRenderer({
                                 <ImageViewer images={data.step8.gallery} initialIndex={viewerStartIndex} onClose={() => setViewerOpen(false)} />
                             )}
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="gallery" whisper="No images preserve their face." />
+                    ) : null}
 
                     {/* Videos */}
-                    {data.step9?.videos?.length > 0 && (
+                    {data.step9?.videos?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'}`}>Video Memories</h2>
                             <div className={`grid grid-cols-1 ${compact ? '' : 'md:grid-cols-2'} gap-${compact ? '3' : '6'}`}>
@@ -530,10 +566,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="video" whisper="No moving images have been gathered." />
+                    ) : null}
 
                     {/* Voice Recordings */}
-                    {data.step8?.voiceRecordings?.length > 0 && (
+                    {data.step8?.voiceRecordings?.length > 0 ? (
                         <section>
                             <h2 className={`font-serif ${s.sectionTitle} text-warm-dark mb-${compact ? '4' : '8'} flex items-center gap-3`}>
                                 <div className={`${compact ? 'w-8 h-8' : 'w-12 h-12'} bg-warm-brown/10 rounded-xl flex items-center justify-center`}>
@@ -555,10 +593,12 @@ export default function MemorialRenderer({
                                 ))}
                             </div>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="voice" whisper="Their voice is waiting to be heard." />
+                    ) : null}
 
                     {/* Legacy Statement */}
-                    {data.step8?.legacyStatement && (
+                    {data.step8?.legacyStatement ? (
                         <section className={`bg-gradient-to-br from-olive/20 via-surface-low to-warm-brown/20 rounded-2xl ${compact ? 'p-6' : 'p-12 md:p-16'} text-center border-2 border-warm-border/30 shadow-lg`}>
                             <Star size={compact ? 24 : 48} className="text-warm-brown mx-auto mb-4" />
                             <h2 className={`font-serif ${compact ? 'text-lg' : 'text-3xl'} text-warm-dark mb-4`}>Legacy</h2>
@@ -566,7 +606,9 @@ export default function MemorialRenderer({
                                 {data.step8.legacyStatement}
                             </p>
                         </section>
-                    )}
+                    ) : isPreview ? (
+                        <GhostPresence variant="text" whisper="Their legacy message awaits." />
+                    ) : null}
                 </div>
 
                 {/* Footer — only on full view */}

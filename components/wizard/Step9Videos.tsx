@@ -44,7 +44,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
     {
       target: '[data-tutorial="videos"]',
       title: 'Add Videos',
-      description: 'Share videos that capture their voice, spirit, and memorable moments. Please stay on this page until the upload is complete!',
+      description: 'Gather videos that capture their voice, spirit, and memorable moments. Please stay on this page until gathering is complete!',
       position: 'bottom' as const,
     },
   ];
@@ -57,7 +57,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
     if (!files.length) return;
 
     if (!memorialId) {
-      setUploadError("Please save the memorial first (Basic Info step) before uploading videos.");
+      setUploadError("Please preserve the memorial first (Basic Info step) before gathering videos.");
       return;
     }
 
@@ -67,14 +67,14 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      setUploadError(`Maximum ${maxAllowed} videos per archive. You have already uploaded ${currentCount} video(s).`);
+      setUploadError(`Maximum ${maxAllowed} videos per archive. You have already gathered ${currentCount} video(s).`);
       return;
     }
 
     const filesToUpload = files.slice(0, remaining);
 
     if (files.length > remaining) {
-      setUploadError(`You tried to upload ${files.length} videos, but only ${remaining} slot(s) remaining. Will upload ${remaining} video(s).`);
+      setUploadError(`You selected ${files.length} videos, but only ${remaining} slot(s) remaining. Will gather ${remaining} video(s).`);
       // Continue l'upload des fichiers autorisés après 3 secondes
       await new Promise(resolve => setTimeout(resolve, 3000));
       setUploadError(null);
@@ -86,7 +86,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
 
     for (let i = 0; i < filesToUpload.length; i++) { // Use filesToUpload
       const file = filesToUpload[i];
-      setUploadProgress(`Uploading ${i + 1} of ${filesToUpload.length}...`);
+      setUploadProgress(`Gathering ${i + 1} of ${filesToUpload.length}...`);
 
       // Check file size (50MB limit)
       if (file.size > 50 * 1024 * 1024) {
@@ -150,7 +150,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
 
       } catch (error: any) {
         console.error(`Error uploading ${file.name}:`, error);
-        setUploadError(`Failed to upload "${file.name}": ${error.message}`);
+        setUploadError(`Failed to gather "${file.name}": ${error.message}`);
       }
     }
 
@@ -275,7 +275,10 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
           Video Memories
         </h2>
         <p className="text-warm-dark/60 text-lg">
-          Share videos that capture their voice, spirit, and memorable moments.
+          Gather videos that capture their voice, spirit, and memorable moments.
+        </p>
+        <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+          Moving images that will let future generations see them as they were.
         </p>
       </div>
 
@@ -314,7 +317,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
             </li>
             <li className="flex items-start gap-2">
               <span className="text-warm-brown mt-0.5">⚠️</span>
-              <span><strong>Important:</strong> Stay on this page until upload completes!</span>
+              <span><strong>Important:</strong> Stay on this page until gathering completes!</span>
             </li>
           </ul>
         </div>
@@ -409,7 +412,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
               <div className="flex flex-col items-center justify-center">
                 <div className="w-12 h-12 border-4 border-olive/30 border-t-olive rounded-full animate-spin mb-4" />
                 <p className="text-olive font-medium text-lg">{uploadProgress}</p>
-                <p className="text-warm-dark/60 text-sm mt-2">⚠️ Please stay on this page until upload completes</p>
+                <p className="text-warm-dark/60 text-sm mt-2">⚠️ Please stay on this page until gathering completes</p>
               </div>
             ) : data.videos.length >= maxVideos ? (
               <>
@@ -422,7 +425,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                   Maximum Videos Reached
                 </h3>
                 <p className="text-warm-dark/40 mb-6 max-w-md mx-auto">
-                  You have uploaded the maximum of {maxVideos} videos for this archive.
+                  You have gathered the maximum of {maxVideos} videos for this archive.
                 </p>
               </>
             ) : (
@@ -436,11 +439,11 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
                   {data.videos.length === 0 ? "Gather Your First Video" : "Gather More Videos"}
                 </h3>
                 <p className="text-warm-dark/60 mb-6 max-w-md mx-auto">
-                  Click here to upload video files. You can select multiple videos at once.
+                  Select video files to gather. You can select multiple videos at once.
                 </p>
                 <div className="inline-flex items-center gap-2 px-6 py-3 bg-olive hover:bg-olive/90 text-surface-low rounded-xl font-medium transition-all">
                   <Upload size={20} />
-                  Choose Video Files
+                  Select Video Files
                 </div>
               </>
             )}

@@ -400,7 +400,7 @@ export default function AdminProjectEditor({ params }: { params: Promise<{ id: s
                             {files.length === 0 ? (
                                 <div className="text-center py-12 text-slate-500">
                                     <Upload size={48} className="mx-auto mb-4 text-slate-300" />
-                                    <p>No files uploaded yet</p>
+                                    <p>No files gathered yet</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">

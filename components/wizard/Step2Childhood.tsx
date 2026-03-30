@@ -101,6 +101,9 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                         ? "Tell us about your formative years. You can skip any section and come back later."
                         : "Tell us about their formative years. You can skip any section and come back later."}
                 </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    The roots of their story — for those who will one day ask where it all began.
+                </p>
             </div>
 
             <div className="space-y-10">
@@ -294,7 +297,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                 <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-3">
                         <Upload size={18} className="text-olive" />
-                        Upload Childhood Photos (Optional)
+                        Gather Childhood Photos (Optional)
                     </label>
 
                     {data.childhoodPhotos.length === 0 ? (
@@ -305,7 +308,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             >
                                 <Upload className="mx-auto mb-3 text-warm-outline" size={32} />
                                 <p className="text-sm text-warm-muted mb-1">
-                                    Choose childhood photos
+                                    Select childhood photos
                                 </p>
                                 <p className="text-xs text-warm-outline">
                                     You can select multiple photos
@@ -313,7 +316,7 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
                             </div>
                         ) : (
                             <div className="border-2 border-dashed border-warm-border/30 rounded-xl p-8 text-center bg-warm-border/5">
-                                <p className="text-sm text-warm-outline">Photo upload disabled</p>
+                                <p className="text-sm text-warm-outline">Photo gathering disabled</p>
                             </div>
                         )
                     ) : (

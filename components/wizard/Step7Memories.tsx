@@ -259,6 +259,9 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                 <p className="text-warm-dark/60 text-lg">
                     Add memories from people who knew them, or invite others to contribute their stories.
                 </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    Every witness strengthens the legacy you are building.
+                </p>
             </div>
 
             <div className="space-y-10">
@@ -290,7 +293,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <p className="font-medium text-warm-dark">{item.content.title}</p>
-                                                <p className="text-xs text-warm-dark/40">Submitted by {item.witness_name}</p>
+                                                <p className="text-xs text-warm-dark/40">Offered by {item.witness_name}</p>
                                             </div>
 
                                             {/* STANDARD ACTIONS */}
@@ -345,7 +348,7 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
                                         {/* Visual indicator of conflict */}
                                         {disputingId === item.id && (
                                             <div className="mt-3 p-3 bg-warm-brown/5 rounded-lg text-xs text-warm-brown border border-warm-brown/20">
-                                                <p><strong>Conflict Detected:</strong> Choose "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
+                                                <p><strong>Conflict Detected:</strong> Select "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
                                             </div>
                                         )}
                                     </div>

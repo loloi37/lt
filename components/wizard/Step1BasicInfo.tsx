@@ -142,6 +142,9 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                     <p className="text-warm-muted text-lg">
                         We'll begin with the essential information. Don't worry, you can always come back and edit this later.
                     </p>
+                    <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                        The foundation of a legacy that will outlive us all.
+                    </p>
                 </div>
 
                 <div className="space-y-8">
@@ -344,7 +347,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
                                 >
                                     <Upload className="mx-auto mb-3 text-warm-outline" size={32} />
                                     <p className="text-sm text-warm-muted mb-1">
-                                        Choose a photo or drag and drop
+                                        Select a photo or drag and drop
                                     </p>
                                     <p className="text-xs text-warm-outline">
                                         PNG, JPG up to 10MB
@@ -494,7 +497,7 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
 
                 <div className="mt-4 text-center">
                     <button className="text-sm text-warm-muted hover:text-warm-dark transition-colors">
-                        Save Draft & Exit
+                        Preserve Draft & Exit
                     </button>
                 </div>
             </div>

@@ -6,10 +6,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Image as ImageIcon, Film, BookOpen, MapPin, Calendar, Shield } from 'lucide-react';
+import { ArrowLeft, Shield, Check, Clock, Infinity as InfinityIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { MemorialData } from '@/types/memorial';
 import { calculateCompletion } from '@/lib/completionLogic';
+import { countFragments } from '@/lib/emotionalState';
 
 function SealConfirmationContent() {
     const router = useRouter();
@@ -24,6 +25,7 @@ function SealConfirmationContent() {
         biographyWords: 0,
         pathsExplored: 0,
         totalPaths: 5,
+        fragments: 0,
     });
 
     useEffect(() => {
@@ -51,6 +53,7 @@ function SealConfirmationContent() {
                 const videoCount = data.step9?.videos?.length || 0;
                 const bioWords = data.step6?.biography?.trim().split(/\s+/).filter(Boolean).length || 0;
                 const explored = completion.steps.filter(s => s.completed).length;
+                const fragments = countFragments(data as MemorialData);
 
                 setArchiveStats({
                     photos: photoCount,
@@ -58,6 +61,7 @@ function SealConfirmationContent() {
                     biographyWords: bioWords,
                     pathsExplored: explored,
                     totalPaths: completion.steps.length,
+                    fragments,
                 });
             } catch (err) {
                 console.error('Error loading memorial:', err);
@@ -115,59 +119,84 @@ function SealConfirmationContent() {
             </div>
 
             <div className="max-w-3xl mx-auto px-6 py-16">
-                {/* Step 2.1.3: Archive declaration */}
-                <div className="text-center mb-12">
+                {/* Archive declaration — narrative tone */}
+                <div className="text-center mb-14">
                     <h1 className="font-serif text-4xl text-warm-dark mb-4">
-                        You are about to seal the archive
+                        You are about to seal the archive of
                     </h1>
-                    <div className="text-lg text-warm-dark/50">
-                        <span className="font-serif italic">{fullName}</span>
-                        {birthDate && (
-                            <span className="text-warm-dark/30">
-                                {' '}({birthDate}{deathDate ? ` — ${deathDate}` : ''})
-                            </span>
+                    <p className="font-serif text-3xl italic text-warm-dark/70 mb-2">{fullName}</p>
+                    {birthDate && (
+                        <p className="text-warm-dark/30 text-sm">
+                            {birthDate}{deathDate ? ` — ${deathDate}` : ''}
+                        </p>
+                    )}
+                </div>
+
+                {/* Narrative summary — replaces raw stats */}
+                <div className="bg-white rounded-2xl border border-warm-border/25 p-10 mb-8 text-center">
+                    <p className="font-serif text-5xl text-warm-dark mb-2">{archiveStats.fragments}</p>
+                    <p className="text-warm-dark/50 text-lg font-serif italic mb-8">
+                        fragments of their life have been gathered
+                    </p>
+                    <div className="space-y-2 text-sm text-warm-dark/40 leading-relaxed">
+                        {archiveStats.photos > 0 && (
+                            <p>{archiveStats.photos} image{archiveStats.photos !== 1 ? 's' : ''} preserving their world</p>
+                        )}
+                        {archiveStats.biographyWords > 0 && (
+                            <p>{archiveStats.biographyWords} words carrying their story</p>
+                        )}
+                        {archiveStats.videos > 0 && (
+                            <p>{archiveStats.videos} moment{archiveStats.videos !== 1 ? 's' : ''} captured in motion</p>
+                        )}
+                        {archiveStats.pathsExplored > 0 && (
+                            <p>{archiveStats.pathsExplored} of {archiveStats.totalPaths} paths explored</p>
                         )}
                     </div>
+                    <div className="mt-8 pt-6 border-t border-warm-border/15">
+                        <p className="font-serif text-lg text-warm-dark/60 italic">
+                            You are now the guardian of this legacy.
+                        </p>
+                    </div>
                 </div>
 
-                {/* Archive contents summary */}
-                <div className="bg-white rounded-2xl border border-warm-border/25 p-8 mb-8">
-                    <h2 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-6">
-                        What this archive contains
+                {/* Timeline of Immortality */}
+                <div className="bg-gradient-to-br from-olive/5 to-warm-brown/5 rounded-2xl border border-warm-border/15 p-8 mb-8">
+                    <h2 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-8 text-center">
+                        Timeline of Immortality
                     </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <ImageIcon size={18} className="text-warm-dark/30" />
+                    <div className="flex items-center justify-between max-w-md mx-auto">
+                        {/* Step 1: Gathered */}
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-full bg-olive/20 border-2 border-olive flex items-center justify-center mb-2">
+                                <Check size={20} className="text-olive" />
                             </div>
-                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.photos}</p>
-                            <p className="text-xs text-warm-dark/30">photo{archiveStats.photos !== 1 ? 's' : ''}</p>
+                            <p className="text-xs font-medium text-olive">Gathered</p>
+                            <p className="text-[10px] text-warm-dark/30">Fragments collected</p>
                         </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <Film size={18} className="text-warm-dark/30" />
+                        {/* Connector */}
+                        <div className="flex-1 h-0.5 bg-gradient-to-r from-olive to-warm-brown/40 mx-3 mt-[-20px]" />
+                        {/* Step 2: Sealed */}
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-full bg-warm-brown/10 border-2 border-warm-brown/40 border-dashed flex items-center justify-center mb-2 animate-pulse">
+                                <Clock size={20} className="text-warm-brown/50" />
                             </div>
-                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.videos}</p>
-                            <p className="text-xs text-warm-dark/30">video{archiveStats.videos !== 1 ? 's' : ''}</p>
+                            <p className="text-xs font-medium text-warm-brown/60">Sealed</p>
+                            <p className="text-[10px] text-warm-dark/30">Made permanent</p>
                         </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <BookOpen size={18} className="text-warm-dark/30" />
+                        {/* Connector */}
+                        <div className="flex-1 h-0.5 bg-warm-border/20 mx-3 mt-[-20px]" />
+                        {/* Step 3: Eternal */}
+                        <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-full bg-warm-border/10 border-2 border-warm-border/20 flex items-center justify-center mb-2">
+                                <InfinityIcon size={20} className="text-warm-dark/20" />
                             </div>
-                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.biographyWords}</p>
-                            <p className="text-xs text-warm-dark/30">words written</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-warm-border/10 rounded-xl flex items-center justify-center mx-auto mb-2">
-                                <MapPin size={18} className="text-warm-dark/30" />
-                            </div>
-                            <p className="text-2xl font-serif text-warm-dark">{archiveStats.pathsExplored}</p>
-                            <p className="text-xs text-warm-dark/30">paths explored</p>
+                            <p className="text-xs font-medium text-warm-dark/30">Eternal</p>
+                            <p className="text-[10px] text-warm-dark/20">Beyond time</p>
                         </div>
                     </div>
                 </div>
 
-                {/* What sealing means */}
+                {/* What sealing means — solemn narrative */}
                 <div className="bg-warm-border/8 rounded-2xl border border-warm-border/15 p-8 mb-8">
                     <h2 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-5">
                         What this means
@@ -175,20 +204,20 @@ function SealConfirmationContent() {
                     <ul className="space-y-3 text-sm text-warm-dark/50 leading-relaxed">
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
-                            This archive becomes permanent. It will be accessible at
+                            Their presence becomes permanent — accessible forever at
                             <span className="text-warm-dark/70 font-medium ml-1">ulumae.com/person/{slug}</span>
                         </li>
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
-                            It can be shared, exported, and transmitted to your heirs.
+                            This legacy can be shared, passed to your heirs, and carried forward through generations.
                         </li>
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
-                            The watermark will be removed. The archive will appear exactly as you have seen it in the preview.
+                            The draft watermark will be lifted. What remains is the pure archive, exactly as you shaped it.
                         </li>
                         <li className="flex items-start gap-3">
                             <div className="w-1.5 h-1.5 rounded-full bg-warm-dark/20 mt-2 flex-shrink-0" />
-                            You can continue editing and adding content after sealing.
+                            You remain the guardian — you may continue enriching this archive after sealing.
                         </li>
                     </ul>
                 </div>
@@ -205,24 +234,24 @@ function SealConfirmationContent() {
                     <span>Lifetime access</span>
                 </div>
 
-                {/* Step 2.1.3: Two equal buttons — return and proceed */}
+                {/* Action buttons — solemn tone */}
                 <div className="space-y-3 max-w-md mx-auto">
                     <button
                         onClick={handleProceed}
                         className="w-full py-4 glass-btn-dark rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                     >
-                        I am ready — Proceed
+                        Seal this legacy forever
                     </button>
                     <button
                         onClick={handleGoBack}
                         className="w-full py-4 bg-white border border-warm-border/30 text-warm-dark/50 rounded-xl font-medium hover:bg-warm-border/5 transition-all"
                     >
-                        I am not ready yet — Return to draft
+                        I need more time with their story
                     </button>
                 </div>
 
                 <p className="text-center text-xs text-warm-dark/20 mt-6">
-                    Your draft is saved. You can return to this page at any time.
+                    Your work is preserved. You can return to this moment at any time.
                 </p>
             </div>
         </div>

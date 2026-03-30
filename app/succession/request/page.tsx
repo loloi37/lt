@@ -20,7 +20,7 @@ export default function SuccessionRequestPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!files.deathCert || !files.idProof) {
-            alert("Please upload both required documents.");
+            alert("Please provide both required documents.");
             return;
         }
         setSubmitting(true);
@@ -162,7 +162,7 @@ export default function SuccessionRequestPage() {
                             type="submit"
                             className="w-full py-4 glass-btn-dark rounded-lg font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
                         >
-                            {submitting ? <Loader2 className="animate-spin" size={20} /> : "Submit Formal Request"}
+                            {submitting ? <Loader2 className="animate-spin" size={20} /> : "Offer Formal Request"}
                         </button>
 
                         <p className="text-[10px] text-center text-warm-outline uppercase tracking-tighter">

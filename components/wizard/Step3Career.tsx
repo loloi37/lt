@@ -77,6 +77,9 @@ export default function Step3Career({ data, onUpdate, onNext, onBack, readOnly, 
                         ? "Tell us about your professional life and educational achievements."
                         : "Tell us about their professional life and educational achievements."}
                 </p>
+                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
+                    Their life's work, preserved for generations to come.
+                </p>
             </div>
 
             <div className="space-y-10">
