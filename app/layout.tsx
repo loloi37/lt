@@ -60,14 +60,20 @@ function Footer() {
               Navigation
             </p>
             <div className="mt-1 flex flex-col gap-1 text-sm text-warm-muted">
-              <a href="/process" className="hover:text-warm-dark transition-colors">
-                Process
+              <a href="/how-it-works" className="hover:text-warm-dark transition-colors">
+                How It Works
               </a>
-              <a href="/plans" className="hover:text-warm-dark transition-colors">
-                Plans
+              <a href="/learn-more" className="hover:text-warm-dark transition-colors">
+                Learn More
               </a>
-              <a href="/advisor" className="hover:text-warm-dark transition-colors">
-                Advisor
+              <a href="/choice-pricing" className="hover:text-warm-dark transition-colors">
+                Pricing
+              </a>
+              <a href="/faq" className="hover:text-warm-dark transition-colors">
+                FAQ
+              </a>
+              <a href="/contact" className="hover:text-warm-dark transition-colors">
+                Contact
               </a>
             </div>
           </div>

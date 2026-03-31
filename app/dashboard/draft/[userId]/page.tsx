@@ -77,7 +77,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     const softDeleteMemorial = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this draft? It will be moved to the trash for 30 days.')) return;
+        if (!confirm('Are you sure you want to delete this archive? It will be moved to the trash for 30 days.')) return;
 
         const supabase = createClient();
         const { error } = await supabase
@@ -86,7 +86,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
             .eq('id', id);
 
         if (error) {
-            alert('Error deleting draft');
+            alert('Error deleting archive');
             console.error(error);
         } else {
             loadMemorials();
@@ -101,7 +101,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
             .eq('id', id);
 
         if (error) {
-            alert('Error restoring draft');
+            alert('Error restoring archive');
             console.error(error);
         } else {
             loadMemorials();
@@ -109,14 +109,14 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     const permanentDeleteMemorial = async (id: string) => {
-        if (!confirm('Are you sure you want to permanently delete this draft? This action cannot be undone.')) return;
-        if (!confirm('This is irreversible. The draft and all its content will be lost forever. Continue?')) return;
+        if (!confirm('Are you sure you want to permanently delete this archive? This action cannot be undone.')) return;
+        if (!confirm('This is irreversible. The archive and all its content will be lost forever. Continue?')) return;
         try {
             const res = await fetch(`/api/memorials/${id}/permanent-delete`, { method: 'DELETE' });
             if (!res.ok) throw new Error('Operation failed');
             loadMemorials();
         } catch {
-            alert('Error permanently deleting draft. Please try again.');
+            alert('Error permanently deleting archive. Please try again.');
         }
     };
 
@@ -152,12 +152,12 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                 <Link href="/choice-pricing" className="p-2 hover:bg-warm-border/10 rounded-lg">
                                     <ArrowLeft size={20} className="text-warm-dark/60" />
                                 </Link>
-                                <h1 className="font-serif text-4xl text-warm-dark">My Drafts</h1>
+                                <h1 className="font-serif text-4xl text-warm-dark">My Archives</h1>
                                 <span className="px-3 py-1 bg-warm-dark/10 text-warm-dark/60 text-xs font-semibold rounded-full uppercase tracking-wide">
-                                    Free Plan
+                                    Private Preview
                                 </span>
                             </div>
-                            <p className="text-warm-dark/60">Your draft memorials — upgrade to Personal to publish</p>
+                            <p className="text-warm-dark/60">Your private preview archives — upgrade to Personal to preserve permanently</p>
                             <p className="text-xs text-warm-dark/40 mt-1">ID: {userId.slice(0, 8)}...</p>
                         </div>
 
@@ -182,7 +182,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                 className="glass-btn-dark px-6 py-3 rounded-lg font-semibold flex items-center gap-2 bg-gradient-to-r from-warm-dark/80 to-warm-dark hover:shadow-lg text-surface-low"
                             >
                                 <Plus size={20} />
-                                New Draft
+                                New Archive
                             </button>
                         </div>
                     </div>
@@ -199,27 +199,27 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                         <div className="w-24 h-24 bg-warm-dark/5 rounded-full flex items-center justify-center mx-auto mb-6">
                             <FileEdit size={48} className="text-warm-dark/30" />
                         </div>
-                        <h2 className="font-serif text-3xl text-warm-dark mb-3">Start Your First Draft</h2>
+                        <h2 className="font-serif text-3xl text-warm-dark mb-3">Start Your First Archive</h2>
                         <p className="text-warm-dark/50 mb-6 max-w-sm mx-auto">
                             Build your memorial at your own pace. No payment required to get started.
                         </p>
                         <button onClick={handleCreate} className="glass-btn-dark inline-flex items-center gap-2 px-6 py-3 bg-warm-dark/80 hover:bg-warm-dark text-surface-low rounded-lg font-semibold">
                             <Plus size={20} />
-                            Create Draft
+                            Create Archive
                         </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {memorials.map((memorial) => (
                             <div key={memorial.id} className="bg-white rounded-xl shadow-sm border border-warm-border/30 overflow-hidden">
-                                {/* Draft watermark overlay on thumbnail */}
+                                {/* Preview watermark overlay on thumbnail */}
                                 <div className="relative h-48 bg-gradient-to-br from-warm-dark/5 to-warm-dark/10">
                                     {memorial.profile_photo_url ? (
                                         <>
                                             <img src={memorial.profile_photo_url} alt="" className="w-full h-full object-cover opacity-60" />
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <span className="text-warm-dark/40 font-bold text-xl tracking-widest rotate-[-20deg] select-none pointer-events-none">
-                                                    DRAFT
+                                                    PREVIEW
                                                 </span>
                                             </div>
                                         </>
@@ -228,13 +228,13 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                             <FileEdit size={64} className="text-warm-dark/20" />
                                         </div>
                                     )}
-                                    {/* Draft badge */}
+                                    {/* Preview badge */}
                                     <div className="absolute top-3 left-3 px-2 py-1 bg-warm-dark/70 text-surface-low text-xs font-semibold rounded-md">
-                                        DRAFT
+                                        PREVIEW
                                     </div>
                                 </div>
                                 <div className="p-6">
-                                    <h3 className="font-serif text-2xl text-warm-dark mb-2">{memorial.full_name || 'Untitled Draft'}</h3>
+                                    <h3 className="font-serif text-2xl text-warm-dark mb-2">{memorial.full_name || 'Untitled Archive'}</h3>
                                     <p className="text-xs text-warm-dark/40 mb-4">
                                         Last edited: {new Date(memorial.updated_at).toLocaleDateString()}
                                     </p>
@@ -248,7 +248,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                                         <button
                                             onClick={() => softDeleteMemorial(memorial.id)}
                                             className="py-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg"
-                                            title="Delete draft"
+                                            title="Delete archive"
                                         >
                                             <Trash2 size={16} />
                                         </button>
@@ -259,21 +259,21 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                     </div>
                 )}
 
-                {/* Removed Drafts */}
+                {/* Removed Archives */}
                 {deletedMemorials.length > 0 && (
                     <div className="mt-16 pt-10 border-t border-warm-border/30">
                         <h3 className="text-xl font-serif text-warm-dark mb-2 flex items-center gap-2">
                             <Trash2 size={20} className="text-warm-dark/40" />
-                            Removed Drafts
+                            Removed Archives
                         </h3>
                         <p className="text-sm text-warm-dark/40 mb-6">
-                            Drafts are kept for 30 days before permanent deletion.
+                            Archives are kept for 30 days before permanent deletion.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (
                                 <div key={memorial.id} className="bg-warm-border/10 rounded-xl border border-warm-border/30 p-4 flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium text-warm-dark">{memorial.full_name || 'Untitled Draft'}</p>
+                                        <p className="font-medium text-warm-dark">{memorial.full_name || 'Untitled Archive'}</p>
                                         <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                                             <AlertTriangle size={12} />
                                             {getDaysRemaining(memorial.deleted_at!)} days until permanent deletion

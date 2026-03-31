@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { ArrowRight, Shield, Globe, Clock, Lock, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
     const [open, setOpen] = useState(false);
@@ -26,6 +28,17 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function LandingPage() {
+    const router = useRouter();
+    const auth = useAuth();
+
+    // Redirect authenticated users with Personal or Family plan to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (auth.authenticated && (auth.plan === 'personal' || auth.plan === 'family')) {
+            router.replace('/dashboard');
+        }
+    }, [auth.loading, auth.authenticated, auth.plan, router]);
+
     return (
         <div className="min-h-screen bg-surface-low text-warm-dark font-serif">
             {/* NAV */}
@@ -36,22 +49,16 @@ export default function LandingPage() {
                     </span>
                     <div className="flex items-center gap-3">
                         <Link
-                            href="/login"
-                            className="px-5 py-2.5 text-sm font-sans font-medium text-warm-dark border border-warm-border/30 rounded-lg hover:bg-surface-mid transition-all"
-                        >
-                            Sign in
-                        </Link>
-                        <Link
                             href="/choice-pricing"
                             className="px-5 py-2.5 text-sm font-sans font-medium text-warm-muted hover:text-warm-dark transition-all"
                         >
                             Pricing
                         </Link>
                         <Link
-                            href="/choice-pricing"
-                            className="px-5 py-2.5 text-sm font-sans font-medium text-white glass-btn-primary rounded-lg"
+                            href="/login"
+                            className="px-5 py-2.5 text-sm font-sans font-medium text-warm-dark border border-warm-border/30 rounded-lg hover:bg-surface-mid transition-all"
                         >
-                            Start Building
+                            Sign in / Sign up
                         </Link>
                     </div>
                 </div>
@@ -72,21 +79,6 @@ export default function LandingPage() {
                         A private, structured space to preserve the essence of a life —
                         backed by technology designed to last centuries.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link
-                            href="/choice-pricing"
-                            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-sans font-medium text-white glass-btn-primary rounded-lg"
-                        >
-                            Start Building a Memorial
-                            <ArrowRight size={18} />
-                        </Link>
-                        <Link
-                            href="/example"
-                            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-sans font-medium text-warm-dark border border-warm-border/30 rounded-lg hover:bg-surface-mid transition-all"
-                        >
-                            View an Example
-                        </Link>
-                    </div>
                     <p className="text-xs text-warm-outline mt-4 font-sans">
                         No account required to begin. Free to build. Pay only to preserve permanently.
                     </p>
@@ -198,123 +190,8 @@ export default function LandingPage() {
 
             <div className="border-t border-warm-border/30" />
 
-            {/* PRICING */}
-            <section className="py-20 md:py-24 px-6 bg-surface-mid/30">
-                <div className="max-w-5xl mx-auto">
-                    <div className="text-center mb-14">
-                        <span className="inline-block text-xs font-sans tracking-widest uppercase text-warm-outline border border-warm-border/30 rounded-full px-4 py-1.5 mb-6 bg-surface-mid/50">
-                            Pricing
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-light mb-3">
-                            One payment. Permanent preservation.
-                        </h2>
-                        <p className="text-warm-muted font-sans">No subscription. No monthly fees. No surprises.</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-6">
-                        {/* Personal */}
-                        <div className="bg-white rounded-xl p-8 border border-warm-border/30 flex flex-col hover:bg-surface-low transition-colors">
-                            <h3 className="text-2xl font-light mb-1">Personal</h3>
-                            <p className="text-xs text-warm-muted font-sans mb-4">One complete memorial</p>
-                            <div className="mb-6">
-                                <span className="text-3xl font-sans font-bold text-warm-dark">$1,470</span>
-                                <span className="text-sm text-warm-muted font-sans ml-1">one time</span>
-                            </div>
-                            <ul className="space-y-2.5 mb-8 text-sm font-sans text-warm-muted flex-1">
-                                {[
-                                    'Permanent Arweave preservation',
-                                    'Up to 50 GB of photos, video, audio',
-                                    'Structured biography & life story',
-                                    'Witness invitations & contributions',
-                                    'Successor designation',
-                                    'Certificate of Permanence',
-                                ].map(f => (
-                                    <li key={f} className="flex items-start gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-olive mt-2 flex-shrink-0" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            <Link
-                                href="/choice-pricing"
-                                className="block w-full text-center py-3 glass-btn-primary text-sm font-sans font-medium rounded-lg"
-                            >
-                                Choose Personal
-                            </Link>
-                        </div>
-
-                        {/* Family */}
-                        <div className="bg-warm-dark text-white rounded-xl p-8 border border-warm-dark flex flex-col shadow-xl">
-                            <h3 className="text-2xl font-light mb-1">Family</h3>
-                            <p className="text-xs text-white/50 font-sans mb-4">Unlimited linked memorials</p>
-                            <div className="mb-6">
-                                <span className="text-3xl font-sans font-bold">$2,940</span>
-                                <span className="text-sm text-white/50 font-sans ml-1">one time</span>
-                            </div>
-                            <ul className="space-y-2.5 mb-8 text-sm font-sans text-white/70 flex-1">
-                                {[
-                                    'Everything in Personal',
-                                    'Unlimited family memorials',
-                                    'Visual family constellation',
-                                    'Anchor: local device sync',
-                                    'Offline access guarantee',
-                                    'Family steward designation',
-                                ].map(f => (
-                                    <li key={f} className="flex items-start gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-white/50 mt-2 flex-shrink-0" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            <Link
-                                href="/choice-pricing"
-                                className="block w-full text-center py-3 bg-white text-warm-dark text-sm font-sans font-medium rounded-lg hover:bg-white/90 transition-all"
-                            >
-                                Choose Family
-                            </Link>
-                        </div>
-
-                        {/* Concierge */}
-                        <div className="bg-white rounded-xl p-8 border border-warm-border/30 flex flex-col relative overflow-hidden hover:bg-surface-low transition-colors">
-                            <div className="absolute top-4 right-4 px-3 py-1 bg-plum/15 text-plum text-xs font-sans font-semibold rounded-full border border-plum/30">
-                                White Glove
-                            </div>
-                            <h3 className="text-2xl font-light mb-1">Conciergerie</h3>
-                            <p className="text-xs text-warm-muted font-sans mb-4">We build it for you</p>
-                            <div className="mb-6">
-                                <span className="text-3xl font-sans font-bold text-warm-dark">$6,300</span>
-                                <span className="text-sm text-warm-muted font-sans ml-1">per memorial</span>
-                            </div>
-                            <ul className="space-y-2.5 mb-8 text-sm font-sans text-warm-muted flex-1">
-                                {[
-                                    'Everything in Family',
-                                    'Phone/video interview session',
-                                    'Professional biographical writing',
-                                    'Document digitization',
-                                    '2 revision cycles included',
-                                    'Delivered within 60 days',
-                                ].map(f => (
-                                    <li key={f} className="flex items-start gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-plum mt-2 flex-shrink-0" />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-                            <Link
-                                href="/concierge/request"
-                                className="block w-full text-center py-3 border border-warm-border/30 text-warm-dark text-sm font-sans font-medium rounded-lg hover:bg-surface-mid transition-all"
-                            >
-                                Request First Call
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <div className="border-t border-warm-border/30" />
-
             {/* TRUST SIGNALS */}
-            <section className="py-20 md:py-24 px-6 bg-surface-low">
+            <section className="py-20 md:py-24 px-6 bg-surface-mid/30">
                 <div className="max-w-3xl mx-auto text-center">
                     <h2 className="text-3xl md:text-4xl font-light mb-12">
                         Built on trust, not promises.
@@ -345,7 +222,7 @@ export default function LandingPage() {
             <div className="border-t border-warm-border/30" />
 
             {/* FAQ */}
-            <section className="py-20 md:py-24 px-6 bg-surface-mid/30">
+            <section className="py-20 md:py-24 px-6 bg-surface-low">
                 <div className="max-w-2xl mx-auto">
                     <h2 className="text-3xl font-light mb-10 text-center">Common Questions</h2>
                     <FAQItem
@@ -378,7 +255,7 @@ export default function LandingPage() {
             <div className="border-t border-warm-border/30" />
 
             {/* CTA */}
-            <section className="py-24 md:py-32 px-6 text-center bg-surface-low">
+            <section className="py-24 md:py-32 px-6 text-center bg-surface-mid/30">
                 <div className="max-w-2xl mx-auto">
                     <h2 className="text-3xl md:text-4xl font-light mb-5">
                         Start preserving what matters.

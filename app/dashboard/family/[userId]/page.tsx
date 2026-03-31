@@ -295,7 +295,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                 className="pl-12 pr-8 py-3 glass-input rounded-xl appearance-none cursor-pointer"
                             >
                                 <option value="all">All Memorials</option>
-                                <option value="draft">Drafts</option>
+                                <option value="draft">Preview Archives</option>
                                 <option value="published">Published</option>
                             </select>
                         </div>

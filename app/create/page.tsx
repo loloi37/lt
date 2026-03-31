@@ -264,7 +264,7 @@ function CreateMemorialPageContent() {
       }`}>
       {effectiveMode === 'family' ? <Users size={12} /> : <User size={12} />}
       <span className="uppercase tracking-wider">
-        {effectiveMode === 'family' ? 'Family Archive' : effectiveMode === 'draft' ? 'Draft' : 'Personal Archive'}
+        {effectiveMode === 'family' ? 'Family Archive' : effectiveMode === 'draft' ? 'Preview Archive' : 'Personal Archive'}
       </span>
     </div>
   );

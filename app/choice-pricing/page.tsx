@@ -157,7 +157,7 @@ export default function ChoicePricingPage() {
 
             {/* Pricing Cards Grid */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-32 gap-8">
-                {/* Draft */}
+                {/* Preview Archive */}
                 <button
                     onClick={handleDraftStart}
                     disabled={!ready}
@@ -167,7 +167,7 @@ export default function ChoicePricingPage() {
                         <div className="w-14 h-14 bg-gradient-to-br from-warm-dark/80 to-warm-dark/60 flex items-center justify-center mb-4">
                             <FileEdit size={28} className="text-warm-bg" />
                         </div>
-                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Draft</h3>
+                        <h3 className="font-serif text-3xl text-warm-dark mb-1">Preview Archive</h3>
                         <p className="text-xs uppercase tracking-widest text-warm-outline">
                             Free Start
                         </p>
@@ -350,7 +350,7 @@ export default function ChoicePricingPage() {
                         <thead>
                             <tr className="uppercase tracking-widest text-[10px] text-warm-outline border-b border-warm-border/20">
                                 <th className="py-6 px-4">Feature</th>
-                                <th className="py-6 px-4">Draft</th>
+                                <th className="py-6 px-4">Preview</th>
                                 <th className="py-6 px-4">Personal</th>
                                 <th className="py-6 px-4">Family</th>
                                 <th className="py-6 px-4">Concierge</th>
@@ -383,7 +383,7 @@ export default function ChoicePricingPage() {
                             &ldquo;Independent archive export + 30-day satisfaction guarantee.
                             If you are not satisfied, contact us within 30 days of payment
                             for a full refund, as long as the archive has not been published.
-                            Your draft remains accessible.&rdquo;
+                            Your preview archive remains accessible.&rdquo;
                         </p>
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-warm-outline flex items-center justify-center">
@@ -418,7 +418,7 @@ export default function ChoicePricingPage() {
             {/* Bottom note */}
             <div className="mt-16 text-center">
                 <p className="text-sm text-warm-outline">
-                    Not sure which to choose? <strong>Draft</strong> is free to start — you can upgrade to Personal at any time.
+                    Not sure which to choose? <strong>Preview Archive</strong> is free to start — you can upgrade to Personal at any time.
                     Personal and Family are self-service tools. Conciergerie is a fully managed, human-led service.
                 </p>
             </div>
