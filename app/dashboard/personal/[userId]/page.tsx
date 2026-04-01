@@ -13,6 +13,7 @@ import { supabase, Memorial } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import PreservationStatus from '@/components/PreservationStatus';
 import SuccessionSetup from '@/components/SuccessionSetup';
+import RoleManagementTable from '@/components/RoleManagementTable';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -517,6 +518,14 @@ function ActiveArchiveView({
                     label="Full Editor"
                 />
             </div>
+
+            {/* ── Witnesses ── */}
+            <RoleManagementTable
+                memorialId={archive.id}
+                isOwner={true}
+                planType="personal"
+                inviteStepHref={`/create?id=${archive.id}&mode=personal&step=7`}
+            />
 
             {/* ── Two-column section ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

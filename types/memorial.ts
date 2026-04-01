@@ -218,7 +218,7 @@ export type EmotionalStateName = 'void' | 'fragile' | 'emerging' | 'substantial'
 // PHASE 2: WITNESS & COLLABORATION TYPES
 // ==========================================
 
-export type WitnessRole = 'owner' | 'co_guardian' | 'witness';
+export type WitnessRole = 'owner' | 'co_guardian' | 'witness' | 'reader';
 
 export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
 

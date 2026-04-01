@@ -8,6 +8,7 @@ import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
 import AnchorPanel from '@/components/AnchorPanel';
+import RoleManagementTable from '@/components/RoleManagementTable';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -346,7 +347,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-white/80 backdrop-blur-sm text-warm-muted border border-warm-border/30 font-sans">
-                                                    Draft
+                                                    Preview
                                                 </span>
                                             )}
                                         </div>
@@ -396,6 +397,18 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                             </button>
                         </div>
                     </>
+                )}
+
+                {/* MEMBERS — Role Management per Memorial */}
+                {firstPaidMemorial && (
+                    <div className="mt-12">
+                        <RoleManagementTable
+                            memorialId={firstPaidMemorial.id}
+                            isOwner={true}
+                            planType="family"
+                            inviteStepHref={`/create?id=${firstPaidMemorial.id}&mode=family&step=7`}
+                        />
+                    </div>
                 )}
 
                 {/* ANCHOR PANEL — Device Sync Display */}

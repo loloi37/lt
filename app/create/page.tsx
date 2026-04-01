@@ -1147,32 +1147,6 @@ function CreateMemorialPageContent() {
             />
           </div>
 
-          {hasFullAccess && (
-            <div className="col-span-full mt-8">
-              <button
-                onClick={() => {
-                  setActivePath('witnesses');
-                  setMemorialData(prev => ({ ...prev, currentStep: 7 }));
-                  setViewMode('path');
-                }}
-                className="w-full p-8 rounded-2xl border-2 border-olive bg-surface-low hover:shadow-xl transition-all text-left flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-6">
-                  <div className="p-4 bg-olive/10 rounded-2xl text-olive group-hover:scale-110 transition-transform">
-                    <Users size={32} />
-                  </div>
-                  <div>
-                    <h3 className="font-serif text-2xl text-warm-dark">Invite Witnesses</h3>
-                    <p className="text-sm text-warm-muted">Invite family and friends to add their own stories and shared memories.</p>
-                  </div>
-                </div>
-                <div className="px-6 py-2 bg-olive text-warm-bg rounded-lg text-sm font-bold">
-                  Open for Contributions
-                </div>
-              </button>
-            </div>
-          )}
-
           {hasFullAccess ? (
             <div className="mt-12 p-10 bg-plum/5 border-2 border-plum/20 rounded-3xl text-center animate-fadeIn">
               <div className="w-16 h-16 bg-plum text-warm-bg rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -1180,7 +1154,7 @@ function CreateMemorialPageContent() {
               </div>
               <h3 className="font-serif text-3xl text-warm-dark mb-4">This Memory is Protected</h3>
               <p className="text-warm-muted max-w-lg mx-auto mb-8 text-sm">
-                The archive is preserved at its permanent address. You can now invite others to bear witness and add their memories.
+                The archive is preserved at its permanent address. Manage witnesses and contributions from your dashboard.
               </p>
 
               <div className="flex justify-center gap-4">
@@ -1191,12 +1165,6 @@ function CreateMemorialPageContent() {
                 >
                   Visit the Archive
                 </Link>
-                <button
-                  onClick={() => alert("Invite Witnesses feature coming soon!")}
-                  className="px-8 py-3 border border-olive text-olive rounded-lg font-medium hover:bg-olive/5 transition-all"
-                >
-                  Invite Witnesses
-                </button>
               </div>
 
               {/* Review & Seal — always accessible for paid users to re-review */}
