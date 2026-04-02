@@ -1,10 +1,10 @@
 // components/SaveIndicator.tsx
-// Shows auto-save status: idle, saving, saved, error
-// Place this in your wizard header/toolbar area
+// Step 1.1.3: Minimal, silent auto-save indicator
+// Shows status briefly then disappears. Never intrusive.
 
 'use client';
 
-import { Cloud, CloudOff, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { Check, Loader2, WifiOff } from 'lucide-react';
 import { SaveStatus } from '@/hooks/useAutoSave';
 
 interface SaveIndicatorProps {
@@ -15,50 +15,47 @@ interface SaveIndicatorProps {
 }
 
 export default function SaveIndicator({ status, lastSavedAt, error, onRetry }: SaveIndicatorProps) {
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
+    // Step 1.1.3: Most of the time, show nothing. The save is silent.
+    if (status === 'idle') return null;
 
     return (
-        <div className="flex items-center gap-2 text-xs">
-            {status === 'idle' && lastSavedAt && (
-                <div className="flex items-center gap-1.5 text-charcoal/40 transition-opacity">
-                    <Cloud size={14} />
-                    <span>Saved at {formatTime(lastSavedAt)}</span>
-                </div>
-            )}
-
-            {status === 'idle' && !lastSavedAt && (
-                <div className="flex items-center gap-1.5 text-charcoal/30">
-                    <Cloud size={14} />
-                    <span>Auto-save active</span>
-                </div>
-            )}
-
+        <div className="flex items-center gap-1.5 text-xs">
             {status === 'saving' && (
-                <div className="flex items-center gap-1.5 text-sage animate-pulse">
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Saving...</span>
+                <div className="flex items-center gap-1.5 text-warm-outline transition-opacity">
+                    <Loader2 size={12} className="animate-spin" />
                 </div>
             )}
 
             {status === 'saved' && (
-                <div className="flex items-center gap-1.5 text-sage transition-opacity">
-                    <Check size={14} />
-                    <span>All changes saved</span>
+                <div className="flex items-center gap-1.5 text-warm-outline animate-fadeIn">
+                    <Check size={12} />
+                    <span>Preserved</span>
+                </div>
+            )}
+
+            {status === 'offline' && (
+                <div className="flex items-center gap-1.5 text-warm-outline">
+                    <WifiOff size={12} />
+                    <span>Held safely</span>
+                </div>
+            )}
+
+            {status === 'reconnected' && (
+                <div className="flex items-center gap-1.5 text-olive/60 animate-fadeIn">
+                    <Check size={12} />
+                    <span>Reconnected. Everything is preserved.</span>
                 </div>
             )}
 
             {status === 'error' && (
-                <div className="flex items-center gap-1.5 text-terracotta">
-                    <AlertTriangle size={14} />
-                    <span>Save failed</span>
+                <div className="flex items-center gap-1.5 text-warm-brown/60">
+                    <span>Could not preserve</span>
                     {onRetry && (
                         <button
                             onClick={onRetry}
-                            className="underline hover:text-terracotta/80 transition-colors ml-1"
+                            className="underline hover:text-warm-brown/80 transition-colors ml-1"
                         >
-                            Retry
+                            Try again
                         </button>
                     )}
                 </div>

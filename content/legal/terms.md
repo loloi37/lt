@@ -6,9 +6,9 @@ TERMS OF SERVICE
 
 ## 1. ACCEPTANCE OF TERMS
 
-By accessing or using Legacy Vault (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
+By accessing or using ULUMAE (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
 
-These Terms constitute a legally binding agreement between you and Legacy Vault LLC ("Legacy Vault," "we," "us," or "our").
+These Terms constitute a legally binding agreement between you and ULUMAE LLC ("ULUMAE," "we," "us," or "our").
 
 **You must be at least 18 years old to use this Service.** By using the Service, you represent that you are at least 18 years of age and have the legal capacity to enter into this agreement.
 
@@ -16,17 +16,17 @@ These Terms constitute a legally binding agreement between you and Legacy Vault 
 
 ## 2. SERVICE DESCRIPTION
 
-### 2.1 What Legacy Vault Is
+### 2.1 What ULUMAE Is
 
-Legacy Vault is a digital memorial and archive creation service that allows users to create, organize, and preserve biographical information, photographs, videos, documents, and other content related to themselves or deceased persons.
+ULUMAE is a digital memorial and archive creation service that allows users to create, organize, and preserve biographical information, photographs, videos, documents, and other content related to themselves or deceased persons.
 
-### 2.2 What Legacy Vault Is NOT
+### 2.2 What ULUMAE Is NOT
 
-Legacy Vault is NOT a funeral home, funeral service provider, or estate planning service. We do not provide legal advice, mediate family disputes, or determine the accuracy of biographical information.
+ULUMAE is NOT a funeral home, funeral service provider, or estate planning service. We do not provide legal advice, mediate family disputes, or determine the accuracy of biographical information.
 
 ### 2.3 Service Tiers
 
-Legacy Vault offers three service tiers:
+ULUMAE offers three service tiers:
 
 - **Personal Archive** ($1,500): Individual memorial creation for one person
 - **Family Archive** ($3,000): Multiple memorials within a family structure with cross-linking capabilities
@@ -79,7 +79,7 @@ You agree to comply with all applicable local, state, national, and internationa
 
 ### 5.1 Payment Structure
 
-Legacy Vault operates on a **one-time payment model**. There are no recurring subscription fees.
+ULUMAE operates on a **one-time payment model**. There are no recurring subscription fees.
 
 ### 5.2 Payment Processing
 
@@ -113,7 +113,7 @@ You retain all ownership rights to the content you upload to the Service, includ
 
 ### 6.2 License You Grant to Us
 
-By uploading content to the Service, you grant Legacy Vault a **non-exclusive, worldwide, royalty-free license** to:
+By uploading content to the Service, you grant ULUMAE a **non-exclusive, worldwide, royalty-free license** to:
 - Store your content on our servers and backup systems
 - Display your content within the memorial you create
 - Process your content for technical purposes (resize images, compress videos, format text)
@@ -136,7 +136,7 @@ You represent and warrant that:
 
 ### 6.4 Copyright Infringement
 
-If you believe any content on our Service infringes your copyright, please contact us at legal@legacyvault.com with:
+If you believe any content on our Service infringes your copyright, please contact us at legal@ulumae.com with:
 - Identification of the copyrighted work
 - Identification of the infringing material
 - Your contact information
@@ -147,7 +147,7 @@ We reserve the right to remove allegedly infringing content and terminate accoun
 
 ### 6.5 Your Indemnification
 
-**You agree to indemnify, defend, and hold harmless Legacy Vault** from any claims, damages, losses, liabilities, and expenses (including reasonable attorney fees) arising from:
+**You agree to indemnify, defend, and hold harmless ULUMAE** from any claims, damages, losses, liabilities, and expenses (including reasonable attorney fees) arising from:
 - Content you upload that infringes third-party rights
 - Your breach of these Terms
 - Your violation of any law or regulation
@@ -236,12 +236,12 @@ Exports include:
 
 You can request an export by:
 - Using the "Export Memorial" feature in your account settings
-- Contacting support@legacyvault.com
+- Contacting support@ulumae.com
 - We will provide the export within 5 business days
 
-### 9.4 Independence from Legacy Vault
+### 9.4 Independence from ULUMAE
 
-Exported memorials are designed to be **viewable and usable without Legacy Vault's Service**. This ensures your content remains accessible even if our Service becomes unavailable.
+Exported memorials are designed to be **viewable and usable without ULUMAE's Service**. This ensures your content remains accessible even if our Service becomes unavailable.
 
 ---
 
@@ -251,11 +251,11 @@ Exported memorials are designed to be **viewable and usable without Legacy Vault
 
 You may close your account at any time by:
 - Using account closure feature in settings
-- Contacting support@legacyvault.com
+- Contacting support@ulumae.com
 
 We recommend exporting your memorial before closing your account.
 
-### 10.2 Termination by Legacy Vault
+### 10.2 Termination by ULUMAE
 
 We may suspend or terminate your account if:
 - You breach these Terms
@@ -287,7 +287,7 @@ Upon termination:
 
 **THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.**
 
-**TO THE MAXIMUM EXTENT PERMITTED BY LAW, LEGACY VAULT DISCLAIMS ALL WARRANTIES, INCLUDING:**
+**TO THE MAXIMUM EXTENT PERMITTED BY LAW, ULUMAE DISCLAIMS ALL WARRANTIES, INCLUDING:**
 
 - **IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT**
 - **WARRANTIES REGARDING ACCURACY, RELIABILITY, OR AVAILABILITY OF THE SERVICE**
@@ -313,11 +313,11 @@ Some jurisdictions do not allow the exclusion of implied warranties, so some of 
 
 ### 12.1 Maximum Liability
 
-**LEGACY VAULT'S TOTAL LIABILITY TO YOU FOR ANY CLAIMS ARISING FROM OR RELATED TO THE SERVICE SHALL NOT EXCEED THE AMOUNT YOU PAID TO LEGACY VAULT FOR THE SERVICE.**
+**ULUMAE'S TOTAL LIABILITY TO YOU FOR ANY CLAIMS ARISING FROM OR RELATED TO THE SERVICE SHALL NOT EXCEED THE AMOUNT YOU PAID TO ULUMAE FOR THE SERVICE.**
 
 ### 12.2 Excluded Damages
 
-**LEGACY VAULT SHALL NOT BE LIABLE FOR:**
+**ULUMAE SHALL NOT BE LIABLE FOR:**
 - **INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES**
 - **LOSS OF PROFITS, REVENUE, OR DATA**
 - **LOSS OF USE OR BUSINESS INTERRUPTION**
@@ -349,7 +349,7 @@ Some jurisdictions do not allow limitation of liability for certain damages, so 
 
 ## 13. INDEMNIFICATION
 
-You agree to **indemnify, defend, and hold harmless Legacy Vault, its officers, directors, employees, agents, and affiliates** from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorney fees) arising from or related to:
+You agree to **indemnify, defend, and hold harmless ULUMAE, its officers, directors, employees, agents, and affiliates** from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorney fees) arising from or related to:
 
 - **Your use of the Service**
 - **Content you upload, including copyright infringement or violation of privacy rights**
@@ -367,7 +367,7 @@ This indemnification obligation will survive termination of these Terms and your
 
 ### 14.1 Informal Resolution First
 
-Before initiating any formal dispute resolution, you agree to contact us at legal@legacyvault.com to attempt to resolve the dispute informally. We commit to working in good faith to resolve disputes within 30 days.
+Before initiating any formal dispute resolution, you agree to contact us at legal@ulumae.com to attempt to resolve the dispute informally. We commit to working in good faith to resolve disputes within 30 days.
 
 ### 14.2 Binding Arbitration
 
@@ -395,7 +395,7 @@ The following disputes are NOT subject to arbitration:
 
 ### 14.5 Opt-Out Right
 
-**You have 30 days from first accepting these Terms to opt out of arbitration.** To opt out, send written notice to legal@legacyvault.com stating your name, address, and clear intent to opt out of arbitration. If you opt out, disputes will be resolved in court.
+**You have 30 days from first accepting these Terms to opt out of arbitration.** To opt out, send written notice to legal@ulumae.com stating your name, address, and clear intent to opt out of arbitration. If you opt out, disputes will be resolved in court.
 
 ### 14.6 Survival
 
@@ -430,7 +430,7 @@ These Terms, together with:
 - The Memorial Authorization Form
 - The Concierge Service Agreement (if applicable)
 
-constitute the entire agreement between you and Legacy Vault regarding the Service and supersede all prior agreements and understandings.
+constitute the entire agreement between you and ULUMAE regarding the Service and supersede all prior agreements and understandings.
 
 ### 16.2 Severability
 
@@ -438,7 +438,7 @@ If any provision of these Terms is found to be invalid or unenforceable, the rem
 
 ### 16.3 No Waiver
 
-Our failure to enforce any provision of these Terms does not constitute a waiver of that provision or any other provision. Any waiver must be in writing and signed by an authorized representative of Legacy Vault.
+Our failure to enforce any provision of these Terms does not constitute a waiver of that provision or any other provision. Any waiver must be in writing and signed by an authorized representative of ULUMAE.
 
 ### 16.4 Assignment
 
@@ -452,15 +452,15 @@ Neither party shall be liable for any failure or delay in performance due to cir
 
 **To You:** We may provide notices to you via:
 - Email to your registered email address
-- Posting on the Legacy Vault website
+- Posting on the ULUMAE website
 - In-Service notifications
 
 **To Us:** You may provide notices to us at:
 ```
-Legacy Vault LLC
+ULUMAE LLC
 123 Main Street
 Wilmington, DE 19801
-Email: legal@legacyvault.com
+Email: legal@ulumae.com
 ```
 
 Notices are considered received:
@@ -469,7 +469,7 @@ Notices are considered received:
 
 ### 16.7 Relationship
 
-Nothing in these Terms creates a partnership, joint venture, agency, or employment relationship between you and Legacy Vault.
+Nothing in these Terms creates a partnership, joint venture, agency, or employment relationship between you and ULUMAE.
 
 ### 16.8 Third-Party Beneficiaries
 
@@ -483,19 +483,19 @@ Headings are for convenience only and do not affect interpretation. "Including" 
 
 ## 17. CONTACT INFORMATION
 
-**Legacy Vault LLC**
+**ULUMAE LLC**
 
 **General Support:**  
-Email: support@legacyvault.com
+Email: support@ulumae.com
 
 **Privacy Inquiries:**  
-Email: privacy@legacyvault.com
+Email: privacy@ulumae.com
 
 **Legal Inquiries:**  
-Email: legal@legacyvault.com
+Email: legal@ulumae.com
 
 **Billing & Refunds:**  
-Email: billing@legacyvault.com
+Email: billing@ulumae.com
 
 **Mailing Address:**  
 123 Main Street  

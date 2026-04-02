@@ -39,13 +39,13 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
     const currentImage = images[currentIndex];
 
     return (
-        <div className="fixed inset-0 bg-charcoal/95 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-warm-dark/95 backdrop-blur-sm z-50 flex items-center justify-center">
             <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-all z-10"
                 aria-label="Close viewer"
             >
-                <X size={24} className="text-ivory" />
+                <X size={24} className="text-surface-low" />
             </button>
 
             {images.length > 1 && (
@@ -54,7 +54,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                     className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-all z-10"
                     aria-label="Previous image"
                 >
-                    <ChevronLeft size={32} className="text-ivory" />
+                    <ChevronLeft size={32} className="text-surface-low" />
                 </button>
             )}
 
@@ -66,18 +66,18 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                 />
 
                 {(currentImage.caption || currentImage.year) && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-charcoal/90 to-transparent p-6 rounded-b-lg">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-warm-dark/90 to-transparent p-6 rounded-b-lg">
                         {currentImage.caption && (
-                            <p className="text-ivory text-lg mb-1">{currentImage.caption}</p>
+                            <p className="text-surface-low text-lg mb-1">{currentImage.caption}</p>
                         )}
                         {currentImage.year && (
-                            <p className="text-ivory/70 text-sm">{currentImage.year}</p>
+                            <p className="text-surface-low/70 text-sm">{currentImage.year}</p>
                         )}
                     </div>
                 )}
 
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-charcoal/80 rounded-full">
-                    <p className="text-ivory text-sm">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-warm-dark/80 rounded-full">
+                    <p className="text-surface-low text-sm">
                         {currentIndex + 1} / {images.length}
                     </p>
                 </div>
@@ -89,7 +89,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                     className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-all z-10"
                     aria-label="Next image"
                 >
-                    <ChevronRight size={32} className="text-ivory" />
+                    <ChevronRight size={32} className="text-surface-low" />
                 </button>
             )}
 
@@ -101,7 +101,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                                 key={img.id}
                                 onClick={() => setCurrentIndex(idx)}
                                 className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentIndex
-                                    ? 'border-sage scale-110'
+                                    ? 'border-olive scale-110'
                                     : 'border-transparent opacity-60 hover:opacity-100'
                                     }`}
                             >

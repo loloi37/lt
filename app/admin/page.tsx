@@ -8,10 +8,10 @@ import { supabase } from '@/lib/supabase';
 import type { ConciergeProject } from '@/types/concierge';
 
 const STATUS_CONFIG = {
-    requested: { label: 'Requested', color: 'text-amber-600', bg: 'bg-amber-50', icon: Clock },
+    requested: { label: 'Requested', color: 'text-warm-brown', bg: 'bg-surface-high', icon: Clock },
     in_progress: { label: 'In Progress', color: 'text-blue-600', bg: 'bg-blue-50', icon: Edit },
     in_review: { label: 'In Review', color: 'text-purple-600', bg: 'bg-purple-50', icon: Eye },
-    finalized: { label: 'Finalized', color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle }
+    finalized: { label: 'Finalized', color: 'text-olive', bg: 'bg-olive/10', icon: CheckCircle }
 };
 
 export default function AdminDashboard() {

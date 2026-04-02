@@ -1,8 +1,16 @@
 // lib/completionLogic.ts
-// Centralized logic for determining archive completion status
-// Used by Step10Review, LiveMirror, Dashboard, etc.
+// Refactored: Now delegates to the emotional state engine
+// Backward-compatible exports for existing consumers (Step10Review, seal-confirmation)
 
 import { MemorialData } from '@/types/memorial';
+import {
+  calculateEmotionalState,
+  calculateRichness,
+  getPathDepth,
+  type EmotionalState,
+  type EmotionalStateResult,
+  type DepthLevel,
+} from '@/lib/emotionalState';
 
 export type CompletionStatus = 'complete' | 'complete_solo' | 'in_progress' | 'minimal';
 
@@ -10,33 +18,34 @@ export interface StepCompletionInfo {
     step: number;
     title: string;
     completed: boolean;
-    required: boolean;        // Is this step required for "complete" status?
-    optional: boolean;        // Is this an enrichment step (witnesses, videos)?
+    required: boolean;
+    optional: boolean;
     summary: string;
-    category: 'core' | 'enrichment'; // core = needed for completion, enrichment = bonus
+    category: 'core' | 'enrichment';
+    depth: DepthLevel;
 }
 
 export interface CompletionResult {
     status: CompletionStatus;
-    percentage: number;              // 0-100, based on CORE steps only
-    totalPercentage: number;         // 0-100, including enrichment
     coreStepsCompleted: number;
     coreStepsTotal: number;
     enrichmentStepsCompleted: number;
     enrichmentStepsTotal: number;
     steps: StepCompletionInfo[];
-    message: string;                 // User-facing message
-    canPublish: boolean;
+    message: string;
+    canSeal: boolean;
+    sealBlockReasons: string[];
+    emotionalState: EmotionalState;
+    emotionalResult: EmotionalStateResult;
 }
 
 /**
- * Calculate the completion status of a memorial archive.
- * 
- * KEY PRINCIPLE: Witnesses (Step 7 invitations) and Videos (Step 9) are 
- * ENRICHMENT steps, not required for completion. A solo creator who fills 
- * all core steps has a "complete" archive.
+ * Calculate the exploration status of a memorial archive.
+ * Now powered by the emotional state engine — richness over checkboxes.
  */
 export function calculateCompletion(data: MemorialData): CompletionResult {
+    const emotionalResult = calculateEmotionalState(data);
+
     const steps: StepCompletionInfo[] = [
         {
             step: 1,
@@ -45,9 +54,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: true,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'facts'),
             summary: data.step1.fullName
-                ? `${data.step1.fullName} • ${data.step1.birthDate}${data.step1.deathDate ? ` - ${data.step1.deathDate}` : ' (Living)'}`
-                : 'Not completed',
+                ? `${data.step1.fullName} \u2022 ${data.step1.birthDate}${data.step1.deathDate ? ` - ${data.step1.deathDate}` : ' (Living)'}`
+                : 'Awaiting your voice',
         },
         {
             step: 2,
@@ -56,9 +66,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'body'),
             summary: data.step2.childhoodHome
-                ? `${data.step2.schools.highSchool || 'Schools added'} • ${data.step2.childhoodPersonality.length} traits`
-                : 'Not completed',
+                ? `${data.step2.schools.highSchool || 'Schools added'} \u2022 ${data.step2.childhoodPersonality.length} traits`
+                : 'Awaiting your voice',
         },
         {
             step: 3,
@@ -67,9 +78,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'body'),
             summary: data.step3.occupations.length > 0
-                ? `${data.step3.occupations.length} job${data.step3.occupations.length !== 1 ? 's' : ''} • ${data.step3.careerHighlights.length} highlights`
-                : 'Not completed',
+                ? `${data.step3.occupations.length} role${data.step3.occupations.length !== 1 ? 's' : ''} \u2022 ${data.step3.careerHighlights.length} highlights`
+                : 'Awaiting your voice',
         },
         {
             step: 4,
@@ -78,9 +90,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'body'),
             summary: (data.step4.partners.length + data.step4.children.length) > 0
-                ? `${data.step4.partners.length} partner${data.step4.partners.length !== 1 ? 's' : ''} • ${data.step4.children.length} child${data.step4.children.length !== 1 ? 'ren' : ''}`
-                : 'Not completed',
+                ? `${data.step4.partners.length} partner${data.step4.partners.length !== 1 ? 's' : ''} \u2022 ${data.step4.children.length} child${data.step4.children.length !== 1 ? 'ren' : ''}`
+                : 'Awaiting your voice',
         },
         {
             step: 5,
@@ -89,9 +102,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'soul'),
             summary: (data.step5.personalityTraits.length + data.step5.coreValues.length) > 0
-                ? `${data.step5.personalityTraits.length} traits • ${data.step5.coreValues.length} values`
-                : 'Not completed',
+                ? `${data.step5.personalityTraits.length} traits \u2022 ${data.step5.coreValues.length} values`
+                : 'Awaiting your voice',
         },
         {
             step: 6,
@@ -100,9 +114,10 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'soul'),
             summary: data.step6.biography.trim().length > 0
-                ? `${data.step6.biography.trim().split(/\s+/).length} words • ${data.step6.lifeChapters.length} chapters`
-                : 'Not completed',
+                ? `${data.step6.biography.trim().split(/\s+/).length} words \u2022 ${data.step6.lifeChapters.length} chapters`
+                : 'Awaiting your voice',
         },
         {
             step: 7,
@@ -113,14 +128,15 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
                 (data.step7.invitedEmails && data.step7.invitedEmails.length > 0)
             ),
             required: false,
-            optional: true,       // ← ENRICHMENT: not required for "complete"
+            optional: true,
             category: 'enrichment',
+            depth: getPathDepth(data, 'witnesses'),
             summary: (() => {
                 const memories = data.step7.sharedMemories.length;
                 const stories = data.step7.impactStories.length;
                 const invited = data.step7.invitedEmails?.length || 0;
-                if (memories + stories + invited === 0) return 'No witnesses yet — optional';
-                return `${memories} memories • ${stories} stories • ${invited} invited`;
+                if (memories + stories + invited === 0) return 'No witnesses yet \u2014 entirely optional';
+                return `${memories} memories \u2022 ${stories} stories \u2022 ${invited} invited`;
             })(),
         },
         {
@@ -130,73 +146,59 @@ export function calculateCompletion(data: MemorialData): CompletionResult {
             required: false,
             optional: false,
             category: 'core',
+            depth: getPathDepth(data, 'presence'),
             summary: data.step8.gallery.length > 0
-                ? `${data.step8.gallery.length} photos • ${data.step8.voiceRecordings.length} recordings`
-                : 'Not completed',
+                ? `${data.step8.gallery.length} photos \u2022 ${data.step8.voiceRecordings.length} recordings`
+                : 'Awaiting your voice',
         },
         {
             step: 9,
             title: 'Videos',
             completed: !!(data.step9.videos.length > 0),
             required: false,
-            optional: true,       // ← ENRICHMENT: not required for "complete"
+            optional: true,
             category: 'enrichment',
+            depth: getPathDepth(data, 'presence'),
             summary: data.step9.videos.length > 0
                 ? `${data.step9.videos.length} video${data.step9.videos.length !== 1 ? 's' : ''}`
-                : 'No videos yet — optional',
+                : 'No videos yet \u2014 entirely optional',
         },
     ];
 
-    // Calculate core completion (steps that matter for "complete" status)
     const coreSteps = steps.filter(s => s.category === 'core');
     const coreCompleted = coreSteps.filter(s => s.completed).length;
     const coreTotal = coreSteps.length;
-    const corePercentage = Math.round((coreCompleted / coreTotal) * 100);
 
-    // Calculate enrichment
     const enrichmentSteps = steps.filter(s => s.category === 'enrichment');
     const enrichmentCompleted = enrichmentSteps.filter(s => s.completed).length;
     const enrichmentTotal = enrichmentSteps.length;
 
-    // Total percentage (all steps)
-    const allCompleted = steps.filter(s => s.completed).length;
-    const totalPercentage = Math.round((allCompleted / steps.length) * 100);
+    const hasBasicInfo = steps[0].completed;
 
-    // Determine status
+    // Map emotional state to legacy CompletionStatus
     let status: CompletionStatus;
-    let message: string;
-    const hasBasicInfo = steps[0].completed; // Step 1 is always required
-
-    if (coreCompleted === coreTotal && enrichmentCompleted === enrichmentTotal) {
-        // Everything done including witnesses + videos
+    if (emotionalResult.state === 'eternal') {
         status = 'complete';
-        message = 'Your archive is fully complete with all enrichments.';
-    } else if (coreCompleted === coreTotal) {
-        // All core steps done, some enrichment missing — THIS IS STILL COMPLETE
+    } else if (emotionalResult.state === 'substantial') {
         status = 'complete_solo';
-        message = 'Your archive is complete. You can invite witnesses or add videos at any time to enrich it further.';
-    } else if (hasBasicInfo && coreCompleted >= 3) {
-        status = 'in_progress';
-        message = `Great progress! ${coreTotal - coreCompleted} core section${coreTotal - coreCompleted !== 1 ? 's' : ''} left to complete your archive.`;
-    } else if (hasBasicInfo) {
-        status = 'minimal';
-        message = 'Your archive is started. Keep filling in sections to build a rich memorial.';
+    } else if (emotionalResult.state === 'emerging' || emotionalResult.state === 'fragile') {
+        status = hasBasicInfo ? 'in_progress' : 'minimal';
     } else {
         status = 'minimal';
-        message = 'Start by completing the Basic Information section.';
     }
 
     return {
         status,
-        percentage: corePercentage,
-        totalPercentage,
         coreStepsCompleted: coreCompleted,
         coreStepsTotal: coreTotal,
         enrichmentStepsCompleted: enrichmentCompleted,
         enrichmentStepsTotal: enrichmentTotal,
         steps,
-        message,
-        canPublish: hasBasicInfo,
+        message: emotionalResult.ambientMessage,
+        canSeal: emotionalResult.canSeal,
+        sealBlockReasons: emotionalResult.sealBlockReasons,
+        emotionalState: emotionalResult.state,
+        emotionalResult,
     };
 }
 

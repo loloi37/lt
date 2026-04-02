@@ -5,10 +5,13 @@ export interface BasicInfo {
   birthDate: string;
   deathDate: string | null;
   isStillLiving: boolean;
+  isSelfArchive?: boolean; // NEW: Track if user is creating for themselves
+  privateUntilDeath?: boolean; // NEW: Controls visibility logic
   birthPlace: string;
   deathPlace: string;
   profilePhoto: File | null;
   profilePhotoPreview: string | null;
+  profilePhotoHash?: string; // NEW: Store hash for profile photo
   epitaph: string;
 }
 
@@ -136,6 +139,7 @@ export interface MemoriesStories {
 export interface MediaLegacy {
   coverPhoto: File | null;
   coverPhotoPreview: string | null;
+  coverPhotoHash?: string; // NEW: Store hash for cover photo
   gallery: Array<{
     id: string;
     file: File;
@@ -143,22 +147,24 @@ export interface MediaLegacy {
     caption: string;
     year: string;
     type: 'photo' | 'video';
+    sha256_hash?: string; // NEW: Store hash for gallery items
   }>;
   interactiveGallery: Array<{
     id: string;
     file: File;
     preview: string;
     description: string;
+    sha256_hash?: string; // NEW: Store hash for interactive items
   }>;
   voiceRecordings: Array<{
     id: string;
     file: File;
     title: string;
+    sha256_hash?: string; // NEW: Store hash for voice recordings
   }>;
   legacyStatement: string;
 }
 
-// NEW: Step 9 for Videos only
 // NEW: Step 9 for Videos only
 export interface VideoContent {
   videos: Array<{
@@ -167,8 +173,11 @@ export interface VideoContent {
     thumbnail: string; // Public URL of thumbnail image
     title: string;
     duration?: string;
+    description?: string; // NEW: Description for video
+    sha256_hash?: string; // NEW: Store hash for videos
   }>;
 }
+
 
 // UPDATED: MemorialData with step9
 export interface MemorialData {
@@ -189,6 +198,7 @@ export interface MemorialData {
 
 export const TOTAL_STEPS = 10; // UPDATED from 9 to 10
 
+// Emotional state vocabulary
 export const STEP_NAMES = [
   'Basic Information',
   'Early Life & Childhood',
@@ -196,9 +206,120 @@ export const STEP_NAMES = [
   'Relationships & Family',
   'Personality, Values & Passions',
   'Full Life Story',
-  'Memories & Stories',
-  'Photos & Legacy', // UPDATED - removed "Videos"
-  'Videos', // NEW - Step 9
-  'Review & Publish' // UPDATED - now step 10
+  'Memories & Witnesses',
+  'Photos & Legacy',
+  'Videos',
+  'Review & Seal'
 ];
 
+export type EmotionalStateName = 'void' | 'fragile' | 'emerging' | 'substantial' | 'eternal';
+
+// ==========================================
+// PHASE 2: WITNESS & COLLABORATION TYPES
+// ==========================================
+
+export type WitnessRole = 'owner' | 'co_guardian' | 'witness' | 'reader';
+
+export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
+export type ContributionStatus = 'pending_approval' | 'approved' | 'rejected' | 'needs_changes';
+
+export interface WitnessInvitation {
+  id: string; // Unique token/UUID for the link
+  memorialId: string;
+  inviterName: string;
+  inviteeEmail: string;
+  role: WitnessRole;
+  personalMessage?: string;
+  status: InvitationStatus;
+  createdAt: string;
+  expiresAt: string; // Invitations should expire for security (e.g., 30 days)
+}
+
+export interface MemorialWitness {
+  id: string;
+  memorialId: string;
+  userId: string; // Link to the registered user
+  displayName: string;
+  email: string;
+  role: WitnessRole;
+  joinedAt: string;
+  status: 'active' | 'suspended';
+}
+
+// Updated structure for a Memory/Contribution to support the Approval System
+export interface WitnessContribution {
+  id: string;
+  memorialId: string;
+  witnessId: string; // Who wrote it
+  type: 'memory' | 'photo' | 'video';
+  content: any; // The actual data (text, url, etc.)
+  status: ContributionStatus;
+  adminNotes?: string; // If rejected or needs changes, owner writes why here
+  createdAt: string;
+  updatedAt: string;
+  disputed?: boolean; // For Step 2.1.6 (Conflict detection)
+}
+
+
+export interface MemorialRelation {
+  id: string;
+  from_memorial_id: string;
+  to_memorial_id: string;
+  target_name?: string; // Fetched from the joined table
+  target_photo?: string; // Fetched from the joined table
+  relationship_type: 'parent' | 'child' | 'spouse' | 'sibling' | 'other';
+}
+
+
+// ==========================================
+// PRESERVATION & LUXURY PLATFORM TYPES
+// ==========================================
+
+export type PreservationState =
+  | 'draft'
+  | 'building'
+  | 'review'
+  | 'preserving'
+  | 'preserved'
+  | 'archived';
+
+export interface PreservationStatus {
+  state: PreservationState;
+  arweaveTxId: string | null;
+  gatewayUrls: string[];
+  nodeCount: number;
+  lastVerifiedAt: string | null;
+  preservedAt: string | null;
+  storageBytesUsed: number;
+  storageBytesIncluded: number; // e.g. 100GB
+}
+
+export interface AnchorDeviceInfo {
+  id: string;
+  deviceName: string;
+  browser: string;
+  os: string;
+  syncProgressBytes: number;
+  totalBytes: number;
+  lastSyncAt: string | null;
+  status: 'syncing' | 'synced' | 'error' | 'stale';
+  location?: string;
+}
+
+export interface RecoveryContactInfo {
+  id: string;
+  name: string;
+  email: string;
+  relationship: string;
+  status: 'pending' | 'confirmed' | 'delivered';
+}
+
+export type SuccessorAccessLevel = 'read_only' | 'editorial' | 'full_ownership';
+
+export interface ContentReviewStatus {
+  status: 'not_submitted' | 'pending_review' | 'approved' | 'needs_changes';
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  flaggedItems: string[];
+}

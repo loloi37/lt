@@ -2,18 +2,18 @@
 
 **Last Updated:** February 2, 2026
 
-⚠️ **IMPORTANT NOTICE**: This document includes temporary DMCA procedures (Section 6) that provide good-faith copyright protection until Legacy Vault registers a designated DMCA agent with the U.S. Copyright Office. For immediate copyright concerns, contact copyright@legacyvault.com.
+⚠️ **IMPORTANT NOTICE**: This document includes temporary DMCA procedures (Section 6) that provide good-faith copyright protection until ULUMAE registers a designated DMCA agent with the U.S. Copyright Office. For immediate copyright concerns, contact copyright@ulumae.com.
 
 ---
 
 ## 1. Our Commitment
 
-Legacy Vault is a sacred space for memorialization. This policy ensures we maintain dignity, protect families, and comply with legal obligations while balancing the deeply personal nature of remembrance.
+ULUMAE is a sacred space for memorialization. This policy ensures we maintain dignity, protect families, and comply with legal obligations while balancing the deeply personal nature of remembrance.
 
 **By creating a memorial, you agree to:**
 - Only upload content you own or have permission to use
 - Respect the privacy and dignity of the deceased and their families
-- Indemnify Legacy Vault against disputes arising from your memorial content
+- Indemnify ULUMAE against disputes arising from your memorial content
 - Accept our Family Dispute Resolution procedures
 
 ---
@@ -28,7 +28,7 @@ The following will result in immediate removal and potential account termination
 - **Text**: Copied obituaries, articles, or book excerpts without permission
 - **Artwork**: Paintings, drawings, or designs you didn't create
 
-**Temporary Process**: Copyright holders should email copyright@legacyvault.com with proof of ownership. We remove infringing content within 48 hours of verification. Repeat infringers will be banned.
+**Temporary Process**: Copyright holders should email copyright@ulumae.com with proof of ownership. We remove infringing content within 48 hours of verification. Repeat infringers will be banned.
 
 ### 2.2 Graphic and Disturbing Content
 - Death imagery (bodies, autopsy photos, crime scenes)
@@ -77,13 +77,13 @@ Families often disagree about memorial content. We do not take sides. Our only g
 - Ex-spouses disputing representation of marriage
 
 ### 3.2 Our Neutral Stance
-**Legacy Vault does not:**
+**ULUMAE does not:**
 - Judge family conflicts or determine "truth"
 - Mediate estate disputes
 - Determine who "deserves" to control the narrative
 - Provide legal advice
 
-**Legacy Vault does:**
+**ULUMAE does:**
 - Follow legal documentation (court orders, estate papers)
 - Provide a 30-day dispute resolution process
 - Remove content that violates this policy or law
@@ -95,7 +95,7 @@ Families often disagree about memorial content. We do not take sides. Our only g
 We encourage families to resolve issues privately. Contact the memorial creator directly if possible.
 
 **Step 2: Formal Complaint (Days 8-14)**
-Email disputes@legacyvault.com with:
+Email disputes@ulumae.com with:
 - Your relationship to deceased
 - Specific content in dispute (URLs, screenshots)
 - Legal basis (privacy rights, defamation, copyright)
@@ -125,7 +125,7 @@ When disputes arise, we give weight to (in order):
 *Note: Without legal documentation, we default to the memorial creator who submitted the Authorization Form.*
 
 ### 3.5 No Liability for Family Conflicts
-**You explicitly agree**: Legacy Vault is not liable for:
+**You explicitly agree**: ULUMAE is not liable for:
 - Emotional distress from family disputes
 - Removal or retention of disputed content
 - Legal costs incurred by any party
@@ -152,12 +152,12 @@ We respect diverse mourning traditions. Content should not gratuitously violate 
 
 ## 5. Temporary DMCA Copyright Procedure
 
-⚠️ **TEMPORARY PROCEDURE**: Legacy Vault has not yet registered a designated DMCA agent with the U.S. Copyright Office. The following good-faith procedure provides copyright protection until formal registration is completed.
+⚠️ **TEMPORARY PROCEDURE**: ULUMAE has not yet registered a designated DMCA agent with the U.S. Copyright Office. The following good-faith procedure provides copyright protection until formal registration is completed.
 
 ### 5.1 Reporting Copyright Infringement
 If you believe your copyrighted work is on our platform without authorization:
 
-**Email**: copyright@legacyvault.com
+**Email**: copyright@ulumae.com
 
 **Include**:
 1. Your name and contact information
@@ -176,7 +176,7 @@ If you believe your copyrighted work is on our platform without authorization:
 ### 5.3 Counter-Notification (If Your Content Was Removed)
 If you believe your content was removed by mistake:
 
-**Email**: copyright@legacyvault.com with subject "Counter-Notification"
+**Email**: copyright@ulumae.com with subject "Counter-Notification"
 
 **Include**:
 1. Your name and contact information
@@ -204,7 +204,7 @@ Users with multiple valid copyright complaints will have their accounts terminat
 ## 6. Reporting Violations
 
 ### 6.1 How to Report
-**Email**: reports@legacyvault.com
+**Email**: reports@ulumae.com
 
 **Include**:
 - URL of memorial
@@ -220,7 +220,7 @@ Users with multiple valid copyright complaints will have their accounts terminat
 - **Notification**: Reporter and content owner notified (unless safety concern)
 
 ### 6.3 Appeals
-**Email**: appeals@legacyvault.com within 14 days
+**Email**: appeals@ulumae.com within 14 days
 - Explain why the decision was incorrect
 - Provide additional context
 - Senior team reviews within 7 days (decision is final)
@@ -256,17 +256,17 @@ We may update this policy to address new issues or legal requirements. Material 
 
 ## 9. Contact
 
-- **General Reports**: reports@legacyvault.com
-- **Copyright**: copyright@legacyvault.com  
-- **Family Disputes**: disputes@legacyvault.com
-- **Appeals**: appeals@legacyvault.com
+- **General Reports**: reports@ulumae.com
+- **Copyright**: copyright@ulumae.com  
+- **Family Disputes**: disputes@ulumae.com
+- **Appeals**: appeals@ulumae.com
 
 **Address**:  
-Legacy Vault LLC  
+ULUMAE LLC  
 Attn: Content Policy Department  
 123 Main Street  
 Wilmington, DE 19801
 
 ---
 
-**By creating a memorial on Legacy Vault, you affirm that you have read, understood, and agree to abide by this Content Policy, including the requirement to indemnify Legacy Vault against family disputes and copyright claims.**
+**By creating a memorial on ULUMAE, you affirm that you have read, understood, and agree to abide by this Content Policy, including the requirement to indemnify ULUMAE against family disputes and copyright claims.**

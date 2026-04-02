@@ -6,7 +6,7 @@
 
 ## 1. Introduction: A Sacred Trust
 
-At Legacy Vault, we understand that we are not merely storing data—we are safeguarding the most precious memories of your life and the lives of those you love. This Privacy Policy explains how we collect, use, store, and protect your information in accordance with the highest standards of digital stewardship.
+At ULUMAE, we understand that we are not merely storing data—we are safeguarding the most precious memories of your life and the lives of those you love. This Privacy Policy explains how we collect, use, store, and protect your information in accordance with the highest standards of digital stewardship.
 
 We treat your memorial data with the same care and reverence that you would give to a family archive. Our commitment to privacy is inseparable from our commitment to durability: just as we promise to preserve your memories for generations, we promise to protect them with equal dedication.
 
@@ -15,7 +15,7 @@ We treat your memorial data with the same care and reverence that you would give
 ## 2. Information We Collect
 
 ### 2.1 Account Information
-When you create a Legacy Vault account, we collect:
+When you create a ULUMAE account, we collect:
 - **Identity**: Your name and email address
 - **Authentication**: Encrypted password (hashed using bcrypt)
 - **Payment Data**: Billing information processed securely through Stripe (we never store full credit card numbers on our servers)
@@ -96,7 +96,7 @@ We may disclose information:
 - **Fraud Prevention**: To investigate violations of our Terms or fraudulent payment activity
 
 ### 4.4 Business Transfers
-If Legacy Vault is acquired, merges with another entity, or sells assets, your data will transfer to the new owner subject to the same privacy commitments. We will notify you via email 30 days before any such transfer.
+If ULUMAE is acquired, merges with another entity, or sells assets, your data will transfer to the new owner subject to the same privacy commitments. We will notify you via email 30 days before any such transfer.
 
 ### 4.5 What We Never Do
 **We do not sell, rent, or trade your personal information or memorial content to third parties for marketing purposes.** We do not use your memorial photos in advertising. We do not train AI models on your private content.
@@ -158,7 +158,7 @@ We recognize that memorials often contain information about deceased individuals
 - **Dignity**: We reserve the right to remove content that defames the deceased or causes undue harm to surviving family members
 
 ### 6.5 How to Exercise Rights
-Submit requests to: **privacy@legacyvault.com**
+Submit requests to: **privacy@ulumae.com**
 
 Response time: 30 days (may extend to 60 days for complex requests). We will verify your identity before processing sensitive requests.
 
@@ -190,7 +190,7 @@ In the unlikely event of a data breach:
 
 ## 8. International Data Transfers
 
-Legacy Vault is based in the United States. Your data is stored on servers located in the United States (US East region).
+ULUMAE is based in the United States. Your data is stored on servers located in the United States (US East region).
 
 ### 8.1 For EU/UK Users
 We transfer data from the EU/UK to the US using:
@@ -228,7 +228,7 @@ You can disable cookies in your browser settings, though this may affect functio
 ## 10. Children's Privacy (COPPA Compliance)
 
 ### 10.1 Age Requirements
-Legacy Vault is intended for users **18 years of age or older**. We do not knowingly collect personal information from children under 18.
+ULUMAE is intended for users **18 years of age or older**. We do not knowingly collect personal information from children under 18.
 
 ### 10.2 Memorials of Minors
 If creating a memorial for a deceased child:
@@ -236,7 +236,7 @@ If creating a memorial for a deceased child:
 - **Enhanced Privacy**: These memorials default to private and require explicit consent for any public sharing
 - **Sensitive Handling**: We treat child memorials with additional care and expedited support for family disputes
 
-If you believe we have inadvertently collected information from a child under 18 without parental consent, contact us immediately at **privacy@legacyvault.com** for immediate deletion.
+If you believe we have inadvertently collected information from a child under 18 without parental consent, contact us immediately at **privacy@ulumae.com** for immediate deletion.
 
 ---
 
@@ -248,7 +248,7 @@ We may update this policy to reflect changes in our practices or legal requireme
 - **Minor Updates**: For clarifications or non-substantive changes, we will update the "Last Updated" date at the top of this page
 - **Archive**: Previous versions available upon request
 
-Your continued use of Legacy Vault after changes constitutes acceptance of the updated policy.
+Your continued use of ULUMAE after changes constitutes acceptance of the updated policy.
 
 ---
 
@@ -257,9 +257,9 @@ Your continued use of Legacy Vault after changes constitutes acceptance of the u
 ### Data Protection Officer
 For privacy-specific inquiries, GDPR requests, or data protection concerns:
 
-**Email:** privacy@legacyvault.com  
+**Email:** privacy@ulumae.com  
 **Address:**  
-Legacy Vault LLC  
+ULUMAE LLC  
 Attn: Data Protection Officer  
 123 Main Street  
 Wilmington, DE 19801  
@@ -294,4 +294,4 @@ After your Concierge memorial is finalized:
 
 ---
 
-**By using Legacy Vault, you entrust us with your most precious memories. We honor that trust through rigorous privacy protection, transparent practices, and unwavering commitment to your family's dignity.**
+**By using ULUMAE, you entrust us with your most precious memories. We honor that trust through rigorous privacy protection, transparent practices, and unwavering commitment to your family's dignity.**

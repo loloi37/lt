@@ -1,5 +1,5 @@
 {
-  "name": "legacy-vault-bio",
+  "name": "ulumae",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,16 +12,24 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^5.0.1",
+    "@getbrevo/brevo": "^5.0.1",
+    "@stripe/react-stripe-js": "^5.6.0",
     "@stripe/stripe-js": "^8.7.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.93.1",
+    "@xyflow/react": "^12.10.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
     "next": "^16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-resizable-panels": "^4.6.0",
-    "stripe": "^20.3.0"
+    "resend": "^6.9.2",
+    "stripe": "^20.4.1"
   },
   "devDependencies": {
+    "@types/jszip": "^3.4.0",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",

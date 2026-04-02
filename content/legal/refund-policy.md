@@ -8,9 +8,9 @@
 
 ## 1. Overview
 
-Legacy Vault creates permanent digital memorials that require significant preparation, storage allocation, and curation work. Due to the nature of digital memorialization services and the immediate costs we incur upon purchase (server provisioning, support team allocation, curation preparation), we maintain a structured refund policy that balances fairness to our customers with protection against abuse.
+ULUMAE creates permanent digital memorials that require significant preparation, storage allocation, and curation work. Due to the nature of digital memorialization services and the immediate costs we incur upon purchase (server provisioning, support team allocation, curation preparation), we maintain a structured refund policy that balances fairness to our customers with protection against abuse.
 
-**By purchasing a Legacy Vault memorial, you acknowledge and agree to this Refund & Cancellation Policy.**
+**By purchasing a ULUMAE memorial, you acknowledge and agree to this Refund & Cancellation Policy.**
 
 ---
 
@@ -34,7 +34,7 @@ We recognize that memorialization can trigger family conflicts. We provide a **F
 
 ---
 
-## 3. Personal Plan Refunds ($300)
+## 3. Personal Plan Refunds ($1,470)
 
 ### 3.1 Before Publication (Draft Status)
 - **Full refund** available within 30 days of purchase if memorial has not been published
@@ -53,11 +53,11 @@ If you request significant customization beyond standard templates before public
 
 ---
 
-## 4. Family Plan Refunds ($3,000)
+## 4. Family Plan Refunds ($2,940)
 
 ### 4.1 Before Curation Begins
 - **Full refund** available if curation team has not started work
-- **Status check**: Email refunds@legacyvault.com to confirm work status
+- **Status check**: Email refunds@ulumae.com to confirm work status
 - **Timeline**: Typically 5 business days after purchase if no work started
 
 ### 4.2 During Curation (Work in Progress)
@@ -96,7 +96,7 @@ If a family dispute arises regarding the memorial with **valid legal documentati
 - **Timeline**: Processed within 10 business days of documentation verification
 
 ### 5.3 Process
-1. Email disputes@legacyvault.com with documentation
+1. Email disputes@ulumae.com with documentation
 2. Our team verifies legal validity (may require attorney consultation)
 3. If valid, refund issued and memorial removed within 72 hours
 4. If insufficient documentation, standard refund policy applies
@@ -109,7 +109,7 @@ Without legal documentation, family disagreements do **not** qualify for excepti
 ## 6. Cancellation Process
 
 ### 6.1 How to Cancel
-Email **refunds@legacyvault.com** with:
+Email **refunds@ulumae.com** with:
 - Account email address
 - Memorial URL or name
 - Reason for cancellation
@@ -148,18 +148,18 @@ Cancelled memorials can be reactivated within 30 days by repurchasing at origina
 - Collection proceedings for chargeback fees ($25-100 per dispute)
 - Ban from future service
 
-**If you have a legitimate dispute**: Contact refunds@legacyvault.com first. We resolve 95% of issues without chargebacks.
+**If you have a legitimate dispute**: Contact refunds@ulumae.com first. We resolve 95% of issues without chargebacks.
 
 ---
 
 ## 8. Subscription Billing (If Applicable)
 
-If Legacy Vault introduces recurring subscription elements:
+If ULUMAE introduces recurring subscription elements:
 - **Monthly/Annual plans**: Cancel anytime, prorated refund for unused days
 - **Auto-renewal**: Charged automatically unless cancelled 24 hours before renewal
-- **Cancellation**: Via account settings or email to refunds@legacyvault.com
+- **Cancellation**: Via account settings or email to refunds@ulumae.com
 
-*Currently, Legacy Vault operates on one-time purchases only.*
+*Currently, ULUMAE operates on one-time purchases only.*
 
 ---
 
@@ -172,7 +172,7 @@ If the person who purchased the memorial dies before publication:
 - **Timeframe**: Must request within 1 year of death
 
 ### 9.2 Technical Failure on Our End
-If Legacy Vault experiences catastrophic technical failure preventing memorial publication:
+If ULUMAE experiences catastrophic technical failure preventing memorial publication:
 - **Your choice**: Full refund OR wait for resolution + service credit
 - **Definition**: Server outage >30 days, data loss on our end (not user error)
 - **Force Majeure**: Natural disasters, acts of war, internet infrastructure failure do not qualify
@@ -236,10 +236,10 @@ We may update this policy with 30 days notice for material changes. Current poli
 
 ## 13. Contact Information
 
-**Refund Requests**: refunds@legacyvault.com  
-**Family Disputes**: disputes@legacyvault.com  
-**Billing Issues**: billing@legacyvault.com  
-**General Questions**: support@legacyvault.com
+**Refund Requests**: refunds@ulumae.com  
+**Family Disputes**: disputes@ulumae.com  
+**Billing Issues**: billing@ulumae.com  
+**General Questions**: support@ulumae.com
 
 **Response Times**:
 - Refund requests: 2 business days
@@ -247,7 +247,7 @@ We may update this policy with 30 days notice for material changes. Current poli
 - Appeals: 7 business days
 
 **Mailing Address**:  
-Legacy Vault LLC  
+ULUMAE LLC  
 Attn: Refunds Department  
 123 Main Street  
 Wilmington, DE 19801  
@@ -255,4 +255,4 @@ United States
 
 ---
 
-**By completing a purchase on Legacy Vault, you acknowledge that you have read, understood, and agree to this Refund & Cancellation Policy, including the prohibition on chargebacks without prior contact.**
+**By completing a purchase on ULUMAE, you acknowledge that you have read, understood, and agree to this Refund & Cancellation Policy, including the prohibition on chargebacks without prior contact.**

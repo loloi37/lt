@@ -1,0 +1,124 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+interface MemorialRow {
+    id: string;
+    full_name: string;
+    birth_date: string | null;
+    death_date: string | null;
+    profile_photo_url: string | null;
+    mode: string;
+    user_id: string;
+}
+
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ memorialId: string }> }
+) {
+    try {
+        const { memorialId } = await params;
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        const [memorialRes, roleRes, contributionsRes] =
+            await Promise.all([
+                supabaseAdmin
+                    .from('memorials')
+                    .select(
+                        'id, full_name, birth_date, death_date,' +
+                        'profile_photo_url, mode, user_id'
+                    )
+                    .eq('id', memorialId)
+                    .single(),
+                supabaseAdmin
+                    .from('user_memorial_roles')
+                    .select('role')
+                    .eq('user_id', user.id)
+                    .eq('memorial_id', memorialId)
+                    .single(),
+                supabaseAdmin
+                    .from('memorial_contributions')
+                    .select('id, type, status, content, created_at')
+                    .eq('memorial_id', memorialId)
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(20)
+            ]);
+
+        // Cast memorial explicitly so TypeScript knows the shape
+        const memorial = memorialRes.data as MemorialRow | null;
+
+        if (!memorial) {
+            return NextResponse.json(
+                { error: 'Archive not found' },
+                { status: 404 }
+            );
+        }
+
+        const isOwner = memorial.user_id === user.id;
+        const roleRow = roleRes.data;
+
+        if (!isOwner && !roleRow) {
+            return NextResponse.json(
+                { error: 'Access denied' },
+                { status: 403 }
+            );
+        }
+
+        const userRole = isOwner ? 'owner' : roleRow!.role;
+
+        let pendingCount = 0;
+        if (userRole === 'co_guardian' || isOwner) {
+            const { count } = await supabaseAdmin
+                .from('memorial_contributions')
+                .select('*', { count: 'exact', head: true })
+                .eq('memorial_id', memorialId)
+                .eq('status', 'pending_approval');
+            pendingCount = count || 0;
+        }
+
+        const contributions = (contributionsRes.data || []).map(
+            (c: any) => ({
+                id: c.id,
+                type: c.type,
+                status: c.status,
+                title: c.content?.title || 'Untitled',
+                createdAt: c.created_at
+            })
+        );
+
+        return NextResponse.json({
+            userRole,
+            plan: memorial.mode === 'family' ? 'family' : 'personal',
+            memorial: {
+                id: memorial.id,
+                fullName: memorial.full_name,
+                birthDate: memorial.birth_date,
+                deathDate: memorial.death_date,
+                profilePhotoUrl: memorial.profile_photo_url,
+                userId: memorial.user_id
+            },
+            myContributions: contributions,
+            pendingCount
+        });
+
+    } catch (err: any) {
+        console.error('[role-data]', err);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}

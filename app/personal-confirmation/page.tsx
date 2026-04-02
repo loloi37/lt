@@ -1,214 +1,365 @@
 // app/personal-confirmation/page.tsx
+// Seal confirmation page — handles authorization + payment flow
 'use client';
-import { useState } from 'react';
-import { ArrowLeft, Check, ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 
-export default function PersonalConfirmationPage() {
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { ArrowLeft, Check, ExternalLink, ArrowUpCircle, Loader2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider';
+
+function PersonalConfirmationContent() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isOpeningAuth, setIsOpeningAuth] = useState(false);
+    const [authorizationCompleted, setAuthorizationCompleted] = useState(false);
+    const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(null);
+    const [authUserId, setAuthUserId] = useState<string | null>(null);
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const auth = useAuth();
 
-    const handlePayment = async () => {
-        if (!acceptedTerms) {
-            alert('Please accept the general conditions to continue');
+    const upgradeMemorialId = searchParams.get('memorialId');
+    const isPopup = searchParams.get('popup') === 'true';
+    const isDraftUpgrade = !!upgradeMemorialId;
+
+    // Auth guard: if user already has a personal paid plan, redirect to dashboard
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/personal-confirmation');
             return;
         }
+        // If user already has a paid personal or higher plan (not draft upgrade), redirect
+        if (!isDraftUpgrade && auth.hasPaid && (auth.plan === 'personal' || auth.plan === 'family' || auth.plan === 'concierge')) {
+            router.replace(`/dashboard/${auth.plan}/${auth.user!.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.hasPaid, auth.plan, auth.user, isDraftUpgrade, router]);
 
-        setIsProcessing(true);
+    // Get authenticated user
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) setAuthUserId(user.id);
+        });
+    }, []);
 
-        // GET THE ID BEFORE SENDING
-        const memorialId = localStorage.getItem('current-memorial-id');
+    // On mount: restore memorialId from URL/localStorage and check if auth was already completed
+    useEffect(() => {
+        const storedId = upgradeMemorialId || localStorage.getItem('current-memorial-id');
+        if (storedId && storedId !== 'null' && storedId !== 'undefined') {
+            setCurrentMemorialId(storedId);
+            if (localStorage.getItem(`lv-auth-${storedId}`) === 'done') {
+                setAuthorizationCompleted(true);
+            }
+        }
+    }, [upgradeMemorialId]);
 
+    // Poll the DB every 3 s for auth completion, and listen for postMessage from popup
+    useEffect(() => {
+        if (!currentMemorialId || authorizationCompleted) return;
+
+        const handleMessage = (event: MessageEvent) => {
+            if (
+                event.data?.type === 'lv-auth-complete' &&
+                event.data?.memorialId === currentMemorialId
+            ) {
+                setAuthorizationCompleted(true);
+            }
+        };
+        window.addEventListener('message', handleMessage);
+
+        pollRef.current = setInterval(async () => {
+            // Also check localStorage (set by the popup window)
+            if (localStorage.getItem(`lv-auth-${currentMemorialId}`) === 'done') {
+                setAuthorizationCompleted(true);
+                return;
+            }
+            const { data } = await createClient()
+                .from('memorial_authorizations')
+                .select('id')
+                .eq('memorial_id', currentMemorialId)
+                .in('status', ['pending', 'approved'])
+                .maybeSingle();
+            if (data) setAuthorizationCompleted(true);
+        }, 3000);
+
+        return () => {
+            window.removeEventListener('message', handleMessage);
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, [currentMemorialId, authorizationCompleted]);
+
+    // Stop polling once done
+    useEffect(() => {
+        if (authorizationCompleted && pollRef.current) {
+            clearInterval(pollRef.current);
+        }
+    }, [authorizationCompleted]);
+
+    // Mutex to prevent concurrent memorial creation
+    const creatingRef = useRef(false);
+
+    // Single source of truth for memorial creation — prevents duplicates
+    const ensureMemorial = async (): Promise<string> => {
+        const supabase = createClient();
+
+        // 1. Check React state first (most reliable)
+        let memorialId = upgradeMemorialId || currentMemorialId;
+
+        // 2. Fallback to localStorage
+        if (!memorialId || memorialId === 'null' || memorialId === 'undefined') {
+            memorialId = localStorage.getItem('current-memorial-id');
+        }
+
+        // 3. Validate the memorial still exists in the DB
+        if (memorialId && memorialId !== 'null' && memorialId !== 'undefined') {
+            const { data: existing } = await supabase
+                .from('memorials').select('id').eq('id', memorialId).maybeSingle();
+            if (existing) {
+                // Memorial exists — update state and return
+                setCurrentMemorialId(memorialId);
+                localStorage.setItem('current-memorial-id', memorialId);
+                return memorialId;
+            }
+            // Memorial was deleted or invalid — clear stale reference
+            memorialId = null;
+            localStorage.removeItem('current-memorial-id');
+        }
+
+        // 4. Prevent concurrent creation
+        if (creatingRef.current) {
+            // Wait briefly and re-check state (another call is creating)
+            await new Promise(r => setTimeout(r, 1000));
+            if (currentMemorialId) return currentMemorialId;
+            throw new Error('Memorial creation in progress. Please try again.');
+        }
+
+        creatingRef.current = true;
         try {
-            // Create Stripe Checkout Session
-            const response = await fetch('/api/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    memorialId: memorialId, // <--- CRITICAL: Pass the ID
-                    plan: 'Personal',
-                    amount: 1500, // $1,500
-                }),
-            });
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Please sign in to continue.');
 
-            const { url, error } = await response.json();
+            // 5. Check for an existing unpaid personal memorial (dedup)
+            const { data: existingUnpaid } = await supabase
+                .from('memorials')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('mode', 'personal')
+                .eq('paid', false)
+                .eq('deleted', false)
+                .limit(1)
+                .maybeSingle();
 
-            if (error) {
-                throw new Error(error);
-            }
-
-            if (url) {
-                window.location.href = url;
+            if (existingUnpaid) {
+                memorialId = existingUnpaid.id;
             } else {
-                throw new Error('No checkout URL returned');
+                // 6. Create only if truly none exists
+                const { data, error: insertError } = await supabase
+                    .from('memorials')
+                    .insert({ user_id: user.id, slug: `memorial-${Date.now()}`, mode: 'personal', paid: false })
+                    .select().single();
+                if (insertError || !data) {
+                    console.error('Memorial insert error:', insertError);
+                    throw new Error(insertError?.message || 'Could not initialize your archive');
+                }
+                memorialId = data.id;
             }
+
+            localStorage.setItem('current-memorial-id', memorialId!);
+            setCurrentMemorialId(memorialId);
+            return memorialId!;
+        } finally {
+            creatingRef.current = false;
+        }
+    };
+
+    const handlePayment = async () => {
+        setIsProcessing(true);
+        try {
+            const memorialId = await ensureMemorial();
+
+            // replace: prevent back-button from returning to confirmation after going to payment
+            const popupParam = isPopup ? '&popup=true' : '';
+            router.replace(`/payment?memorialId=${memorialId}${popupParam}`);
         } catch (error: any) {
             console.error('Payment error:', error);
-            alert('Payment failed. Please try again or contact support.');
+            alert(error.message || 'Payment failed. Please try again.');
         } finally {
             setIsProcessing(false);
         }
     };
 
+    const handleOpenAuthorization = async () => {
+        setIsOpeningAuth(true);
+        try {
+            const memorialId = await ensureMemorial();
+
+            const url = `/authorization/${memorialId}?type=individual&popup=true`;
+            window.open(url, '_blank', 'width=960,height=820,scrollbars=yes,resizable=yes');
+        } catch (err: any) {
+            alert(err.message || 'An error occurred. Please try again.');
+        } finally {
+            setIsOpeningAuth(false);
+        }
+    };
+
+    const canPay = acceptedTerms && authorizationCompleted && !isProcessing;
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sage/10 via-ivory to-terracotta/10">
-            {/* Header */}
-            <div className="border-b border-sand/30 bg-white/80 backdrop-blur-sm">
+        <div className="min-h-screen bg-surface-low">
+            <div className="border-b border-warm-border/20 bg-white/60 backdrop-blur-sm">
                 <div className="max-w-4xl mx-auto px-6 py-6">
                     <Link
-                        href="/choice-pricing"
-                        className="inline-flex items-center gap-2 text-charcoal/60 hover:text-charcoal transition-colors"
+                        href={isDraftUpgrade ? '/choice-pricing' : '/choice-pricing'}
+                        className="inline-flex items-center gap-2 text-warm-dark/40 hover:text-warm-dark transition-colors text-sm"
                     >
-                        <ArrowLeft size={20} />
-                        <span>Back to plans</span>
+                        <ArrowLeft size={16} />
+                        <span>{isDraftUpgrade ? 'Back to my drafts' : 'Back to plans'}</span>
                     </Link>
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-4xl mx-auto px-6 py-12">
-                {/* Title */}
                 <div className="text-center mb-12">
-                    <h1 className="font-serif text-4xl text-charcoal mb-4">
-                        Confirm Your Order
-                    </h1>
-                    <p className="text-lg text-charcoal/70">
-                        Personal Plan - $1,500
-                    </p>
+                    {isDraftUpgrade ? (
+                        <>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-olive/10 text-olive rounded-full text-sm font-semibold mb-4">
+                                <ArrowUpCircle size={16} />
+                                Upgrading from Draft to Personal
+                            </div>
+                            <h1 className="font-serif text-4xl text-warm-dark mb-4">Seal Your Archive</h1>
+                            <p className="text-lg text-warm-dark/50">Your draft is ready. $1,470 — A single payment for a permanent archive. No monthly fees. No renewals.</p>
+                        </>
+                    ) : (
+                        <>
+                            <h1 className="font-serif text-4xl text-warm-dark mb-4">Seal the Archive</h1>
+                            <p className="text-lg text-warm-dark/50">$1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.</p>
+                        </>
+                    )}
                 </div>
 
-                {/* Order Summary Card */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h2 className="text-2xl font-semibold text-charcoal mb-6">Order Summary</h2>
+                {/* Steps before payment */}
+                <div className="bg-white rounded-2xl border border-warm-border/25 p-8 mb-8 max-w-2xl mx-auto">
+                    <h3 className="text-sm font-medium text-warm-dark/40 uppercase tracking-wider mb-6">Before Payment</h3>
 
-                    {/* Lorem Ipsum Content */}
-                    <div className="prose max-w-none mb-8">
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed mb-4">
-                            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-                        </p>
-                        <p className="text-charcoal/70 leading-relaxed">
-                            Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.
-                        </p>
-                    </div>
-
-                    {/* Price Breakdown */}
-                    <div className="border-t border-sand/30 pt-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Personal Plan</span>
-                            <span className="text-charcoal font-medium">$1,500.00</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                            <span className="text-charcoal/70">Tax</span>
-                            <span className="text-charcoal font-medium">$0.00</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xl font-bold border-t border-sand/30 pt-4">
-                            <span className="text-charcoal">Total</span>
-                            <span className="text-sage">$1,500.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Terms and Conditions - UPDATED */}
-                <div className="bg-white rounded-2xl border border-sand/30 shadow-sm p-8 mb-8">
-                    <h3 className="text-lg font-semibold text-charcoal mb-6">Before Payment</h3>
-
-                    {/* General T&C Checkbox */}
+                    {/* Step 1 — Accept terms */}
                     <label className="flex items-start gap-4 cursor-pointer group mb-6">
                         <div className="relative flex-shrink-0 mt-1">
                             <input
                                 type="checkbox"
                                 checked={acceptedTerms}
                                 onChange={(e) => setAcceptedTerms(e.target.checked)}
-                                className="w-6 h-6 text-sage border-2 border-sand/40 rounded focus:ring-2 focus:ring-sage/30 cursor-pointer"
+                                className="w-5 h-5 border-2 border-warm-border/40 rounded cursor-pointer accent-warm-dark"
                             />
-                            {acceptedTerms && (
-                                <Check size={16} className="absolute top-1 left-1 text-ivory pointer-events-none" />
-                            )}
                         </div>
                         <div className="flex-1">
-                            <p className="text-charcoal group-hover:text-charcoal/80 transition-colors">
+                            <p className="text-sm text-warm-dark/60 group-hover:text-warm-dark/80 transition-colors">
                                 I accept the{' '}
-                                <Link href="/legal/terms" className="text-sage hover:text-sage/80 underline font-medium">
-                                    General Conditions
-                                </Link>
+                                <Link href="/legal/terms" className="text-warm-dark underline font-medium" target="_blank">General Conditions</Link>
                                 {' '}and{' '}
-                                <Link href="/legal/privacy" className="text-sage hover:text-sage/80 underline font-medium">
-                                    Privacy Policy
-                                </Link>
-                            </p>
-                            <p className="text-sm text-charcoal/60 mt-2">
-                                By checking this box, you agree to our terms of service and acknowledge that you have read our privacy policy.
+                                <Link href="/legal/privacy" className="text-warm-dark underline font-medium" target="_blank">Privacy Policy</Link>
                             </p>
                         </div>
                     </label>
 
-                    {/* NEW: Memorial Authorization Link */}
-                    <div className="p-6 bg-gradient-to-br from-sage/5 to-terracotta/5 rounded-xl border-2 border-sage/20">
+                    {/* Step 2 — Authorization form */}
+                    <div className={`p-6 rounded-xl border transition-all ${acceptedTerms ? 'border-warm-border/30 bg-warm-border/5' : 'border-warm-border/15 bg-warm-border/5 opacity-40 pointer-events-none'}`}>
                         <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 mt-1">
-                                <div className="w-8 h-8 bg-sage/20 rounded-full flex items-center justify-center">
-                                    <ExternalLink size={16} className="text-sage" />
-                                </div>
+                            <div className="flex-shrink-0 mt-0.5">
+                                {authorizationCompleted ? (
+                                    <div className="w-7 h-7 bg-warm-dark rounded-full flex items-center justify-center">
+                                        <Check size={14} className="text-surface-low" strokeWidth={2.5} />
+                                    </div>
+                                ) : (
+                                    <div className="w-7 h-7 bg-warm-border/20 rounded-full flex items-center justify-center">
+                                        <ExternalLink size={14} className="text-warm-dark/30" />
+                                    </div>
+                                )}
                             </div>
                             <div className="flex-1">
-                                <h4 className="font-semibold text-charcoal mb-2">Required: Memorial Authorization</h4>
-                                <p className="text-sm text-charcoal/70 mb-4">
-                                    Before proceeding to payment, you must review and complete the Memorial Authorization Form. This establishes your legal authority to create a memorial.
-                                </p>
-                                <Link
-                                    href="/legal/memorial-authorization"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-sage hover:bg-sage/90 text-ivory rounded-lg text-sm font-medium transition-all"
-                                >
-                                    <ExternalLink size={16} />
-                                    Open Memorial Authorization Form
-                                </Link>
-                                <p className="text-xs text-charcoal/60 mt-3">
-                                    💡 This will open in a new tab. You can close it when done and return here to proceed with payment.
-                                </p>
+                                <h4 className="font-medium text-warm-dark text-sm mb-1">Memorial Authorization</h4>
+                                {authorizationCompleted ? (
+                                    <p className="text-xs text-warm-dark/40">
+                                        Authorization completed. You may now proceed to payment.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p className="text-xs text-warm-dark/40 mb-4">
+                                            Confirm your legal authority to create this archive. The form opens in a new window.
+                                        </p>
+                                        <button
+                                            onClick={handleOpenAuthorization}
+                                            disabled={isOpeningAuth || !acceptedTerms}
+                                            className="inline-flex items-center gap-2 px-4 py-2 glass-btn-dark rounded-lg text-xs font-medium transition-all disabled:opacity-50"
+                                        >
+                                            {isOpeningAuth ? (
+                                                <div className="w-3.5 h-3.5 border-2 border-surface-low/40 border-t-surface-low rounded-full animate-spin" />
+                                            ) : (
+                                                <ExternalLink size={13} />
+                                            )}
+                                            Open Authorization Form
+                                        </button>
+                                    </>
+                                )}
+
+                                {currentMemorialId && !authorizationCompleted && !isOpeningAuth && (
+                                    <p className="text-[11px] text-warm-dark/25 mt-3 flex items-center gap-1.5">
+                                        <Loader2 size={10} className="animate-spin" />
+                                        Waiting for authorization...
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Payment Button */}
-                <button
-                    onClick={handlePayment}
-                    disabled={!acceptedTerms || isProcessing}
-                    className={`w-full py-5 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${acceptedTerms && !isProcessing
-                        ? 'bg-gradient-to-r from-sage to-sage/90 hover:shadow-lg text-ivory'
-                        : 'bg-sand/30 text-charcoal/40 cursor-not-allowed'
-                        }`}
-                >
-                    {isProcessing ? (
-                        <>
-                            <div className="w-5 h-5 border-2 border-ivory/30 border-t-ivory rounded-full animate-spin" />
-                            Processing...
-                        </>
-                    ) : acceptedTerms ? (
-                        <>
-                            <Check size={20} />
-                            Proceed to Payment
-                        </>
-                    ) : (
-                        'Please accept the terms to continue'
-                    )}
-                </button>
+                <div className="max-w-2xl mx-auto">
+                    <button
+                        onClick={handlePayment}
+                        disabled={!canPay}
+                        className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${canPay
+                            ? 'glass-btn-dark'
+                            : 'bg-warm-border/20 text-warm-dark/25 cursor-not-allowed'
+                            }`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-surface-low/30 border-t-surface-low rounded-full animate-spin" />
+                                Preparing payment...
+                            </>
+                        ) : (
+                            'Proceed to payment'
+                        )}
+                    </button>
 
-                {/* Security Note */}
-                <div className="mt-6 text-center">
-                    <p className="text-xs text-charcoal/50">
-                        🔒 Secure payment powered by Stripe. Your information is encrypted and protected.
+                    {!authorizationCompleted && acceptedTerms && (
+                        <p className="text-center text-[11px] text-warm-dark/25 mt-3">
+                            Complete the authorization form above to enable payment.
+                        </p>
+                    )}
+
+                    <p className="text-center text-[11px] text-warm-dark/20 mt-6">
+                        Secure payment powered by Stripe. Your information is encrypted.
                     </p>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PersonalConfirmationPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <div className="w-10 h-10 border-2 border-warm-border/30 border-t-warm-dark/40 rounded-full animate-spin" />
+            </div>
+        }>
+            <PersonalConfirmationContent />
+        </Suspense>
     );
 }
