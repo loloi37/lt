@@ -1688,6 +1688,30 @@ CREATE TRIGGER tr_prevent_mode_downgrade_with_relations
   WHEN (OLD.mode IS DISTINCT FROM NEW.mode)
   EXECUTE FUNCTION prevent_mode_downgrade_with_relations();
 
+
+  -- ============================================================
+-- SECTION 24
+-- ============================================================
+
+-- Commands to execute in Supabase SQL Editor (in order)
+-- Phase: Role Management & UX Cleanup
+
+-- 1. Add 'reader' role to user_memorial_roles table
+ALTER TABLE user_memorial_roles DROP CONSTRAINT IF EXISTS user_memorial_roles_role_check;
+ALTER TABLE user_memorial_roles ADD CONSTRAINT user_memorial_roles_role_check
+  CHECK (role IN ('owner', 'witness', 'co_guardian', 'reader'));
+
+-- 2. Add 'reader' role to witness_invitations table
+ALTER TABLE witness_invitations DROP CONSTRAINT IF EXISTS witness_invitations_role_check;
+ALTER TABLE witness_invitations ADD CONSTRAINT witness_invitations_role_check
+  CHECK (role IN ('witness', 'co_guardian', 'reader'));
+
+-- Note: Existing RLS policies on user_memorial_roles already handle
+-- view access via role membership. Readers will be able to view
+-- memorial data through the same policies that govern witnesses.
+-- No additional RLS policies are required.
+
+
 -- ============================================================
 -- Done
 -- ============================================================
