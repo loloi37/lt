@@ -104,16 +104,38 @@ async function handleAnonymousJoin(
     token: string,
     contributionId: string
 ) {
-    // Verify the contribution exists and is verified
-    const { data: contribution } = await supabaseAdmin
-        .from('memorial_contributions')
-        .select('id, memorial_id, contributor_verified')
-        .eq('id', contributionId)
-        .single();
+    const [{ data: contribution }, { data: invitation }] =
+        await Promise.all([
+            supabaseAdmin
+                .from('memorial_contributions')
+                .select('id, memorial_id, contributor_verified')
+                .eq('id', contributionId)
+                .single(),
+            supabaseAdmin
+                .from('witness_invitations')
+                .select('id, memorial_id, role, plan, status')
+                .eq('id', token)
+                .single()
+        ]);
 
+    // Verify the contribution exists and is verified
     if (!contribution?.contributor_verified) {
         return NextResponse.json(
             { error: 'Contribution not verified.' },
+            { status: 400 }
+        );
+    }
+
+    if (!invitation || invitation.status !== 'pending') {
+        return NextResponse.json(
+            { error: 'This invitation is no longer valid.' },
+            { status: 400 }
+        );
+    }
+
+    if (invitation.memorial_id !== contribution.memorial_id) {
+        return NextResponse.json(
+            { error: 'Invitation does not match this contribution.' },
             { status: 400 }
         );
     }
@@ -128,8 +150,8 @@ async function handleAnonymousJoin(
     return NextResponse.json({
         success: true,
         memorialId: contribution.memorial_id,
-        role: 'witness',
-        plan: 'personal',
+        role: invitation.role,
+        plan: invitation.plan || 'personal',
         isAnonymous: true
     });
 }

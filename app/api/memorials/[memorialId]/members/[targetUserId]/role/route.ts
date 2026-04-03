@@ -19,9 +19,14 @@ export async function PATCH(
 
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+        const VALID_ROLES = ['co_guardian', 'witness', 'reader'];
+        if (!VALID_ROLES.includes(newRole)) {
+            return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+        }
+
         // 1. Verify caller is Owner
         const { data: memorial } = await supabaseAdmin
-            .from('memorials').select('user_id').eq('id', memorialId).single();
+            .from('memorials').select('user_id, mode').eq('id', memorialId).single();
 
         if (memorial?.user_id !== user.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -30,6 +35,10 @@ export async function PATCH(
         // 2. Prevent changing own role
         if (targetUserId === user.id) {
             return NextResponse.json({ error: 'Cannot change the owner role' }, { status: 400 });
+        }
+
+        if (newRole === 'co_guardian' && memorial?.mode !== 'family') {
+            return NextResponse.json({ error: 'Co-Guardian is a Family plan role only' }, { status: 403 });
         }
 
         // 3. Update Role

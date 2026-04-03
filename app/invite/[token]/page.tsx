@@ -3,6 +3,33 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import InviteShell from './_components/InviteShell';
+import { WitnessRole } from '@/types/roles';
+
+export interface InvitationData {
+    id: string;
+    inviterName: string;
+    inviteeEmail: string;
+    role: WitnessRole;
+    personalMessage: string | null;
+    plan: 'personal' | 'family';
+    status: string;
+    isExpired: boolean;
+    memorial: {
+        id: string;
+        fullName: string;
+        birthDate: string | null;
+        deathDate: string | null;
+        profilePhotoUrl: string | null;
+    };
+}
+
+export type TerminalReason =
+    | 'NOT_FOUND'
+    | 'EXPIRED'
+    | 'DECLINED'
+    | 'USED_BY_OTHER'
+    | 'MEMORIAL_DELETED'
+    | 'ALREADY_JOINED';
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
     const { token } = await params;
@@ -51,14 +78,17 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
     const isExpired = new Date(invitation.expires_at) < new Date();
 
     // Package the data for the client component
-    const initialData = {
+    const initialData: {
+        invitation: InvitationData;
+        isAuthenticated: boolean;
+    } = {
         invitation: {
             id: invitation.id,
             inviterName: invitation.inviter_name,
             inviteeEmail: invitation.invitee_email,
-            role: invitation.role,
+            role: invitation.role as WitnessRole,
             personalMessage: invitation.personal_message,
-            plan: invitation.plan,
+            plan: (invitation.plan === 'family' ? 'family' : 'personal'),
             status: invitation.status,
             isExpired,
             memorial: {

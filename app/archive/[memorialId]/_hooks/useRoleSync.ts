@@ -3,11 +3,14 @@
 
 import { useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { getArchiveCapabilities } from '@/lib/archivePermissions';
+import { WitnessRole } from '@/types/roles';
 
 export function useRoleSync(memorialId: string, userId: string, currentRole: string) {
     const router = useRouter();
+    const pathname = usePathname();
     const supabase = createClient();
 
     useEffect(() => {
@@ -27,12 +30,23 @@ export function useRoleSync(memorialId: string, userId: string, currentRole: str
                     // Verify it's specifically for this user
                     if (payload.new.user_id !== userId) return;
 
-                    const newRole = payload.new.role;
+                    const newRole = payload.new.role as WitnessRole;
                     if (newRole !== currentRole) {
                         // Fire a custom event that the RoleBanner component listens to
                         window.dispatchEvent(new CustomEvent('ulumae:role-changed', {
                             detail: { memorialId, oldRole: currentRole, newRole }
                         }));
+
+                        const nextCapabilities = getArchiveCapabilities(newRole, pathname.includes('/family') ? 'family' : 'personal');
+                        if (pathname.includes('/steward') && !nextCapabilities.canReview) {
+                            toast.error('Your updated role no longer includes steward access.');
+                            router.replace(`/archive/${memorialId}`);
+                            return;
+                        }
+                        if (pathname.includes('/contribute') && !nextCapabilities.canContribute) {
+                            toast.error('Your updated role no longer includes contribution access.');
+                            router.replace(`/archive/${memorialId}`);
+                        }
                     }
                 }
             )
@@ -62,5 +76,5 @@ export function useRoleSync(memorialId: string, userId: string, currentRole: str
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [memorialId, userId, currentRole, router, supabase]);
+    }, [memorialId, userId, currentRole, pathname, router, supabase]);
 }

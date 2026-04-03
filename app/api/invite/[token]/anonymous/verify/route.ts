@@ -8,9 +8,10 @@ const supabaseAdmin = createClient(
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { token: string } }
+    { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        await params;
         const { email, code, name } =
             await req.json();
 

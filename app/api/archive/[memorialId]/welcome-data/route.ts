@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { getArchiveCapabilities, getRoleLabel } from '@/lib/archivePermissions';
+import { WitnessRole } from '@/types/roles';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,10 +70,11 @@ export async function GET(
         }
 
         const memorial = memorialResult.data;
-        const userRole = roleResult.data.role;
+        const userRole = roleResult.data.role as WitnessRole;
         const plan = memorial.mode === 'family'
             ? 'family'
             : 'personal';
+        const capabilities = getArchiveCapabilities(userRole, plan);
 
         // 4. Compute content richness
         // (determines which empty-state copy we show)
@@ -126,7 +129,9 @@ export async function GET(
                 profilePhotoUrl: memorial.profile_photo_url
             },
             userRole,
+            roleLabel: getRoleLabel(userRole),
             plan,
+            capabilities,
             archiveRichness,
             stats: {
                 photoCount,

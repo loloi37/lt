@@ -7,6 +7,7 @@ import {
     Eye, Edit, MessageCircle
 } from 'lucide-react';
 import { InvitationData } from '../page';
+import { WitnessRole } from '@/types/roles';
 
 interface Props {
     invitation: InvitationData;
@@ -15,7 +16,13 @@ interface Props {
 }
 
 // Role explanations — clear and non-technical
-const ROLE_CONFIG = {
+const ROLE_CONFIG: Record<'witness' | 'co_guardian' | 'reader', {
+    label: string;
+    color: string;
+    description: string;
+    capabilities: { icon: any; text: string }[];
+    cannotDo: string[];
+}> = {
     witness: {
         label: 'Witness',
         color: 'bg-olive/10 text-olive border-olive/20',
@@ -69,6 +76,23 @@ const ROLE_CONFIG = {
             'Change the owner',
             'Access billing'
         ]
+    },
+    reader: {
+        label: 'Reader',
+        color: 'bg-warm-border/25 text-warm-dark/60 border-warm-border/40',
+        description:
+            'You can read and explore this archive, but you cannot contribute to it or edit anything inside it.',
+        capabilities: [
+            {
+                icon: Eye,
+                text: 'Read the full archive'
+            }
+        ],
+        cannotDo: [
+            'Share memories or photos',
+            'Edit archive content',
+            'Invite others'
+        ]
     }
 } as const;
 
@@ -87,8 +111,8 @@ export default function InviteAcceptance({
     const [showDeclineConfirm, setShowDeclineConfirm] =
         useState(false);
 
-    const role = invitation.role;
-    const roleConfig = ROLE_CONFIG[role];
+    const role = invitation.role as WitnessRole;
+    const roleConfig = ROLE_CONFIG[(role === 'reader' ? 'reader' : role) as keyof typeof ROLE_CONFIG];
     const canJoin = checkedModeration && checkedDignity;
 
     // Check if this is an anonymous contributor
@@ -285,7 +309,7 @@ export default function InviteAcceptance({
                                 </p>
                                 <ul className="space-y-2">
                                     {roleConfig.capabilities.map(
-                                        (cap, i) => {
+                                        (cap: { icon: any; text: string }, i: number) => {
                                             const Icon = cap.icon;
                                             return (
                                                 <li key={i}
@@ -310,7 +334,7 @@ export default function InviteAcceptance({
                                     You cannot
                                 </p>
                                 <ul className="space-y-2">
-                                    {roleConfig.cannotDo.map((item, i) => (
+                                    {roleConfig.cannotDo.map((item: string, i: number) => (
                                         <li key={i}
                                             className="flex items-center
                         gap-2.5 text-sm

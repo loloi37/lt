@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ mem
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        if (memorial.mode !== 'family') {
+        if (!memorial || memorial.mode !== 'family') {
             return NextResponse.json({ error: 'Co-guardian promotion is only available for Family plan archives' }, { status: 403 });
         }
 

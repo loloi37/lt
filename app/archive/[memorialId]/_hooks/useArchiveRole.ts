@@ -1,9 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { ArchiveCapabilities } from '@/lib/archivePermissions';
 
 export interface ArchiveRoleData {
-    userRole: 'witness' | 'co_guardian' | 'owner';
+    currentUserId: string;
+    userRole: 'witness' | 'co_guardian' | 'owner' | 'reader';
     plan: 'personal' | 'family';
+    roleLabel: string;
+    capabilities: ArchiveCapabilities;
     memorial: {
         id: string;
         fullName: string;
@@ -29,7 +33,7 @@ export function useArchiveRole(memorialId: string) {
 
     useEffect(() => {
         if (!memorialId) return;
-        fetch(`/api/archive/${memorialId}/role-data`)
+        const fetchRoleData = () => fetch(`/api/archive/${memorialId}/role-data`)
             .then(r => r.json())
             .then(d => {
                 if (d.error) throw new Error(d.error);
@@ -37,6 +41,19 @@ export function useArchiveRole(memorialId: string) {
             })
             .catch(err => setError(err.message))
             .finally(() => setLoading(false));
+
+        fetchRoleData();
+
+        const handleRoleChanged = (event: Event) => {
+            const detail = (event as CustomEvent<{ memorialId: string }>).detail;
+            if (detail?.memorialId === memorialId) {
+                setLoading(true);
+                fetchRoleData();
+            }
+        };
+
+        window.addEventListener('ulumae:role-changed', handleRoleChanged);
+        return () => window.removeEventListener('ulumae:role-changed', handleRoleChanged);
     }, [memorialId]);
 
     return { data, loading, error };

@@ -1,322 +1,151 @@
 'use client';
-import { use, useEffect, Suspense } from 'react';
+
+import { Suspense, use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Loader2, Shield } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import {
-    DrawerProvider,
-    useDrawer
-} from './_context/DrawerContext';
-import ContributionDrawer from
-    './_components/ContributionDrawer';
-import PendingBadge from
-    './_components/PendingBadge';
-import { useArchiveRole } from
-    '../_hooks/useArchiveRole';
-import {
-    ArrowLeft, BookOpen,
-    ImageIcon, MessageCircle, Film
-} from 'lucide-react';
+import MemorialRenderer from '@/components/MemorialRenderer';
+import { useArchiveRole } from '../_hooks/useArchiveRole';
+import { useRoleSync } from '../_hooks/useRoleSync';
+import { DrawerProvider, useDrawer } from './_context/DrawerContext';
+import ContributionDrawer from './_components/ContributionDrawer';
 
-function ArchiveViewContent({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    const router = useRouter();
-    const supabase = createClient();
-    const { data, loading } =
-        useArchiveRole(memorialId);
-    const { setContributions } = useDrawer();
+function ArchiveViewContent({ memorialId }: { memorialId: string }) {
+  const router = useRouter();
+  const supabase = createClient();
+  const { data: roleData, loading: roleLoading } = useArchiveRole(memorialId);
+  useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
+  const { openDrawer, setContributions } = useDrawer();
 
-    const canReview =
-        data?.userRole === 'co_guardian' ||
-        data?.userRole === 'owner';
+  const [viewData, setViewData] = useState<{ memorialData: any; relations: any[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    // Load pending contributions for
-    // co-guardians and owners + real-time updates
-    useEffect(() => {
-        if (!canReview) return;
+  useEffect(() => {
+    fetch(`/api/archive/${memorialId}/render-data`)
+      .then((response) => response.json())
+      .then((payload) => {
+        if (payload.error) {
+          throw new Error(payload.error);
+        }
+        setViewData(payload);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [memorialId]);
 
-        const fetchPending = () => {
-            supabase
-                .from('memorial_contributions')
-                .select('*')
-                .eq('memorial_id', memorialId)
-                .eq('status', 'pending_approval')
-                .order('created_at', { ascending: true })
-                .then(({ data: contributions }) => {
-                    if (contributions) {
-                        setContributions(contributions);
-                    }
-                });
-        };
+  useEffect(() => {
+    if (!roleData?.capabilities.canReview) return;
 
-        fetchPending();
+    const fetchPending = () => {
+      supabase
+        .from('memorial_contributions')
+        .select('*')
+        .eq('memorial_id', memorialId)
+        .eq('status', 'pending_approval')
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          setContributions(data || []);
+        });
+    };
 
-        const channel = supabase
-            .channel(`view-pending-${memorialId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'memorial_contributions',
-                    filter: `memorial_id=eq.${memorialId}`,
-                },
-                () => { fetchPending(); }
-            )
-            .subscribe();
+    fetchPending();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [canReview, memorialId]);
+    const channel = supabase
+      .channel(`view-pending-${memorialId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'memorial_contributions',
+          filter: `memorial_id=eq.${memorialId}`,
+        },
+        fetchPending
+      )
+      .subscribe();
 
-    if (loading || !data) {
-        return (
-            <div className="min-h-screen bg-surface-low
-        flex items-center justify-center">
-                <div className="w-10 h-10 border-2
-          border-warm-border/30 border-t-warm-dark/40
-          rounded-full animate-spin" />
-            </div>
-        );
-    }
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [memorialId, roleData?.capabilities.canReview, setContributions, supabase]);
 
-    const { memorial } = data;
-
+  if (roleLoading || loading) {
     return (
-        <div className="min-h-screen bg-surface-low">
-            {/* Header */}
-            <div className="border-b border-warm-border/20
-        bg-white sticky top-0 z-30">
-                <div className="max-w-3xl mx-auto
-          px-6 py-4 flex items-center gap-4">
-                    <button
-                        onClick={() =>
-                            router.push(`/archive/${memorialId}`)
-                        }
-                        className="p-2 hover:bg-warm-border/10
-              rounded-lg transition-colors"
-                    >
-                        <ArrowLeft size={20}
-                            className="text-warm-dark/60" />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                        <p className="font-serif text-base
-              text-warm-dark truncate">
-                            {memorial.fullName}
-                        </p>
-                        <p className="text-xs
-              text-warm-dark/40 font-sans">
-                            Archive
-                        </p>
-                    </div>
-                </div>
-            </div>
+      <div className="min-h-screen bg-surface-low flex items-center justify-center">
+        <Loader2 size={32} className="text-olive animate-spin" />
+      </div>
+    );
+  }
 
-            <div className="max-w-3xl mx-auto
-        px-6 py-12 space-y-16">
-
-                {/* Biography section */}
-                <ArchiveSection
-                    icon={BookOpen}
-                    title="Biography"
-                    section="biography"
-                    canReview={canReview}
-                    memorialId={memorialId}
-                >
-                    <BiographyBlock
-                        memorialId={memorialId}
-                    />
-                </ArchiveSection>
-
-                {/* Photos section */}
-                <ArchiveSection
-                    icon={ImageIcon}
-                    title="Photos"
-                    section="photos"
-                    canReview={canReview}
-                    memorialId={memorialId}
-                >
-                    <PhotosBlock
-                        memorialId={memorialId}
-                    />
-                </ArchiveSection>
-
-                {/* Memories section */}
-                <ArchiveSection
-                    icon={MessageCircle}
-                    title="Memories"
-                    section="memories"
-                    canReview={canReview}
-                    memorialId={memorialId}
-                >
-                    <MemoriesBlock
-                        memorialId={memorialId}
-                    />
-                </ArchiveSection>
-
-                {/* Videos section */}
-                <ArchiveSection
-                    icon={Film}
-                    title="Videos"
-                    section="videos"
-                    canReview={canReview}
-                    memorialId={memorialId}
-                >
-                    <VideosBlock
-                        memorialId={memorialId}
-                    />
-                </ArchiveSection>
-
-            </div>
-
-            {/* The Drawer — lives outside the scroll */}
-            {canReview && (
-                <ContributionDrawer
-                    memorialId={memorialId}
-                />
-            )}
+  if (error || !viewData || !roleData) {
+    return (
+      <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <p className="text-warm-dark/50 mb-4">{error || 'This archive could not be loaded.'}</p>
+          <button onClick={() => router.push(`/archive/${memorialId}`)} className="text-olive underline text-sm">
+            Return to archive dashboard
+          </button>
         </div>
+      </div>
     );
-}
+  }
 
-// ─── Section wrapper ──────────────────────────────
-
-function ArchiveSection({
-    icon: Icon,
-    title,
-    section,
-    canReview,
-    children,
-    memorialId
-}: {
-    icon: any;
-    title: string;
-    section: any;
-    canReview: boolean;
-    children: React.ReactNode;
-    memorialId: string;
-}) {
-    return (
-        <section>
-            <div className="flex items-center
-        gap-3 mb-8">
-                <div className="w-8 h-8 bg-warm-border/20
-          rounded-lg flex items-center
-          justify-center">
-                    <Icon size={16}
-                        className="text-warm-dark/40" />
-                </div>
-                <h2 className="font-serif text-2xl
-          text-warm-dark">
-                    {title}
-                </h2>
-                {/* Badge only visible to reviewers */}
-                {canReview && (
-                    <PendingBadge section={section} />
-                )}
+  return (
+    <div className="min-h-screen bg-surface-low">
+      <div className="border-b border-warm-border/20 bg-white sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <button
+              onClick={() => router.push(`/archive/${memorialId}`)}
+              className="p-2 hover:bg-warm-border/10 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-warm-dark/60" />
+            </button>
+            <div className="min-w-0">
+              <p className="font-serif text-base text-warm-dark truncate">{roleData.memorial.fullName}</p>
+              <p className="text-xs text-warm-dark/40 font-sans">{roleData.roleLabel}</p>
             </div>
-            {children}
-        </section>
-    );
-}
+          </div>
 
-// ─── Content blocks (stubs — connect to your
-//     existing memorial data) ───────────────────────
-
-function BiographyBlock({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    // Connect this to your existing memorial
-    // step6 biography data
-    return (
-        <div className="prose prose-warm-dark
-      font-serif max-w-none">
-            <p className="text-warm-dark/60
-        leading-relaxed italic text-sm">
-                Biography content renders here from
-                your existing memorial step data.
-            </p>
+          {roleData.capabilities.canReview && (
+            <button
+              onClick={() => openDrawer('all')}
+              className="inline-flex items-center gap-2 px-4 py-2 border border-warm-border/30 rounded-xl text-sm text-warm-dark/70 hover:bg-warm-border/10 transition-colors font-sans"
+            >
+              <Shield size={16} />
+              Review pending contributions
+            </button>
+          )}
         </div>
-    );
+      </div>
+
+      <MemorialRenderer
+        data={viewData.memorialData}
+        relations={viewData.relations}
+        isPreview={false}
+        compact={false}
+      />
+
+      {roleData.capabilities.canReview && <ContributionDrawer memorialId={memorialId} />}
+    </div>
+  );
 }
 
-function PhotosBlock({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    return (
-        <div className="grid grid-cols-2
-      sm:grid-cols-3 gap-3">
-            <div className="aspect-square
-        bg-warm-border/20 rounded-xl flex
-        items-center justify-center">
-                <p className="text-xs
-          text-warm-dark/30 font-sans">
-                    Photos from step8 data
-                </p>
-            </div>
-        </div>
-    );
-}
+export default function ArchiveViewPage({ params }: { params: Promise<{ memorialId: string }> }) {
+  const { memorialId } = use(params);
 
-function MemoriesBlock({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    return (
-        <div className="space-y-4">
-            <p className="text-sm text-warm-dark/40
-        font-sans italic">
-                Approved memories render here.
-            </p>
-        </div>
-    );
-}
-
-function VideosBlock({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    return (
-        <div className="space-y-4">
-            <p className="text-sm text-warm-dark/40
-        font-sans italic">
-                Videos from step9 data render here.
-            </p>
-        </div>
-    );
-}
-
-// ─── Page export ──────────────────────────────────
-
-export default function ArchiveViewPage({
-    params
-}: {
-    params: Promise<{ memorialId: string }>
-}) {
-    const { memorialId } = use(params);
-    return (
-        <DrawerProvider>
-            <Suspense fallback={
-                <div className="min-h-screen bg-surface-low
-          flex items-center justify-center">
-                    <div className="w-10 h-10 border-2
-            border-warm-border/30 border-t-warm-dark/40
-            rounded-full animate-spin" />
-                </div>
-            }>
-                <ArchiveViewContent
-                    memorialId={memorialId}
-                />
-            </Suspense>
-        </DrawerProvider>
-    );
+  return (
+    <DrawerProvider>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-surface-low flex items-center justify-center">
+            <Loader2 size={32} className="text-olive animate-spin" />
+          </div>
+        }
+      >
+        <ArchiveViewContent memorialId={memorialId} />
+      </Suspense>
+    </DrawerProvider>
+  );
 }

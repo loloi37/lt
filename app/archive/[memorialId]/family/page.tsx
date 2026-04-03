@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import { useArchiveRole } from
     '../_hooks/useArchiveRole';
+import AccessRequestButton from '@/components/role/AccessRequestButton';
+import { useRoleSync } from '../_hooks/useRoleSync';
 
 interface LinkedMemorial {
     id: string;
@@ -27,6 +29,8 @@ export default function FamilyMapPage({
     const router = useRouter();
     const { data: roleData, loading: roleLoading } =
         useArchiveRole(memorialId);
+
+    useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
 
     const [linked, setLinked] =
         useState<LinkedMemorial[]>([]);
@@ -145,11 +149,10 @@ export default function FamilyMapPage({
                                     memorial={m}
                                     onClick={() => {
                                         if (m.userHasAccess) {
-                                            router.push(
-                                                `/archive/${m.id}`
-                                            );
+                                            router.push(`/archive/${m.id}`);
                                         }
                                     }}
+                                    roleCanRequest={roleData?.capabilities.canRequestAccess ?? false}
                                 />
                             ))}
                         </div>
@@ -162,10 +165,12 @@ export default function FamilyMapPage({
 
 function LinkedMemorialCard({
     memorial: m,
-    onClick
+    onClick,
+    roleCanRequest = false,
 }: {
     memorial: LinkedMemorial;
     onClick: () => void;
+    roleCanRequest?: boolean;
 }) {
     const formatYear = (d: string | null) =>
         d ? new Date(d).getFullYear() : null;
@@ -233,9 +238,18 @@ function LinkedMemorialCard({
                     className="text-warm-dark/25
           flex-shrink-0" />
             ) : (
-                <Lock size={16}
-                    className="text-warm-dark/20
+                <div className="flex-shrink-0">
+                    {roleCanRequest ? (
+                        <AccessRequestButton
+                            memorialId={m.id}
+                            memorialName={m.fullName}
+                        />
+                    ) : (
+                        <Lock size={16}
+                            className="text-warm-dark/20
           flex-shrink-0" />
+                    )}
+                </div>
             )}
         </div>
     );

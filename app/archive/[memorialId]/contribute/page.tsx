@@ -1,566 +1,413 @@
 'use client';
 
-import { useState, use, Suspense, useRef } from 'react';
+import { Suspense, use, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-    MessageCircle, Image as ImageIcon,
-    ArrowLeft, Send, Loader2,
-    Check, AlertCircle, X
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  Image as ImageIcon,
+  Loader2,
+  MessageCircle,
+  Send,
+  X,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { useArchiveRole } from '../_hooks/useArchiveRole';
+import { useRoleSync } from '../_hooks/useRoleSync';
 
 type ContributionType = 'memory' | 'photo';
 
-function ContributeContent({
-    memorialId
-}: {
-    memorialId: string
-}) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const typeFromUrl =
-        searchParams.get('type') as ContributionType | null;
+function ContributeContent({ memorialId }: { memorialId: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeFromUrl = searchParams.get('type') as ContributionType | null;
+  const { data: roleData, loading: roleLoading } = useArchiveRole(memorialId);
+  useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
 
-    const [type, setType] =
-        useState<ContributionType>(
-            typeFromUrl || 'memory'
-        );
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [authorName, setAuthorName] = useState('');
-    const [relationship, setRelationship] = useState('');
-    const [photoFile, setPhotoFile] =
-        useState<File | null>(null);
-    const [photoPreview, setPhotoPreview] =
-        useState<string | null>(null);
-    const [photoCaption, setPhotoCaption] = useState('');
-    const [photoYear, setPhotoYear] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const [type, setType] = useState<ContributionType>(typeFromUrl || 'memory');
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [relationship, setRelationship] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoCaption, setPhotoCaption] = useState('');
+  const [photoYear, setPhotoYear] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const photoRef = useRef<HTMLInputElement>(null);
-    const supabase = createClient();
+  const photoRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
-    const handlePhotoSelect = (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+  useEffect(() => {
+    if (!roleLoading && roleData && !roleData.capabilities.canContribute) {
+      router.replace(`/archive/${memorialId}`);
+    }
+  }, [memorialId, roleData, roleLoading, router]);
 
-        // Client-side size check (10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            setError('Photo must be under 10MB.');
-            return;
-        }
+  if (roleLoading || !roleData) {
+    return (
+      <div className="min-h-screen bg-surface-low flex items-center justify-center">
+        <Loader2 size={32} className="text-olive animate-spin" />
+      </div>
+    );
+  }
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setPhotoPreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-        setPhotoFile(file);
-        setError(null);
-    };
+  if (!roleData.capabilities.canContribute) {
+    return null;
+  }
 
-    const handleSubmit = async () => {
-        // Validation
-        if (type === 'memory') {
-            if (!title.trim()) {
-                setError('Please add a title for your memory.');
-                return;
-            }
-            if (!content.trim() || content.length < 20) {
-                setError(
-                    'Please write at least a sentence or two.'
-                );
-                return;
-            }
-        }
+  const requiresReview = roleData.capabilities.contributionsRequireReview;
 
-        if (type === 'photo' && !photoFile) {
-            setError('Please select a photo to upload.');
-            return;
-        }
+  const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-        setLoading(true);
-        setError(null);
-
-        try {
-            const { data: { user } } =
-                await supabase.auth.getUser();
-
-            // Check for anonymous contributor in session
-            const anonData = (() => {
-                try {
-                    const s = sessionStorage.getItem(
-                        'anon_contributor'
-                    );
-                    return s ? JSON.parse(s) : null;
-                } catch { return null; }
-            })();
-
-            const contributorName =
-                authorName.trim() ||
-                anonData?.name ||
-                'Anonymous';
-
-            let contributionContent: Record<string, any> = {};
-
-            if (type === 'memory') {
-                contributionContent = {
-                    title: title.trim(),
-                    content: content.trim(),
-                    relationship: relationship.trim()
-                };
-            }
-
-            if (type === 'photo' && photoFile) {
-                // Upload photo first
-                const ext =
-                    photoFile.name.split('.').pop() || 'jpg';
-                const path =
-                    `${memorialId}/witness-photos/` +
-                    `${Date.now()}.${ext}`;
-
-                const { error: uploadError } =
-                    await supabase.storage
-                        .from('memorial-media')
-                        .upload(path, photoFile, {
-                            contentType: photoFile.type,
-                            upsert: false
-                        });
-
-                if (uploadError) throw uploadError;
-
-                const { data: urlData } =
-                    supabase.storage
-                        .from('memorial-media')
-                        .getPublicUrl(path);
-
-                contributionContent = {
-                    title: photoCaption.trim() || 'Photo',
-                    url: urlData.publicUrl,
-                    caption: photoCaption.trim(),
-                    year: photoYear.trim(),
-                    relationship: relationship.trim()
-                };
-            }
-
-            // Submit the contribution
-            const { error: insertError } =
-                await supabase
-                    .from('memorial_contributions')
-                    .insert({
-                        memorial_id: memorialId,
-                        user_id: user?.id || null,
-                        witness_name: contributorName,
-                        contributor_email: anonData?.email || null,
-                        contributor_verified:
-                            anonData ? true : false,
-                        is_anonymous: !user,
-                        type,
-                        content: contributionContent,
-                        status: 'pending_approval'
-                    });
-
-            if (insertError) throw insertError;
-
-            setSubmitted(true);
-
-        } catch (err: any) {
-            console.error('[contribute]', err);
-            setError(
-                err.message ||
-                'Failed to submit. Please try again.'
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Success state
-    if (submitted) {
-        return (
-            <div className="min-h-screen bg-surface-low flex
-        items-center justify-center p-6">
-                <div className="max-w-md w-full text-center">
-                    <div className="w-16 h-16 bg-olive/10
-            rounded-full flex items-center
-            justify-center mx-auto mb-6">
-                        <Check size={32} className="text-olive" />
-                    </div>
-                    <h2 className="font-serif text-3xl
-            text-warm-dark mb-3">
-                        {type === 'photo'
-                            ? 'Photo submitted'
-                            : 'Memory submitted'}
-                    </h2>
-                    <p className="text-sm text-warm-dark/50
-            mb-8 leading-relaxed">
-                        The archive owner will review your
-                        contribution. You can track its status
-                        from your archive dashboard.
-                    </p>
-                    <div className="flex flex-col
-            sm:flex-row gap-3">
-                        <button
-                            onClick={() => {
-                                setSubmitted(false);
-                                setTitle('');
-                                setContent('');
-                                setPhotoFile(null);
-                                setPhotoPreview(null);
-                                setPhotoCaption('');
-                                setPhotoYear('');
-                            }}
-                            className="flex-1 py-3 border
-                border-warm-border/40 rounded-xl text-sm
-                text-warm-dark/60 hover:bg-warm-border/10
-                transition-all font-sans"
-                        >
-                            Share another
-                        </button>
-                        <button
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}`
-                                )
-                            }
-                            className="flex-1 py-3 glass-btn-dark
-                rounded-xl text-sm
-                font-medium
-                transition-all font-sans"
-                        >
-                            Back to dashboard
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Photo must be under 10MB.');
+      return;
     }
 
+    const reader = new FileReader();
+    reader.onloadend = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setPhotoFile(file);
+    setError(null);
+  };
+
+  const handleSubmit = async () => {
+    if (type === 'memory') {
+      if (!title.trim()) {
+        setError('Please add a title for your memory.');
+        return;
+      }
+      if (!content.trim() || content.length < 20) {
+        setError('Please write at least a sentence or two.');
+        return;
+      }
+    }
+
+    if (type === 'photo' && !photoFile) {
+      setError('Please select a photo to upload.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const anonData = (() => {
+        try {
+          const raw = sessionStorage.getItem('anon_contributor');
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      })();
+
+      const contributorName = authorName.trim() || anonData?.name || 'Anonymous';
+      let contributionContent: Record<string, any> = {};
+
+      if (type === 'memory') {
+        contributionContent = {
+          title: title.trim(),
+          content: content.trim(),
+          relationship: relationship.trim(),
+        };
+      }
+
+      if (type === 'photo' && photoFile) {
+        const ext = photoFile.name.split('.').pop() || 'jpg';
+        const path = `${memorialId}/witness-photos/${Date.now()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage.from('memorial-media').upload(path, photoFile, {
+          contentType: photoFile.type,
+          upsert: false,
+        });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from('memorial-media').getPublicUrl(path);
+        contributionContent = {
+          title: photoCaption.trim() || 'Photo',
+          url: urlData.publicUrl,
+          caption: photoCaption.trim(),
+          year: photoYear.trim(),
+          relationship: relationship.trim(),
+        };
+      }
+
+      const { error: insertError } = await supabase.from('memorial_contributions').insert({
+        memorial_id: memorialId,
+        user_id: user?.id || null,
+        witness_name: contributorName,
+        contributor_email: anonData?.email || null,
+        contributor_verified: anonData ? true : false,
+        is_anonymous: !user,
+        type,
+        content: contributionContent,
+        status: requiresReview ? 'pending_approval' : 'approved',
+      });
+
+      if (insertError) throw insertError;
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error('[contribute]', err);
+      setError(err.message || 'Failed to submit. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
     return (
-        <div className="min-h-screen bg-surface-low">
-
-            {/* Header */}
-            <div className="border-b border-warm-border/20
-        bg-white sticky top-0 z-10">
-                <div className="max-w-2xl mx-auto
-          px-6 py-4 flex items-center gap-4">
-                    <button
-                        onClick={() =>
-                            router.push(`/archive/${memorialId}`)
-                        }
-                        className="p-2 hover:bg-warm-border/10
-              rounded-lg transition-colors"
-                    >
-                        <ArrowLeft size={20}
-                            className="text-warm-dark/60" />
-                    </button>
-                    <h1 className="font-serif text-xl
-            text-warm-dark">
-                        Share a contribution
-                    </h1>
-                </div>
-            </div>
-
-            <div className="max-w-2xl mx-auto
-        px-6 py-10">
-
-                {/* Type switcher */}
-                <div className="flex gap-2 p-1
-          bg-warm-border/20 rounded-xl mb-8">
-                    {(['memory', 'photo'] as const).map(t => (
-                        <button
-                            key={t}
-                            onClick={() => {
-                                setType(t);
-                                setError(null);
-                            }}
-                            className={`flex-1 py-2.5 rounded-lg
-                text-sm font-medium transition-all
-                flex items-center justify-center
-                gap-2 font-sans ${type === t
-                                    ? 'bg-white shadow-sm text-warm-dark'
-                                    : 'text-warm-dark/50 hover:text-warm-dark'
-                                }`}
-                        >
-                            {t === 'memory'
-                                ? <MessageCircle size={16} />
-                                : <ImageIcon size={16} />
-                            }
-                            {t === 'memory'
-                                ? 'A memory'
-                                : 'A photo'}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="space-y-6">
-
-                    {/* Memory form */}
-                    {type === 'memory' && (
-                        <>
-                            <div>
-                                <label className="block text-xs
-                  font-medium text-warm-dark/50
-                  uppercase tracking-wider
-                  mb-2 font-sans">
-                                    What is this memory about?
-                                </label>
-                                <input
-                                    type="text"
-                                    value={title}
-                                    onChange={e =>
-                                        setTitle(e.target.value)
-                                    }
-                                    placeholder="e.g. The summer she taught me to bake"
-                                    className="glass-input"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs
-                  font-medium text-warm-dark/50
-                  uppercase tracking-wider
-                  mb-2 font-sans">
-                                    Tell the story
-                                </label>
-                                <textarea
-                                    value={content}
-                                    onChange={e =>
-                                        setContent(e.target.value)
-                                    }
-                                    placeholder="Write your memory here. There is no right or wrong way — just tell it as you remember it."
-                                    rows={7}
-                                    className="w-full px-4 py-3 border
-                    border-warm-border/40 rounded-xl
-                    focus:outline-none focus:ring-2
-                    focus:ring-olive/20 focus:border-olive
-                    transition-all resize-none text-sm
-                    font-serif leading-relaxed"
-                                />
-                                <p className="text-xs text-warm-dark/30
-                  mt-1.5 font-sans text-right">
-                                    {content.length} characters
-                                </p>
-                            </div>
-                        </>
-                    )}
-
-                    {/* Photo form */}
-                    {type === 'photo' && (
-                        <>
-                            {!photoPreview ? (
-                                <div
-                                    onClick={() =>
-                                        photoRef.current?.click()
-                                    }
-                                    className="border-2 border-dashed
-                    border-warm-border/40 rounded-xl p-12
-                    text-center cursor-pointer
-                    hover:border-olive/40 hover:bg-olive/5
-                    transition-all"
-                                >
-                                    <ImageIcon size={40}
-                                        className="text-warm-dark/20
-                      mx-auto mb-3" />
-                                    <p className="text-sm
-                    text-warm-dark/50 font-sans">
-                                        Click to select a photo
-                                    </p>
-                                    <p className="text-xs
-                    text-warm-dark/30 mt-1 font-sans">
-                                        JPG, PNG up to 10MB
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="relative">
-                                    <img
-                                        src={photoPreview}
-                                        alt="Preview"
-                                        className="w-full rounded-xl
-                      border-2 border-warm-border/30
-                      max-h-80 object-cover"
-                                    />
-                                    <button
-                                        onClick={() => {
-                                            setPhotoFile(null);
-                                            setPhotoPreview(null);
-                                        }}
-                                        className="absolute top-3 right-3
-                      p-2 bg-warm-dark/80 rounded-full
-                      hover:bg-warm-dark transition-all"
-                                    >
-                                        <X size={14}
-                                            className="text-surface-low" />
-                                    </button>
-                                </div>
-                            )}
-
-                            <input
-                                ref={photoRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handlePhotoSelect}
-                                className="hidden"
-                            />
-
-                            <div>
-                                <label className="block text-xs
-                  font-medium text-warm-dark/50
-                  uppercase tracking-wider
-                  mb-2 font-sans">
-                                    Caption (optional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={photoCaption}
-                                    onChange={e =>
-                                        setPhotoCaption(e.target.value)
-                                    }
-                                    placeholder="What is happening in this photo?"
-                                    className="glass-input"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs
-                  font-medium text-warm-dark/50
-                  uppercase tracking-wider
-                  mb-2 font-sans">
-                                    Approximate year (optional)
-                                </label>
-                                <input
-                                    type="text"
-                                    value={photoYear}
-                                    onChange={e =>
-                                        setPhotoYear(e.target.value)
-                                    }
-                                    placeholder="e.g. 1987"
-                                    className="glass-input"
-                                />
-                            </div>
-                        </>
-                    )}
-
-                    {/* Shared fields */}
-                    <div className="grid grid-cols-1
-            sm:grid-cols-2 gap-4 pt-2 border-t
-            border-warm-border/20">
-                        <div>
-                            <label className="block text-xs
-                font-medium text-warm-dark/50
-                uppercase tracking-wider
-                mb-2 font-sans">
-                                Your name (optional)
-                            </label>
-                            <input
-                                type="text"
-                                value={authorName}
-                                onChange={e =>
-                                    setAuthorName(e.target.value)
-                                }
-                                placeholder="How you want to be credited"
-                                className="glass-input"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs
-                font-medium text-warm-dark/50
-                uppercase tracking-wider
-                mb-2 font-sans">
-                                Your relationship (optional)
-                            </label>
-                            <input
-                                type="text"
-                                value={relationship}
-                                onChange={e =>
-                                    setRelationship(e.target.value)
-                                }
-                                placeholder="e.g. Daughter, Colleague"
-                                className="glass-input"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="p-4 bg-red-50
-              border border-red-200 rounded-xl
-              flex items-start gap-3">
-                            <AlertCircle size={16}
-                                className="text-red-500 mt-0.5
-                  flex-shrink-0" />
-                            <p className="text-sm text-red-700
-                font-sans">
-                                {error}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Review notice */}
-                    <div className="p-4 bg-warm-border/10
-            rounded-xl border border-warm-border/20
-            flex items-start gap-3">
-                        <AlertCircle size={16}
-                            className="text-warm-dark/30 mt-0.5
-                flex-shrink-0" />
-                        <p className="text-xs text-warm-dark/40
-              leading-relaxed font-sans">
-                            Your contribution will be reviewed
-                            by the archive owner before it appears.
-                            This usually takes a few days.
-                        </p>
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className={`w-full py-4 rounded-xl
-              font-medium transition-all flex
-              items-center justify-center gap-2
-              font-sans ${loading
-                                ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed'
-                                : 'glass-btn-dark shadow-lg'
-                            }`}
-                    >
-                        {loading ? (
-                            <>
-                                <Loader2 size={18}
-                                    className="animate-spin" />
-                                Submitting...
-                            </>
-                        ) : (
-                            <>
-                                <Send size={18} />
-                                Offer for review
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
+      <div className="min-h-screen bg-surface-low flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-olive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check size={32} className="text-olive" />
+          </div>
+          <h2 className="font-serif text-3xl text-warm-dark mb-3">
+            {type === 'photo' ? 'Photo shared' : 'Memory shared'}
+          </h2>
+          <p className="text-sm text-warm-dark/50 mb-8 leading-relaxed">
+            {requiresReview
+              ? 'A guardian will review your contribution before it appears in the archive. You can track its status from your archive dashboard.'
+              : 'Your contribution is now visible in the archive.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => {
+                setSubmitted(false);
+                setTitle('');
+                setContent('');
+                setPhotoFile(null);
+                setPhotoPreview(null);
+                setPhotoCaption('');
+                setPhotoYear('');
+              }}
+              className="flex-1 py-3 border border-warm-border/40 rounded-xl text-sm text-warm-dark/60 hover:bg-warm-border/10 transition-all font-sans"
+            >
+              Share another
+            </button>
+            <button
+              onClick={() => router.push(`/archive/${memorialId}`)}
+              className="flex-1 py-3 glass-btn-dark rounded-xl text-sm font-medium transition-all font-sans"
+            >
+              Back to dashboard
+            </button>
+          </div>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-surface-low">
+      <div className="border-b border-warm-border/20 bg-white sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center gap-4">
+          <button
+            onClick={() => router.push(`/archive/${memorialId}`)}
+            className="p-2 hover:bg-warm-border/10 rounded-lg transition-colors"
+          >
+            <ArrowLeft size={20} className="text-warm-dark/60" />
+          </button>
+          <h1 className="font-serif text-xl text-warm-dark">Share a contribution</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="flex gap-2 p-1 bg-warm-border/20 rounded-xl mb-8">
+          {(['memory', 'photo'] as const).map((nextType) => (
+            <button
+              key={nextType}
+              onClick={() => {
+                setType(nextType);
+                setError(null);
+              }}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 font-sans ${
+                type === nextType ? 'bg-white shadow-sm text-warm-dark' : 'text-warm-dark/50 hover:text-warm-dark'
+              }`}
+            >
+              {nextType === 'memory' ? <MessageCircle size={16} /> : <ImageIcon size={16} />}
+              {nextType === 'memory' ? 'A memory' : 'A photo'}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-6">
+          {type === 'memory' && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                  What is this memory about?
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="e.g. The summer she taught me to bake"
+                  className="glass-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                  Tell the story
+                </label>
+                <textarea
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="Write your memory here. There is no right or wrong way - just tell it as you remember it."
+                  rows={7}
+                  className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/20 focus:border-olive transition-all resize-none text-sm font-serif leading-relaxed"
+                />
+                <p className="text-xs text-warm-dark/30 mt-1.5 font-sans text-right">{content.length} characters</p>
+              </div>
+            </>
+          )}
+
+          {type === 'photo' && (
+            <>
+              {!photoPreview ? (
+                <div
+                  onClick={() => photoRef.current?.click()}
+                  className="border-2 border-dashed border-warm-border/40 rounded-xl p-12 text-center cursor-pointer hover:border-olive/40 hover:bg-olive/5 transition-all"
+                >
+                  <ImageIcon size={40} className="text-warm-dark/20 mx-auto mb-3" />
+                  <p className="text-sm text-warm-dark/50 font-sans">Click to select a photo</p>
+                  <p className="text-xs text-warm-dark/30 mt-1 font-sans">JPG, PNG up to 10MB</p>
+                </div>
+              ) : (
+                <div className="relative">
+                  <img src={photoPreview} alt="Preview" className="w-full rounded-xl border-2 border-warm-border/30 max-h-80 object-cover" />
+                  <button
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                    className="absolute top-3 right-3 p-2 bg-warm-dark/80 rounded-full hover:bg-warm-dark transition-all"
+                  >
+                    <X size={14} className="text-surface-low" />
+                  </button>
+                </div>
+              )}
+
+              <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+
+              <div>
+                <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                  Caption (optional)
+                </label>
+                <input
+                  type="text"
+                  value={photoCaption}
+                  onChange={(event) => setPhotoCaption(event.target.value)}
+                  placeholder="What is happening in this photo?"
+                  className="glass-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                  Approximate year (optional)
+                </label>
+                <input
+                  type="text"
+                  value={photoYear}
+                  onChange={(event) => setPhotoYear(event.target.value)}
+                  placeholder="e.g. 1987"
+                  className="glass-input"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-warm-border/20">
+            <div>
+              <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                Your name (optional)
+              </label>
+              <input
+                type="text"
+                value={authorName}
+                onChange={(event) => setAuthorName(event.target.value)}
+                placeholder="How you want to be credited"
+                className="glass-input"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-warm-dark/50 uppercase tracking-wider mb-2 font-sans">
+                Your relationship (optional)
+              </label>
+              <input
+                type="text"
+                value={relationship}
+                onChange={(event) => setRelationship(event.target.value)}
+                placeholder="e.g. Daughter, Colleague"
+                className="glass-input"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-700 font-sans">{error}</p>
+            </div>
+          )}
+
+          <div className="p-4 bg-warm-border/10 rounded-xl border border-warm-border/20 flex items-start gap-3">
+            <AlertCircle size={16} className="text-warm-dark/30 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-warm-dark/40 leading-relaxed font-sans">
+              {requiresReview
+                ? 'Your contribution will be reviewed by a guardian before it appears in the archive.'
+                : 'As a guardian, anything you share here appears in the archive immediately.'}
+            </p>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className={`w-full py-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 font-sans ${
+              loading ? 'bg-warm-border/20 text-warm-dark/30 cursor-not-allowed' : 'glass-btn-dark shadow-lg'
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send size={18} />
+                {requiresReview ? 'Offer for review' : 'Publish contribution'}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default function ContributePage({
-    params
-}: {
-    params: Promise<{ memorialId: string }>
-}) {
-    const { memorialId } = use(params);
-    return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-surface-low
-        flex items-center justify-center">
-                <Loader2 size={32}
-                    className="text-olive animate-spin" />
-            </div>
-        }>
-            <ContributeContent memorialId={memorialId} />
-        </Suspense>
-    );
+export default function ContributePage({ params }: { params: Promise<{ memorialId: string }> }) {
+  const { memorialId } = use(params);
+
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-surface-low flex items-center justify-center">
+          <Loader2 size={32} className="text-olive animate-spin" />
+        </div>
+      }
+    >
+      <ContributeContent memorialId={memorialId} />
+    </Suspense>
+  );
 }

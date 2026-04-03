@@ -1851,3 +1851,10 @@ CREATE POLICY "Service role full access to requests"
 -- ============================================================
 -- Done
 -- ============================================================
+
+
+-- ============================================================
+-- SECTION 25 (Codex commands)
+-- ============================================================
+-- No new SQL commands are required for this Codex implementation pass.
+-- The fixes in this pass use the schema already introduced in Sections 1-24.

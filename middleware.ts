@@ -59,6 +59,8 @@ export async function middleware(request: NextRequest) {
   // 5. CACHE HARDENING
   // Prevent browser caching of state-critical pages to ensure role changes are caught
   const noCachePaths = [
+    '/archive',
+    '/create',
     '/dashboard',
     '/choice-pricing',
     '/personal-confirmation',

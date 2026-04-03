@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { getArchiveCapabilities, getRoleLabel } from '@/lib/archivePermissions';
+import { WitnessRole } from '@/types/roles';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -77,10 +79,12 @@ export async function GET(
             );
         }
 
-        const userRole = isOwner ? 'owner' : roleRow!.role;
+        const userRole = (isOwner ? 'owner' : roleRow!.role) as WitnessRole;
+        const plan = memorial.mode === 'family' ? 'family' : 'personal';
+        const capabilities = getArchiveCapabilities(userRole, plan);
 
         let pendingCount = 0;
-        if (userRole === 'co_guardian' || isOwner) {
+        if (capabilities.canReview) {
             const { count } = await supabaseAdmin
                 .from('memorial_contributions')
                 .select('*', { count: 'exact', head: true })
@@ -100,8 +104,11 @@ export async function GET(
         );
 
         return NextResponse.json({
+            currentUserId: user.id,
             userRole,
-            plan: memorial.mode === 'family' ? 'family' : 'personal',
+            roleLabel: getRoleLabel(userRole),
+            plan,
+            capabilities,
             memorial: {
                 id: memorial.id,
                 fullName: memorial.full_name,

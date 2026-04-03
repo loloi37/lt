@@ -51,15 +51,11 @@ export async function GET(
     const members: MemberRecord[] = [];
 
     // Add the owner first
-    const { data: ownerData } = await supabaseAdmin
-      .from('auth.users' as any)
-      .select('email')
-      .eq('id', user.id)
-      .single();
+    const { data: ownerData } = await supabaseAdmin.auth.admin.getUserById(user.id);
 
     members.push({
       userId: user.id,
-      email: ownerData?.email || user.email || 'Owner',
+      email: ownerData?.user?.email || user.email || 'Owner',
       displayName: null,
       role: 'owner',
       status: 'active',
@@ -71,15 +67,11 @@ export async function GET(
       for (const role of roles) {
         if (role.user_id === user.id) continue; // Skip owner duplicate
 
-        const { data: userData } = await supabaseAdmin
-          .from('auth.users' as any)
-          .select('email')
-          .eq('id', role.user_id)
-          .single();
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(role.user_id);
 
         members.push({
           userId: role.user_id,
-          email: userData?.email || 'Unknown',
+          email: userData?.user?.email || 'Unknown',
           displayName: null,
           role: role.role,
           status: 'active',

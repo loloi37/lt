@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useArchiveRole } from '../_hooks/useArchiveRole';
+import { useRoleSync } from '../_hooks/useRoleSync';
 
 interface PendingContribution {
     id: string;
@@ -47,6 +48,8 @@ export default function StewardPage({
 
     const { data: roleData, loading: roleLoading } =
         useArchiveRole(memorialId);
+
+    useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
 
     // Access control: only owners and co-guardians can review
     useEffect(() => {

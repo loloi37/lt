@@ -12,9 +12,11 @@ interface Step7Props {
     onUpdate: (data: MemoriesStories) => void;
     onNext: () => void;
     onBack: () => void;
+    isPaid?: boolean;
     readOnly?: boolean;
     userRole: WitnessRole;
     memorialId: string | null;
+    onSubmitContribution?: (type: 'memory' | 'photo' | 'video', content: any) => Promise<any>;
 }
 
 export default function Step7Memories({ data, onUpdate, onNext, onBack, readOnly, userRole, memorialId }: Step7Props) {
