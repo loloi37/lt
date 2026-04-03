@@ -75,7 +75,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
 
     const { data: myContributions } = await supabase
         .from('memorial_contributions')
-        .select('id, type, status, content, created_at')
+        .select('id, type, status, content, created_at, admin_notes, revision_count')
         .eq('memorial_id', memorialId)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -95,7 +95,9 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
             type: c.type,
             status: c.status,
             title: c.content?.title || 'Untitled',
-            createdAt: c.created_at
+            createdAt: c.created_at,
+            adminNotes: c.admin_notes || null,
+            revisionCount: c.revision_count || 0,
         }))
     };
 

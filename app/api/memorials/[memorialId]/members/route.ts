@@ -19,14 +19,23 @@ export async function GET(
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         // 1. Verify caller is Owner or Co-Guardian
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('user_id')
+            .eq('id', memorialId)
+            .single();
+
         const { data: callerRole } = await supabaseAdmin
             .from('user_memorial_roles')
             .select('role')
             .eq('memorial_id', memorialId)
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
-        if (!callerRole || (callerRole.role !== 'owner' && callerRole.role !== 'co_guardian')) {
+        const isOwner = memorial?.user_id === user.id;
+        const isCoGuardian = callerRole?.role === 'co_guardian';
+
+        if (!isOwner && !isCoGuardian) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -53,13 +62,14 @@ export async function GET(
         // 4. Fetch Pending Invitations
         const { data: pending, error: pendingError } = await supabaseAdmin
             .from('witness_invitations')
-            .select('invitee_email, role, created_at')
+            .select('id, invitee_email, role, created_at')
             .eq('memorial_id', memorialId)
             .eq('status', 'pending');
 
         if (pendingError) throw pendingError;
 
         const pendingMembers = (pending || []).map(inv => ({
+            invitationId: inv.id,
             userId: null,
             email: inv.invitee_email,
             role: inv.role,

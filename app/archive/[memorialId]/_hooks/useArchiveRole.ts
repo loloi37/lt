@@ -19,9 +19,11 @@ export interface ArchiveRoleData {
     myContributions: {
         id: string;
         type: 'memory' | 'photo' | 'video';
-        status: 'pending_approval' | 'approved' | 'rejected';
+        status: 'pending_approval' | 'approved' | 'rejected' | 'needs_changes';
         title: string;
         createdAt: string;
+        adminNotes: string | null;
+        revisionCount: number;
     }[];
     pendingCount: number;
 }

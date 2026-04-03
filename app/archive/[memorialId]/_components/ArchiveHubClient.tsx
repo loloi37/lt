@@ -52,6 +52,11 @@ const STATUS_CONFIG = {
     label: 'Not published',
     color: 'text-warm-dark/40 bg-warm-border/20 border-warm-border/30',
   },
+  needs_changes: {
+    icon: AlertCircle,
+    label: 'Needs changes',
+    color: 'text-amber-700 bg-amber-50 border-amber-200',
+  },
 } as const;
 
 const TYPE_ICONS = {
@@ -176,7 +181,7 @@ export default function ArchiveHubClient({ roleData, memorialId, userId }: Archi
             ) : (
               <div className="space-y-3">
                 {myContributions.map((contribution: any) => (
-                  <ContributionRow key={contribution.id} contribution={contribution} />
+                  <ContributionRow key={contribution.id} contribution={contribution} memorialId={memorialId} />
                 ))}
               </div>
             )}
@@ -213,26 +218,43 @@ function QuickAction({ icon: Icon, label, onClick, primary = false, badge }: any
   );
 }
 
-function ContributionRow({ contribution }: any) {
+function ContributionRow({ contribution, memorialId }: { contribution: any; memorialId: string }) {
   const statusConfig = STATUS_CONFIG[contribution.status as keyof typeof STATUS_CONFIG];
   const StatusIcon = statusConfig.icon;
   const TypeIcon = TYPE_ICONS[contribution.type as keyof typeof TYPE_ICONS];
 
   return (
-    <div className="bg-white border border-warm-border/30 rounded-xl p-4 flex items-center gap-4">
-      <div className="w-9 h-9 bg-warm-border/20 rounded-lg flex items-center justify-center flex-shrink-0">
-        <TypeIcon size={16} className="text-warm-dark/40" />
+    <div className="bg-white border border-warm-border/30 rounded-xl p-4">
+      <div className="flex items-center gap-4">
+        <div className="w-9 h-9 bg-warm-border/20 rounded-lg flex items-center justify-center flex-shrink-0">
+          <TypeIcon size={16} className="text-warm-dark/40" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-warm-dark truncate font-sans">{contribution.title}</p>
+          <p className="text-xs text-warm-dark/40 font-sans mt-0.5">
+            {new Date(contribution.createdAt).toLocaleDateString()}
+            {contribution.revisionCount > 0 ? ` • revision ${contribution.revisionCount}` : ''}
+          </p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border font-sans flex-shrink-0 ${statusConfig.color}`}>
+          <StatusIcon size={10} />
+          {statusConfig.label}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-warm-dark truncate font-sans">{contribution.title}</p>
-        <p className="text-xs text-warm-dark/40 font-sans mt-0.5">
-          {new Date(contribution.createdAt).toLocaleDateString()}
-        </p>
-      </div>
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border font-sans flex-shrink-0 ${statusConfig.color}`}>
-        <StatusIcon size={10} />
-        {statusConfig.label}
-      </span>
+
+      {contribution.status === 'needs_changes' && contribution.adminNotes && (
+        <div className="mt-4 pt-4 border-t border-warm-border/20 space-y-3">
+          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider font-sans">Requested changes</p>
+          <p className="text-sm text-warm-dark/65 font-sans leading-relaxed">{contribution.adminNotes}</p>
+          <Link
+            href={`/archive/${memorialId}/contribute?revise=${contribution.id}`}
+            className="inline-flex items-center gap-2 text-sm text-amber-800 hover:text-amber-900 transition-colors font-sans"
+          >
+            <ChevronRight size={14} />
+            Revise and resubmit
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useEffect, useMemo, useState, use, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Shield, Check, X, MessageCircle,
     ImageIcon, ArrowLeft, Loader2,
-    AlertTriangle, Clock
+    AlertTriangle, Clock, Lock,
+    Mail, RefreshCw
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useArchiveRole } from '../_hooks/useArchiveRole';
@@ -28,6 +29,20 @@ interface PendingContribution {
     is_anonymous: boolean;
 }
 
+interface AccessRequestRecord {
+    id: string;
+    requesterUserId: string;
+    email: string;
+    requestedRole: string;
+    requestMessage: string;
+    status: 'pending';
+    createdAt: string;
+}
+
+type ReviewDecision = 'approved' | 'rejected' | 'needs_changes';
+type AccessDecision = 'approved' | 'denied';
+type StewardTab = 'contributions' | 'requests';
+
 export default function StewardPage({
     params
 }: {
@@ -37,37 +52,59 @@ export default function StewardPage({
     const router = useRouter();
     const supabase = createClient();
 
-    const [contributions, setContributions] =
-        useState<PendingContribution[]>([]);
+    const [contributions, setContributions] = useState<PendingContribution[]>([]);
+    const [accessRequests, setAccessRequests] = useState<AccessRequestRecord[]>([]);
     const [loading, setLoading] = useState(true);
-    const [processing, setProcessing] =
-        useState<string | null>(null);
-    const [error, setError] = useState<string | null>(
-        null
-    );
+    const [requestsLoading, setRequestsLoading] = useState(true);
+    const [processing, setProcessing] = useState<string | null>(null);
+    const [requestProcessing, setRequestProcessing] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [tab, setTab] = useState<StewardTab>('contributions');
 
-    const { data: roleData, loading: roleLoading } =
-        useArchiveRole(memorialId);
-
+    const { data: roleData, loading: roleLoading } = useArchiveRole(memorialId);
     useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
 
-    // Access control: only owners and co-guardians can review
     useEffect(() => {
         if (roleLoading || !roleData) return;
-        if (
-            roleData.userRole !== 'owner' &&
-            roleData.userRole !== 'co_guardian'
-        ) {
+        if (!roleData.capabilities.canReview) {
             router.push(`/archive/${memorialId}`);
         }
     }, [roleData, roleLoading, memorialId, router]);
 
-    // Load pending contributions + subscribe to real-time changes
+    const loadPending = async () => {
+        setLoading(true);
+        const { data, error: loadError } = await supabase
+            .from('memorial_contributions')
+            .select('*')
+            .eq('memorial_id', memorialId)
+            .eq('status', 'pending_approval')
+            .order('created_at', { ascending: true });
+
+        if (loadError) setError(loadError.message);
+        else setContributions(data || []);
+        setLoading(false);
+    };
+
+    const loadAccessRequests = async () => {
+        setRequestsLoading(true);
+        try {
+            const res = await fetch(`/api/memorials/${memorialId}/access-request`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load requests');
+            setAccessRequests(data.requests || []);
+        } catch (requestError: any) {
+            setError(requestError.message);
+        } finally {
+            setRequestsLoading(false);
+        }
+    };
+
     useEffect(() => {
         loadPending();
+        loadAccessRequests();
 
-        const channel = supabase
-            .channel(`steward-${memorialId}`)
+        const contributionsChannel = supabase
+            .channel(`steward-contributions-${memorialId}`)
             .on(
                 'postgres_changes',
                 {
@@ -76,46 +113,47 @@ export default function StewardPage({
                     table: 'memorial_contributions',
                     filter: `memorial_id=eq.${memorialId}`,
                 },
-                () => { loadPending(); }
+                loadPending
+            )
+            .subscribe();
+
+        const requestsChannel = supabase
+            .channel(`steward-requests-${memorialId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'memorial_access_requests',
+                    filter: `memorial_id=eq.${memorialId}`,
+                },
+                loadAccessRequests
             )
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(contributionsChannel);
+            supabase.removeChannel(requestsChannel);
         };
-    }, [memorialId]);
-
-    const loadPending = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-            .from('memorial_contributions')
-            .select('*')
-            .eq('memorial_id', memorialId)
-            .eq('status', 'pending_approval')
-            .order('created_at', { ascending: true });
-
-        if (error) setError(error.message);
-        else setContributions(data || []);
-        setLoading(false);
-    };
+    }, [memorialId, supabase]);
 
     const handleDecision = async (
         id: string,
-        decision: 'approved' | 'rejected'
+        decision: ReviewDecision,
+        adminNotes = ''
     ) => {
         setProcessing(id);
         try {
-            const { error } = await supabase
-                .from('memorial_contributions')
-                .update({ status: decision })
-                .eq('id', id);
+            const res = await fetch(`/api/archive/${memorialId}/contributions/${id}/review`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision, adminNotes }),
+            });
 
-            if (error) throw error;
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Review failed');
 
-            // Remove from local state immediately
-            setContributions(prev =>
-                prev.filter(c => c.id !== id)
-            );
+            setContributions(prev => prev.filter((c) => c.id !== id));
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -123,85 +161,125 @@ export default function StewardPage({
         }
     };
 
+    const handleAccessDecision = async (
+        requestId: string,
+        decision: AccessDecision
+    ) => {
+        setRequestProcessing(requestId);
+        try {
+            const res = await fetch(`/api/memorials/${memorialId}/access-request/${requestId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Could not update request');
+
+            setAccessRequests(prev => prev.filter((request) => request.id !== requestId));
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setRequestProcessing(null);
+        }
+    };
+
+    const totalItems = useMemo(
+        () => contributions.length + accessRequests.length,
+        [contributions.length, accessRequests.length]
+    );
+
     return (
         <div className="min-h-screen bg-surface-low">
-
-            {/* Header */}
-            <div className="border-b border-warm-border/20
-        bg-white sticky top-0 z-10">
-                <div className="max-w-3xl mx-auto
-          px-6 py-4 flex items-center gap-4">
+            <div className="border-b border-warm-border/20 bg-white sticky top-0 z-10">
+                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
                     <button
-                        onClick={() =>
-                            router.push(`/archive/${memorialId}`)
-                        }
-                        className="p-2 hover:bg-warm-border/10
-              rounded-lg transition-colors"
+                        onClick={() => router.push(`/archive/${memorialId}`)}
+                        className="p-2 hover:bg-warm-border/10 rounded-lg transition-colors"
                     >
-                        <ArrowLeft size={20}
-                            className="text-warm-dark/60" />
+                        <ArrowLeft size={20} className="text-warm-dark/60" />
                     </button>
-                    <div>
-                        <h1 className="font-serif text-xl
-              text-warm-dark">
-                            Review Queue
-                        </h1>
-                        {!loading && (
-                            <p className="text-xs
-                text-warm-dark/40 font-sans">
-                                {contributions.length === 0
+                    <div className="flex-1">
+                        <h1 className="font-serif text-xl text-warm-dark">Steward queue</h1>
+                        {!(loading || requestsLoading) && (
+                            <p className="text-xs text-warm-dark/40 font-sans">
+                                {totalItems === 0
                                     ? 'All clear'
-                                    : `${contributions.length} awaiting your decision`}
+                                    : `${contributions.length} contribution${contributions.length !== 1 ? 's' : ''} and ${accessRequests.length} access request${accessRequests.length !== 1 ? 's' : ''} waiting`}
                             </p>
                         )}
                     </div>
+                    <button
+                        onClick={() => {
+                            loadPending();
+                            loadAccessRequests();
+                        }}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-warm-border/30 text-xs text-warm-dark/60 hover:bg-warm-border/10 transition-colors"
+                    >
+                        <RefreshCw size={14} />
+                        Refresh
+                    </button>
                 </div>
             </div>
 
-            <div className="max-w-3xl mx-auto px-6 py-10">
+            <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
+                <div className="flex gap-2 p-1 bg-warm-border/20 rounded-xl w-full sm:w-fit">
+                    <TabButton
+                        active={tab === 'contributions'}
+                        label={`Contributions (${contributions.length})`}
+                        onClick={() => setTab('contributions')}
+                    />
+                    <TabButton
+                        active={tab === 'requests'}
+                        label={`Access requests (${accessRequests.length})`}
+                        onClick={() => setTab('requests')}
+                    />
+                </div>
 
-                {(loading || roleLoading) ? (
+                {(loading || requestsLoading || roleLoading) ? (
                     <div className="flex justify-center py-20">
-                        <Loader2 size={32}
-                            className="text-olive animate-spin" />
+                        <Loader2 size={32} className="text-olive animate-spin" />
                     </div>
                 ) : error ? (
-                    <div className="p-4 bg-red-50
-            border border-red-200 rounded-xl">
-                        <p className="text-sm text-red-700
-              font-sans">{error}</p>
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <p className="text-sm text-red-700 font-sans">{error}</p>
                     </div>
-                ) : contributions.length === 0 ? (
-                    <div className="text-center py-20">
-                        <div className="w-16 h-16 bg-olive/10
-              rounded-full flex items-center
-              justify-center mx-auto mb-4">
-                            <Check size={32}
-                                className="text-olive" />
+                ) : tab === 'contributions' ? (
+                    contributions.length === 0 ? (
+                        <EmptyState
+                            icon={<Check size={32} className="text-olive" />}
+                            title="No contributions waiting"
+                            description="Witness contributions will appear here when they need your review."
+                        />
+                    ) : (
+                        <div className="space-y-6">
+                            {contributions.map((contribution) => (
+                                <ContributionCard
+                                    key={contribution.id}
+                                    contribution={contribution}
+                                    processing={processing === contribution.id}
+                                    onApprove={() => handleDecision(contribution.id, 'approved')}
+                                    onReject={(notes) => handleDecision(contribution.id, 'rejected', notes)}
+                                    onNeedsChanges={(notes) => handleDecision(contribution.id, 'needs_changes', notes)}
+                                />
+                            ))}
                         </div>
-                        <h2 className="font-serif text-2xl
-              text-warm-dark mb-2">
-                            All clear
-                        </h2>
-                        <p className="text-sm text-warm-dark/40
-              font-sans">
-                            No contributions are waiting
-                            for review.
-                        </p>
-                    </div>
+                    )
+                ) : accessRequests.length === 0 ? (
+                    <EmptyState
+                        icon={<Lock size={32} className="text-olive" />}
+                        title="No access requests waiting"
+                        description="Family access requests will appear here when witnesses ask to join a linked archive."
+                    />
                 ) : (
-                    <div className="space-y-6">
-                        {contributions.map(c => (
-                            <ContributionCard
-                                key={c.id}
-                                contribution={c}
-                                processing={processing === c.id}
-                                onApprove={() =>
-                                    handleDecision(c.id, 'approved')
-                                }
-                                onReject={() =>
-                                    handleDecision(c.id, 'rejected')
-                                }
+                    <div className="space-y-4">
+                        {accessRequests.map((request) => (
+                            <AccessRequestCard
+                                key={request.id}
+                                request={request}
+                                processing={requestProcessing === request.id}
+                                onApprove={() => handleAccessDecision(request.id, 'approved')}
+                                onDeny={() => handleAccessDecision(request.id, 'denied')}
                             />
                         ))}
                     </div>
@@ -211,23 +289,65 @@ export default function StewardPage({
     );
 }
 
+function TabButton({
+    active,
+    label,
+    onClick
+}: {
+    active: boolean;
+    label: string;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all font-sans ${
+                active ? 'bg-white shadow-sm text-warm-dark' : 'text-warm-dark/50 hover:text-warm-dark'
+            }`}
+        >
+            {label}
+        </button>
+    );
+}
+
+function EmptyState({
+    icon,
+    title,
+    description
+}: {
+    icon: ReactNode;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div className="text-center py-20">
+            <div className="w-16 h-16 bg-olive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                {icon}
+            </div>
+            <h2 className="font-serif text-2xl text-warm-dark mb-2">{title}</h2>
+            <p className="text-sm text-warm-dark/40 font-sans">{description}</p>
+        </div>
+    );
+}
+
 function ContributionCard({
     contribution: c,
     processing,
     onApprove,
-    onReject
+    onReject,
+    onNeedsChanges
 }: {
     contribution: PendingContribution;
     processing: boolean;
     onApprove: () => void;
-    onReject: () => void;
+    onReject: (notes: string) => void;
+    onNeedsChanges: (notes: string) => void;
 }) {
-    const [showRejectConfirm, setShowRejectConfirm] =
-        useState(false);
+    const [mode, setMode] = useState<'actions' | 'reject' | 'changes'>('actions');
+    const [notes, setNotes] = useState('');
 
     const timeAgo = (() => {
-        const diff = Date.now() -
-            new Date(c.created_at).getTime();
+        const diff = Date.now() - new Date(c.created_at).getTime();
         const days = Math.floor(diff / 86400000);
         if (days === 0) return 'Today';
         if (days === 1) return 'Yesterday';
@@ -235,64 +355,43 @@ function ContributionCard({
     })();
 
     return (
-        <div className="bg-white border border-warm-border/30
-      rounded-2xl overflow-hidden shadow-sm">
-
-            {/* Card header */}
-            <div className="px-6 pt-6 pb-4
-        border-b border-warm-border/20">
-                <div className="flex items-start
-          justify-between gap-4">
+        <div className="bg-white border border-warm-border/30 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-6 pt-6 pb-4 border-b border-warm-border/20">
+                <div className="flex items-start justify-between gap-4">
                     <div>
-                        <div className="flex items-center
-              gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1">
                             {c.type === 'memory'
-                                ? <MessageCircle size={14}
-                                    className="text-warm-dark/40" />
-                                : <ImageIcon size={14}
-                                    className="text-warm-dark/40" />
+                                ? <MessageCircle size={14} className="text-warm-dark/40" />
+                                : <ImageIcon size={14} className="text-warm-dark/40" />
                             }
-                            <span className="text-xs
-                text-warm-dark/40 uppercase
-                tracking-wider font-sans">
+                            <span className="text-xs text-warm-dark/40 uppercase tracking-wider font-sans">
                                 {c.type}
                             </span>
                         </div>
-                        <h3 className="font-serif text-lg
-              text-warm-dark">
+                        <h3 className="font-serif text-lg text-warm-dark">
                             {c.content.title || 'Untitled'}
                         </h3>
                     </div>
-                    <div className="flex items-center gap-1.5
-            text-xs text-warm-dark/30
-            flex-shrink-0 font-sans">
+                    <div className="flex items-center gap-1.5 text-xs text-warm-dark/30 flex-shrink-0 font-sans">
                         <Clock size={12} />
                         {timeAgo}
                     </div>
                 </div>
 
-                {/* Contributor */}
                 <div className="mt-3 flex items-center gap-2">
-                    <div className="w-6 h-6 bg-warm-border/30
-            rounded-full flex items-center
-            justify-center flex-shrink-0">
-                        <span className="text-xs
-              text-warm-dark/50 font-serif">
+                    <div className="w-6 h-6 bg-warm-border/30 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs text-warm-dark/50 font-serif">
                             {c.witness_name.charAt(0)}
                         </span>
                     </div>
-                    <p className="text-xs text-warm-dark/50
-            font-sans">
+                    <p className="text-xs text-warm-dark/50 font-sans">
                         <strong>{c.witness_name}</strong>
+                        {c.contributor_email && <span className="text-warm-dark/30">{` • ${c.contributor_email}`}</span>}
                         {c.content.relationship && (
-                            <span className="text-warm-dark/30">
-                                {' '}· {c.content.relationship}
-                            </span>
+                            <span className="text-warm-dark/30">{` • ${c.content.relationship}`}</span>
                         )}
                         {c.is_anonymous && (
-                            <span className="ml-1.5 px-1.5 py-0.5
-                bg-warm-border/30 text-warm-dark/30
-                rounded text-[10px]">
+                            <span className="ml-1.5 px-1.5 py-0.5 bg-warm-border/30 text-warm-dark/30 rounded text-[10px]">
                                 no account
                             </span>
                         )}
@@ -300,11 +399,9 @@ function ContributionCard({
                 </div>
             </div>
 
-            {/* Content preview */}
             <div className="px-6 py-5">
                 {c.type === 'memory' && c.content.content && (
-                    <p className="font-serif text-warm-dark/70
-            text-base leading-relaxed line-clamp-4">
+                    <p className="font-serif text-warm-dark/70 text-base leading-relaxed line-clamp-5">
                         {c.content.content}
                     </p>
                 )}
@@ -314,17 +411,13 @@ function ContributionCard({
                         <img
                             src={c.content.url}
                             alt={c.content.caption || 'Photo'}
-                            className="w-full max-h-64
-                object-cover rounded-xl
-                border border-warm-border/30"
+                            className="w-full max-h-64 object-cover rounded-xl border border-warm-border/30"
                         />
                         {c.content.caption && (
-                            <p className="text-sm
-                text-warm-dark/60 font-sans italic">
+                            <p className="text-sm text-warm-dark/60 font-sans italic">
                                 "{c.content.caption}"
                                 {c.content.year && (
-                                    <span className="not-italic
-                    text-warm-dark/30 ml-2">
+                                    <span className="not-italic text-warm-dark/30 ml-2">
                                         {c.content.year}
                                     </span>
                                 )}
@@ -334,89 +427,122 @@ function ContributionCard({
                 )}
             </div>
 
-            {/* Actions */}
             <div className="px-6 pb-6">
-                {!showRejectConfirm ? (
-                    <div className="flex gap-3">
+                {mode === 'actions' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button
                             onClick={onApprove}
                             disabled={processing}
-                            className="flex-1 py-3 bg-olive
-                hover:bg-olive/90 text-white
-                rounded-xl font-medium text-sm
-                transition-all flex items-center
-                justify-center gap-2
-                font-sans disabled:opacity-50"
+                            className="py-3 bg-olive hover:bg-olive/90 text-white rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 font-sans disabled:opacity-50"
                         >
-                            {processing ? (
-                                <Loader2 size={16}
-                                    className="animate-spin" />
-                            ) : (
-                                <Check size={16} />
-                            )}
-                            Honor this contribution
+                            {processing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                            Approve
                         </button>
                         <button
-                            onClick={() =>
-                                setShowRejectConfirm(true)
-                            }
+                            onClick={() => setMode('changes')}
                             disabled={processing}
-                            className="px-5 py-3 border
-                border-warm-border/40 text-warm-dark/50
-                rounded-xl text-sm transition-all
-                hover:bg-warm-border/10 font-sans
-                disabled:opacity-50"
+                            className="py-3 border border-amber-200 text-amber-800 rounded-xl text-sm transition-all hover:bg-amber-50 font-sans disabled:opacity-50"
                         >
-                            Set aside with care
+                            Request changes
+                        </button>
+                        <button
+                            onClick={() => setMode('reject')}
+                            disabled={processing}
+                            className="py-3 border border-warm-border/40 text-warm-dark/50 rounded-xl text-sm transition-all hover:bg-warm-border/10 font-sans disabled:opacity-50"
+                        >
+                            Reject
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-warm-border/10 rounded-xl
-            p-4 space-y-3">
+                    <div className="bg-warm-border/10 rounded-xl p-4 space-y-3">
                         <div className="flex items-start gap-2">
-                            <AlertTriangle size={14}
-                                className="text-warm-muted mt-0.5
-                  flex-shrink-0" />
-                            <p className="text-sm text-warm-dark/60
-                font-sans leading-relaxed">
-                                This contribution won't appear in
-                                the archive. The contributor won't
-                                be notified.
+                            <AlertTriangle size={14} className="text-warm-muted mt-0.5 flex-shrink-0" />
+                            <p className="text-sm text-warm-dark/60 font-sans leading-relaxed">
+                                {mode === 'changes'
+                                    ? 'Explain what needs to be adjusted so the contributor can revise and send it back.'
+                                    : 'Explain why this will not appear in the archive. Clear feedback avoids confusion later.'}
                             </p>
                         </div>
+                        <textarea
+                            value={notes}
+                            onChange={(event) => setNotes(event.target.value)}
+                            rows={3}
+                            placeholder={mode === 'changes' ? 'What should they revise?' : 'Why is this not the right fit for the archive?'}
+                            className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/20 focus:border-olive transition-all resize-none text-sm font-sans"
+                        />
                         <div className="flex gap-2">
                             <button
-                                onClick={() =>
-                                    setShowRejectConfirm(false)
-                                }
-                                className="flex-1 py-2.5 border
-                  border-warm-border/40 rounded-lg text-sm
-                  text-warm-dark/50 hover:bg-warm-border/10
-                  transition-all font-sans"
+                                onClick={() => {
+                                    setMode('actions');
+                                    setNotes('');
+                                }}
+                                className="flex-1 py-2.5 border border-warm-border/40 rounded-lg text-sm text-warm-dark/50 hover:bg-warm-border/10 transition-all font-sans"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={onReject}
-                                disabled={processing}
-                                className="flex-1 py-2.5
-                  bg-warm-dark/10 rounded-lg text-sm
-                  text-warm-dark/60 hover:bg-warm-dark/20
-                  transition-all font-sans
-                  disabled:opacity-50 flex items-center
-                  justify-center gap-2"
+                                onClick={() => mode === 'changes' ? onNeedsChanges(notes) : onReject(notes)}
+                                disabled={processing || notes.trim().length < 8}
+                                className="flex-1 py-2.5 bg-warm-dark/10 rounded-lg text-sm text-warm-dark/60 hover:bg-warm-dark/20 transition-all font-sans disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {processing ? (
-                                    <Loader2 size={14}
-                                        className="animate-spin" />
-                                ) : (
-                                    <X size={14} />
-                                )}
-                                I understand
+                                {processing ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                                {mode === 'changes' ? 'Send back for revision' : 'Confirm rejection'}
                             </button>
                         </div>
                     </div>
                 )}
+            </div>
+        </div>
+    );
+}
+
+function AccessRequestCard({
+    request,
+    processing,
+    onApprove,
+    onDeny
+}: {
+    request: AccessRequestRecord;
+    processing: boolean;
+    onApprove: () => void;
+    onDeny: () => void;
+}) {
+    return (
+        <div className="bg-white border border-warm-border/30 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Mail size={14} className="text-warm-dark/35" />
+                        <p className="text-sm font-medium text-warm-dark font-sans">{request.email}</p>
+                    </div>
+                    <p className="text-xs text-warm-dark/40 font-sans uppercase tracking-wider mb-3">
+                        Requests witness access
+                    </p>
+                    <p className="text-sm text-warm-dark/60 font-sans leading-relaxed">
+                        {request.requestMessage || 'No message was included with this request.'}
+                    </p>
+                </div>
+                <div className="text-xs text-warm-dark/30 font-sans">
+                    {new Date(request.createdAt).toLocaleDateString()}
+                </div>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+                <button
+                    onClick={onApprove}
+                    disabled={processing}
+                    className="flex-1 py-3 bg-olive hover:bg-olive/90 text-white rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 font-sans disabled:opacity-50"
+                >
+                    {processing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    Grant access
+                </button>
+                <button
+                    onClick={onDeny}
+                    disabled={processing}
+                    className="flex-1 py-3 border border-warm-border/40 text-warm-dark/50 rounded-xl text-sm transition-all hover:bg-warm-border/10 font-sans disabled:opacity-50"
+                >
+                    Decline request
+                </button>
             </div>
         </div>
     );

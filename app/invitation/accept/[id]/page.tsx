@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 
-export default function OldInvitePage({
+export default async function OldInvitePage({
     params
 }: {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }) {
-    redirect(`/invite/${params.id}`);
+    const { id } = await params;
+    redirect(`/invite/${id}`);
 }

@@ -26,6 +26,7 @@ export async function POST(
         }
 
         const { email, role, personalMessage } = await req.json();
+        const normalizedEmail = String(email || '').trim().toLowerCase();
 
         // 2. VALIDATE INPUTS
         const VALID_ROLES: WitnessRole[] = ['witness', 'co_guardian', 'reader'];
@@ -33,7 +34,7 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
         }
 
-        if (!email || !email.includes('@')) {
+        if (!normalizedEmail || !normalizedEmail.includes('@')) {
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
         }
 
@@ -63,6 +64,10 @@ export async function POST(
             return NextResponse.json({ error: 'Forbidden: You do not have permission to invite members' }, { status: 403 });
         }
 
+        if (normalizedEmail === user.email?.toLowerCase()) {
+            return NextResponse.json({ error: 'You already have access to this archive.' }, { status: 400 });
+        }
+
         // 4. ROLE CONSTRAINTS
         if (isCoGuardian && role === 'co_guardian') {
             return NextResponse.json({ error: 'Co-Guardians cannot invite other Co-Guardians.' }, { status: 403 });
@@ -72,6 +77,23 @@ export async function POST(
             return NextResponse.json({ error: 'Co-Guardian is a Family plan role only.' }, { status: 403 });
         }
 
+        const { data: existingMember } = await supabaseAdmin
+            .from('user_memorial_roles')
+            .select('user_id, role')
+            .eq('memorial_id', memorialId);
+
+        if (existingMember?.length) {
+            for (const member of existingMember) {
+                const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+                if (authUser.user?.email?.toLowerCase() === normalizedEmail) {
+                    return NextResponse.json(
+                        { error: `This person already has archive access as ${member.role}.` },
+                        { status: 400 }
+                    );
+                }
+            }
+        }
+
         // 5. UPSERT LOGIC (Update existing pending or Create new)
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -79,7 +101,7 @@ export async function POST(
             .from('witness_invitations')
             .select('id')
             .eq('memorial_id', memorialId)
-            .eq('invitee_email', email.toLowerCase())
+            .eq('invitee_email', normalizedEmail)
             .eq('status', 'pending')
             .maybeSingle();
 
@@ -106,7 +128,7 @@ export async function POST(
                 .insert({
                     memorial_id: memorialId,
                     inviter_name: user.email,
-                    invitee_email: email.toLowerCase(),
+                    invitee_email: normalizedEmail,
                     role,
                     personal_message: personalMessage,
                     plan: memorial.mode === 'family' ? 'family' : 'personal',
@@ -123,7 +145,7 @@ export async function POST(
         const inviteLink = `${process.env.NEXT_PUBLIC_BASE_URL}/invite/${invitationId}`;
 
         await sendEmail({
-            to: email.toLowerCase(),
+            to: normalizedEmail,
             subject: `An invitation to bear witness for ${memorial.full_name || 'a loved one'}`,
             html: getWitnessInvitationEmail(
                 user.email!,

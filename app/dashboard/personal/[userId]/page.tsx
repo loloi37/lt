@@ -13,7 +13,6 @@ import { supabase, Memorial } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import PreservationStatus from '@/components/PreservationStatus';
 import SuccessionSetup from '@/components/SuccessionSetup';
-import RoleManagementTable from '@/components/RoleManagementTable';
 import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
 
 function computeStats(memorial: Memorial) {
@@ -525,12 +524,25 @@ function ActiveArchiveView({
             />
 
             {/* ── Witnesses ── */}
-            <RoleManagementTable
-                memorialId={archive.id}
-                isOwner={true}
-                planType="personal"
-                inviteStepHref={`/create?id=${archive.id}&mode=personal&step=7`}
-            />
+            <section className="glass-card p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 className="font-serif italic text-lg text-warm-dark mb-2">
+                            People around this archive
+                        </h3>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed max-w-2xl">
+                            Use one member manager for invitations, role changes, pending invites, and access cleanup. This now matches the archive experience instead of sending you through an older dashboard-only flow.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsWitnessModalOpen(true)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
+                    >
+                        <Users size={14} />
+                        Open member manager
+                    </button>
+                </div>
+            </section>
 
             {/* ── Two-column section ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

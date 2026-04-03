@@ -86,3 +86,61 @@ export async function POST(
         return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
 }
+
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ memorialId: string }> }
+) {
+    try {
+        const { memorialId } = await params;
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('user_id')
+            .eq('id', memorialId)
+            .single();
+
+        if (memorial?.user_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: requests, error } = await supabaseAdmin
+            .from('memorial_access_requests')
+            .select('id, requester_user_id, requested_role, request_message, status, created_at')
+            .eq('memorial_id', memorialId)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            throw error;
+        }
+
+        const enriched = await Promise.all(
+            (requests || []).map(async (request) => {
+                const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(request.requester_user_id);
+                return {
+                    id: request.id,
+                    requesterUserId: request.requester_user_id,
+                    email: authUser.user?.email || 'Unknown',
+                    requestedRole: request.requested_role,
+                    requestMessage: request.request_message || '',
+                    status: request.status,
+                    createdAt: request.created_at,
+                };
+            })
+        );
+
+        return NextResponse.json({ requests: enriched });
+    } catch (error: any) {
+        console.error('[ACCESS_REQUEST_LIST_ERROR]', error);
+        return NextResponse.json(
+            { error: error.message || 'Internal Server Error' },
+            { status: 500 }
+        );
+    }
+}

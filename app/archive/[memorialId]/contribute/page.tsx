@@ -22,6 +22,7 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const typeFromUrl = searchParams.get('type') as ContributionType | null;
+  const reviseId = searchParams.get('revise');
   const { data: roleData, loading: roleLoading } = useArchiveRole(memorialId);
   useRoleSync(memorialId, roleData?.currentUserId || '', roleData?.userRole || 'witness');
 
@@ -37,6 +38,12 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingContributionLoaded, setExistingContributionLoaded] = useState(false);
+  const [revisionContext, setRevisionContext] = useState<{
+    id: string;
+    adminNotes: string | null;
+    existingPhotoUrl: string | null;
+  } | null>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
@@ -47,7 +54,56 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
     }
   }, [memorialId, roleData, roleLoading, router]);
 
-  if (roleLoading || !roleData) {
+  useEffect(() => {
+    if (!reviseId) {
+      setExistingContributionLoaded(true);
+      return;
+    }
+
+    if (!roleData) {
+      return;
+    }
+
+    const contribution = roleData.myContributions.find((item) => item.id === reviseId);
+    if (!contribution || contribution.status !== 'needs_changes') {
+      setError('This contribution is no longer available for revision.');
+      setExistingContributionLoaded(true);
+      return;
+    }
+
+    (async () => {
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('memorial_contributions')
+          .select('id, type, content, admin_notes')
+          .eq('id', reviseId)
+          .single();
+
+        if (fetchError || !data) {
+          throw fetchError || new Error('Contribution not found');
+        }
+
+        setType(data.type as ContributionType);
+        setTitle(data.content?.title || '');
+        setContent(data.content?.content || '');
+        setRelationship(data.content?.relationship || '');
+        setPhotoCaption(data.content?.caption || '');
+        setPhotoYear(data.content?.year || '');
+        setPhotoPreview(data.content?.url || null);
+        setRevisionContext({
+          id: data.id,
+          adminNotes: data.admin_notes || null,
+          existingPhotoUrl: data.content?.url || null,
+        });
+      } catch (fetchError: any) {
+        setError(fetchError.message || 'Could not load the contribution to revise.');
+      } finally {
+        setExistingContributionLoaded(true);
+      }
+    })();
+  }, [reviseId, roleData, supabase]);
+
+  if (roleLoading || !roleData || !existingContributionLoaded) {
     return (
       <div className="min-h-screen bg-surface-low flex items-center justify-center">
         <Loader2 size={32} className="text-olive animate-spin" />
@@ -60,6 +116,7 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
   }
 
   const requiresReview = roleData.capabilities.contributionsRequireReview;
+  const isRevision = Boolean(revisionContext);
 
   const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -143,19 +200,47 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
         };
       }
 
-      const { error: insertError } = await supabase.from('memorial_contributions').insert({
-        memorial_id: memorialId,
-        user_id: user?.id || null,
-        witness_name: contributorName,
-        contributor_email: anonData?.email || null,
-        contributor_verified: anonData ? true : false,
-        is_anonymous: !user,
-        type,
-        content: contributionContent,
-        status: requiresReview ? 'pending_approval' : 'approved',
-      });
+      if (type === 'photo' && !photoFile && revisionContext?.existingPhotoUrl) {
+        contributionContent = {
+          title: photoCaption.trim() || 'Photo',
+          url: revisionContext.existingPhotoUrl,
+          caption: photoCaption.trim(),
+          year: photoYear.trim(),
+          relationship: relationship.trim(),
+        };
+      }
 
-      if (insertError) throw insertError;
+      if (isRevision && revisionContext) {
+        const nextStatus = requiresReview ? 'pending_approval' : 'approved';
+        const { error: updateError } = await supabase
+          .from('memorial_contributions')
+          .update({
+            witness_name: contributorName,
+            content: contributionContent,
+            status: nextStatus,
+            admin_notes: null,
+            revision_count: (roleData.myContributions.find((item) => item.id === revisionContext.id)?.revisionCount || 0) + 1,
+            notified_at: null,
+          })
+          .eq('id', revisionContext.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase.from('memorial_contributions').insert({
+          memorial_id: memorialId,
+          user_id: user?.id || null,
+          witness_name: contributorName,
+          contributor_email: anonData?.email || null,
+          contributor_verified: anonData ? true : false,
+          is_anonymous: !user,
+          type,
+          content: contributionContent,
+          status: requiresReview ? 'pending_approval' : 'approved',
+        });
+
+        if (insertError) throw insertError;
+      }
+
       setSubmitted(true);
     } catch (err: any) {
       console.error('[contribute]', err);
@@ -173,11 +258,13 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
             <Check size={32} className="text-olive" />
           </div>
           <h2 className="font-serif text-3xl text-warm-dark mb-3">
-            {type === 'photo' ? 'Photo shared' : 'Memory shared'}
+            {type === 'photo' ? (isRevision ? 'Photo updated' : 'Photo shared') : (isRevision ? 'Memory updated' : 'Memory shared')}
           </h2>
           <p className="text-sm text-warm-dark/50 mb-8 leading-relaxed">
             {requiresReview
-              ? 'A guardian will review your contribution before it appears in the archive. You can track its status from your archive dashboard.'
+              ? (isRevision
+                ? 'Your revised contribution is back in the review queue. You can track its status from your archive dashboard.'
+                : 'A guardian will review your contribution before it appears in the archive. You can track its status from your archive dashboard.')
               : 'Your contribution is now visible in the archive.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -222,6 +309,13 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-10">
+        {revisionContext?.adminNotes && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-xs font-medium text-amber-700 uppercase tracking-wider font-sans mb-2">Requested changes</p>
+            <p className="text-sm text-amber-900 font-sans leading-relaxed">{revisionContext.adminNotes}</p>
+          </div>
+        )}
+
         <div className="flex gap-2 p-1 bg-warm-border/20 rounded-xl mb-8">
           {(['memory', 'photo'] as const).map((nextType) => (
             <button
@@ -366,7 +460,9 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
             <AlertCircle size={16} className="text-warm-dark/30 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-warm-dark/40 leading-relaxed font-sans">
               {requiresReview
-                ? 'Your contribution will be reviewed by a guardian before it appears in the archive.'
+                ? (isRevision
+                  ? 'Your revised contribution will go back to the guardians for review.'
+                  : 'Your contribution will be reviewed by a guardian before it appears in the archive.')
                 : 'As a guardian, anything you share here appears in the archive immediately.'}
             </p>
           </div>
@@ -386,7 +482,9 @@ function ContributeContent({ memorialId }: { memorialId: string }) {
             ) : (
               <>
                 <Send size={18} />
-                {requiresReview ? 'Offer for review' : 'Publish contribution'}
+                {isRevision
+                  ? (requiresReview ? 'Resubmit for review' : 'Update contribution')
+                  : (requiresReview ? 'Offer for review' : 'Publish contribution')}
               </>
             )}
           </button>

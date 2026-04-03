@@ -8,7 +8,7 @@ import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import SuccessorSettings from '@/components/SuccessorSettings';
 import AnchorPanel from '@/components/AnchorPanel';
-import RoleManagementTable from '@/components/RoleManagementTable';
+import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -22,6 +22,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [deletedMemorials, setDeletedMemorials] = useState<Memorial[]>([]);
     const [loading, setLoading] = useState(true);
     const [managingId, setManagingId] = useState<string | null>(null);
+    const [memberManagerMemorial, setMemberManagerMemorial] = useState<Memorial | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -369,9 +370,16 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                                 <Edit size={14} /> Edit
                                             </Link>
                                             <button
+                                                onClick={() => setMemberManagerMemorial(memorial)}
+                                                className="py-2 px-3 bg-surface-mid rounded-lg text-warm-muted hover:bg-surface-high transition-colors"
+                                                title="Manage members"
+                                            >
+                                                <User size={14} />
+                                            </button>
+                                            <button
                                                 onClick={() => setManagingId(memorial.id)}
                                                 className="py-2 px-3 bg-surface-mid rounded-lg text-warm-muted hover:bg-surface-high transition-colors"
-                                                title="Manage Connections"
+                                                title="Manage family connections"
                                             >
                                                 <Network size={14} />
                                             </button>
@@ -401,13 +409,22 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
                 {/* MEMBERS — Role Management per Memorial */}
                 {firstPaidMemorial && (
-                    <div className="mt-12">
-                        <RoleManagementTable
-                            memorialId={firstPaidMemorial.id}
-                            isOwner={true}
-                            planType="family"
-                            inviteStepHref={`/create?id=${firstPaidMemorial.id}&mode=family&step=7`}
-                        />
+                    <div className="mt-12 bg-white border border-warm-border/30 rounded-xl p-8">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                            <div>
+                                <h3 className="font-serif text-2xl text-warm-dark mb-2">Member management</h3>
+                                <p className="text-sm text-warm-muted font-sans leading-relaxed max-w-3xl">
+                                    Open the member manager from any memorial card to invite people, change roles, cancel pending invitations, or review who has access to that specific archive.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setMemberManagerMemorial(firstPaidMemorial)}
+                                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-sans font-semibold border border-warm-border/30 text-warm-dark text-sm hover:bg-surface-high transition-all"
+                            >
+                                <User size={16} />
+                                Open primary member manager
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -517,6 +534,16 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                         </div>
                     </div>
                 </div>
+            )}
+
+            {memberManagerMemorial && (
+                <ManageWitnessesModal
+                    isOpen={true}
+                    onClose={() => setMemberManagerMemorial(null)}
+                    memorialId={memberManagerMemorial.id}
+                    memorialName={memberManagerMemorial.full_name || 'Untitled'}
+                    planType="family"
+                />
             )}
         </div>
     );

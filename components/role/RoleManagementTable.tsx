@@ -11,6 +11,7 @@ import RoleDropdown from './RoleDropdown';
 import toast from 'react-hot-toast';
 
 interface MemberRecord {
+    invitationId?: string | null;
     userId: string | null;
     email: string;
     role: WitnessRole;
@@ -117,6 +118,23 @@ export default function RoleManagementTable({ memorialId, isOwner, planType, inv
         }
     };
 
+    const handleCancelInvite = async (invitationId: string, email: string) => {
+        if (!window.confirm(`Cancel the pending invitation for ${email}?`)) return;
+
+        setMembers(prev => prev.filter((member) => member.invitationId !== invitationId));
+        try {
+            const res = await fetch(`/api/memorials/${memorialId}/invitations/${invitationId}`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to cancel invitation');
+            toast.success(`Invitation cancelled for ${email}`);
+        } catch (err: any) {
+            fetchMembers();
+            toast.error(err.message || 'Cancellation failed');
+        }
+    };
+
     if (loading) return (
         <div className="glass-card p-8 flex justify-center">
             <Loader2 className="animate-spin text-warm-dark/20" />
@@ -166,6 +184,15 @@ export default function RoleManagementTable({ memorialId, isOwner, planType, inv
                                         >
                                             <RefreshCw size={14} />
                                         </button>
+                                        {isOwner && member.invitationId && (
+                                            <button
+                                                onClick={() => handleCancelInvite(member.invitationId!, member.email)}
+                                                className="p-2 text-warm-dark/20 hover:text-red-500 transition-colors"
+                                                title="Cancel invitation"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
                                         <RoleBadge role={member.role} />
                                     </div>
                                 ) : (
