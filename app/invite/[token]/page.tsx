@@ -1,192 +1,76 @@
-'use client';
+// app/invite/[token]/page.tsx
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import InviteShell from './_components/InviteShell';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
+    const { token } = await params;
+    const cookieStore = await cookies();
 
-// Sub-components (defined in sections below)
-import InvitePreview from './_components/InvitePreview';
-import InviteAcceptance from './_components/InviteAcceptance';
-import InviteTerminal from './_components/InviteTerminal';
-import InviteAuthStep from './_components/InviteAuthStep';
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll() { return cookieStore.getAll(); } } }
+    );
 
-export type InviteStep =
-    | 'loading'
-    | 'preview'
-    | 'auth'
-    | 'acceptance'
-    | 'joining'
-    | 'terminal';
+    // 1. Fetch invitation data and memorial details in one join
+    const { data: invitation, error } = await supabase
+        .from('witness_invitations')
+        .select(`
+      id, inviter_name, invitee_email, role, personal_message, plan, status, expires_at, memorial_id,
+      memorials!inner ( id, full_name, birth_date, death_date, profile_photo_url, deleted_at )
+    `)
+        .eq('id', token)
+        .single();
 
-export type TerminalReason =
-    | 'NOT_FOUND'
-    | 'EXPIRED'
-    | 'DECLINED'
-    | 'USED_BY_OTHER'
-    | 'MEMORIAL_DELETED'
-    | 'ALREADY_JOINED';
+    // 2. Security & Logic Gates
+    if (error || !invitation) redirect('/dashboard?error=invite_not_found');
 
-export interface InvitationData {
-    id: string;
-    inviterName: string;
-    inviteeEmail: string;
-    role: 'witness' | 'co_guardian';
-    personalMessage: string | null;
-    plan: 'personal' | 'family';
-    memorial: {
-        id: string;
-        fullName: string;
-        birthDate: string | null;
-        deathDate: string | null;
-        profilePhotoUrl: string | null;
-    };
-}
+    const memorial = (invitation as any).memorials;
+    if (memorial?.deleted_at) redirect('/dashboard?error=memorial_deleted');
 
-export default function InvitePage({
-    params
-}: {
-    params: Promise<{ token: string }>
-}) {
-    const unwrapped = use(params);
-    const token = unwrapped.token;
-    const router = useRouter();
+    // 3. Check if user is already authenticated
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const [step, setStep] = useState<InviteStep>('loading');
-    const [invitation, setInvitation] =
-        useState<InvitationData | null>(null);
-    const [terminalReason, setTerminalReason] =
-        useState<TerminalReason | null>(null);
-    const [terminalMeta, setTerminalMeta] =
-        useState<Record<string, string>>({});
-    const [isAuthenticated, setIsAuthenticated] =
-        useState(false);
+    // 4. Check if user is already a member
+    if (user) {
+        const { data: existingRole } = await supabase
+            .from('user_memorial_roles')
+            .select('role')
+            .eq('memorial_id', memorial.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-    useEffect(() => {
-        initPage();
-    }, [token]);
-
-    const initPage = async () => {
-        try {
-            // 1. Check auth status in parallel with API call
-            const supabase = createClient();
-            const [
-                { data: { user } },
-                apiRes
-            ] = await Promise.all([
-                supabase.auth.getUser(),
-                fetch(`/api/invite/${token}`)
-            ]);
-
-            const data = await apiRes.json();
-            setIsAuthenticated(!!user);
-
-            // 2. Route based on state
-            switch (data.state) {
-                case 'PENDING':
-                    setInvitation(data.invitation);
-                    // If authenticated, skip preview and go
-                    // straight to acceptance
-                    setStep(user ? 'acceptance' : 'preview');
-                    break;
-
-                case 'ALREADY_JOINED':
-                    // Redirect directly to their archive
-                    router.replace(
-                        `/archive/${data.memorialId}`
-                    );
-                    break;
-
-                case 'NOT_FOUND':
-                case 'EXPIRED':
-                case 'DECLINED':
-                case 'USED_BY_OTHER':
-                case 'MEMORIAL_DELETED':
-                    setTerminalReason(data.state);
-                    setTerminalMeta({
-                        inviterName: data.inviterName || '',
-                        inviteeEmail: data.inviteeEmail || ''
-                    });
-                    setStep('terminal');
-                    break;
-
-                default:
-                    setTerminalReason('NOT_FOUND');
-                    setStep('terminal');
-            }
-        } catch (err) {
-            console.error('[InvitePage]', err);
-            setTerminalReason('NOT_FOUND');
-            setStep('terminal');
+        if (existingRole) {
+            redirect(`/archive/${memorial.id}`); // Already joined, skip the invite
         }
+    }
+
+    // 5. Check Expiry
+    const isExpired = new Date(invitation.expires_at) < new Date();
+
+    // Package the data for the client component
+    const initialData = {
+        invitation: {
+            id: invitation.id,
+            inviterName: invitation.inviter_name,
+            inviteeEmail: invitation.invitee_email,
+            role: invitation.role,
+            personalMessage: invitation.personal_message,
+            plan: invitation.plan,
+            status: invitation.status,
+            isExpired,
+            memorial: {
+                id: memorial.id,
+                fullName: memorial.full_name,
+                birthDate: memorial.birth_date,
+                deathDate: memorial.death_date,
+                profilePhotoUrl: memorial.profile_photo_url
+            }
+        },
+        isAuthenticated: !!user
     };
 
-    const handleAuthSuccess = async () => {
-        setIsAuthenticated(true);
-        setStep('acceptance');
-    };
-
-    const handleJoinSuccess = (
-        memorialId: string,
-        role: string
-    ) => {
-        router.replace(
-            `/archive/${memorialId}/welcome?role=${role}`
-        );
-    };
-
-    // Loading state
-    if (step === 'loading') {
-        return (
-            <div className="min-h-screen bg-surface-low flex
-        items-center justify-center">
-                <div className="w-10 h-10 border-2
-          border-warm-border/30 border-t-warm-dark/40
-          rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    // Terminal states (expired, not found, etc.)
-    if (step === 'terminal') {
-        return (
-            <InviteTerminal
-                reason={terminalReason!}
-                meta={terminalMeta}
-            />
-        );
-    }
-
-    // Unauthenticated preview
-    if (step === 'preview' && invitation) {
-        return (
-            <InvitePreview
-                invitation={invitation}
-                onContinue={() => setStep('auth')}
-            />
-        );
-    }
-
-    // Auth step
-    if (step === 'auth' && invitation) {
-        return (
-            <InviteAuthStep
-                invitation={invitation}
-                onSuccess={handleAuthSuccess}
-                onBack={() => setStep('preview')}
-            />
-        );
-    }
-
-    // Acceptance screen
-    if (step === 'acceptance' && invitation) {
-        return (
-            <InviteAcceptance
-                invitation={invitation}
-                token={token}
-                onSuccess={handleJoinSuccess}
-            />
-        );
-    }
-
-    return null;
+    return <InviteShell initialData={initialData} token={token} />;
 }

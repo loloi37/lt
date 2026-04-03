@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
   title: 'ULUMAE — Every life, an indelible mark',
@@ -35,6 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Footer />
+          <Toaster position="bottom-right" />
         </AuthProvider>
       </body>
     </html>

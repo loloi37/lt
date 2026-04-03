@@ -6,7 +6,7 @@ import {
     AlertTriangle, CheckCircle, Share2,
     Clock, Shield,
     Archive, Download, Copy, Mail, QrCode, Camera, FileText,
-    ChevronRight, ExternalLink
+    ChevronRight, ExternalLink, Users
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
@@ -14,6 +14,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import PreservationStatus from '@/components/PreservationStatus';
 import SuccessionSetup from '@/components/SuccessionSetup';
 import RoleManagementTable from '@/components/RoleManagementTable';
+import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -359,6 +360,7 @@ function ActiveArchiveView({
 }) {
     const stats = computeStats(archive);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [isWitnessModalOpen, setIsWitnessModalOpen] = useState(false);
 
     const birthYear = archive.birth_date ? new Date(archive.birth_date).getFullYear() : null;
     const deathYear = archive.death_date ? new Date(archive.death_date).getFullYear() : null;
@@ -494,30 +496,33 @@ function ActiveArchiveView({
                 </div>
             </div>
 
-            {/* ── Quick actions row ── */}
+            {/* --- Updated Actions Row --- */}
             <div className="flex flex-wrap gap-3">
-                <QuickAction
-                    href={`/create?id=${archive.id}&mode=personal&step=7`}
-                    icon={Plus}
-                    label="Add Memory"
-                    accent
-                />
-                <QuickAction
-                    href={`/create?id=${archive.id}&mode=personal&step=8`}
-                    icon={Camera}
-                    label="Photos"
-                />
-                <QuickAction
-                    href={`/create?id=${archive.id}&mode=personal&step=6`}
-                    icon={FileText}
-                    label="Biography"
-                />
-                <QuickAction
-                    href={`/create?id=${archive.id}&mode=personal`}
-                    icon={Edit}
-                    label="Full Editor"
-                />
+                <QuickAction href={`/create?id=${archive.id}&mode=personal&step=8`} icon={Camera} label="Photos" />
+                <QuickAction href={`/create?id=${archive.id}&mode=personal&step=6`} icon={FileText} label="Biography" />
+
+                {/* Updated Button to trigger Modal */}
+                <button
+                    onClick={() => setIsWitnessModalOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
+                >
+                    <Users size={14} />
+                    Manage Witnesses
+                </button>
+
+                <Link href={`/create?id=${archive.id}&mode=personal`} className="flex items-center gap-2 px-5 py-2.5 border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all">
+                    <Edit size={14} /> Edit All
+                </Link>
             </div>
+
+            {/* --- ADD THE MODAL HERE --- */}
+            <ManageWitnessesModal 
+                isOpen={isWitnessModalOpen}
+                onClose={() => setIsWitnessModalOpen(false)}
+                memorialId={archive.id}
+                memorialName={archive.full_name || 'Untitled'}
+                planType="personal"
+            />
 
             {/* ── Witnesses ── */}
             <RoleManagementTable

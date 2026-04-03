@@ -1,85 +1,47 @@
-// components/wizard/Step7Memories.tsx — UPDATED Step 1.1.2
-// Changes: Witness invitation UI visible before payment, sending blocked until paid
+// components/wizard/Step7Memories.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Star, Mail, Plus, X, Trash2, Calendar, Lock, Send, Eye, Users, Shield, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Heart, MessageCircle, Star, Plus, X, Trash2, Shield, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { MemoriesStories, WitnessRole } from '@/types/memorial';
 import { supabase } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 interface Step7Props {
     data: MemoriesStories;
     onUpdate: (data: MemoriesStories) => void;
     onNext: () => void;
     onBack: () => void;
-    isPaid?: boolean;
     readOnly?: boolean;
     userRole: WitnessRole;
-    onSubmitContribution: (type: 'memory' | 'photo' | 'video', content: any) => Promise<void>;
     memorialId: string | null;
 }
 
-export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid = false, readOnly, userRole, onSubmitContribution, memorialId }: Step7Props) {
-    const [newEmail, setNewEmail] = useState('');
-    const [showPreviewEmail, setShowPreviewEmail] = useState(false);
-    const [previewRecipient, setPreviewRecipient] = useState('');
-    const [personalMessage, setPersonalMessage] = useState(data.witnessPersonalMessage || '');
-    const [sendingError, setSendingError] = useState<string | null>(null);
-
-    // WITNESS CONTRIBUTION STATE
-    const [isAddingNew, setIsAddingNew] = useState(false);
-    const [newMemoryDraft, setNewMemoryDraft] = useState({
-        title: '',
-        content: '',
-        author: '',
-        relationship: ''
-    });
-
-    const handleWitnessSubmit = async () => {
-        if (!newMemoryDraft.title || !newMemoryDraft.content) {
-            alert("Please provide at least a title and the memory text.");
-            return;
-        }
-
-        await onSubmitContribution('memory', newMemoryDraft);
-
-        // Reset form
-        setNewMemoryDraft({ title: '', content: '', author: '', relationship: '' });
-        setIsAddingNew(false);
-    };
-
+export default function Step7Memories({ data, onUpdate, onNext, onBack, readOnly, userRole, memorialId }: Step7Props) {
     const [pendingContributions, setPendingContributions] = useState<any[]>([]);
     const [isFetching, setIsFetching] = useState(false);
     const [disputingId, setDisputingId] = useState<string | null>(null);
 
-    // Fetch pending items only if the user is the Owner
-    useEffect(() => {
-        if (userRole === 'owner' && memorialId) {
-            fetchPendingContributions();
-        }
-    }, [memorialId, userRole]);
-
-    const fetchPendingContributions = async () => {
+    // --- 1. APPROVAL LOGIC (Kept until Steward Page is built) ---
+    const fetchPending = useCallback(async () => {
+        if (userRole !== 'owner' && userRole !== 'co_guardian') return;
         setIsFetching(true);
-        const { data, error } = await supabase
+        const { data: pending, error } = await supabase
             .from('memorial_contributions')
             .select('*')
             .eq('memorial_id', memorialId)
             .eq('status', 'pending_approval');
 
-        if (!error && data) {
-            setPendingContributions(data);
-        }
+        if (!error && pending) setPendingContributions(pending);
         setIsFetching(false);
-    };
+    }, [memorialId, userRole]);
 
-    const handleDecision = async (
-        contribution: any,
-        decision: 'approved' | 'rejected',
-        overrideContent?: string // <--- NEW OPTIONAL ARGUMENT
-    ) => {
+    useEffect(() => {
+        fetchPending();
+    }, [fetchPending]);
+
+    const handleDecision = async (contribution: any, decision: 'approved' | 'rejected', overrideContent?: string) => {
         try {
-            // 1. Update the contribution record in Supabase
             const { error: updateError } = await supabase
                 .from('memorial_contributions')
                 .update({ status: decision })
@@ -87,800 +49,145 @@ export default function Step7Memories({ data, onUpdate, onNext, onBack, isPaid =
 
             if (updateError) throw updateError;
 
-            // 2. If approved, add it to the main archive data
             if (decision === 'approved') {
                 const newMemory = {
-                    id: `witness-${contribution.id}`, // Maintain link to contribution
+                    id: `witness-${contribution.id}`,
                     title: contribution.content.title,
-                    // USE OVERRIDE CONTENT IF PROVIDED, OTHERWISE ORIGINAL
                     content: overrideContent || contribution.content.content,
                     author: contribution.witness_name,
                     relationship: contribution.content.relationship || 'Friend',
                     date: new Date().toISOString().split('T')[0]
                 };
-
-                // Update local state and trigger parent onUpdate
-                const updatedMemories = [...data.sharedMemories, newMemory];
-                onUpdate({ ...data, sharedMemories: updatedMemories });
+                onUpdate({ ...data, sharedMemories: [...(data.sharedMemories || []), newMemory] });
             }
 
-            // 3. Refresh the pending list
             setPendingContributions(prev => prev.filter(item => item.id !== contribution.id));
-            // Clear dispute state if it exists
             setDisputingId(null);
-
-            alert(decision === 'approved' ? "Processed successfully." : "Contribution rejected.");
-
+            toast.success(decision === 'approved' ? "Memory published" : "Contribution set aside");
         } catch (err: any) {
-            console.error("Decision error:", err);
-            alert("Failed to process decision: " + err.message);
+            toast.error("Failed to process decision");
         }
     };
 
+    // --- 2. CONTENT EDITING LOGIC ---
     const handleChange = (field: keyof MemoriesStories, value: any) => {
-        if (readOnly) return; // Prevent changes in readOnly mode
+        if (readOnly) return;
         onUpdate({ ...data, [field]: value });
     };
 
-    // =============================================
-    // SHARED MEMORIES (unchanged logic)
-    // =============================================
-    const addMemory = () => {
-        if (readOnly) return;
-        const newMemory = {
-            id: `memory-${Date.now()}`,
-            title: '',
-            date: '',
-            content: '',
-            author: '',
-            relationship: ''
-        };
-        handleChange('sharedMemories', [...data.sharedMemories, newMemory]);
-    };
-
-    const removeMemory = (id: string) => {
-        if (readOnly) return;
-        handleChange('sharedMemories', data.sharedMemories.filter(m => m.id !== id));
-    };
-
     const updateMemory = (id: string, field: string, value: string) => {
-        if (readOnly) return;
-        handleChange(
-            'sharedMemories',
-            data.sharedMemories.map(m => (m.id === id ? { ...m, [field]: value } : m))
-        );
-    };
-
-    // =============================================
-    // IMPACT STORIES (unchanged logic)
-    // =============================================
-    const addImpactStory = () => {
-        if (readOnly) return;
-        const newStory = {
-            id: `impact-${Date.now()}`,
-            title: '',
-            content: '',
-            author: ''
-        };
-        handleChange('impactStories', [...data.impactStories, newStory]);
-    };
-
-    const removeImpactStory = (id: string) => {
-        if (readOnly) return;
-        handleChange('impactStories', data.impactStories.filter(s => s.id !== id));
+        handleChange('sharedMemories', data.sharedMemories.map(m => (m.id === id ? { ...m, [field]: value } : m)));
     };
 
     const updateImpactStory = (id: string, field: string, value: string) => {
-        if (readOnly) return;
-        handleChange(
-            'impactStories',
-            data.impactStories.map(s => (s.id === id ? { ...s, [field]: value } : s))
-        );
-    };
-
-    // =============================================
-    // WITNESS INVITATIONS — NEW LOGIC
-    // =============================================
-    const addEmail = () => {
-        if (readOnly) return;
-        const email = newEmail.trim();
-        if (email && !data.invitedEmails.includes(email)) {
-            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                handleChange('invitedEmails', [...data.invitedEmails, email]);
-                setNewEmail('');
-            } else {
-                alert('Please enter a valid email address');
-            }
-        }
-    };
-
-    const removeEmail = (email: string) => {
-        if (readOnly) return;
-        handleChange('invitedEmails', data.invitedEmails.filter(e => e !== email));
-    };
-
-    const handlePersonalMessageChange = (msg: string) => {
-        if (readOnly) return;
-        setPersonalMessage(msg);
-        onUpdate({ ...data, witnessPersonalMessage: msg });
-    };
-
-    const handlePreviewEmail = (email: string) => {
-        setPreviewRecipient(email);
-        setShowPreviewEmail(true);
-    };
-
-    const handleSendInvitations = async () => {
-        if (readOnly) return;
-        if (!isPaid) return; // Safety check
-        setSendingError(null);
-
-        try {
-            const response = await fetch('/api/send-witness-invitations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    memorialId: memorialId, // Use the prop we added
-                    emails: data.invitedEmails,
-                    personalMessage,
-                    inviterName: "The Family", // We can improve this later with a real name
-                    deceasedName: "Your Loved One", // We can pass this from Step 1 later
-                }),
-            });
-
-            const result = await response.json();
-            if (result.error) throw new Error(result.error);
-
-            // Mark emails as sent
-            onUpdate({
-                ...data,
-                sentInvitations: [
-                    ...(data.sentInvitations || []),
-                    ...data.invitedEmails.map(email => ({
-                        email,
-                        sentAt: new Date().toISOString(),
-                        status: 'sent' as const
-                    }))
-                ]
-            });
-
-            alert(`${data.invitedEmails.length} invitation(s) sent successfully!`);
-        } catch (err: any) {
-            setSendingError(err.message || 'Failed to send invitations');
-        }
+        handleChange('impactStories', data.impactStories.map(s => (s.id === id ? { ...s, [field]: value } : s)));
     };
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
             <div className="mb-12">
-                <h2 className="font-serif text-4xl text-warm-dark mb-3">
-                    Memories & Stories from Others
-                </h2>
-                <p className="text-warm-dark/60 text-lg">
-                    Add memories from people who knew them, or invite others to contribute their stories.
-                </p>
-                <p className="text-xs text-warm-dark/30 italic mt-1 mb-4">
-                    Every witness strengthens the legacy you are building.
-                </p>
+                <h2 className="font-serif text-4xl text-warm-dark mb-3 text-center sm:text-left">Memories & Stories</h2>
+                <p className="text-warm-dark/60 text-lg text-center sm:text-left">Add your own stories or review those shared by others.</p>
             </div>
 
-            <div className="space-y-10">
-                {/* OWNER REVIEW QUEUE */}
-                {userRole === 'owner' && (
-                    <div className="mb-10">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-serif text-xl text-warm-dark flex items-center gap-2">
-                                <Shield size={20} className="text-warm-brown" />
-                                Witness Contributions
-                            </h3>
-                            <span className="text-xs bg-warm-brown/10 text-warm-brown px-2 py-1 rounded-full font-medium">
-                                {pendingContributions.length} Pending
-                            </span>
-                        </div>
-
-                        {isFetching ? (
-                            <div className="flex justify-center py-8">
-                                <Loader2 className="animate-spin text-warm-brown/40" size={24} />
-                            </div>
-                        ) : pendingContributions.length === 0 ? (
-                            <div className="p-8 border-2 border-dashed border-warm-border/30 rounded-2xl text-center">
-                                <p className="text-sm text-warm-dark/40 italic">No new contributions to review.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {pendingContributions.map((item) => (
-                                    <div key={item.id} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${disputingId === item.id ? 'border-warm-brown ring-1 ring-warm-brown' : 'border-warm-brown/10'}`}>
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <p className="font-medium text-warm-dark">{item.content.title}</p>
-                                                <p className="text-xs text-warm-dark/40">Offered by {item.witness_name}</p>
-                                            </div>
-
-                                            {/* STANDARD ACTIONS */}
-                                            {disputingId !== item.id ? (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => handleDecision(item, 'approved')}
-                                                        className="px-3 py-1.5 bg-olive text-surface-low text-xs rounded-lg font-medium hover:bg-olive/90"
-                                                    >
-                                                        Approve
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setDisputingId(item.id)}
-                                                        className="px-3 py-1.5 border border-warm-brown/30 text-warm-brown text-xs rounded-lg font-medium hover:bg-warm-brown/5"
-                                                    >
-                                                        Flag Conflict
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDecision(item, 'rejected')}
-                                                        className="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg font-medium hover:bg-red-100"
-                                                    >
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                /* CONFLICT RESOLUTION ACTIONS */
-                                                <div className="flex flex-col gap-2 items-end">
-                                                    <span className="text-[10px] font-bold text-warm-brown uppercase tracking-wider">Mediation Mode</span>
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                const note = `[ULUMAE Note: This account represents a specific perspective on the event.]\n\n${item.content.content}`;
-                                                                handleDecision(item, 'approved', note);
-                                                            }}
-                                                            className="px-3 py-1.5 bg-warm-brown text-surface-low text-xs rounded-lg font-medium hover:bg-warm-brown/90"
-                                                        >
-                                                            Accept with Context Note
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setDisputingId(null)}
-                                                            className="px-3 py-1.5 text-warm-dark/60 text-xs hover:text-warm-dark"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <p className="text-sm text-warm-dark/70 italic line-clamp-3">"{item.content.content}"</p>
-
-                                        {/* Visual indicator of conflict */}
-                                        {disputingId === item.id && (
-                                            <div className="mt-3 p-3 bg-warm-brown/5 rounded-lg text-xs text-warm-brown border border-warm-brown/20">
-                                                <p><strong>Conflict Detected:</strong> Select "Accept with Context Note" to keep this memory but mark it as a subjective perspective. This preserves the truth without validating disputed facts.</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+            {/* SECTION A: REVIEW QUEUE (Only for Owners/Co-Guardians) */}
+            {(userRole === 'owner' || userRole === 'co_guardian') && pendingContributions.length > 0 && (
+                <div className="mb-16 animate-fadeIn">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="font-serif text-xl text-warm-dark flex items-center gap-2">
+                            <Shield size={20} className="text-warm-brown" />
+                            Pending Review
+                        </h3>
+                        <span className="text-xs bg-warm-brown/10 text-warm-brown px-3 py-1 rounded-full font-bold uppercase tracking-tighter">
+                            {pendingContributions.length} NEW
+                        </span>
                     </div>
-                )}
 
-                {/* ========================================= */}
-                {/* SHARED MEMORIES — Same as before           */}
-                {/* ========================================= */}
-                <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-4">
-                        <Heart size={18} className="text-warm-brown" />
-                        Shared Memories
-                    </label>
-                    <p className="text-xs text-warm-dark/40 mb-4">
-                        Add memories and stories from family members and friends
-                    </p>
-
-                    <div className="space-y-6">
-                        {data.sharedMemories.map((memory) => (
-                            <div
-                                key={memory.id}
-                                className="p-6 bg-white border border-warm-border/40 rounded-xl space-y-4 relative"
-                            >
-                                {userRole === 'owner' && (
-                                    <button
-                                        onClick={() => removeMemory(memory.id)}
-                                        className="absolute top-4 right-4 p-2 text-warm-dark/40 hover:text-warm-brown hover:bg-warm-brown/10 rounded-lg transition-all"
-                                        title="Remove memory"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                )}
-
-                                <div className="pr-8">
-                                    <label className="block text-xs text-warm-dark/60 mb-1">Memory Title</label>
-                                    <input
-                                        type="text"
-                                        value={memory.title}
-                                        onChange={(e) => updateMemory(memory.id, 'title', e.target.value)}
-                                        placeholder="e.g., The Day She Changed My Life"
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all font-medium disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                        readOnly={userRole !== 'owner'}
-                                        disabled={userRole !== 'owner'}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-warm-dark/60 mb-1">Date (Optional)</label>
-                                    <div className="relative">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-warm-dark/40" size={18} />
-                                        <input
-                                            type="date"
-                                            value={memory.date}
-                                            onChange={(e) => updateMemory(memory.id, 'date', e.target.value)}
-                                            className="w-full pl-12 pr-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                            readOnly={userRole !== 'owner'}
-                                            disabled={userRole !== 'owner'}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-warm-dark/60 mb-1">The Memory</label>
-                                    <textarea
-                                        value={memory.content}
-                                        onChange={(e) => updateMemory(memory.id, 'content', e.target.value)}
-                                        placeholder="Share the memory or story..."
-                                        rows={6}
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all resize-none disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                        readOnly={userRole !== 'owner'}
-                                        disabled={userRole !== 'owner'}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        {pendingContributions.map((item) => (
+                            <div key={item.id} className="bg-white p-5 rounded-xl border border-warm-border/30 shadow-sm">
+                                <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <label className="block text-xs text-warm-dark/60 mb-1">Author Name</label>
-                                        <input
-                                            type="text"
-                                            value={memory.author}
-                                            onChange={(e) => updateMemory(memory.id, 'author', e.target.value)}
-                                            placeholder="e.g., Marcus Johnson"
-                                            className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                            readOnly={userRole !== 'owner'}
-                                            disabled={userRole !== 'owner'}
-                                        />
+                                        <p className="font-bold text-warm-dark">{item.content.title}</p>
+                                        <p className="text-xs text-warm-dark/40">From {item.witness_name}</p>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs text-warm-dark/60 mb-1">Relationship</label>
-                                        <input
-                                            type="text"
-                                            value={memory.relationship}
-                                            onChange={(e) => updateMemory(memory.id, 'relationship', e.target.value)}
-                                            placeholder="e.g., Former Student"
-                                            className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                            readOnly={userRole !== 'owner'}
-                                            disabled={userRole !== 'owner'}
-                                        />
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleDecision(item, 'approved')} className="px-3 py-1.5 bg-olive text-white text-xs rounded-lg font-medium hover:bg-olive/90">Approve</button>
+                                        <button onClick={() => handleDecision(item, 'rejected')} className="px-3 py-1.5 bg-red-50 text-red-600 text-xs rounded-lg font-medium hover:bg-red-100">Ignore</button>
                                     </div>
                                 </div>
+                                <p className="text-sm text-warm-dark/70 italic line-clamp-3">"{item.content.content}"</p>
                             </div>
                         ))}
-
-                        {/* WITNESS CONTRIBUTION FORM */}
-                        {isAddingNew ? (
-                            <div className="p-6 bg-olive/5 border-2 border-dashed border-olive/30 rounded-xl space-y-4 mb-6 animate-fadeIn">
-                                <h4 className="font-serif text-lg text-warm-dark">Your Contribution</h4>
-                                <input
-                                    type="text"
-                                    placeholder="Memory Title"
-                                    value={newMemoryDraft.title}
-                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, title: e.target.value })}
-                                    className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:ring-olive outline-none"
-                                />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Your Name"
-                                        value={newMemoryDraft.author}
-                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, author: e.target.value })}
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:ring-olive outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Relationship"
-                                        value={newMemoryDraft.relationship}
-                                        onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, relationship: e.target.value })}
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:ring-olive outline-none"
-                                    />
-                                </div>
-                                <textarea
-                                    placeholder="Share your story..."
-                                    rows={4}
-                                    value={newMemoryDraft.content}
-                                    onChange={(e) => setNewMemoryDraft({ ...newMemoryDraft, content: e.target.value })}
-                                    className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:ring-olive resize-none outline-none"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={handleWitnessSubmit}
-                                        className="flex-1 py-3 bg-olive text-surface-low rounded-xl font-medium hover:bg-olive/90 transition-all"
-                                    >
-                                        Offer for Approval
-                                    </button>
-                                    <button
-                                        onClick={() => setIsAddingNew(false)}
-                                        className="px-6 py-3 border border-warm-border/40 text-warm-dark/60 rounded-xl hover:bg-warm-border/5 transition-all"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingNew(true)}
-                                className="w-full py-4 border-2 border-dashed border-warm-border/40 rounded-xl text-sm font-medium text-warm-dark/60 hover:border-olive hover:bg-olive/5 hover:text-olive transition-all flex items-center justify-center gap-2"
-                            >
-                                <Plus size={18} />
-                                {userRole === 'owner' ? 'Add Shared Memory' : 'Offer a Memory'}
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                {/* ========================================= */}
-                {/* IMPACT STORIES — Same as before            */}
-                {/* ========================================= */}
-                <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-warm-dark mb-4">
-                        <Star size={18} className="text-olive" />
-                        Impact Stories
-                    </label>
-                    <p className="text-xs text-warm-dark/40 mb-4">
-                        How did they change lives? Stories of their lasting impact
-                    </p>
-
-                    <div className="space-y-6">
-                        {data.impactStories.map((story) => (
-                            <div
-                                key={story.id}
-                                className="p-6 bg-white border border-warm-border/40 rounded-xl space-y-4 relative"
-                            >
-                                {!readOnly && (
-                                    <button
-                                        onClick={() => removeImpactStory(story.id)}
-                                        className="absolute top-4 right-4 p-2 text-warm-dark/40 hover:text-warm-brown hover:bg-warm-brown/10 rounded-lg transition-all"
-                                        title="Remove story"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                )}
-
-                                <div className="pr-8">
-                                    <label className="block text-xs text-warm-dark/60 mb-1">Story Title</label>
-                                    <input
-                                        type="text"
-                                        value={story.title}
-                                        onChange={(e) => updateImpactStory(story.id, 'title', e.target.value)}
-                                        placeholder="e.g., The Teacher Who Saved My Life"
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all font-medium disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-warm-dark/60 mb-1">The Story</label>
-                                    <textarea
-                                        value={story.content}
-                                        onChange={(e) => updateImpactStory(story.id, 'content', e.target.value)}
-                                        placeholder="Tell the story of how they made a difference..."
-                                        rows={6}
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all resize-none disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-warm-dark/60 mb-1">Author & Relationship</label>
-                                    <input
-                                        type="text"
-                                        value={story.author}
-                                        onChange={(e) => updateImpactStory(story.id, 'author', e.target.value)}
-                                        placeholder="e.g., David Chen, Former Student (Class of 2003)"
-                                        className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                        readOnly={readOnly}
-                                        disabled={readOnly}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-
-                        {!readOnly && (
-                            <button
-                                onClick={addImpactStory}
-                                className="w-full py-4 border-2 border-dashed border-warm-border/40 rounded-xl text-sm font-medium text-warm-dark/60 hover:border-olive hover:bg-olive/5 hover:text-olive transition-all flex items-center justify-center gap-2"
-                            >
-                                <Plus size={18} />
-                                Add Impact Story
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="mt-4 p-3 bg-warm-brown/5 rounded-lg border border-warm-brown/20">
-                        <p className="text-xs text-warm-dark/60">
-                            💡 Examples: "She inspired me to become a teacher", "He helped me through the hardest time", "They believed in me when no one else did"
-                        </p>
-                    </div>
-                </div>
-
-                {/* ========================================= */}
-                {/* WITNESS INVITATIONS — NEW: Step 1.1.2     */}
-                {/* Full UI visible, sending gated by payment */}
-                {/* ========================================= */}
-                <div>
-                    <div className="flex items-center justify-between mb-4">
-                        <label className="flex items-center gap-2 text-sm font-medium text-warm-dark">
-                            <Users size={18} className="text-warm-brown" />
-                            Invite Witnesses to Contribute
-                        </label>
-                        {isPaid ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-olive/10 text-olive rounded-full text-xs font-medium">
-                                <Send size={12} />
-                                Ready to Send
-                            </span>
-                        ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-warm-border/20 text-warm-dark/50 rounded-full text-xs font-medium">
-                                <Lock size={12} />
-                                Sending unlocked after payment
-                            </span>
-                        )}
-                    </div>
-
-                    <p className="text-xs text-warm-dark/40 mb-6">
-                        Invite family and friends to share their memories directly. You can prepare everything now
-                        {!isPaid && ' — invitations will be sent once you activate your archive'}.
-                    </p>
-
-                    {/* Witness invitation card */}
-                    <div className={`p-6 rounded-2xl border-2 transition-all ${isPaid
-                        ? 'bg-white border-olive/30'
-                        : 'bg-gradient-to-br from-olive/5 to-warm-brown/5 border-warm-border/30'
-                        }`}>
-
-                        {/* Pre-payment info banner */}
-                        {!isPaid && (
-                            <div className="mb-6 p-4 bg-white/80 rounded-xl border border-olive/20 flex items-start gap-3">
-                                <div className="w-10 h-10 bg-olive/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <Eye size={18} className="text-olive" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-warm-dark mb-1">
-                                        Preview Mode — Prepare Your Invitations
-                                    </p>
-                                    <p className="text-xs text-warm-dark/60 leading-relaxed">
-                                        Add email addresses and write your personal message now. Everything will be saved.
-                                        Once you activate your archive, you'll be able to send all invitations with one click.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Personal message for witnesses */}
-                        <div className="mb-6">
-                            <label className="block text-xs font-medium text-warm-dark/70 mb-2">
-                                Personal Message (included in every invitation)
-                            </label>
-                            <textarea
-                                value={personalMessage}
-                                onChange={(e) => handlePersonalMessageChange(e.target.value)}
-                                placeholder="Write a personal note to your witnesses. Example: 'Dear friend, I'm creating a memorial archive for Mom. Your memories of her would mean the world to our family. Any story, photo, or moment you remember would help preserve her legacy...'"
-                                rows={4}
-                                className="w-full px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all resize-none text-sm disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                readOnly={readOnly}
-                                disabled={readOnly}
-                            />
-                            <p className="text-xs text-warm-dark/40 mt-1">
-                                {personalMessage.length}/500 characters
-                            </p>
-                        </div>
-
-                        {/* Email list */}
-                        <div className="mb-6">
-                            <label className="block text-xs font-medium text-warm-dark/70 mb-2">
-                                Witness Email Addresses
-                            </label>
-
-                            {data.invitedEmails.length > 0 && (
-                                <div className="mb-4 space-y-2">
-                                    {data.invitedEmails.map((email, idx) => {
-                                        const wasSent = data.sentInvitations?.some(inv => inv.email === email);
-                                        return (
-                                            <div
-                                                key={idx}
-                                                className="flex items-center justify-between p-3 bg-white rounded-lg border border-warm-border/30"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <Mail size={16} className={wasSent ? 'text-olive' : 'text-warm-dark/30'} />
-                                                    <span className="text-sm text-warm-dark">{email}</span>
-                                                    {wasSent && (
-                                                        <span className="text-xs bg-olive/10 text-olive px-2 py-0.5 rounded-full">
-                                                            Sent
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {!readOnly && !wasSent && (
-                                                        <button
-                                                            onClick={() => handlePreviewEmail(email)}
-                                                            className="p-1.5 hover:bg-olive/10 rounded-lg transition-all"
-                                                            title="Preview invitation"
-                                                        >
-                                                            <Eye size={14} className="text-olive" />
-                                                        </button>
-                                                    )}
-                                                    {!readOnly && (
-                                                        <button
-                                                            onClick={() => removeEmail(email)}
-                                                            className="p-1.5 hover:bg-warm-border/20 rounded-lg transition-all"
-                                                        >
-                                                            <X size={14} className="text-warm-dark/40" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            <div className="flex gap-2">
-                                <input
-                                    type="email"
-                                    value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEmail())}
-                                    placeholder="friend@example.com"
-                                    className="flex-1 px-4 py-3 border border-warm-border/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-olive/30 focus:border-olive transition-all disabled:bg-warm-border/10 disabled:text-warm-dark/70"
-                                    readOnly={readOnly}
-                                    disabled={readOnly}
-                                />
-                                {!readOnly && (
-                                    <button
-                                        onClick={addEmail}
-                                        className="px-6 py-3 bg-olive hover:bg-olive/90 text-surface-low rounded-xl transition-all flex items-center gap-2"
-                                    >
-                                        <Plus size={18} />
-                                        Add
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Send button — gated by payment */}
-                        {data.invitedEmails.length > 0 && (
-                            <div className="pt-4 border-t border-warm-border/20">
-                                {sendingError && (
-                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                        {sendingError}
-                                    </div>
-                                )}
-
-                                {isPaid ? (
-                                    <button
-                                        onClick={handleSendInvitations}
-                                        className="w-full py-4 bg-gradient-to-r from-olive to-olive/90 hover:shadow-lg text-surface-low rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <Send size={18} />
-                                        Send {data.invitedEmails.filter(e => !data.sentInvitations?.some(s => s.email === e)).length} Invitation(s)
-                                    </button>
-                                ) : (
-                                    <div className="relative">
-                                        <button
-                                            disabled
-                                            className="w-full py-4 bg-warm-border/30 text-warm-dark/40 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-2"
-                                        >
-                                            <Lock size={18} />
-                                            Send {data.invitedEmails.length} Invitation(s)
-                                        </button>
-                                        <p className="text-center text-xs text-warm-dark/50 mt-3 flex items-center justify-center gap-1.5">
-                                            <Shield size={12} />
-                                            Invitations will be sent once you activate your archive
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* ========================================= */}
-            {/* EMAIL PREVIEW MODAL                       */}
-            {/* ========================================= */}
-            {showPreviewEmail && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-warm-dark/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
-                        {/* Modal header */}
-                        <div className="p-6 border-b border-warm-border/20 flex items-center justify-between">
-                            <div>
-                                <h3 className="font-serif text-xl text-warm-dark">Invitation Preview</h3>
-                                <p className="text-xs text-warm-dark/50 mt-1">This is what {previewRecipient} will receive</p>
-                            </div>
-                            <button
-                                onClick={() => setShowPreviewEmail(false)}
-                                className="p-2 hover:bg-warm-border/10 rounded-lg transition-all"
-                            >
-                                <X size={20} className="text-warm-dark/40" />
-                            </button>
-                        </div>
-
-                        {/* Email preview */}
-                        <div className="p-6">
-                            <div className="bg-gradient-to-br from-surface-low to-warm-border/10 border-2 border-warm-border/20 rounded-xl p-8 font-serif">
-                                {/* Email header */}
-                                <div className="text-center mb-6 pb-6 border-b border-warm-border/20">
-                                    <div className="w-12 h-12 bg-olive/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <Shield size={24} className="text-olive" />
-                                    </div>
-                                    <p className="text-xs text-warm-dark/40 uppercase tracking-widest">ULUMAE</p>
-                                    <p className="text-xs text-warm-dark/40">Memorial Witness Invitation</p>
-                                </div>
-
-                                {/* Email body */}
-                                <div className="space-y-4 text-sm text-warm-dark/80 leading-relaxed">
-                                    <p>
-                                        <strong className="text-warm-dark">You have been entrusted with a portion of memory.</strong>
-                                    </p>
-                                    <p>
-                                        This is not a request for photos. It is an invitation to bear witness.
-                                    </p>
-                                    {personalMessage && (
-                                        <div className="pl-4 border-l-2 border-olive/30 italic text-warm-dark/70">
-                                            "{personalMessage}"
-                                        </div>
-                                    )}
-                                    <p>
-                                        Your contribution will become part of the permanent historical archives.
-                                    </p>
-
-                                    {/* CTA button preview */}
-                                    <div className="text-center pt-4">
-                                        <div className="inline-block px-8 py-3 bg-olive text-surface-low rounded-xl font-medium text-sm">
-                                            Accept & Bear Witness
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Modal footer */}
-                        <div className="p-6 bg-warm-border/5 border-t border-warm-border/20">
-                            <button
-                                onClick={() => setShowPreviewEmail(false)}
-                                className="w-full py-3 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all text-sm font-medium text-warm-dark"
-                            >
-                                Close Preview
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Navigation */}
-            <div className="mt-12 flex gap-4">
-                <button
-                    onClick={onBack}
-                    className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium"
-                >
-                    ← Return
-                </button>
-                <button
-                    onClick={onNext}
-                    className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-medium transition-all"
-                >
-                    Preserve & continue →
-                </button>
+            {/* SECTION B: SHARED MEMORIES EDITOR */}
+            <div className="space-y-12">
+                <section>
+                    <label className="flex items-center gap-2 text-sm font-bold text-warm-dark mb-6 uppercase tracking-widest">
+                        <MessageCircle size={18} className="text-olive" />
+                        Shared Memories
+                    </label>
+                    <div className="space-y-6 mb-6">
+                        {(data.sharedMemories || []).map((memory) => (
+                            <div key={memory.id} className="p-6 bg-white rounded-xl border border-warm-border/30 shadow-sm relative animate-fadeIn">
+                                {!readOnly && (
+                                    <button onClick={() => handleChange('sharedMemories', data.sharedMemories.filter(m => m.id !== memory.id))} className="absolute top-4 right-4 p-2 text-warm-dark/20 hover:text-red-500 transition-all">
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                                <div className="space-y-4 pr-8">
+                                    <input type="text" value={memory.title} onChange={(e) => updateMemory(memory.id, 'title', e.target.value)} placeholder="Memory Title" className="w-full glass-input font-medium" disabled={readOnly} />
+                                    <textarea value={memory.content} onChange={(e) => updateMemory(memory.id, 'content', e.target.value)} placeholder="Tell the story..." rows={4} className="w-full glass-input text-sm resize-none" disabled={readOnly} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input type="text" value={memory.author} onChange={(e) => updateMemory(memory.id, 'author', e.target.value)} placeholder="Written by" className="w-full glass-input text-sm" disabled={readOnly} />
+                                        <input type="text" value={memory.relationship} onChange={(e) => updateMemory(memory.id, 'relationship', e.target.value)} placeholder="Relationship" className="w-full glass-input text-sm" disabled={readOnly} />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {!readOnly && (
+                        <button onClick={() => handleChange('sharedMemories', [...(data.sharedMemories || []), { id: `m-${Date.now()}`, title: '', content: '', author: '', relationship: '' }])} className="w-full py-4 border-2 border-dashed border-warm-border/30 rounded-xl text-sm font-medium text-warm-dark/40 hover:border-olive hover:text-olive transition-all flex items-center justify-center gap-2">
+                            <Plus size={18} /> Add Memory
+                        </button>
+                    )}
+                </section>
+
+                {/* SECTION C: IMPACT STORIES EDITOR */}
+                <section>
+                    <label className="flex items-center gap-2 text-sm font-bold text-warm-dark mb-6 uppercase tracking-widest">
+                        <Star size={18} className="text-warm-brown" />
+                        Impact Stories
+                    </label>
+                    <div className="space-y-6 mb-6">
+                        {(data.impactStories || []).map((story) => (
+                            <div key={story.id} className="p-6 bg-white rounded-xl border border-warm-border/30 shadow-sm relative animate-fadeIn">
+                                {!readOnly && (
+                                    <button onClick={() => handleChange('impactStories', data.impactStories.filter(s => s.id !== story.id))} className="absolute top-4 right-4 p-2 text-warm-dark/20 hover:text-red-500 transition-all">
+                                        <Trash2 size={18} />
+                                    </button>
+                                )}
+                                <div className="space-y-4 pr-8">
+                                    <input type="text" value={story.title} onChange={(e) => updateImpactStory(story.id, 'title', e.target.value)} placeholder="Impact Title" className="w-full glass-input font-medium" disabled={readOnly} />
+                                    <textarea value={story.content} onChange={(e) => updateImpactStory(story.id, 'content', e.target.value)} placeholder="Describe their impact..." rows={4} className="w-full glass-input text-sm resize-none" disabled={readOnly} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {!readOnly && (
+                        <button onClick={() => handleChange('impactStories', [...(data.impactStories || []), { id: `s-${Date.now()}`, title: '', content: '', author: '' }])} className="w-full py-4 border-2 border-dashed border-warm-border/30 rounded-xl text-sm font-medium text-warm-dark/40 hover:border-warm-brown hover:text-warm-brown transition-all flex items-center justify-center gap-2">
+                            <Plus size={18} /> Add Impact Story
+                        </button>
+                    )}
+                </section>
             </div>
 
-            {/* Skip Option */}
-            <div className="mt-4 text-center">
-                <button
-                    onClick={onNext}
-                    className="text-sm text-warm-dark/60 hover:text-warm-dark transition-colors"
-                >
-                    I'll return to this →
-                </button>
+            <div className="mt-12 flex gap-4">
+                <button onClick={onBack} className="px-6 py-4 border border-warm-border/40 rounded-xl hover:bg-warm-border/10 transition-all font-medium text-warm-dark/60">← Return</button>
+                <button onClick={onNext} className="flex-1 bg-olive hover:bg-olive/90 text-warm-bg py-4 px-6 rounded-xl font-bold transition-all shadow-lg active:scale-[0.99]">Preserve & continue →</button>
             </div>
         </div>
     );

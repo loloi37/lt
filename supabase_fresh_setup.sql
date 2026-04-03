@@ -1711,6 +1711,142 @@ ALTER TABLE witness_invitations ADD CONSTRAINT witness_invitations_role_check
 -- memorial data through the same policies that govern witnesses.
 -- No additional RLS policies are required.
 
+  -- ============================================================
+-- SECTION 24
+-- ============================================================
+
+
+-- 1. Enable Realtime for user_memorial_roles (Required for mid-session downgrades)
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE user_memorial_roles;
+EXCEPTION WHEN duplicate_object THEN 
+  NULL;
+END;
+$$;
+
+-- 2. Prevent Owner Role Removal (Last Admin Protection)
+CREATE OR REPLACE FUNCTION prevent_owner_role_removal()
+RETURNS TRIGGER AS $$
+DECLARE
+  memorial_owner_id UUID;
+BEGIN
+  SELECT user_id INTO memorial_owner_id FROM memorials WHERE id = OLD.memorial_id;
+  IF OLD.user_id = memorial_owner_id AND OLD.role = 'owner' THEN
+    RAISE EXCEPTION 'Cannot remove the Owner role from the memorial owner.';
+  END IF;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_prevent_owner_role_removal ON user_memorial_roles;
+CREATE TRIGGER tr_prevent_owner_role_removal
+  BEFORE DELETE ON user_memorial_roles
+  FOR EACH ROW EXECUTE FUNCTION prevent_owner_role_removal();
+
+-- 3. Lock down role updates (Only API routes using service_role can change roles)
+DROP POLICY IF EXISTS "Owners can update roles" ON user_memorial_roles;
+CREATE POLICY "Only service_role can update roles"
+  ON user_memorial_roles FOR UPDATE
+  USING (auth.role() = 'service_role');
+
+-- 4. Prevent Duplicate Pending Invitations
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_invitation
+  ON witness_invitations(memorial_id, invitee_email)
+  WHERE status = 'pending';
+
+-- 1. Delete older duplicate pending invitations, keeping only the most recent one
+DELETE FROM witness_invitations
+WHERE status = 'pending'
+AND id IN (
+    SELECT id
+    FROM (
+        SELECT id,
+               ROW_NUMBER() OVER (
+                   PARTITION BY memorial_id, invitee_email 
+                   ORDER BY created_at DESC
+               ) as row_num
+        FROM witness_invitations
+        WHERE status = 'pending'
+    ) duplicates
+    WHERE duplicates.row_num > 1
+);
+
+-- 2. Now that duplicates are gone, apply the unique index safely
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_invitation
+  ON witness_invitations(memorial_id, invitee_email)
+  WHERE status = 'pending';
+
+  -- 5. Harden witness_invitations UPDATE policy (Close security gap)
+DROP POLICY IF EXISTS "Authenticated users can update invitations" ON witness_invitations;
+CREATE POLICY "Only memorial owner can update invitations"
+  ON witness_invitations FOR UPDATE
+  USING (
+    memorial_id IN (SELECT get_owned_memorial_ids(auth.uid()))
+  );
+
+
+-- 6. Add Infinite Revision Loop Tracking to memorial_contributions
+ALTER TABLE memorial_contributions
+  ADD COLUMN IF NOT EXISTS revision_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS retracted_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS notified_at TIMESTAMPTZ;
+
+
+-- 7. Harden memorial_contributions INSERT policy
+DROP POLICY IF EXISTS "Anyone can submit contributions" ON memorial_contributions;
+CREATE POLICY "Verified contributors can submit"
+  ON memorial_contributions FOR INSERT
+  WITH CHECK (
+    -- Authenticated users
+    auth.uid() IS NOT NULL
+    OR
+    -- Anonymous users must have a server-set verification_code
+    (is_anonymous = true AND verification_code IS NOT NULL)
+  );
+
+
+-- 8. Create Family Access Request Table (Corrected column name to avoid reserved keyword)
+CREATE TABLE IF NOT EXISTS memorial_access_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  requester_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  memorial_id UUID NOT NULL REFERENCES memorials(id) ON DELETE CASCADE,
+  requested_role TEXT NOT NULL, -- Renamed from current_role to avoid keyword conflict
+  request_message TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'approved', 'denied')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  decided_at TIMESTAMPTZ,
+  decided_by UUID REFERENCES auth.users(id)
+);
+
+-- Partial Unique Index to prevent multiple pending requests from the same user to the same archive
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_access_request
+  ON memorial_access_requests (requester_user_id, memorial_id) 
+  WHERE status = 'pending';
+
+-- RLS Policies for memorial_access_requests
+ALTER TABLE memorial_access_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Requesters can view own requests"
+  ON memorial_access_requests FOR SELECT
+  USING (requester_user_id = auth.uid());
+
+CREATE POLICY "Memorial owners can view requests for their memorials"
+  ON memorial_access_requests FOR SELECT
+  USING (memorial_id IN (SELECT get_owned_memorial_ids(auth.uid())));
+
+CREATE POLICY "Authenticated users can create requests"
+  ON memorial_access_requests FOR INSERT
+  WITH CHECK (requester_user_id = auth.uid());
+
+CREATE POLICY "Owners can update requests"
+  ON memorial_access_requests FOR UPDATE
+  USING (memorial_id IN (SELECT get_owned_memorial_ids(auth.uid())));
+
+CREATE POLICY "Service role full access to requests"
+  ON memorial_access_requests FOR ALL
+  USING (auth.role() = 'service_role');
 
 -- ============================================================
 -- Done

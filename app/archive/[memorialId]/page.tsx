@@ -1,444 +1,109 @@
-'use client';
+// app/archive/[memorialId]/page.tsx
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import ArchiveHubClient from './_components/ArchiveHubClient';
+import { WitnessRole } from '@/types/roles';
 
-import { use } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-    MessageCircle, Image as ImageIcon,
-    Clock, Check, X, ChevronRight,
-    Shield, Eye, Plus, Network,
-    AlertCircle, Loader2
-} from 'lucide-react';
-import Link from 'next/link';
-import { useArchiveRole } from
-    './_hooks/useArchiveRole';
+export default async function ArchivePage({ params }: { params: Promise<{ memorialId: string }> }) {
+    const { memorialId } = await params;
+    const cookieStore = await cookies();
 
-const STATUS_CONFIG = {
-    pending_approval: {
-        icon: Clock,
-        label: 'Awaiting review',
-        color: 'text-warm-muted bg-warm-muted/10 border-warm-muted/20'
-    },
-    approved: {
-        icon: Check,
-        label: 'Published',
-        color: 'text-olive bg-olive/10 border-olive/20'
-    },
-    rejected: {
-        icon: X,
-        label: 'Not published',
-        color: 'text-warm-dark/40 bg-warm-border/20 border-warm-border/30'
-    }
-} as const;
+    // 1. Initialize server-side Supabase client
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() {
+                    return cookieStore.getAll();
+                }
+            }
+        }
+    );
 
-const TYPE_ICONS = {
-    memory: MessageCircle,
-    photo: ImageIcon,
-    video: AlertCircle
-} as const;
-
-export default function ArchiveDashboard({
-    params
-}: {
-    params: Promise<{ memorialId: string }>
-}) {
-    const { memorialId } = use(params);
-    const router = useRouter();
-    const { data, loading, error } =
-        useArchiveRole(memorialId);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-surface-low flex
-        items-center justify-center">
-                <Loader2 size={32}
-                    className="text-olive animate-spin" />
-            </div>
-        );
+    // 2. Authenticate User
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        redirect(`/login?next=/archive/${memorialId}`);
     }
 
-    if (error || !data) {
-        return (
-            <div className="min-h-screen bg-surface-low flex
-        items-center justify-center p-6">
-                <div className="text-center max-w-md">
-                    <p className="text-warm-dark/50 mb-4">
-                        {error || 'Archive not found.'}
-                    </p>
-                    <button
-                        onClick={() => router.replace('/')}
-                        className="text-olive underline text-sm"
-                    >
-                        Return home
-                    </button>
-                </div>
-            </div>
-        );
+    // 3. Fetch Memorial Data & Determine Ownership
+    const { data: memorial, error: memError } = await supabase
+        .from('memorials')
+        .select('id, full_name, profile_photo_url, mode, user_id')
+        .eq('id', memorialId)
+        .single();
+
+    if (memError || !memorial) {
+        redirect('/dashboard'); // Memorial doesn't exist or was deleted
     }
 
-    const {
-        userRole, plan, memorial,
-        myContributions, pendingCount
-    } = data;
+    let userRole: WitnessRole | 'none' = 'none';
 
-    const canReview =
-        userRole === 'co_guardian' ||
-        userRole === 'owner';
+    if (memorial.user_id === user.id) {
+        userRole = 'owner';
+    } else {
+        // 4. Check specific role if not owner
+        const { data: roleData } = await supabase
+            .from('user_memorial_roles')
+            .select('role')
+            .eq('memorial_id', memorialId)
+            .eq('user_id', user.id)
+            .single();
 
-    return (
-        <div className="min-h-screen bg-surface-low">
-
-            {/* Header */}
-            <div className="border-b border-warm-border/20
-        bg-white sticky top-0 z-10 shadow-sm">
-                <div className="max-w-3xl mx-auto
-          px-6 py-4 flex items-center
-          justify-between">
-
-                    {/* Memorial identity */}
-                    <div className="flex items-center gap-3">
-                        {memorial.profilePhotoUrl ? (
-                            <img
-                                src={memorial.profilePhotoUrl}
-                                alt={memorial.fullName}
-                                className="w-10 h-10 rounded-full
-                  object-cover border-2 border-warm-border/30"
-                            />
-                        ) : (
-                            <div className="w-10 h-10 rounded-full
-                bg-gradient-to-br from-olive/20
-                to-warm-muted/20 border-2 border-warm-border/30
-                flex items-center justify-center">
-                                <span className="text-warm-dark/30
-                  text-sm font-serif">
-                                    {memorial.fullName.charAt(0)}
-                                </span>
-                            </div>
-                        )}
-                        <div>
-                            <p className="font-serif text-base
-                text-warm-dark leading-none mb-0.5">
-                                {memorial.fullName}
-                            </p>
-                            <p className="text-xs text-warm-dark/40
-                font-sans">
-                                {userRole === 'co_guardian'
-                                    ? 'Co-Guardian'
-                                    : userRole === 'owner'
-                                        ? 'Owner'
-                                        : 'Witness'}
-                                {plan === 'family'
-                                    ? ' · Family Archive'
-                                    : ' · Personal Archive'}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* View archive link */}
-                    <Link
-                        href={`/archive/${memorialId}/view`}
-                        className="flex items-center gap-1.5
-              text-sm text-olive hover:text-olive/80
-              transition-colors font-sans"
-                    >
-                        <Eye size={16} />
-                        View archive
-                    </Link>
-                </div>
-            </div>
-
-            <div className="max-w-3xl mx-auto
-        px-6 py-10 space-y-8">
-
-                {/* Co-guardian alert banner */}
-                {canReview && pendingCount > 0 && (
-                        <div
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}/steward`
-                                )
-                            }
-                            className="bg-warm-muted/5 border border-warm-muted/20
-              rounded-xl p-5 flex items-center
-              justify-between cursor-pointer
-              hover:bg-warm-muted/10 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-warm-muted/10
-                rounded-lg flex items-center
-                justify-center flex-shrink-0">
-                                    <Shield size={18}
-                                        className="text-warm-muted" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium
-                  text-warm-dark">
-                                        {pendingCount} contribution
-                                        {pendingCount !== 1 ? 's' : ''}
-                                        {' '}awaiting review
-                                    </p>
-                                    <p className="text-xs
-                  text-warm-dark/50">
-                                        Witnesses are waiting for
-                                        your decision
-                                    </p>
-                                </div>
-                            </div>
-                            <ChevronRight size={18}
-                                className="text-warm-dark/30" />
-                        </div>
-                    )}
-
-                {/* Quick actions */}
-                <section>
-                    <h2 className="text-xs font-semibold
-            text-warm-dark/40 uppercase tracking-wider
-            mb-4 font-sans">
-                        Actions
-                    </h2>
-                    <div className="grid grid-cols-2
-            sm:grid-cols-3 gap-3">
-
-                        <QuickAction
-                            icon={MessageCircle}
-                            label="Share memory"
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}/contribute`
-                                )
-                            }
-                            primary
-                        />
-
-                        <QuickAction
-                            icon={ImageIcon}
-                            label="Add a photo"
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}/contribute?type=photo`
-                                )
-                            }
-                        />
-
-                        <QuickAction
-                            icon={Eye}
-                            label="View archive"
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}/view`
-                                )
-                            }
-                        />
-
-                        {plan === 'family' && (
-                            <QuickAction
-                                icon={Network}
-                                label="Family map"
-                                onClick={() =>
-                                    router.push(
-                                        `/archive/${memorialId}/family`
-                                    )
-                                }
-                            />
-                        )}
-
-                        {/* Only show "Review Queue" if the user has permission */}
-                        {canReview && (
-                            <QuickAction
-                                icon={Shield}
-                                label="Review queue"
-                                badge={pendingCount > 0 ? pendingCount : undefined}
-                                onClick={() => router.push(`/archive/${memorialId}/steward`)}
-                            />
-                        )}
-                    </div>
-                </section>
-
-                {/* My contributions */}
-                <section>
-                    <div className="flex items-center
-            justify-between mb-4">
-                        <h2 className="text-xs font-semibold
-              text-warm-dark/40 uppercase
-              tracking-wider font-sans">
-                            My Contributions
-                        </h2>
-                        <button
-                            onClick={() =>
-                                router.push(
-                                    `/archive/${memorialId}/contribute`
-                                )
-                            }
-                            className="flex items-center gap-1
-                text-xs text-olive hover:text-olive/80
-                transition-colors font-sans"
-                        >
-                            <Plus size={12} />
-                            Add new
-                        </button>
-                    </div>
-
-                    {myContributions.length === 0 ? (
-                        <EmptyContributions
-                            memorialId={memorialId}
-                            onAdd={() =>
-                                router.push(
-                                    `/archive/${memorialId}/contribute`
-                                )
-                            }
-                        />
-                    ) : (
-                        <div className="space-y-3">
-                            {myContributions.map(c => (
-                                <ContributionRow
-                                    key={c.id}
-                                    contribution={c}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </section>
-            </div>
-        </div>
-    );
-}
-
-// ─── Sub-components ───────────────────────────────
-
-function QuickAction({
-    icon: Icon,
-    label,
-    onClick,
-    primary = false,
-    badge
-}: {
-    icon: any;
-    label: string;
-    onClick: () => void;
-    primary?: boolean;
-    badge?: number;
-}) {
-    return (
-        <button
-            onClick={onClick}
-            className={`relative p-4 rounded-xl border
-        transition-all flex flex-col items-center
-        gap-2 font-sans ${primary
-                    ? 'glass-btn-dark'
-                    : 'bg-white text-warm-dark/70 border-warm-border/30 hover:border-warm-border/60 hover:bg-warm-border/5'
-                }`}
-        >
-            {badge !== undefined && (
-                <span className="absolute -top-1.5 -right-1.5
-          w-5 h-5 bg-warm-muted text-white text-xs
-          rounded-full flex items-center
-          justify-center font-semibold font-sans">
-                    {badge}
-                </span>
-            )}
-            <Icon size={20} />
-            <span className="text-xs font-medium">
-                {label}
-            </span>
-        </button>
-    );
-}
-
-function ContributionRow({
-    contribution
-}: {
-    contribution: {
-        id: string;
-        type: 'memory' | 'photo' | 'video';
-        status: 'pending_approval' | 'approved' | 'rejected';
-        title: string;
-        createdAt: string;
+        if (roleData) {
+            userRole = roleData.role as WitnessRole;
+        }
     }
-}) {
-    const statusCfg = STATUS_CONFIG[contribution.status];
-    const StatusIcon = statusCfg.icon;
-    const TypeIcon = TYPE_ICONS[contribution.type];
 
-    const timeAgo = (() => {
-        const diff = Date.now() -
-            new Date(contribution.createdAt).getTime();
-        const days = Math.floor(diff / 86400000);
-        if (days === 0) return 'Today';
-        if (days === 1) return 'Yesterday';
-        if (days < 30) return `${days} days ago`;
-        return new Date(contribution.createdAt)
-            .toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
-            });
-    })();
+    // 5. Hard Security Gate
+    if (userRole === 'none') {
+        redirect('/dashboard'); // User has no access to this archive
+    }
+
+    // 6. Fetch contextual data (Pending queue for admins, own contributions for everyone)
+    let pendingCount = 0;
+    if (userRole === 'owner' || userRole === 'co_guardian') {
+        const { count } = await supabase
+            .from('memorial_contributions')
+            .select('*', { count: 'exact', head: true })
+            .eq('memorial_id', memorialId)
+            .eq('status', 'pending_approval');
+        pendingCount = count || 0;
+    }
+
+    const { data: myContributions } = await supabase
+        .from('memorial_contributions')
+        .select('id, type, status, content, created_at')
+        .eq('memorial_id', memorialId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    // 7. Package safe data for the client
+    const roleData = {
+        userRole,
+        plan: memorial.mode,
+        memorial: {
+            id: memorial.id,
+            fullName: memorial.full_name,
+            profilePhotoUrl: memorial.profile_photo_url
+        },
+        pendingCount,
+        myContributions: (myContributions || []).map(c => ({
+            id: c.id,
+            type: c.type,
+            status: c.status,
+            title: c.content?.title || 'Untitled',
+            createdAt: c.created_at
+        }))
+    };
 
     return (
-        <div className="bg-white border border-warm-border/30
-      rounded-xl p-4 flex items-center gap-4">
-
-            {/* Type icon */}
-            <div className="w-9 h-9 bg-warm-border/20 rounded-lg
-        flex items-center justify-center flex-shrink-0">
-                <TypeIcon size={16}
-                    className="text-warm-dark/40" />
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-warm-dark
-          truncate font-sans">
-                    {contribution.title}
-                </p>
-                <p className="text-xs text-warm-dark/40
-          font-sans mt-0.5">
-                    {timeAgo}
-                </p>
-            </div>
-
-            {/* Status badge */}
-            <span className={`inline-flex items-center
-        gap-1.5 px-2.5 py-1 rounded-full text-xs
-        font-medium border font-sans flex-shrink-0
-        ${statusCfg.color}`}>
-                <StatusIcon size={10} />
-                {statusCfg.label}
-            </span>
-        </div>
+        <ArchiveHubClient
+            roleData={roleData}
+            memorialId={memorialId}
+            userId={user.id}
+        />
     );
-}
-
-function EmptyContributions({
-    memorialId,
-    onAdd
-}: {
-    memorialId: string;
-    onAdd: () => void;
-}) {
-    return (
-        <div className="bg-white border-2 border-dashed
-      border-warm-border/40 rounded-xl p-10 text-center">
-            <div className="w-12 h-12 bg-warm-border/20 rounded-full
-        flex items-center justify-center mx-auto mb-4">
-                <MessageCircle size={24}
-                    className="text-warm-dark/20" />
-            </div>
-            <p className="text-sm text-warm-dark/40
-        mb-4 font-sans leading-relaxed">
-                You haven't contributed anything yet.
-                <br />
-                Your memories will appear here once submitted.
-            </p>
-            <button
-                onClick={onAdd}
-                className="inline-flex items-center gap-2
-          px-5 py-2.5 glass-btn-dark
-          rounded-xl text-sm font-medium
-          transition-all
-          font-sans"
-            >
-                <Plus size={16} />
-                Share your first memory
-            </button>
-        </div>
-    );
-}
+}   
