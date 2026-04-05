@@ -38,7 +38,7 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
         }
 
-        // 3. PERMISSION CHECK: Is the caller the Owner or a Co-Guardian?
+        // 3. PERMISSION CHECK: Only the owner can invite members
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
             .select('user_id, mode, full_name')
@@ -51,17 +51,8 @@ export async function POST(
 
         const isOwner = memorial.user_id === user.id;
 
-        const { data: callerRoleRecord } = await supabaseAdmin
-            .from('user_memorial_roles')
-            .select('role')
-            .eq('memorial_id', memorialId)
-            .eq('user_id', user.id)
-            .single();
-
-        const isCoGuardian = callerRoleRecord?.role === 'co_guardian';
-
-        if (!isOwner && !isCoGuardian) {
-            return NextResponse.json({ error: 'Forbidden: You do not have permission to invite members' }, { status: 403 });
+        if (!isOwner) {
+            return NextResponse.json({ error: 'Only the archive owner can invite members.' }, { status: 403 });
         }
 
         if (normalizedEmail === user.email?.toLowerCase()) {
@@ -69,10 +60,6 @@ export async function POST(
         }
 
         // 4. ROLE CONSTRAINTS
-        if (isCoGuardian && role === 'co_guardian') {
-            return NextResponse.json({ error: 'Co-Guardians cannot invite other Co-Guardians.' }, { status: 403 });
-        }
-
         if (role === 'co_guardian' && memorial.mode !== 'family') {
             return NextResponse.json({ error: 'Co-Guardian is a Family plan role only.' }, { status: 403 });
         }

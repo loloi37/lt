@@ -39,7 +39,7 @@ export function getArchiveCapabilities(
     canViewArchive: true,
     canContribute,
     canReview,
-    canInvite: role === 'owner' || role === 'co_guardian',
+    canInvite: role === 'owner',
     canManageMembers: role === 'owner',
     canViewFamilyMap: plan === 'family',
     canRequestAccess: role === 'witness' && plan === 'family',

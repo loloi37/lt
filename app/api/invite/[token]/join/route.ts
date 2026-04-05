@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { syncCoGuardianAcrossOwnerFamily } from '@/lib/familyWorkspace';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,6 +74,18 @@ export async function POST(
                 },
                 { status: 400 }
             );
+        }
+
+        if (data.role === 'co_guardian' && data.plan === 'family') {
+            const { data: memorial } = await supabaseAdmin
+                .from('memorials')
+                .select('user_id')
+                .eq('id', data.memorial_id)
+                .single();
+
+            if (memorial?.user_id) {
+                await syncCoGuardianAcrossOwnerFamily(memorial.user_id, user!.id);
+            }
         }
 
         // 4. Update last_visited_at on the new role

@@ -8,12 +8,57 @@ interface Props {
     onContinue: () => void;
 }
 
+const PREVIEW_COPY = {
+    witness: {
+        roleLabel: 'Witness',
+        intro: 'You have been invited to contribute stories and photos to this private archive.',
+        can: [
+            'Read the full archive',
+            'Share memories and stories',
+            'Upload photos for review'
+        ],
+        cannot: [
+            'Edit the main biography directly',
+            'Publish contributions instantly',
+            'Invite other people'
+        ]
+    },
+    co_guardian: {
+        roleLabel: 'Co-Guardian',
+        intro: 'You have been invited to help steward this family archive alongside the owner.',
+        can: [
+            'Read and edit memorial content',
+            'Review witness contributions',
+            'Invite witnesses and readers'
+        ],
+        cannot: [
+            'Delete the archive',
+            'Change the owner',
+            'Manage billing'
+        ]
+    },
+    reader: {
+        roleLabel: 'Reader',
+        intro: 'You have been invited to privately read and explore this archive.',
+        can: [
+            'Read the published archive',
+            'View preserved memories and photos',
+            'Return to the archive whenever you wish'
+        ],
+        cannot: [
+            'Share memories or photos',
+            'Edit archive content',
+            'Invite other people'
+        ]
+    }
+} as const;
+
 export default function InvitePreview({
     invitation,
     onContinue
 }: Props) {
-    const { memorial, inviterName,
-        personalMessage, plan } = invitation;
+    const { memorial, inviterName, personalMessage, plan, role, inviteeEmail } = invitation;
+    const roleCopy = PREVIEW_COPY[role as keyof typeof PREVIEW_COPY];
 
     const formatYear = (date: string | null) =>
         date ? new Date(date).getFullYear() : null;
@@ -23,15 +68,13 @@ export default function InvitePreview({
 
     const dateRange = birthYear
         ? deathYear
-            ? `${birthYear} — ${deathYear}`
+            ? `${birthYear} - ${deathYear}`
             : `Born ${birthYear}`
         : null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br
       from-olive/10 via-surface-low to-warm-muted/10">
-
-            {/* Minimal header — no navigation */}
             <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
                 <div className="max-w-2xl mx-auto px-6
@@ -45,8 +88,6 @@ export default function InvitePreview({
 
             <div className="max-w-2xl mx-auto px-6
         py-16 flex flex-col items-center">
-
-                {/* Profile photo or placeholder */}
                 <div className="mb-8">
                     {memorial.profilePhotoUrl ? (
                         <div className="w-32 h-32 rounded-full
@@ -71,7 +112,6 @@ export default function InvitePreview({
                     )}
                 </div>
 
-                {/* Name and dates */}
                 <h1 className="font-serif text-4xl
           text-warm-dark text-center mb-2">
                     {memorial.fullName}
@@ -83,12 +123,9 @@ export default function InvitePreview({
                     </p>
                 )}
 
-                {/* The invitation card */}
                 <div className="w-full bg-white rounded-2xl
           border border-warm-border/30 shadow-sm
           overflow-hidden mb-8">
-
-                    {/* Plan badge */}
                     <div className="px-8 pt-8 pb-0">
                         <span className={`inline-flex
               items-center gap-1.5 px-3 py-1
@@ -96,106 +133,106 @@ export default function InvitePreview({
               border ${plan === 'family'
                                 ? 'bg-warm-muted/10 text-warm-muted border-warm-muted/20'
                                 : 'bg-olive/10 text-olive border-olive/20'
-              }`}>
+                            }`}>
                             {plan === 'family'
                                 ? 'Family Archive'
                                 : 'Personal Archive'}
                         </span>
                     </div>
 
-                {/* Invitation text */}
-                <div className="px-8 py-6">
-                    <p className="text-lg text-warm-dark
+                    <div className="px-8 py-6">
+                        <p className="text-lg text-warm-dark
               leading-relaxed mb-6">
-                        <strong>{inviterName}</strong> has
-                        invited you to contribute to the
-                        private archive of{' '}
-                        <strong>{memorial.fullName}</strong>.
-                    </p>
+                            <strong>{inviterName}</strong> has
+                            invited you to join the private archive of{' '}
+                            <strong>{memorial.fullName}</strong>.
+                        </p>
 
-                    {/* Personal message */}
-                    {personalMessage && (
-                        <div className="border-l-4
-                border-olive/30 pl-6 mb-6">
-                            <p className="text-xs
-                  text-warm-dark/40 uppercase
-                  tracking-wider mb-2">
-                                A message from {inviterName}
-                            </p>
-                            <p className="font-serif italic
-                  text-warm-dark/80 text-base
-                  leading-relaxed">
-                                "{personalMessage}"
+                        <div className="mb-6 rounded-2xl border border-warm-border/30 bg-surface-low/50 p-5">
+                            <div className="mb-2 flex items-center gap-2 text-sm text-warm-dark/60">
+                                <Shield size={15} className="text-olive" />
+                                Invitation for <strong>{inviteeEmail}</strong>
+                            </div>
+                            <p className="text-sm leading-relaxed text-warm-dark/60">
+                                You are joining as a <strong>{roleCopy.roleLabel}</strong>. {roleCopy.intro}
                             </p>
                         </div>
-                    )}
 
-                    {/* What this is */}
-                    <p className="text-sm text-warm-dark/50
+                        {personalMessage && (
+                            <div className="border-l-4
+                border-olive/30 pl-6 mb-6">
+                                <p className="text-xs
+                  text-warm-dark/40 uppercase
+                  tracking-wider mb-2">
+                                    A message from {inviterName}
+                                </p>
+                                <p className="font-serif italic
+                  text-warm-dark/80 text-base
+                  leading-relaxed">
+                                    "{personalMessage}"
+                                </p>
+                            </div>
+                        )}
+
+                        <p className="text-sm text-warm-dark/50
               leading-relaxed">
-                        This is a private, permanent family
-                        archive. It is not a social network
-                        or public profile.
-                    </p>
-                </div>
+                            This is a private, permanent family
+                            archive. It is not a social network
+                            or public profile.
+                        </p>
+                    </div>
 
-                {/* Can / Cannot grid */}
-                <div className="grid grid-cols-2
+                    <div className="grid grid-cols-2
             border-t border-warm-border/20">
-                    <div className="px-8 py-6
+                        <div className="px-8 py-6
               border-r border-warm-border/20">
-                        <h3 className="text-xs font-semibold
+                            <h3 className="text-xs font-semibold
                 text-warm-dark/50 uppercase
                 tracking-wider mb-3 flex
                 items-center gap-1.5">
-                            <Check size={14}
-                                className="text-olive" />
-                            You can
-                        </h3>
-                        <ul className="space-y-2 text-sm
+                                <Check size={14}
+                                    className="text-olive" />
+                                You can
+                            </h3>
+                            <ul className="space-y-2 text-sm
                 text-warm-dark/70">
-                            <li>Share memories & stories</li>
-                            <li>Share photos you own</li>
-                            <li>Suggest corrections</li>
-                        </ul>
-                    </div>
-                    <div className="px-8 py-6">
-                        <h3 className="text-xs font-semibold
+                                {roleCopy.can.map(item => (
+                                    <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="px-8 py-6">
+                            <h3 className="text-xs font-semibold
                 text-warm-dark/50 uppercase
                 tracking-wider mb-3 flex
                 items-center gap-1.5">
-                            <X size={14}
-                                className="text-warm-muted" />
-                            You cannot
-                        </h3>
-                        <ul className="space-y-2 text-sm
+                                <X size={14}
+                                    className="text-warm-muted" />
+                                You cannot
+                            </h3>
+                            <ul className="space-y-2 text-sm
                 text-warm-dark/70">
-                            <li>Post publicly</li>
-                            <li>Edit the main story</li>
-                            <li>Be charged to participate</li>
-                        </ul>
+                                {roleCopy.cannot.map(item => (
+                                    <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Primary CTA */}
-            <button
-                onClick={onContinue}
-                className="w-full py-4 glass-btn-dark
+                <button
+                    onClick={onContinue}
+                    className="w-full py-4 glass-btn-dark
             rounded-xl font-medium transition-all
             shadow-lg mb-4"
-            >
-                Continue to join this archive →
-            </button>
+                >
+                    Continue to join this archive
+                </button>
 
-            {/* Reassurance microcopy */}
-            <p className="text-xs text-warm-dark/30 text-center leading-relaxed">
-                You will need a free account so your
-                contributions stay linked to you over
-                time. You will never be asked for payment.
-            </p>
-
+                <p className="text-xs text-warm-dark/30 text-center leading-relaxed">
+                    You will create or access a free account with the invited email so this archive access stays linked to you over time.
+                </p>
+            </div>
         </div>
-    </div >
-  );
+    );
 }

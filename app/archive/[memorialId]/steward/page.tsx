@@ -39,9 +39,22 @@ interface AccessRequestRecord {
     createdAt: string;
 }
 
+interface CreationRequestRecord {
+    id: string;
+    requesterUserId: string;
+    email: string;
+    sourceMemorialId: string;
+    sourceMemorialName: string;
+    proposedName: string | null;
+    requestMessage: string;
+    status: 'pending';
+    createdAt: string;
+}
+
 type ReviewDecision = 'approved' | 'rejected' | 'needs_changes';
 type AccessDecision = 'approved' | 'denied';
-type StewardTab = 'contributions' | 'requests';
+type CreationDecision = 'approved' | 'rejected';
+type StewardTab = 'contributions' | 'requests' | 'creation';
 
 export default function StewardPage({
     params
@@ -54,10 +67,13 @@ export default function StewardPage({
 
     const [contributions, setContributions] = useState<PendingContribution[]>([]);
     const [accessRequests, setAccessRequests] = useState<AccessRequestRecord[]>([]);
+    const [creationRequests, setCreationRequests] = useState<CreationRequestRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [requestsLoading, setRequestsLoading] = useState(true);
+    const [creationLoading, setCreationLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
     const [requestProcessing, setRequestProcessing] = useState<string | null>(null);
+    const [creationProcessing, setCreationProcessing] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [tab, setTab] = useState<StewardTab>('contributions');
 
@@ -99,9 +115,30 @@ export default function StewardPage({
         }
     };
 
+    const loadCreationRequests = async () => {
+        if (roleData?.userRole !== 'owner') {
+            setCreationRequests([]);
+            setCreationLoading(false);
+            return;
+        }
+
+        setCreationLoading(true);
+        try {
+            const res = await fetch(`/api/archive/${memorialId}/creation-requests`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load memorial requests');
+            setCreationRequests(data.requests || []);
+        } catch (requestError: any) {
+            setError(requestError.message);
+        } finally {
+            setCreationLoading(false);
+        }
+    };
+
     useEffect(() => {
         loadPending();
         loadAccessRequests();
+        loadCreationRequests();
 
         const contributionsChannel = supabase
             .channel(`steward-contributions-${memorialId}`)
@@ -131,11 +168,31 @@ export default function StewardPage({
             )
             .subscribe();
 
+        let creationChannel: any = null;
+        if (roleData?.userRole === 'owner' && roleData.currentUserId) {
+            creationChannel = supabase
+                .channel(`steward-creation-${memorialId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'memorial_creation_requests',
+                        filter: `owner_user_id=eq.${roleData.currentUserId}`,
+                    },
+                    loadCreationRequests
+                )
+                .subscribe();
+        }
+
         return () => {
             supabase.removeChannel(contributionsChannel);
             supabase.removeChannel(requestsChannel);
+            if (creationChannel) {
+                supabase.removeChannel(creationChannel);
+            }
         };
-    }, [memorialId, supabase]);
+    }, [memorialId, roleData?.currentUserId, roleData?.userRole, supabase]);
 
     const handleDecision = async (
         id: string,
@@ -184,9 +241,32 @@ export default function StewardPage({
         }
     };
 
+    const handleCreationDecision = async (
+        requestId: string,
+        decision: CreationDecision
+    ) => {
+        setCreationProcessing(requestId);
+        try {
+            const res = await fetch(`/api/archive/${memorialId}/creation-requests/${requestId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Could not update memorial request');
+
+            setCreationRequests(prev => prev.filter((request) => request.id !== requestId));
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setCreationProcessing(null);
+        }
+    };
+
     const totalItems = useMemo(
-        () => contributions.length + accessRequests.length,
-        [contributions.length, accessRequests.length]
+        () => contributions.length + accessRequests.length + creationRequests.length,
+        [contributions.length, accessRequests.length, creationRequests.length]
     );
 
     return (
@@ -201,11 +281,11 @@ export default function StewardPage({
                     </button>
                     <div className="flex-1">
                         <h1 className="font-serif text-xl text-warm-dark">Steward queue</h1>
-                        {!(loading || requestsLoading) && (
+                        {!(loading || requestsLoading || creationLoading) && (
                             <p className="text-xs text-warm-dark/40 font-sans">
                                 {totalItems === 0
                                     ? 'All clear'
-                                    : `${contributions.length} contribution${contributions.length !== 1 ? 's' : ''} and ${accessRequests.length} access request${accessRequests.length !== 1 ? 's' : ''} waiting`}
+                                    : `${contributions.length} contribution${contributions.length !== 1 ? 's' : ''}, ${accessRequests.length} access request${accessRequests.length !== 1 ? 's' : ''}, and ${creationRequests.length} memorial request${creationRequests.length !== 1 ? 's' : ''} waiting`}
                             </p>
                         )}
                     </div>
@@ -213,6 +293,7 @@ export default function StewardPage({
                         onClick={() => {
                             loadPending();
                             loadAccessRequests();
+                            loadCreationRequests();
                         }}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-warm-border/30 text-xs text-warm-dark/60 hover:bg-warm-border/10 transition-colors"
                     >
@@ -234,9 +315,16 @@ export default function StewardPage({
                         label={`Access requests (${accessRequests.length})`}
                         onClick={() => setTab('requests')}
                     />
+                    {roleData?.userRole === 'owner' && (
+                        <TabButton
+                            active={tab === 'creation'}
+                            label={`Memorial requests (${creationRequests.length})`}
+                            onClick={() => setTab('creation')}
+                        />
+                    )}
                 </div>
 
-                {(loading || requestsLoading || roleLoading) ? (
+                {(loading || requestsLoading || creationLoading || roleLoading) ? (
                     <div className="flex justify-center py-20">
                         <Loader2 size={32} className="text-olive animate-spin" />
                     </div>
@@ -265,7 +353,7 @@ export default function StewardPage({
                             ))}
                         </div>
                     )
-                ) : accessRequests.length === 0 ? (
+                ) : tab === 'requests' ? accessRequests.length === 0 ? (
                     <EmptyState
                         icon={<Lock size={32} className="text-olive" />}
                         title="No access requests waiting"
@@ -280,6 +368,24 @@ export default function StewardPage({
                                 processing={requestProcessing === request.id}
                                 onApprove={() => handleAccessDecision(request.id, 'approved')}
                                 onDeny={() => handleAccessDecision(request.id, 'denied')}
+                            />
+                        ))}
+                    </div>
+                ) : creationRequests.length === 0 ? (
+                    <EmptyState
+                        icon={<Shield size={32} className="text-olive" />}
+                        title="No memorial requests waiting"
+                        description="Co-guardian requests for new family memorials will appear here."
+                    />
+                ) : (
+                    <div className="space-y-4">
+                        {creationRequests.map((request) => (
+                            <CreationRequestCard
+                                key={request.id}
+                                request={request}
+                                processing={creationProcessing === request.id}
+                                onApprove={() => handleCreationDecision(request.id, 'approved')}
+                                onReject={() => handleCreationDecision(request.id, 'rejected')}
                             />
                         ))}
                     </div>
@@ -542,6 +648,68 @@ function AccessRequestCard({
                     className="flex-1 py-3 border border-warm-border/40 text-warm-dark/50 rounded-xl text-sm transition-all hover:bg-warm-border/10 font-sans disabled:opacity-50"
                 >
                     Decline request
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function CreationRequestCard({
+    request,
+    processing,
+    onApprove,
+    onReject
+}: {
+    request: CreationRequestRecord;
+    processing: boolean;
+    onApprove: () => void;
+    onReject: () => void;
+}) {
+    return (
+        <div className="bg-white border border-warm-border/30 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Shield size={14} className="text-warm-dark/35" />
+                        <p className="text-sm font-medium text-warm-dark font-sans">{request.email}</p>
+                    </div>
+                    <p className="text-xs text-warm-dark/40 font-sans uppercase tracking-wider mb-3">
+                        Requests a new family memorial
+                    </p>
+                    <div className="space-y-2 text-sm text-warm-dark/60 font-sans leading-relaxed">
+                        <p>
+                            Requested from: <strong>{request.sourceMemorialName}</strong>
+                        </p>
+                        {request.proposedName && (
+                            <p>
+                                Proposed memorial: <strong>{request.proposedName}</strong>
+                            </p>
+                        )}
+                        <p>
+                            {request.requestMessage || 'No extra context was included with this request.'}
+                        </p>
+                    </div>
+                </div>
+                <div className="text-xs text-warm-dark/30 font-sans">
+                    {new Date(request.createdAt).toLocaleDateString()}
+                </div>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+                <button
+                    onClick={onApprove}
+                    disabled={processing}
+                    className="flex-1 py-3 bg-olive hover:bg-olive/90 text-white rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 font-sans disabled:opacity-50"
+                >
+                    {processing ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    Create memorial
+                </button>
+                <button
+                    onClick={onReject}
+                    disabled={processing}
+                    className="flex-1 py-3 border border-warm-border/40 text-warm-dark/50 rounded-xl text-sm transition-all hover:bg-warm-border/10 font-sans disabled:opacity-50"
+                >
+                    Reject request
                 </button>
             </div>
         </div>

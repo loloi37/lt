@@ -7,30 +7,28 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// PATCH /api/memorials/[id]/soft-delete
+// PATCH /api/memorials/[memorialId]/soft-delete
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
-        const { id } = await params;
+        const { memorialId } = await params;
         const { action } = await request.json(); // 'delete' | 'restore'
 
-        if (!id) {
+        if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorial id' }, { status: 400 });
         }
 
-        // 1. AUTHENTICATE THE USER MAKING THE REQUEST
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. VERIFY OWNERSHIP
         const { data: memorial, error: fetchError } = await supabaseAdmin
             .from('memorials')
             .select('user_id, preservation_state')
-            .eq('id', id)
+            .eq('id', memorialId)
             .single();
 
         if (fetchError || !memorial) {
@@ -41,7 +39,6 @@ export async function PATCH(
             return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
-        // 3. BLOCK DELETION OF PRESERVED ARCHIVES
         if (action === 'delete' && memorial.preservation_state === 'preserved') {
             return NextResponse.json(
                 { error: 'This archive has been permanently preserved on the blockchain and cannot be deleted.' },
@@ -49,7 +46,6 @@ export async function PATCH(
             );
         }
 
-        // 4. EXECUTE THE ACTION
         const updates =
             action === 'restore'
                 ? { deleted: false, deleted_at: null }
@@ -58,7 +54,7 @@ export async function PATCH(
         const { error } = await supabaseAdmin
             .from('memorials')
             .update(updates)
-            .eq('id', id);
+            .eq('id', memorialId);
 
         if (error) {
             console.error('soft-delete error:', error);

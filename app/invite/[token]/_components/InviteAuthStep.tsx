@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
     ArrowLeft, Mail, Lock, User,
-    Loader2, Eye, EyeOff
+    Loader2, Eye, EyeOff, CheckCircle2
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { InvitationData } from '../page';
@@ -24,7 +25,7 @@ export default function InviteAuthStep({
     const [mode, setMode] =
         useState<AuthMode>('signup');
     const [name, setName] = useState('');
-    const [email, setEmail] = useState(
+    const [email] = useState(
         invitation.inviteeEmail || ''
     );
     const [password, setPassword] = useState('');
@@ -34,17 +35,10 @@ export default function InviteAuthStep({
     const [error, setError] = useState<string | null>(
         null
     );
-
-    const emailIsLocked =
-        !!invitation.inviteeEmail &&
-        mode === 'signup';
-
-    const emailDiffers =
-        mode === 'signup' &&
-        invitation.inviteeEmail &&
-        email.trim().toLowerCase() !==
-        invitation.inviteeEmail.toLowerCase() &&
-        email.trim() !== '';
+    const [agreeTerms, setAgreeTerms] = useState(false);
+    const [agreePrivacy, setAgreePrivacy] = useState(false);
+    const [awaitingConfirmation, setAwaitingConfirmation] =
+        useState(false);
 
     const supabase = createClient();
 
@@ -57,7 +51,6 @@ export default function InviteAuthStep({
 
         try {
             if (mode === 'signup') {
-                // Validate
                 if (!name.trim()) {
                     setError('Please enter your name.');
                     setLoading(false);
@@ -68,31 +61,32 @@ export default function InviteAuthStep({
                     setLoading(false);
                     return;
                 }
+                if (!agreeTerms || !agreePrivacy) {
+                    setError('Please confirm the terms and privacy policy to create your account.');
+                    setLoading(false);
+                    return;
+                }
 
-                // ADDED: Destructure `data`
                 const { data, error: signUpError } =
                     await supabase.auth.signUp({
                         email: email.trim(),
                         password,
                         options: {
                             data: { full_name: name.trim() },
-                            // ADDED: Tell Supabase to send them right back to this invite page after verifying!
                             emailRedirectTo: window.location.href,
                         }
                     });
 
                 if (signUpError) throw signUpError;
 
-                // ADDED: Handle the email confirmation requirement gracefully
                 if (!data.session) {
-                    setError('Account created! Please check your email and click the confirmation link to join the archive.');
+                    setAwaitingConfirmation(true);
                     setLoading(false);
                     return;
                 }
 
                 onSuccess();
             } else {
-                // Login mode remains the same
                 const { error: signInError } =
                     await supabase.auth.signInWithPassword({
                         email: email.trim(),
@@ -117,11 +111,55 @@ export default function InviteAuthStep({
         }
     };
 
+    if (awaitingConfirmation) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br
+      from-olive/10 via-surface-low to-warm-muted/10">
+                <div className="border-b border-warm-border/20
+        bg-white/60 backdrop-blur-sm">
+                    <div className="max-w-2xl mx-auto px-6
+          py-4 flex items-center justify-between">
+                        <button
+                            onClick={() => setAwaitingConfirmation(false)}
+                            className="inline-flex items-center
+              gap-2 text-warm-dark/40
+              hover:text-warm-dark transition-colors
+              text-sm"
+                        >
+                            <ArrowLeft size={16} />
+                            Back
+                        </button>
+                        <span className="text-xs tracking-widest
+            uppercase text-warm-dark/30 font-sans">
+                            ULUMAE
+                        </span>
+                    </div>
+                </div>
+
+                <div className="max-w-md mx-auto px-6 py-16">
+                    <div className="rounded-3xl border border-olive/20 bg-white p-8 text-center shadow-sm">
+                        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-olive/10">
+                            <CheckCircle2 size={28} className="text-olive" />
+                        </div>
+                        <h1 className="mb-3 font-serif text-3xl text-warm-dark">
+                            Check your email
+                        </h1>
+                        <p className="mb-4 text-sm leading-relaxed text-warm-dark/60">
+                            We sent a confirmation link to <strong>{email.trim()}</strong>.
+                            After you confirm, you will come straight back to this invitation and can finish joining the archive.
+                        </p>
+                        <p className="text-xs leading-relaxed text-warm-dark/40">
+                            If you do not see it, check your spam folder and keep this tab for when you return.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br
       from-olive/10 via-surface-low to-warm-muted/10">
-
-            {/* Minimal header */}
             <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
                 <div className="max-w-2xl mx-auto px-6
@@ -145,8 +183,6 @@ export default function InviteAuthStep({
 
             <div className="max-w-md mx-auto px-6
         py-16">
-
-                {/* Context header — keeps user grounded */}
                 <div className="text-center mb-10">
                     <h1 className="font-serif text-3xl
             text-warm-dark mb-3">
@@ -159,32 +195,22 @@ export default function InviteAuthStep({
                     </h1>
                     <p className="text-warm-dark/50 text-sm">
                         {mode === 'signup'
-                            ? 'A free account keeps your contributions linked to you over time.'
+                            ? 'Create your account with the invited email, then we will bring you back to finish joining.'
                             : `Log in to continue to ${invitation.memorial.fullName}'s archive.`
                         }
                     </p>
                 </div>
 
-                {/* Email differs warning */}
-                {emailDiffers && (
-                    <div className="mb-6 p-4 bg-warm-border/20
+                <div className="mb-6 p-4 bg-warm-border/20
             border border-warm-border/40 rounded-xl">
-                        <p className="text-xs
+                    <p className="text-xs
               text-warm-dark/60 leading-relaxed">
-                            This invitation was sent to{' '}
-                            <strong>
-                                {invitation.inviteeEmail}
-                            </strong>
-                            . Since you are using a different
-                            email, the archive owner will see
-                            your name and email as the person
-                            who responded. That is completely
-                            fine.
-                        </p>
-                    </div>
-                )}
+                        This invitation is addressed to{' '}
+                        <strong>{invitation.inviteeEmail}</strong>.
+                        Use this same email so the archive access stays linked to the right person.
+                    </p>
+                </div>
 
-                {/* Error message */}
                 {error && (
                     <div className="mb-6 p-4 bg-red-50
             border border-red-200 rounded-xl">
@@ -194,12 +220,10 @@ export default function InviteAuthStep({
                     </div>
                 )}
 
-                {/* Form */}
                 <form
                     onSubmit={handleSubmit}
                     className="space-y-5"
                 >
-                    {/* Name field — signup only */}
                     {mode === 'signup' && (
                         <div>
                             <label className="block text-xs
@@ -225,7 +249,6 @@ export default function InviteAuthStep({
                         </div>
                     )}
 
-                    {/* Email field */}
                     <div>
                         <label className="block text-xs
               font-medium text-warm-dark/50
@@ -239,32 +262,18 @@ export default function InviteAuthStep({
                             <input
                                 type="email"
                                 value={email}
-                                onChange={e =>
-                                    !emailIsLocked &&
-                                    setEmail(e.target.value)}
-                                readOnly={emailIsLocked}
+                                readOnly
                                 placeholder="you@example.com"
                                 required
-                                className={`w-full pl-11 pr-4
-                  py-3 border border-warm-border/40
-                  rounded-xl text-warm-dark
-                  focus:outline-none focus:border-olive
-                  focus:ring-2 focus:ring-olive/10
-                  transition-all ${emailIsLocked
-                                        ? 'bg-warm-border/10 cursor-not-allowed text-warm-dark /60'
-                                        : 'bg-surface-low/50'
-                                    }`}
+                                className="w-full cursor-not-allowed rounded-xl border border-warm-border/40 bg-warm-border/10 py-3 pl-11 pr-4 text-warm-dark/60"
                             />
                         </div>
-                        {emailIsLocked && (
-                            <p className="text-xs
+                        <p className="text-xs
                 text-warm-dark/30 mt-1">
-                                Pre-filled from your invitation.
-                            </p>
-                        )}
+                            Pre-filled from your invitation.
+                        </p>
                     </div>
 
-                    {/* Password field */}
                     <div>
                         <label className="block text-xs
               font-medium text-warm-dark/50
@@ -308,7 +317,33 @@ export default function InviteAuthStep({
                         </div>
                     </div>
 
-                    {/* Submit */}
+                    {mode === 'signup' && (
+                        <div className="space-y-3 rounded-2xl border border-warm-border/30 bg-white/70 p-4">
+                            <label className="flex items-start gap-3 text-sm text-warm-dark/60">
+                                <input
+                                    type="checkbox"
+                                    checked={agreeTerms}
+                                    onChange={e => setAgreeTerms(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-warm-border/50"
+                                />
+                                <span>
+                                    I agree to the <Link href="/legal/terms" className="text-olive underline underline-offset-4">Terms</Link> and understand this access is for a private memorial archive.
+                                </span>
+                            </label>
+                            <label className="flex items-start gap-3 text-sm text-warm-dark/60">
+                                <input
+                                    type="checkbox"
+                                    checked={agreePrivacy}
+                                    onChange={e => setAgreePrivacy(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-warm-border/50"
+                                />
+                                <span>
+                                    I have read the <Link href="/legal/privacy" className="text-olive underline underline-offset-4">Privacy Policy</Link> and understand my participation is tied to this invited email.
+                                </span>
+                            </label>
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         disabled={loading}
@@ -330,13 +365,12 @@ export default function InviteAuthStep({
                                 }
                             </>
                             : mode === 'signup'
-                                ? 'Create account & continue →'
-                                : 'Log in & continue →'
+                                ? 'Create account and continue'
+                                : 'Log in and continue'
                         }
                     </button>
                 </form>
 
-                {/* Mode toggle */}
                 <div className="mt-6 text-center">
                     {mode === 'signup' ? (
                         <p className="text-sm text-warm-dark/50">
@@ -354,7 +388,7 @@ export default function InviteAuthStep({
                         </p>
                     ) : (
                         <p className="text-sm text-warm-dark/50">
-                            Don't have an account?{' '}
+                            Don&apos;t have an account?{' '}
                             <button
                                 onClick={() => {
                                     setMode('signup');
@@ -369,7 +403,6 @@ export default function InviteAuthStep({
                     )}
                 </div>
 
-                {/* Anonymous option — the key addition */}
                 <div className="mt-8 pt-6 border-t
           border-warm-border/20 text-center">
                     <p className="text-xs text-warm-dark/30 mb-3">
@@ -380,11 +413,10 @@ export default function InviteAuthStep({
                         href={`/invite/${invitation.id}/anonymous`}
                         className="text-sm text-warm-dark/40 hover:text-warm-dark transition-colors underline underline-offset-4"
                     >
-                        Contribute without an account
+                        Continue without an account
                     </a>
                 </div>
-
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }

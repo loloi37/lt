@@ -150,6 +150,7 @@ function CreateMemorialPageContent() {
   const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(memorialId);
   // Track the memorial's actual mode from the database, so auto-save never overwrites it
   const [dbMode, setDbMode] = useState<string | null>(null);
+  const [memorialOwnerId, setMemorialOwnerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!memorialId);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -363,23 +364,18 @@ function CreateMemorialPageContent() {
 
       if (memorial) {
         if (memorial.user_id === user.id) {
-          // user IS the owner
           setUserRole('owner');
         } else {
-          // user is NOT the owner. Check if they are a valid witness.
-          const { data: invitation } = await supabase
-            .from('witness_invitations')
-            .select('id')
+          const { data: roleRow } = await supabase
+            .from('user_memorial_roles')
+            .select('role')
             .eq('memorial_id', memorialId)
-            .eq('accepted_by_user_id', user.id) // This link was made in the accept page
-            .eq('status', 'accepted')
-            .single();
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-          if (invitation) {
-            setUserRole('witness');
+          if (roleRow?.role) {
+            setUserRole(roleRow.role as WitnessRole);
           } else {
-            // Neither owner nor witness? They shouldn't be here.
-            // You could also check for 'co_guardian' here later
             alert("You do not have permission to view this archive.");
             router.replace('/dashboard');
             return;
@@ -501,6 +497,7 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
+        setMemorialOwnerId(data.user_id || null);
         // IMPROVED MERGING: Deep merge to ensure missing properties in DB are filled with defaults
         const initial = getInitialData();
         const loadedData: MemorialData = {
@@ -562,7 +559,7 @@ function CreateMemorialPageContent() {
     if (!memorialData.step1.fullName) return;
 
     // --- NEW PERMISSION CHECK ---
-    if (userRole !== 'owner') {
+    if (userRole !== 'owner' && userRole !== 'co_guardian') {
       // Witnesses do not auto-save the main record.
       // Their changes are handled via the Approval System (Step 2.1.5)
       return;
@@ -603,7 +600,7 @@ function CreateMemorialPageContent() {
         cover_photo_url: memorialData.step8?.coverPhotoPreview || null,
         completed_steps: memorialData.completedSteps || [],
         mode: currentMode,
-        user_id: authUserId,
+        user_id: currentMemorialId ? (memorialOwnerId || authUserId) : authUserId,
         paid: memorialData.paid ?? false,
         updated_at: new Date().toISOString(),
       };

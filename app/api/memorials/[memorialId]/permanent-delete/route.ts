@@ -7,29 +7,27 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// DELETE /api/memorials/[id]/permanent-delete
+// DELETE /api/memorials/[memorialId]/permanent-delete
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
-        const { id } = await params;
+        const { memorialId } = await params;
 
-        if (!id) {
+        if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorial id' }, { status: 400 });
         }
 
-        // 1. AUTHENTICATE
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. VERIFY OWNERSHIP & confirm it's already soft-deleted
         const { data: memorial, error: fetchError } = await supabaseAdmin
             .from('memorials')
             .select('user_id, deleted, paid, mode')
-            .eq('id', id)
+            .eq('id', memorialId)
             .single();
 
         if (fetchError || !memorial) {
@@ -47,13 +45,10 @@ export async function DELETE(
             );
         }
 
-        // 3. PRESERVE PLAN — if this was a paid memorial, save the highest plan
-        //    on the users table so the plan survives permanent deletion.
         if (memorial.paid && memorial.mode) {
             const planRank: Record<string, number> = { draft: 0, personal: 1, family: 2, concierge: 3 };
             const memorialPlanRank = planRank[memorial.mode] ?? 0;
 
-            // Only upgrade, never downgrade
             const { data: userRow } = await supabaseAdmin
                 .from('users')
                 .select('highest_plan')
@@ -67,7 +62,6 @@ export async function DELETE(
                     .update({ highest_plan: memorial.mode })
                     .eq('id', user.id);
             } else if (!userRow?.highest_plan && memorial.paid) {
-                // First time — just set it
                 await supabaseAdmin
                     .from('users')
                     .update({ highest_plan: memorial.mode })
@@ -75,11 +69,10 @@ export async function DELETE(
             }
         }
 
-        // 4. DELETE PERMANENTLY — remove the row from the database
         const { error } = await supabaseAdmin
             .from('memorials')
             .delete()
-            .eq('id', id);
+            .eq('id', memorialId);
 
         if (error) {
             console.error('permanent-delete error:', error);

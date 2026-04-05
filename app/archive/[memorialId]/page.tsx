@@ -1,15 +1,39 @@
-// app/archive/[memorialId]/page.tsx
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ArchiveHubClient from './_components/ArchiveHubClient';
+import CoGuardianFamilyWorkspace from './_components/CoGuardianFamilyWorkspace';
 import { WitnessRole } from '@/types/roles';
+import {
+    getMemorialCreationRequestCount,
+    getOwnerFamilyMemorials,
+    getPendingMemorialCreationRequest,
+    syncCoGuardianAcrossOwnerFamily,
+} from '@/lib/familyWorkspace';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function ArchivePage({ params }: { params: Promise<{ memorialId: string }> }) {
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+function deriveFamilyName(fullName: string | null) {
+    if (!fullName) {
+        return 'Family';
+    }
+
+    const parts = fullName.trim().split(/\s+/);
+    return parts[parts.length - 1] || 'Family';
+}
+
+export default async function ArchivePage({
+    params
+}: {
+    params: Promise<{ memorialId: string }>
+}) {
     const { memorialId } = await params;
     const cookieStore = await cookies();
 
-    // 1. Initialize server-side Supabase client
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,13 +46,11 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
         }
     );
 
-    // 2. Authenticate User
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         redirect(`/login?next=/archive/${memorialId}`);
     }
 
-    // 3. Fetch Memorial Data & Determine Ownership
     const { data: memorial, error: memError } = await supabase
         .from('memorials')
         .select('id, full_name, profile_photo_url, mode, user_id')
@@ -36,7 +58,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
         .single();
 
     if (memError || !memorial) {
-        redirect('/dashboard'); // Memorial doesn't exist or was deleted
+        redirect('/dashboard');
     }
 
     let userRole: WitnessRole | 'none' = 'none';
@@ -44,7 +66,6 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
     if (memorial.user_id === user.id) {
         userRole = 'owner';
     } else {
-        // 4. Check specific role if not owner
         const { data: roleData } = await supabase
             .from('user_memorial_roles')
             .select('role')
@@ -57,12 +78,51 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
         }
     }
 
-    // 5. Hard Security Gate
     if (userRole === 'none') {
-        redirect('/dashboard'); // User has no access to this archive
+        redirect('/dashboard');
     }
 
-    // 6. Fetch contextual data (Pending queue for admins, own contributions for everyone)
+    if (userRole === 'co_guardian' && memorial.mode === 'family') {
+        await syncCoGuardianAcrossOwnerFamily(memorial.user_id, user.id);
+
+        const familyMemorials = await getOwnerFamilyMemorials(memorial.user_id);
+        const pendingCreationRequest = await getPendingMemorialCreationRequest(memorial.user_id, user.id);
+
+        const memorialsWithCounts = await Promise.all(
+            familyMemorials.map(async (familyMemorial) => {
+                const { count } = await supabaseAdmin
+                    .from('memorial_contributions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('memorial_id', familyMemorial.id)
+                    .eq('status', 'pending_approval');
+
+                return {
+                    id: familyMemorial.id,
+                    fullName: familyMemorial.full_name,
+                    birthDate: familyMemorial.birth_date,
+                    deathDate: familyMemorial.death_date,
+                    profilePhotoUrl: familyMemorial.profile_photo_url,
+                    status: familyMemorial.status,
+                    pendingCount: count || 0,
+                };
+            })
+        );
+
+        return (
+            <CoGuardianFamilyWorkspace
+                memorialId={memorialId}
+                familyName={deriveFamilyName(memorial.full_name)}
+                memorials={memorialsWithCounts}
+                pendingCreationRequest={pendingCreationRequest ? {
+                    id: pendingCreationRequest.id,
+                    proposedName: pendingCreationRequest.proposed_name,
+                    requestMessage: pendingCreationRequest.request_message,
+                    createdAt: pendingCreationRequest.created_at,
+                } : null}
+            />
+        );
+    }
+
     let pendingCount = 0;
     if (userRole === 'owner' || userRole === 'co_guardian') {
         const { count } = await supabase
@@ -73,6 +133,11 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
         pendingCount = count || 0;
     }
 
+    let creationRequestCount = 0;
+    if (userRole === 'owner' && memorial.mode === 'family') {
+        creationRequestCount = await getMemorialCreationRequestCount(memorial.user_id);
+    }
+
     const { data: myContributions } = await supabase
         .from('memorial_contributions')
         .select('id, type, status, content, created_at, admin_notes, revision_count')
@@ -80,7 +145,6 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-    // 7. Package safe data for the client
     const roleData = {
         userRole,
         plan: memorial.mode,
@@ -90,6 +154,7 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
             profilePhotoUrl: memorial.profile_photo_url
         },
         pendingCount,
+        creationRequestCount,
         myContributions: (myContributions || []).map(c => ({
             id: c.id,
             type: c.type,
@@ -108,4 +173,4 @@ export default async function ArchivePage({ params }: { params: Promise<{ memori
             userId={user.id}
         />
     );
-}   
+}

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
+import { removeFamilyCoGuardianAccess } from '@/lib/familyWorkspace';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,14 +32,34 @@ export async function DELETE(
             return NextResponse.json({ error: 'You cannot remove yourself as owner' }, { status: 400 });
         }
 
-        // 3. Execute removal
-        const { error } = await supabaseAdmin
-            .from('user_memorial_roles')
-            .delete()
-            .eq('memorial_id', memorialId)
-            .eq('user_id', targetUserId);
+        const { data: memorialWithMode } = await supabaseAdmin
+            .from('memorials')
+            .select('user_id, mode')
+            .eq('id', memorialId)
+            .single();
 
-        if (error) throw error;
+        const { data: targetRole } = await supabaseAdmin
+            .from('user_memorial_roles')
+            .select('role')
+            .eq('memorial_id', memorialId)
+            .eq('user_id', targetUserId)
+            .maybeSingle();
+
+        const shouldRemoveAcrossFamily =
+            memorialWithMode?.mode === 'family'
+            && targetRole?.role === 'co_guardian';
+
+        if (shouldRemoveAcrossFamily) {
+            await removeFamilyCoGuardianAccess(memorialWithMode.user_id, targetUserId);
+        } else {
+            const { error } = await supabaseAdmin
+                .from('user_memorial_roles')
+                .delete()
+                .eq('memorial_id', memorialId)
+                .eq('user_id', targetUserId);
+
+            if (error) throw error;
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

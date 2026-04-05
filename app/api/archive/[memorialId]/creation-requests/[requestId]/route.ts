@@ -1,0 +1,122 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { syncAllCoGuardiansToMemorial } from '@/lib/familyWorkspace';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+type CreationDecision = 'approved' | 'rejected';
+
+function createDraftSlug(proposedName?: string | null) {
+    const base = (proposedName || 'family-memorial')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return `${base || 'family-memorial'}-${Date.now()}`;
+}
+
+export async function PATCH(
+    req: NextRequest,
+    { params }: { params: Promise<{ memorialId: string; requestId: string }> }
+) {
+    try {
+        const { memorialId, requestId } = await params;
+        const { decision } = await req.json() as { decision?: CreationDecision };
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (decision !== 'approved' && decision !== 'rejected') {
+            return NextResponse.json({ error: 'Invalid decision' }, { status: 400 });
+        }
+
+        const { data: memorial } = await supabaseAdmin
+            .from('memorials')
+            .select('id, user_id')
+            .eq('id', memorialId)
+            .single();
+
+        if (!memorial || memorial.user_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: requestRecord } = await supabaseAdmin
+            .from('memorial_creation_requests')
+            .select('*')
+            .eq('id', requestId)
+            .maybeSingle();
+
+        if (!requestRecord || requestRecord.owner_user_id !== user.id) {
+            return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+        }
+
+        if (requestRecord.status !== 'pending') {
+            return NextResponse.json({ error: 'This request has already been handled.' }, { status: 400 });
+        }
+
+        let createdMemorialId: string | null = null;
+
+        if (decision === 'approved') {
+            const step1 = requestRecord.proposed_name
+                ? { fullName: requestRecord.proposed_name }
+                : {};
+
+            const { data: createdMemorial, error: createError } = await supabaseAdmin
+                .from('memorials')
+                .insert({
+                    user_id: user.id,
+                    mode: 'family',
+                    status: 'draft',
+                    slug: createDraftSlug(requestRecord.proposed_name),
+                    full_name: requestRecord.proposed_name || null,
+                    step1,
+                    paid: false,
+                })
+                .select('id')
+                .single();
+
+            if (createError) {
+                throw createError;
+            }
+
+            if (!createdMemorial?.id) {
+                throw new Error('Could not create the new memorial.');
+            }
+
+            const newMemorialId = createdMemorial.id;
+            createdMemorialId = newMemorialId;
+            await syncAllCoGuardiansToMemorial(user.id, newMemorialId);
+        }
+
+        const { error: updateError } = await supabaseAdmin
+            .from('memorial_creation_requests')
+            .update({
+                status: decision,
+                created_memorial_id: createdMemorialId,
+                decided_at: new Date().toISOString(),
+                decided_by: user.id,
+            })
+            .eq('id', requestId);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        return NextResponse.json({
+            success: true,
+            createdMemorialId,
+        });
+    } catch (error: any) {
+        console.error('[creation-request][PATCH]', error);
+        return NextResponse.json(
+            { error: error.message || 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
