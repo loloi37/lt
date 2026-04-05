@@ -77,6 +77,7 @@ export default function Step10Review({
         userId: user?.id || undefined,
         userName: 'Owner',
         changeSummary: 'Archive sealed — protected forever',
+        changeReason: 'archive_seal',
         changeType: 'manual',
       });
     }

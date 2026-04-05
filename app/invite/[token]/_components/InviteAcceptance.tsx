@@ -12,10 +12,10 @@ import { WitnessRole } from '@/types/roles';
 interface Props {
     invitation: InvitationData;
     token: string;
+    currentUserEmail: string | null;
     onSuccess: (memorialId: string, role: string) => void;
 }
 
-// Role explanations — clear and non-technical
 const ROLE_CONFIG: Record<'witness' | 'co_guardian' | 'reader', {
     label: string;
     color: string;
@@ -56,7 +56,7 @@ const ROLE_CONFIG: Record<'witness' | 'co_guardian' | 'reader', {
         description:
             'You share stewardship of this archive. ' +
             'You can review and approve contributions ' +
-            'from witnesses, and edit certain sections.',
+            'from witnesses, and edit memorial content across the family archive.',
         capabilities: [
             {
                 icon: Edit,
@@ -68,13 +68,14 @@ const ROLE_CONFIG: Record<'witness' | 'co_guardian' | 'reader', {
             },
             {
                 icon: Eye,
-                text: 'Full archive access'
+                text: 'Move across family memorials'
             }
         ],
         cannotDo: [
             'Delete the archive',
             'Change the owner',
-            'Access billing'
+            'Access billing',
+            'Invite other people'
         ]
     },
     reader: {
@@ -96,9 +97,31 @@ const ROLE_CONFIG: Record<'witness' | 'co_guardian' | 'reader', {
     }
 } as const;
 
+const ACKNOWLEDGEMENT_COPY = {
+    witness: {
+        firstTitle: 'I understand my contributions are reviewed',
+        firstBody: 'Everything I share will be reviewed by the archive owner before it appears. This protects the dignity of the archive.',
+        secondTitle: 'I will honour this archive with care',
+        secondBody: 'I will only share memories that are truthful and respectful. I understand this is a permanent family record.'
+    },
+    co_guardian: {
+        firstTitle: 'I understand this role carries stewardship responsibility',
+        firstBody: 'I may help review contributions and shape how this archive is preserved for the family.',
+        secondTitle: 'I will act with care and respect',
+        secondBody: 'I will only make edits or decisions that protect the truth, dignity, and continuity of this archive.'
+    },
+    reader: {
+        firstTitle: 'I understand this archive is private',
+        firstBody: 'What I read here belongs to a family memory space and should be treated with discretion and respect.',
+        secondTitle: 'I will honour the family context of this archive',
+        secondBody: 'I understand this invitation is for reading and remembrance, not for editing or contributing.'
+    }
+} as const;
+
 export default function InviteAcceptance({
     invitation,
     token,
+    currentUserEmail,
     onSuccess
 }: Props) {
     const [checkedModeration, setCheckedModeration] =
@@ -112,10 +135,13 @@ export default function InviteAcceptance({
         useState(false);
 
     const role = invitation.role as WitnessRole;
-    const roleConfig = ROLE_CONFIG[(role === 'reader' ? 'reader' : role) as keyof typeof ROLE_CONFIG];
+    const roleKey = (role === 'reader' ? 'reader' : role) as keyof typeof ROLE_CONFIG;
+    const roleConfig = ROLE_CONFIG[roleKey];
+    const acknowledgmentCopy = ACKNOWLEDGEMENT_COPY[roleKey];
     const canJoin = checkedModeration && checkedDignity;
+    const signedInAsDifferentUser = !!currentUserEmail
+        && currentUserEmail.toLowerCase() !== invitation.inviteeEmail.toLowerCase();
 
-    // Check if this is an anonymous contributor
     const anonContributor = (() => {
         try {
             const stored = sessionStorage.getItem(
@@ -134,14 +160,7 @@ export default function InviteAcceptance({
         try {
             const body: Record<string, string> = {};
 
-            // If anonymous, pass their contributionId
             if (anonContributor) {
-                const { data: contribution } = await fetch(
-                    `/api/invite/${token}`
-                ).then(r => r.json());
-
-                // Get the contributionId from session
-                // (set during OTP verification)
                 const storedId = sessionStorage.getItem(
                     'anon_contribution_id'
                 );
@@ -168,13 +187,11 @@ export default function InviteAcceptance({
                 return;
             }
 
-            // Clean up anonymous session data
             sessionStorage.removeItem('anon_contributor');
             sessionStorage.removeItem('anon_contribution_id');
 
             onSuccess(data.memorialId, data.role);
-
-        } catch (err: any) {
+        } catch {
             setError(
                 'A network error occurred. Please try again.'
             );
@@ -189,7 +206,6 @@ export default function InviteAcceptance({
             await fetch(`/api/invite/${token}/decline`, {
                 method: 'POST'
             });
-            // Redirect to a gentle "you've declined" page
             window.location.href = '/';
         } catch {
             setDeclining(false);
@@ -209,8 +225,6 @@ export default function InviteAcceptance({
     return (
         <div className="min-h-screen bg-gradient-to-br
       from-olive/10 via-surface-low to-warm-muted/10">
-
-            {/* Minimal header */}
             <div className="border-b border-warm-border/20
         bg-white/60 backdrop-blur-sm">
                 <div className="max-w-2xl mx-auto px-6 py-4
@@ -223,11 +237,8 @@ export default function InviteAcceptance({
             </div>
 
             <div className="max-w-2xl mx-auto px-6 py-16">
-
-                {/* Memorial identity */}
                 <div className="flex flex-col items-center
           text-center mb-12">
-
                     {invitation.memorial.profilePhotoUrl ? (
                         <div className="w-24 h-24 rounded-full
               overflow-hidden border-4 border-white
@@ -258,7 +269,7 @@ export default function InviteAcceptance({
                         <p className="font-serif italic
               text-warm-dark/40 text-lg">
                             {birthYear && deathYear
-                                ? `${birthYear} — ${deathYear}`
+                                ? `${birthYear} - ${deathYear}`
                                 : birthYear
                                     ? `Born ${birthYear}`
                                     : ''}
@@ -266,12 +277,9 @@ export default function InviteAcceptance({
                     )}
                 </div>
 
-                {/* Main acceptance card */}
                 <div className="bg-white rounded-2xl
           border border-warm-border/30 shadow-sm
           overflow-hidden mb-6">
-
-                    {/* Invitation header */}
                     <div className="px-8 pt-8 pb-6
             border-b border-warm-border/20">
                         <p className="text-warm-dark/60
@@ -288,9 +296,11 @@ export default function InviteAcceptance({
                                 {roleConfig.label}
                             </span>
                         </p>
+                        <p className="mt-3 text-sm text-warm-dark/45">
+                            Invitation address: <strong>{invitation.inviteeEmail}</strong>
+                        </p>
                     </div>
 
-                    {/* Role explanation */}
                     <div className="px-8 py-6
             border-b border-warm-border/20">
                         <p className="text-sm text-warm-dark/50
@@ -298,7 +308,6 @@ export default function InviteAcceptance({
                             {roleConfig.description}
                         </p>
 
-                        {/* Capabilities */}
                         <div className="grid grid-cols-1
               sm:grid-cols-2 gap-4">
                             <div>
@@ -354,10 +363,7 @@ export default function InviteAcceptance({
                         </div>
                     </div>
 
-                    {/* Checkboxes */}
                     <div className="px-8 py-6 space-y-4">
-
-                        {/* Checkbox 1 — Moderation */}
                         <label className={`flex items-start
               gap-4 p-4 rounded-xl border-2
               cursor-pointer transition-all ${checkedModeration
@@ -388,20 +394,15 @@ export default function InviteAcceptance({
                             <div>
                                 <p className="text-sm font-medium
                   text-warm-dark mb-1">
-                                    I understand contributions
-                                    are reviewed
+                                    {acknowledgmentCopy.firstTitle}
                                 </p>
                                 <p className="text-xs
                   text-warm-dark/50 leading-relaxed">
-                                    Everything I share will be reviewed
-                                    by the archive owner before it
-                                    appears. This protects the dignity
-                                    of the archive.
+                                    {acknowledgmentCopy.firstBody}
                                 </p>
                             </div>
                         </label>
 
-                        {/* Checkbox 2 — Dignity pledge */}
                         <label className={`flex items-start
               gap-4 p-4 rounded-xl border-2
               cursor-pointer transition-all ${checkedDignity
@@ -432,20 +433,16 @@ export default function InviteAcceptance({
                             <div>
                                 <p className="text-sm font-medium
                   text-warm-dark mb-1">
-                                    I will honour this archive with care
+                                    {acknowledgmentCopy.secondTitle}
                                 </p>
                                 <p className="text-xs
                   text-warm-dark/50 leading-relaxed">
-                                    I will only share memories that
-                                    are truthful and respectful.
-                                    I understand this is a permanent
-                                    family record.
+                                    {acknowledgmentCopy.secondBody}
                                 </p>
                             </div>
                         </label>
                     </div>
 
-                    {/* Anonymous contributor notice */}
                     {anonContributor && (
                         <div className="mx-8 mb-6 p-4
               bg-warm-border/10 rounded-xl border
@@ -464,7 +461,15 @@ export default function InviteAcceptance({
                         </div>
                     )}
 
-                    {/* Error */}
+                    {signedInAsDifferentUser && (
+                        <div className="mx-8 mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                            <p className="text-sm leading-relaxed text-amber-800">
+                                You are signed in as <strong>{currentUserEmail}</strong>, but this invitation was sent to <strong>{invitation.inviteeEmail}</strong>.
+                                Continue only if that is intentional, or sign out and come back with the invited email.
+                            </p>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="mx-8 mb-6 p-4
               bg-red-50 border border-red-200
@@ -478,7 +483,6 @@ export default function InviteAcceptance({
                         </div>
                     )}
 
-                    {/* CTA */}
                     <div className="px-8 pb-8">
                         <button
                             onClick={handleJoin}
@@ -515,7 +519,6 @@ export default function InviteAcceptance({
                     </div>
                 </div>
 
-                {/* Decline path — subtle, non-destructive */}
                 {!showDeclineConfirm ? (
                     <div className="text-center">
                         <button

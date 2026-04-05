@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
+import {
+    syncCoGuardianAcrossOwnerFamily,
+    updateFamilyCoGuardianRole,
+} from '@/lib/familyWorkspace';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,14 +45,37 @@ export async function PATCH(
             return NextResponse.json({ error: 'Co-Guardian is a Family plan role only' }, { status: 403 });
         }
 
-        // 3. Update Role
-        const { error } = await supabaseAdmin
+        const { data: currentRoleRow } = await supabaseAdmin
             .from('user_memorial_roles')
-            .update({ role: newRole })
+            .select('role')
             .eq('memorial_id', memorialId)
-            .eq('user_id', targetUserId);
+            .eq('user_id', targetUserId)
+            .maybeSingle();
 
-        if (error) throw error;
+        const isFamilyMemorial = memorial?.mode === 'family';
+        const isFamilyWideCoGuardianChange =
+            isFamilyMemorial
+            && (newRole === 'co_guardian' || currentRoleRow?.role === 'co_guardian');
+
+        if (isFamilyWideCoGuardianChange) {
+            if (newRole === 'co_guardian') {
+                await syncCoGuardianAcrossOwnerFamily(memorial.user_id, targetUserId);
+            } else {
+                await updateFamilyCoGuardianRole(
+                    memorial.user_id,
+                    targetUserId,
+                    newRole as 'witness' | 'reader'
+                );
+            }
+        } else {
+            const { error } = await supabaseAdmin
+                .from('user_memorial_roles')
+                .update({ role: newRole })
+                .eq('memorial_id', memorialId)
+                .eq('user_id', targetUserId);
+
+            if (error) throw error;
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

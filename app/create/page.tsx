@@ -37,8 +37,8 @@ import {
 } from '@/types/memorial';
 import { PathId } from '@/types/paths';
 import { createClient } from '@/utils/supabase/client';
-import { createVersion } from '@/lib/versionService';
 import { calculateEmotionalState, getPathDepth } from '@/lib/emotionalState';
+import { getMemorialSaveSignature } from '@/lib/versioning';
 
 const PATH_CONFIG: Record<PathId, { steps: number[]; labels: string[] }> = {
   facts: {
@@ -150,6 +150,7 @@ function CreateMemorialPageContent() {
   const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(memorialId);
   // Track the memorial's actual mode from the database, so auto-save never overwrites it
   const [dbMode, setDbMode] = useState<string | null>(null);
+  const [memorialOwnerId, setMemorialOwnerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!memorialId);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
@@ -157,8 +158,9 @@ function CreateMemorialPageContent() {
   const [userRole, setUserRole] = useState<WitnessRole>('owner'); // Default to owner
   const [hasSuccessor, setHasSuccessor] = useState(false); // NEW: Track if user has a successor
 
-  // Ref to track data when entering a step (for version diffing)
+  // Keep a stable snapshot so restores and saves stay aligned
   const stepEntryDataRef = useRef<MemorialData>(getInitialData());
+  const lastSavedSignatureRef = useRef(getMemorialSaveSignature(getInitialData()));
 
   // Track the authenticated user ID
   const [authUserId, setAuthUserId] = useState<string | null>(null);
@@ -232,6 +234,7 @@ function CreateMemorialPageContent() {
         if (data) {
           setCurrentMemorialId(data.id);
           setDbMode(currentMode);
+          setMemorialOwnerId(authUserId);
           window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
         }
       } catch (err) {
@@ -253,6 +256,7 @@ function CreateMemorialPageContent() {
   const dashboardPath = authUserId
     ? `/dashboard/${effectiveMode === 'family' ? 'family' : effectiveMode === 'draft' ? 'draft' : 'personal'}/${authUserId}`
     : '/dashboard';
+  const isMemorialOwner = !!authUserId && memorialOwnerId === authUserId;
 
   // 2. HELPER FOR BADGE UI — Step 1.1.1: Warm, human draft banner
   const ModeBadge = () => (
@@ -363,23 +367,18 @@ function CreateMemorialPageContent() {
 
       if (memorial) {
         if (memorial.user_id === user.id) {
-          // user IS the owner
           setUserRole('owner');
         } else {
-          // user is NOT the owner. Check if they are a valid witness.
-          const { data: invitation } = await supabase
-            .from('witness_invitations')
-            .select('id')
+          const { data: roleRow } = await supabase
+            .from('user_memorial_roles')
+            .select('role')
             .eq('memorial_id', memorialId)
-            .eq('accepted_by_user_id', user.id) // This link was made in the accept page
-            .eq('status', 'accepted')
-            .single();
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-          if (invitation) {
-            setUserRole('witness');
+          if (roleRow?.role) {
+            setUserRole(roleRow.role as WitnessRole);
           } else {
-            // Neither owner nor witness? They shouldn't be here.
-            // You could also check for 'co_guardian' here later
             alert("You do not have permission to view this archive.");
             router.replace('/dashboard');
             return;
@@ -501,6 +500,7 @@ function CreateMemorialPageContent() {
       if (error) throw error;
 
       if (data) {
+        setMemorialOwnerId(data.user_id || null);
         // IMPROVED MERGING: Deep merge to ensure missing properties in DB are filled with defaults
         const initial = getInitialData();
         const loadedData: MemorialData = {
@@ -528,8 +528,8 @@ function CreateMemorialPageContent() {
         if (data.mode) {
           setDbMode(data.mode);
         }
-        // Initialize step entry ref with loaded data
         stepEntryDataRef.current = structuredClone(loadedData);
+        lastSavedSignatureRef.current = getMemorialSaveSignature(loadedData);
       }
     } catch (error) {
       console.error('Error loading memorial:', error);
@@ -562,7 +562,7 @@ function CreateMemorialPageContent() {
     if (!memorialData.step1.fullName) return;
 
     // --- NEW PERMISSION CHECK ---
-    if (userRole !== 'owner') {
+    if (userRole !== 'owner' && userRole !== 'co_guardian') {
       // Witnesses do not auto-save the main record.
       // Their changes are handled via the Approval System (Step 2.1.5)
       return;
@@ -574,9 +574,13 @@ function CreateMemorialPageContent() {
       return;
     }
 
+    const saveSignature = getMemorialSaveSignature(memorialData);
+    if (saveSignature === lastSavedSignatureRef.current) {
+      return;
+    }
+
     setSaveStatus('saving');
     try {
-      const supabase = createClient();
       const slug = generateSlug(memorialData.step1.fullName);
       // Use the DB mode if we loaded from an existing memorial (prevents overwriting family→personal)
       // Only fall back to URL param for brand new memorials
@@ -603,7 +607,7 @@ function CreateMemorialPageContent() {
         cover_photo_url: memorialData.step8?.coverPhotoPreview || null,
         completed_steps: memorialData.completedSteps || [],
         mode: currentMode,
-        user_id: authUserId,
+        user_id: currentMemorialId ? (memorialOwnerId || authUserId) : authUserId,
         paid: memorialData.paid ?? false,
         updated_at: new Date().toISOString(),
       };
@@ -615,16 +619,16 @@ function CreateMemorialPageContent() {
 
       let data, error;
       if (currentMemorialId) {
-        // Update existing memorial
-        const result = await supabase
-          .from('memorials')
-          .update(memorialRecord)
-          .eq('id', currentMemorialId)
-          .select()
-          .single();
-        data = result.data;
-        error = result.error;
+        const response = await fetch(`/api/memorials/${currentMemorialId}/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memorialData }),
+        });
+        const payload = await response.json().catch(() => null);
+        data = payload?.memorial || null;
+        error = response.ok ? null : { message: payload?.error || 'Save failed' };
       } else {
+        const supabase = createClient();
         // Insert new memorial
         const result = await supabase
           .from('memorials')
@@ -639,41 +643,15 @@ function CreateMemorialPageContent() {
 
       if (data && !currentMemorialId) {
         setCurrentMemorialId(data.id);
+        setMemorialOwnerId(authUserId);
         window.history.replaceState({}, '', `/create?id=${data.id}&mode=${currentMode}`);
       }
 
+      lastSavedSignatureRef.current = saveSignature;
       setSaveStatus('saved');
     } catch (error: any) {
       console.error('Save error:', error?.message || error?.code || JSON.stringify(error));
       setSaveStatus('error');
-    }
-  };
-
-  const goToNextStepAndComplete = async () => {
-    // Only create versions if the user is the owner
-    if (currentMemorialId && userRole === 'owner') {
-      await createVersion({
-        memorialId: currentMemorialId,
-        oldData: stepEntryDataRef.current,
-        newData: memorialData,
-        userId: authUserId || undefined,
-        userName: 'Owner',
-        changeType: 'manual',
-      });
-    }
-
-    // Update the entry snapshot for the next step
-    stepEntryDataRef.current = structuredClone(memorialData);
-
-    if (memorialData.currentStep < TOTAL_STEPS) {
-      setMemorialData(prev => ({
-        ...prev,
-        currentStep: prev.currentStep + 1,
-        completedSteps: prev.completedSteps.includes(prev.currentStep)
-          ? prev.completedSteps
-          : [...prev.completedSteps, prev.currentStep],
-      }));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -951,7 +929,7 @@ function CreateMemorialPageContent() {
 
 
             {/* Version History Button */}
-            {currentMemorialId && (
+            {currentMemorialId && isMemorialOwner && (
               <>
                 <button
                   onClick={() => setShowHistory(true)}
@@ -1311,7 +1289,7 @@ function CreateMemorialPageContent() {
               </button>
 
               {/* Version History Button */}
-              {currentMemorialId && (
+              {currentMemorialId && isMemorialOwner && (
                 <button
                   onClick={() => setShowHistory(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 border border-warm-border/30 rounded-lg hover:bg-warm-border/5 transition-all text-xs text-warm-outline"
@@ -1538,7 +1516,7 @@ function CreateMemorialPageContent() {
       }
 
       {/* VERSION HISTORY MODAL */}
-      {showHistory && currentMemorialId && (
+      {showHistory && currentMemorialId && isMemorialOwner && (
         <VersionHistory
           memorialId={currentMemorialId}
           currentData={memorialData}
@@ -1547,6 +1525,7 @@ function CreateMemorialPageContent() {
           onRestore={(restoredData) => {
             setMemorialData(restoredData);
             stepEntryDataRef.current = structuredClone(restoredData);
+            lastSavedSignatureRef.current = getMemorialSaveSignature(restoredData);
             setShowHistory(false);
           }}
           onClose={() => setShowHistory(false)}

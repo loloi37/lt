@@ -1,38 +1,27 @@
-// app/invite/[token]/_components/InviteShell.tsx
 'use client';
 
 import { useState } from 'react';
 import InvitePreview from './InvitePreview';
 import InviteAuthStep from './InviteAuthStep';
 import InviteAcceptance from './InviteAcceptance';
-import InviteTerminal from './InviteTerminal';
+import { InvitationData } from '../page';
 
-export default function InviteShell({ initialData, token }: any) {
-    // Step machine: 'preview' -> 'auth' -> 'acceptance'
+interface InviteShellProps {
+    initialData: {
+        invitation: InvitationData;
+        isAuthenticated: boolean;
+        currentUserEmail: string | null;
+    };
+    token: string;
+}
+
+export default function InviteShell({
+    initialData,
+    token
+}: InviteShellProps) {
     const [step, setStep] = useState<string>(
-        initialData.invitation.isExpired ? 'terminal' :
-            initialData.invitation.status !== 'pending' ? 'terminal' :
-                initialData.isAuthenticated ? 'acceptance' : 'preview'
+        initialData.isAuthenticated ? 'acceptance' : 'preview'
     );
-
-    const [authStatus, setAuthStatus] = useState(initialData.isAuthenticated);
-
-    // Determine terminal reason if needed
-    const terminalReason = initialData.invitation.isExpired ? 'EXPIRED' :
-        initialData.invitation.status === 'declined' ? 'DECLINED' :
-            initialData.invitation.status === 'accepted' ? 'USED_BY_OTHER' : null;
-
-    if (step === 'terminal' || terminalReason) {
-        return (
-            <InviteTerminal
-                reason={terminalReason || 'NOT_FOUND'}
-                meta={{
-                    inviterName: initialData.invitation.inviterName,
-                    inviteeEmail: initialData.invitation.inviteeEmail
-                }}
-            />
-        );
-    }
 
     if (step === 'preview') {
         return (
@@ -47,26 +36,20 @@ export default function InviteShell({ initialData, token }: any) {
         return (
             <InviteAuthStep
                 invitation={initialData.invitation}
-                onSuccess={() => {
-                    setAuthStatus(true);
-                    setStep('acceptance');
-                }}
+                onSuccess={() => setStep('acceptance')}
                 onBack={() => setStep('preview')}
             />
         );
     }
 
-    if (step === 'acceptance') {
-        return (
-            <InviteAcceptance
-                invitation={initialData.invitation}
-                token={token}
-                onSuccess={(memorialId: string, role: string) => {
-                    window.location.href = `/archive/${memorialId}/welcome?role=${role}`;
-                }}
-            />
-        );
-    }
-
-    return null;
+    return (
+        <InviteAcceptance
+            invitation={initialData.invitation}
+            token={token}
+            currentUserEmail={initialData.currentUserEmail}
+            onSuccess={(memorialId: string, role: string) => {
+                window.location.href = `/archive/${memorialId}/welcome?role=${role}`;
+            }}
+        />
+    );
 }

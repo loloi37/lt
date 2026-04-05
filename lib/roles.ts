@@ -22,21 +22,21 @@ export const ROLE_CONFIG: Record<WitnessRole, RoleConfig> = {
     },
     co_guardian: {
         label: 'Co-Guardian',
-        description: 'Trusted family steward. Can edit content and review witness contributions.',
+        description: 'Trusted family steward. Can edit content and review witness contributions across the family archive.',
         colorClass: 'text-warm-brown',
         bgClass: 'bg-warm-brown/10 border-warm-brown/20',
         iconName: 'Edit',
         capabilities: [
             'View and edit memorial content',
             'Approve/Reject witness contributions',
-            'Invite new witnesses and readers',
+            'Request new memorial creation from the owner',
             'Access steward review queue'
         ],
         restrictions: [
             'Cannot delete the archive',
             'Cannot change billing or plans',
             'Cannot reassign the Owner',
-            'Cannot invite other Co-Guardians'
+            'Cannot invite or remove members'
         ]
     },
     witness: {

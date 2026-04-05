@@ -1,28 +1,36 @@
-## What I understand about this project
+What I understand about your current project:
 
-This project looks like a `Next.js` application for **creating, managing, and preserving digital memorials / family legacy archives**.
+This project looks like **ULUMAE**, a Next.js application for creating, preserving, and managing digital memorial archives.
 
-From the codebase, I understand that the product lets users:
+From the codebase, the main idea seems to be:
 
-- create a memorial through a multi-step guided editor with biography, family, values, memories, photos, audio, and video
-- save drafts and continue later
-- preview the memorial as a visitor would see it
-- invite family members or witnesses to contribute content
-- manage archive roles, permissions, and succession / successor access
-- pay through Stripe to unlock permanent preservation features
-- store application data with Supabase
-- generate archived / rendered memorial pages and preservation flows tied to Arweave-style permanent storage
+- Users can build a structured memorial through a multi-step editor.
+- The memorial is not just a simple profile page; it is organized around identity, life story, memories, media, values, and family contributions.
+- The product is designed around the idea of **long-term or permanent preservation**, especially using **Arweave**.
+- There is a distinction between draft, personal, and family archive modes.
+- The experience includes account/auth flows, dashboards, invitations, family collaboration, succession/successor logic, version history, and payment/preservation flows.
 
-The main product idea seems to be:
+What stands out technically:
 
-`ULUMAE` is a platform for preserving a person's life story and family memory in a structured, private, long-lasting archive, with collaboration, inheritance, and permanence as core features.
+- The frontend is built with **Next.js + React + TypeScript**.
+- Styling appears to use **Tailwind CSS**.
+- Authentication and data storage appear to rely on **Supabase**.
+- Payments are integrated with **Stripe**.
+- The app includes a substantial custom memorial editor in `app/create/page.tsx`.
+- There is a reusable rendering system for the memorial itself through `components/MemorialRenderer.tsx`.
+- The codebase also includes archive permissions, roles, invitation flows, email-related logic, versioning, and preservation-oriented features.
 
-A few specific signals from the project structure:
+My high-level understanding of the product:
 
-- `app/create` is the main memorial creation wizard
-- `app/archive/[memorialId]` contains archive viewing, contribution, stewardship, family, and welcome flows
-- `app/api/...` contains backend routes for invites, payments, uploads, reminders, succession, authorization, and archive management
-- `lib/arweave`, `lib/certificate`, and `components/PreservationStatus` suggest a preservation / certification layer
-- `components/providers/AuthProvider` and Supabase utilities show authentication and user/archive state management
+This is a serious, emotionally guided memorial/archive platform where a person or family can document a life, enrich it with media and witness contributions, and then preserve that archive in a durable way that is meant to outlast a normal web app or subscription product.
 
-So in short, I understand this as a **digital legacy / memorial preservation platform** built with `Next.js`, `Supabase`, and `Stripe`, with a product direction centered on long-term archival preservation and family continuity.
+In short:
+
+It feels like your project is trying to combine:
+
+- memorial creation,
+- family collaboration,
+- permanent digital preservation,
+- and succession/access continuity
+
+into one premium archive product.

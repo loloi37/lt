@@ -1875,3 +1875,66 @@ EXCEPTION WHEN duplicate_object THEN
   NULL;
 END;
 $$;
+
+
+-- ============================================================
+-- SECTION 26 (Codex commands)
+-- ============================================================
+-- Commands to execute in Supabase SQL Editor (in order)
+-- Phase: Co-guardian family workspace + memorial creation requests
+
+-- 1. Create a request table so co-guardians can ask the owner to add a new family memorial
+CREATE TABLE IF NOT EXISTS memorial_creation_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  owner_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  requester_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  source_memorial_id UUID NOT NULL REFERENCES memorials(id) ON DELETE CASCADE,
+  proposed_name TEXT,
+  request_message TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_memorial_id UUID REFERENCES memorials(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  decided_at TIMESTAMPTZ,
+  decided_by UUID REFERENCES auth.users(id)
+);
+
+-- 2. Prevent duplicate pending requests between the same owner and co-guardian
+CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_pending_memorial_creation_request
+  ON memorial_creation_requests (owner_user_id, requester_user_id)
+  WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS idx_memorial_creation_requests_owner_status
+  ON memorial_creation_requests (owner_user_id, status, created_at DESC);
+
+-- 3. RLS for memorial creation requests
+ALTER TABLE memorial_creation_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Requesters can view own memorial creation requests"
+  ON memorial_creation_requests FOR SELECT
+  USING (requester_user_id = auth.uid());
+
+CREATE POLICY "Owners can view memorial creation requests"
+  ON memorial_creation_requests FOR SELECT
+  USING (owner_user_id = auth.uid());
+
+CREATE POLICY "Authenticated users can create memorial creation requests"
+  ON memorial_creation_requests FOR INSERT
+  WITH CHECK (requester_user_id = auth.uid());
+
+CREATE POLICY "Owners can update memorial creation requests"
+  ON memorial_creation_requests FOR UPDATE
+  USING (owner_user_id = auth.uid());
+
+CREATE POLICY "Service role full access to memorial creation requests"
+  ON memorial_creation_requests FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- 4. Enable Realtime so owner steward queues update when a co-guardian requests a memorial
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE memorial_creation_requests;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END;
+$$;

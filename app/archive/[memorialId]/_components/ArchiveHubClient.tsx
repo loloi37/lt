@@ -30,6 +30,7 @@ interface ArchiveHubClientProps {
       profilePhotoUrl: string | null;
     };
     pendingCount: number;
+    creationRequestCount?: number;
     myContributions: any[];
   };
   memorialId: string;
@@ -69,9 +70,10 @@ export default function ArchiveHubClient({ roleData, memorialId, userId }: Archi
   const router = useRouter();
   useRoleSync(memorialId, userId, roleData.userRole);
 
-  const { userRole, plan, memorial, myContributions, pendingCount } = roleData;
+  const { userRole, plan, memorial, myContributions, pendingCount, creationRequestCount = 0 } = roleData;
   const capabilities = getArchiveCapabilities(userRole, plan === 'family' ? 'family' : 'personal');
   const roleLabel = getRoleLabel(userRole);
+  const totalStewardCount = pendingCount + creationRequestCount;
 
   return (
     <div className="min-h-screen bg-surface-low">
@@ -109,7 +111,7 @@ export default function ArchiveHubClient({ roleData, memorialId, userId }: Archi
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-8">
-        {capabilities.canReview && pendingCount > 0 && (
+        {capabilities.canReview && totalStewardCount > 0 && (
           <div
             onClick={() => router.push(`/archive/${memorialId}/steward`)}
             className="bg-warm-muted/5 border border-warm-muted/20 rounded-xl p-5 flex items-center justify-between cursor-pointer hover:bg-warm-muted/10 transition-all"
@@ -120,9 +122,15 @@ export default function ArchiveHubClient({ roleData, memorialId, userId }: Archi
               </div>
               <div>
                 <p className="text-sm font-medium text-warm-dark">
-                  {pendingCount} contribution{pendingCount !== 1 ? 's' : ''} awaiting review
+                  {userRole === 'owner' && creationRequestCount > 0
+                    ? `${pendingCount} contribution${pendingCount !== 1 ? 's' : ''} and ${creationRequestCount} memorial request${creationRequestCount !== 1 ? 's' : ''} waiting`
+                    : `${pendingCount} contribution${pendingCount !== 1 ? 's' : ''} awaiting review`}
                 </p>
-                <p className="text-xs text-warm-dark/50">Witnesses are waiting for your decision</p>
+                <p className="text-xs text-warm-dark/50">
+                  {userRole === 'owner' && creationRequestCount > 0
+                    ? 'Witnesses and co-guardians are waiting for your decision'
+                    : 'Witnesses are waiting for your decision'}
+                </p>
               </div>
             </div>
             <ChevronRight size={18} className="text-warm-dark/30" />
@@ -146,7 +154,7 @@ export default function ArchiveHubClient({ roleData, memorialId, userId }: Archi
               <QuickAction
                 icon={Shield}
                 label="Review queue"
-                badge={pendingCount > 0 ? pendingCount : undefined}
+                badge={totalStewardCount > 0 ? totalStewardCount : undefined}
                 onClick={() => router.push(`/archive/${memorialId}/steward`)}
               />
             )}
