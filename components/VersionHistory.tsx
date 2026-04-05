@@ -1,16 +1,28 @@
-// components/VersionHistory.tsx
-// Displays the full version history timeline for a memorial
-// Includes: view version, restore version, change reasons
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Clock, User, RotateCcw, Eye, ChevronDown, ChevronUp,
-    FileText, Image as ImageIcon, Film, BookOpen, Heart,
-    Briefcase, Sparkles, Home, MessageCircle, X, Loader2,
-    AlertTriangle, CheckCircle, History, ArrowLeft, Shield
+    ArrowLeft,
+    BookOpen,
+    Briefcase,
+    Clock,
+    Eye,
+    FileText,
+    Heart,
+    History,
+    Home,
+    Image as ImageIcon,
+    Loader2,
+    MessageCircle,
+    RotateCcw,
+    Shield,
+    Sparkles,
+    User,
+    X,
+    Film,
 } from 'lucide-react';
-import { MemorialVersion, getVersionHistory, restoreVersion, getVersion } from '@/lib/versionService';
+import { getVersionHistory, restoreVersion, MemorialVersion } from '@/lib/versionService';
+import { applyVersionSnapshot } from '@/lib/versioning';
 import { MemorialData } from '@/types/memorial';
 import MemorialRenderer from '@/components/MemorialRenderer';
 
@@ -19,26 +31,98 @@ interface VersionHistoryProps {
     currentData: MemorialData;
     userId?: string;
     userName?: string;
-    onRestore: (restoredData: MemorialData) => void; // Callback to update parent state
+    onRestore: (restoredData: MemorialData) => void;
     onClose: () => void;
 }
 
+interface RestoreAction {
+    targetVersion: MemorialVersion;
+    title: string;
+    description: string;
+    actionLabel: string;
+}
+
 const STEP_ICONS: Record<number, any> = {
-    1: User, 2: Home, 3: Briefcase, 4: Heart,
-    5: Sparkles, 6: BookOpen, 7: MessageCircle, 8: ImageIcon, 9: Film,
+    1: User,
+    2: Home,
+    3: Briefcase,
+    4: Heart,
+    5: Sparkles,
+    6: BookOpen,
+    7: MessageCircle,
+    8: ImageIcon,
+    9: Film,
 };
 
 const STEP_NAMES: Record<number, string> = {
-    1: 'Basic Info', 2: 'Childhood', 3: 'Career', 4: 'Family',
-    5: 'Personality', 6: 'Biography', 7: 'Memories', 8: 'Photos', 9: 'Videos',
+    1: 'Basic Info',
+    2: 'Childhood',
+    3: 'Career',
+    4: 'Family',
+    5: 'Personality',
+    6: 'Biography',
+    7: 'Memories',
+    8: 'Photos',
+    9: 'Videos',
 };
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-    manual: { label: 'Manual Edit', color: 'bg-olive/10 text-olive' },
-    auto_save: { label: 'Auto-save', color: 'bg-warm-border/20 text-warm-outline' },
+    manual: { label: 'Saved Change', color: 'bg-olive/10 text-olive' },
+    auto_save: { label: 'Auto-saved', color: 'bg-warm-border/20 text-warm-outline' },
     witness_contribution: { label: 'Witness', color: 'bg-warm-brown/10 text-warm-brown' },
-    restore: { label: 'Restored', color: 'bg-purple-100 text-purple-700' },
+    restore: { label: 'Restored', color: 'bg-warm-dark/15 text-warm-dark' },
 };
+
+const SYSTEM_REASON_LABELS: Record<string, { label: string; color: string }> = {
+    co_guardian_edit: { label: 'Co-Guardian Edit', color: 'bg-warm-brown/10 text-warm-brown' },
+    owner_edit: { label: 'Owner Edit', color: 'bg-olive/10 text-olive' },
+    archive_seal: { label: 'Archive Sealed', color: 'bg-warm-dark/15 text-warm-dark' },
+    plan_upgrade: { label: 'Plan Upgrade', color: 'bg-surface-low/10 text-surface-low/70' },
+    restore_action: { label: 'Restored', color: 'bg-warm-dark/15 text-warm-dark' },
+};
+
+function getTypeInfo(version: MemorialVersion) {
+    if (version.change_reason && SYSTEM_REASON_LABELS[version.change_reason]) {
+        return SYSTEM_REASON_LABELS[version.change_reason];
+    }
+    return TYPE_LABELS[version.change_type] || TYPE_LABELS.manual;
+}
+
+function isSystemReason(reason?: string | null) {
+    return !!reason && reason in SYSTEM_REASON_LABELS;
+}
+
+function formatDate(dateStr: string) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function formatTime(dateStr: string) {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function formatRelativeTime(dateStr: string) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatDate(dateStr);
+}
 
 export default function VersionHistory({
     memorialId,
@@ -51,18 +135,11 @@ export default function VersionHistory({
     const [versions, setVersions] = useState<MemorialVersion[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // View version state
     const [viewingVersion, setViewingVersion] = useState<MemorialVersion | null>(null);
     const [viewingData, setViewingData] = useState<MemorialData | null>(null);
     const [loadingView, setLoadingView] = useState(false);
-
-    // Restore state
     const [restoringId, setRestoringId] = useState<string | null>(null);
-    const [confirmRestore, setConfirmRestore] = useState<MemorialVersion | null>(null);
-
-    // Expanded version details
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [pendingAction, setPendingAction] = useState<RestoreAction | null>(null);
 
     useEffect(() => {
         loadHistory();
@@ -71,37 +148,28 @@ export default function VersionHistory({
     const loadHistory = async () => {
         setLoading(true);
         setError(null);
+
         const result = await getVersionHistory(memorialId);
         if (result.error) {
             setError(result.error);
+            setVersions([]);
         } else {
             setVersions(result.versions);
         }
+
         setLoading(false);
     };
 
     const handleViewVersion = async (version: MemorialVersion) => {
         setLoadingView(true);
-
-        // Build complete data from snapshot
-        let data: MemorialData;
-        if (version.is_full_snapshot) {
-            data = { ...currentData, ...version.snapshot_data } as MemorialData;
-        } else {
-            // Partial snapshot — we show what we have merged onto current
-            data = { ...currentData };
-            for (const [key, value] of Object.entries(version.snapshot_data)) {
-                (data as any)[key] = value;
-            }
-        }
-
         setViewingVersion(version);
-        setViewingData(data);
+        setViewingData(applyVersionSnapshot(currentData, version.snapshot_data || {}));
         setLoadingView(false);
     };
 
     const handleRestore = async (version: MemorialVersion) => {
         setRestoringId(version.id);
+
         const result = await restoreVersion(
             memorialId,
             version.id,
@@ -111,58 +179,28 @@ export default function VersionHistory({
         );
 
         if (result.success && result.restoredData) {
+            setRestoringId(null);
+            setPendingAction(null);
             onRestore(result.restoredData);
-            setConfirmRestore(null);
-            await loadHistory(); // Refresh to show new restore version
         } else {
             alert(`Restore failed: ${result.error}`);
+            setRestoringId(null);
         }
-        setRestoringId(null);
     };
 
-    const formatDate = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-        });
-    };
-
-    const formatTime = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return d.toLocaleTimeString('en-US', {
-            hour: '2-digit', minute: '2-digit',
-        });
-    };
-
-    const formatRelativeTime = (dateStr: string) => {
-        const now = new Date();
-        const d = new Date(dateStr);
-        const diffMs = now.getTime() - d.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffMins < 1) return 'Just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return formatDate(dateStr);
-    };
-
-    // =============================================
-    // VERSION VIEWER OVERLAY
-    // =============================================
     if (viewingVersion && viewingData) {
         return (
             <div className="fixed inset-0 z-[100] bg-warm-dark/90 backdrop-blur-sm overflow-y-auto">
                 <div className="min-h-screen">
-                    {/* Header bar */}
                     <div className="sticky top-0 z-10 bg-warm-dark/95 backdrop-blur-md border-b border-surface-low/10 px-6 py-4">
-                        <div className="max-w-5xl mx-auto flex items-center justify-between">
+                        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <button
-                                        onClick={() => { setViewingVersion(null); setViewingData(null); }}
+                                        onClick={() => {
+                                            setViewingVersion(null);
+                                            setViewingData(null);
+                                        }}
                                         className="p-2 hover:bg-surface-low/10 rounded-lg transition-all"
                                     >
                                         <ArrowLeft size={20} className="text-surface-low" />
@@ -176,21 +214,28 @@ export default function VersionHistory({
                                 </div>
                                 <p className="text-surface-low/60 text-sm ml-12">
                                     {viewingVersion.change_summary}
-                                    {!viewingVersion.is_full_snapshot && (
-                                        <span className="text-surface-low/40 ml-2">(partial snapshot — some sections may show current data)</span>
-                                    )}
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button
-                                    onClick={() => setConfirmRestore(viewingVersion)}
+                                    onClick={() =>
+                                        setPendingAction({
+                                            targetVersion: viewingVersion,
+                                            title: `Restore version #${viewingVersion.version_number}?`,
+                                            description: 'This will bring the memorial back to this exact saved state and add a new restore entry to the history.',
+                                            actionLabel: 'Restore this version',
+                                        })
+                                    }
                                     className="px-4 py-2 bg-warm-brown hover:bg-warm-brown/90 text-surface-low rounded-lg font-medium transition-all flex items-center gap-2 text-sm"
                                 >
                                     <RotateCcw size={16} />
                                     Restore This Version
                                 </button>
                                 <button
-                                    onClick={() => { setViewingVersion(null); setViewingData(null); }}
+                                    onClick={() => {
+                                        setViewingVersion(null);
+                                        setViewingData(null);
+                                    }}
                                     className="p-2 hover:bg-surface-low/10 rounded-lg transition-all"
                                 >
                                     <X size={20} className="text-surface-low" />
@@ -199,39 +244,32 @@ export default function VersionHistory({
                         </div>
                     </div>
 
-                    {/* Rendered memorial at this version */}
                     <div className="max-w-5xl mx-auto py-8 px-6">
                         <div className="rounded-2xl overflow-hidden shadow-2xl">
-                            <MemorialRenderer
-                                data={viewingData}
-                                isPreview={true}
-                                compact={false}
-                            />
+                            <MemorialRenderer data={viewingData} isPreview={true} compact={false} />
                         </div>
                     </div>
                 </div>
 
-                {/* Restore confirmation modal */}
-                {confirmRestore && (
+                {pendingAction && (
                     <RestoreConfirmModal
-                        version={confirmRestore}
-                        isRestoring={restoringId === confirmRestore.id}
-                        onConfirm={() => handleRestore(confirmRestore)}
-                        onCancel={() => setConfirmRestore(null)}
+                        title={pendingAction.title}
+                        description={pendingAction.description}
+                        version={pendingAction.targetVersion}
+                        actionLabel={pendingAction.actionLabel}
+                        isRestoring={restoringId === pendingAction.targetVersion.id}
+                        onConfirm={() => handleRestore(pendingAction.targetVersion)}
+                        onCancel={() => setPendingAction(null)}
                     />
                 )}
             </div>
         );
     }
 
-    // =============================================
-    // MAIN TIMELINE VIEW
-    // =============================================
     return (
         <div className="fixed inset-0 z-[100] bg-warm-dark/80 backdrop-blur-sm overflow-y-auto">
             <div className="min-h-screen py-8 px-4">
                 <div className="max-w-3xl mx-auto">
-                    {/* Header */}
                     <div className="flex items-center justify-between mb-8 px-2">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-olive/20 rounded-xl flex items-center justify-center">
@@ -240,7 +278,7 @@ export default function VersionHistory({
                             <div>
                                 <h2 className="text-2xl font-serif text-surface-low">Version History</h2>
                                 <p className="text-surface-low/50 text-sm">
-                                    {versions.length} version{versions.length !== 1 ? 's' : ''} recorded
+                                    {versions.length} saved change{versions.length !== 1 ? 's' : ''} in this memorial
                                 </p>
                             </div>
                         </div>
@@ -252,7 +290,6 @@ export default function VersionHistory({
                         </button>
                     </div>
 
-                    {/* Loading */}
                     {loading && (
                         <div className="text-center py-20">
                             <Loader2 size={32} className="text-olive animate-spin mx-auto mb-4" />
@@ -260,44 +297,44 @@ export default function VersionHistory({
                         </div>
                     )}
 
-                    {/* Error */}
                     {error && (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm mb-6">
                             {error}
                         </div>
                     )}
 
-                    {/* Empty state */}
                     {!loading && versions.length === 0 && (
                         <div className="text-center py-20">
                             <Clock size={48} className="text-surface-low/20 mx-auto mb-4" />
-                            <p className="text-surface-low/50 text-lg mb-2">No version history yet</p>
+                            <p className="text-surface-low/50 text-lg mb-2">No recorded changes yet</p>
                             <p className="text-surface-low/30 text-sm">
-                                Versions are created when you save changes to the memorial.
+                                Owner and co-guardian edits will appear here as restorable checkpoints.
                             </p>
                         </div>
                     )}
 
-                    {/* Timeline */}
                     {!loading && versions.length > 0 && (
                         <div className="relative">
-                            {/* Timeline line */}
                             <div className="absolute left-6 top-0 bottom-0 w-px bg-surface-low/10" />
 
                             <div className="space-y-4">
-                                {versions.map((version, idx) => {
-                                    const isExpanded = expandedId === version.id;
-                                    const typeInfo = TYPE_LABELS[version.change_type] || TYPE_LABELS.manual;
+                                {versions.map((version, index) => {
+                                    const typeInfo = getTypeInfo(version);
+                                    const previousVersion = versions[index + 1] || null;
 
                                     return (
                                         <div key={version.id} className="relative pl-14">
-                                            {/* Timeline dot */}
-                                            <div className={`absolute left-4 top-5 w-5 h-5 rounded-full border-2 border-surface-low/20 ${idx === 0 ? 'bg-olive' : version.change_type === 'restore' ? 'bg-purple-500' : 'bg-warm-dark'
-                                                }`} />
+                                            <div
+                                                className={`absolute left-4 top-5 w-5 h-5 rounded-full border-2 border-surface-low/20 ${
+                                                    index === 0
+                                                        ? 'bg-olive'
+                                                        : version.change_type === 'restore'
+                                                            ? 'bg-warm-brown'
+                                                            : 'bg-warm-dark'
+                                                }`}
+                                            />
 
-                                            {/* Version card */}
                                             <div className="bg-surface-low/5 hover:bg-surface-low/8 border border-surface-low/10 rounded-xl p-5 transition-all">
-                                                {/* Header row */}
                                                 <div className="flex items-start justify-between gap-4 mb-3">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -307,26 +344,22 @@ export default function VersionHistory({
                                                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${typeInfo.color}`}>
                                                                 {typeInfo.label}
                                                             </span>
-                                                            {version.is_full_snapshot && (
-                                                                <span className="px-2 py-0.5 bg-olive/10 text-olive rounded-full text-[10px] font-medium">
-                                                                    Full Snapshot
-                                                                </span>
-                                                            )}
-                                                            {idx === 0 && (
+                                                            {index === 0 && (
                                                                 <span className="px-2 py-0.5 bg-surface-low/10 text-surface-low/70 rounded-full text-[10px] font-medium">
                                                                     Current
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-surface-low/80 text-sm">{version.change_summary}</p>
+                                                        <p className="text-surface-low/80 text-sm leading-relaxed">
+                                                            {version.change_summary}
+                                                        </p>
                                                     </div>
                                                     <span className="text-surface-low/40 text-xs whitespace-nowrap flex-shrink-0">
                                                         {formatRelativeTime(version.created_at)}
                                                     </span>
                                                 </div>
 
-                                                {/* Meta row */}
-                                                <div className="flex items-center gap-4 text-xs text-surface-low/40 mb-3">
+                                                <div className="flex items-center gap-4 text-xs text-surface-low/40 mb-3 flex-wrap">
                                                     {version.created_by_name && (
                                                         <span className="flex items-center gap-1">
                                                             <User size={12} />
@@ -339,21 +372,24 @@ export default function VersionHistory({
                                                     </span>
                                                 </div>
 
-                                                {/* Modified steps badges */}
-                                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                                    {version.steps_modified.map(step => {
-                                                        const Icon = STEP_ICONS[step] || FileText;
-                                                        return (
-                                                            <span key={step} className="inline-flex items-center gap-1 px-2 py-1 bg-surface-low/5 border border-surface-low/10 rounded-lg text-[10px] text-surface-low/50">
-                                                                <Icon size={10} />
-                                                                {STEP_NAMES[step]}
-                                                            </span>
-                                                        );
-                                                    })}
-                                                </div>
+                                                {version.steps_modified.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mb-3">
+                                                        {version.steps_modified.map((step) => {
+                                                            const Icon = STEP_ICONS[step] || FileText;
+                                                            return (
+                                                                <span
+                                                                    key={`${version.id}-${step}`}
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 bg-surface-low/5 border border-surface-low/10 rounded-lg text-[10px] text-surface-low/50"
+                                                                >
+                                                                    <Icon size={10} />
+                                                                    {STEP_NAMES[step] || `Step ${step}`}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
 
-                                                {/* Change reason (if provided) */}
-                                                {version.change_reason && (
+                                                {version.change_reason && !isSystemReason(version.change_reason) && (
                                                     <div className="mb-3 pl-3 border-l-2 border-olive/30">
                                                         <p className="text-surface-low/50 text-xs italic">
                                                             "{version.change_reason}"
@@ -361,8 +397,7 @@ export default function VersionHistory({
                                                     </div>
                                                 )}
 
-                                                {/* Action buttons */}
-                                                <div className="flex items-center gap-2 pt-2 border-t border-surface-low/5">
+                                                <div className="flex items-center gap-2 pt-2 border-t border-surface-low/5 flex-wrap">
                                                     <button
                                                         onClick={() => handleViewVersion(version)}
                                                         disabled={loadingView}
@@ -371,13 +406,42 @@ export default function VersionHistory({
                                                         <Eye size={14} />
                                                         View
                                                     </button>
-                                                    {idx !== 0 && (
+
+                                                    {index !== 0 && (
                                                         <button
-                                                            onClick={() => setConfirmRestore(version)}
+                                                            onClick={() =>
+                                                                setPendingAction({
+                                                                    targetVersion: version,
+                                                                    title: `Restore version #${version.version_number}?`,
+                                                                    description: 'This will bring the memorial back to this saved point and add a new restore entry to the history.',
+                                                                    actionLabel: 'Restore this version',
+                                                                })
+                                                            }
                                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-warm-brown/10 hover:bg-warm-brown/20 text-warm-brown rounded-lg text-xs transition-all"
                                                         >
                                                             <RotateCcw size={14} />
-                                                            Restore
+                                                            Restore This Point
+                                                        </button>
+                                                    )}
+
+                                                    {previousVersion && (
+                                                        <button
+                                                            onClick={() =>
+                                                                setPendingAction({
+                                                                    targetVersion: previousVersion,
+                                                                    title: index === 0
+                                                                        ? 'Undo the latest change?'
+                                                                        : `Revert the changes from version #${version.version_number}?`,
+                                                                    description: index === 0
+                                                                        ? `This will restore version #${previousVersion.version_number}, the state immediately before the latest saved change.`
+                                                                        : `This will restore version #${previousVersion.version_number}, the state immediately before "${version.change_summary}".`,
+                                                                    actionLabel: index === 0 ? 'Undo latest change' : 'Revert this change',
+                                                                })
+                                                            }
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-low/10 hover:bg-surface-low/15 text-surface-low/70 rounded-lg text-xs transition-all"
+                                                        >
+                                                            <RotateCcw size={14} />
+                                                            {index === 0 ? 'Undo Latest Change' : 'Revert This Change'}
                                                         </button>
                                                     )}
                                                 </div>
@@ -391,29 +455,34 @@ export default function VersionHistory({
                 </div>
             </div>
 
-            {/* Restore confirmation modal */}
-            {confirmRestore && (
+            {pendingAction && (
                 <RestoreConfirmModal
-                    version={confirmRestore}
-                    isRestoring={restoringId === confirmRestore.id}
-                    onConfirm={() => handleRestore(confirmRestore)}
-                    onCancel={() => setConfirmRestore(null)}
+                    title={pendingAction.title}
+                    description={pendingAction.description}
+                    version={pendingAction.targetVersion}
+                    actionLabel={pendingAction.actionLabel}
+                    isRestoring={restoringId === pendingAction.targetVersion.id}
+                    onConfirm={() => handleRestore(pendingAction.targetVersion)}
+                    onCancel={() => setPendingAction(null)}
                 />
             )}
         </div>
     );
 }
 
-// =============================================
-// RESTORE CONFIRMATION MODAL
-// =============================================
 function RestoreConfirmModal({
+    title,
+    description,
     version,
+    actionLabel,
     isRestoring,
     onConfirm,
     onCancel,
 }: {
+    title: string;
+    description: string;
     version: MemorialVersion;
+    actionLabel: string;
     isRestoring: boolean;
     onConfirm: () => void;
     onCancel: () => void;
@@ -426,26 +495,28 @@ function RestoreConfirmModal({
                 </div>
 
                 <h3 className="font-serif text-2xl text-warm-dark text-center mb-2">
-                    Restore Version #{version.version_number}?
+                    {title}
                 </h3>
 
                 <p className="text-warm-muted text-sm text-center mb-2">
-                    From {new Date(version.created_at).toLocaleDateString('en-US', {
-                        month: 'long', day: 'numeric', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
+                    Version #{version.version_number} from {new Date(version.created_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
                     })}
                 </p>
 
                 <p className="text-warm-outline text-xs text-center mb-6 leading-relaxed">
-                    "{version.change_summary}"
+                    {description}
                 </p>
 
                 <div className="p-4 bg-olive/5 rounded-xl border border-olive/20 mb-6">
                     <div className="flex items-start gap-2">
                         <Shield size={16} className="text-olive mt-0.5 flex-shrink-0" />
                         <p className="text-xs text-warm-muted leading-relaxed">
-                            This will revert the memorial to this version. Your current state will be saved
-                            as a new version in the history — nothing is ever lost.
+                            The current memorial state will not disappear. This action adds a new restore entry so the full audit trail stays intact.
                         </p>
                     </div>
                 </div>
@@ -471,7 +542,7 @@ function RestoreConfirmModal({
                         ) : (
                             <>
                                 <RotateCcw size={16} />
-                                Restore
+                                {actionLabel}
                             </>
                         )}
                     </button>
