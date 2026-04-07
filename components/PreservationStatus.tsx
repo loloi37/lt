@@ -31,7 +31,7 @@ export default function PreservationStatus({
     deathDate,
     planType,
     storageBytesUsed = 234_567_890,
-    storageBytesIncluded = 107_374_182_400, // 100 GB
+    storageBytesIncluded = 53_687_091_200, // 50 GB
 }: PreservationStatusProps) {
     const [txData, setTxData] = useState<ArweaveTransaction | null>(null);
     const [loading, setLoading] = useState(true);

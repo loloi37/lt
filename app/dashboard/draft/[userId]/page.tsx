@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Memorial } from '@/lib/supabase';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/providers/AuthProvider';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 
 export default function DraftDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -143,6 +144,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     }
 
     return (
+        <DashboardShell userId={userId}>
         <div className="min-h-screen bg-gradient-to-br from-warm-dark/5 via-surface-low to-warm-border/20">
             <div className="bg-white border-b border-warm-border/30 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-6">
@@ -302,5 +304,6 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                 )}
             </div>
         </div>
+        </DashboardShell>
     );
 }

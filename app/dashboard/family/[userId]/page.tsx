@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi } from 'lucide-react';
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
-import SuccessorSettings from '@/components/SuccessorSettings';
 import AnchorPanel from '@/components/AnchorPanel';
 import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -222,6 +222,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     }
 
     return (
+        <DashboardShell userId={userId}>
         <div className="bg-surface-low min-h-screen">
             {/* Welcome banner */}
             {showWelcome && (
@@ -495,22 +496,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                         </div>
                     </div>
                 )}
-
-                {/* SUCCESSION MANAGEMENT SECTION */}
-                <div className="mt-16 pt-12 border-t border-warm-border/30">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                        <div className="lg:col-span-1">
-                            <h2 className="font-serif text-3xl text-warm-dark mb-4">Account Stewardship</h2>
-                            <p className="text-warm-muted font-sans leading-relaxed">
-                                Legacy is not just what you create, but how you ensure it survives. Use this section to designate the person who will care for these archives when you no longer can.
-                            </p>
-                        </div>
-                        <div className="lg:col-span-2">
-                            <SuccessorSettings userId={userId} />
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             {/* CONNECTION MANAGER MODAL */}
@@ -546,5 +531,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                 />
             )}
         </div>
+        </DashboardShell>
     );
 }

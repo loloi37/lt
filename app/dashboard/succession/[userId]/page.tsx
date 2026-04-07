@@ -1,0 +1,129 @@
+'use client';
+
+import { use, useEffect } from 'react';
+import Link from 'next/link';
+import { Shield, UserCheck, Clock, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import DashboardShell from '@/components/dashboard/DashboardShell';
+import { useAuth } from '@/components/providers/AuthProvider';
+import SuccessorSettings from '@/components/SuccessorSettings';
+
+export default function DashboardSuccessionPage({ params }: { params: Promise<{ userId: string }> }) {
+    const { userId } = use(params);
+    const auth = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (auth.loading) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/succession/${auth.user.id}`);
+        }
+    }, [auth.loading, auth.authenticated, auth.user, userId, router]);
+
+    if (auth.loading || !auth.authenticated || auth.user?.id !== userId) {
+        return (
+            <div className="min-h-screen bg-surface-low flex items-center justify-center">
+                <div className="w-10 h-10 border-2 border-warm-border/30 border-t-olive rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    const isPaidPlan = auth.plan === 'personal' || auth.plan === 'family' || auth.plan === 'concierge';
+
+    return (
+        <DashboardShell userId={userId}>
+            <div className="min-h-screen bg-surface-low">
+                <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+                    <div className="mb-8">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Succession Planning</p>
+                        <h1 className="mt-3 font-serif text-4xl text-warm-dark">Plan who takes care of your archives</h1>
+                        <p className="mt-3 max-w-3xl text-sm text-warm-muted">
+                            Choose the trusted person who can step in later, review your dead man&apos;s switch status, and keep your archive stewardship clear.
+                        </p>
+                    </div>
+
+                    {!isPaidPlan && (
+                        <div className="mb-6 rounded-3xl border border-warm-brown/25 bg-warm-brown/5 px-6 py-5">
+                            <div className="flex items-start gap-3">
+                                <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-warm-brown">
+                                    <Shield size={18} />
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className="font-serif text-2xl text-warm-dark">Succession is clearer with a preserved plan</h2>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        You can review the stewardship flow here now. Personal and Family plans are the clearest fit when you want long-term continuity and preservation.
+                                    </p>
+                                    <div className="mt-4 flex flex-wrap gap-3">
+                                        <Link href="/choice-pricing" className="glass-btn-primary rounded-xl px-4 py-2 text-sm font-medium text-white">
+                                            Review Plans
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+                        <section className="glass-card rounded-3xl p-6">
+                            <div className="mb-5 flex items-center gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-olive/10 text-olive">
+                                    <UserCheck size={20} />
+                                </div>
+                                <div>
+                                    <h2 className="font-serif text-2xl text-warm-dark">How it works</h2>
+                                    <p className="text-xs uppercase tracking-[0.14em] text-warm-outline">Clear and account-level</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-4">
+                                    <div className="flex items-center gap-2 text-sm text-warm-dark">
+                                        <UserCheck size={14} className="text-olive" />
+                                        Designate one trusted successor
+                                    </div>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        The successor becomes the person we contact when the succession process needs to begin.
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-4">
+                                    <div className="flex items-center gap-2 text-sm text-warm-dark">
+                                        <Clock size={14} className="text-olive" />
+                                        Manage the dead man&apos;s switch
+                                    </div>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        When enabled, the system checks that you are still managing the account before any successor outreach happens.
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-4">
+                                    <div className="flex items-center gap-2 text-sm text-warm-dark">
+                                        <Shield size={14} className="text-olive" />
+                                        Keep stewardship separate from editing
+                                    </div>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        This section is account-level, so it is easier to understand than burying succession setup inside a single archive dashboard.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 rounded-2xl border border-warm-border/30 bg-surface-mid/40 px-4 py-4 text-sm text-warm-muted">
+                                Need to edit a memorial right now? Go back to{' '}
+                                <Link href={auth.plan === 'family' || auth.plan === 'concierge' ? `/dashboard/family/${userId}` : auth.plan === 'personal' ? `/dashboard/personal/${userId}` : `/dashboard/draft/${userId}`} className="text-warm-dark underline underline-offset-2">
+                                    My Archives
+                                </Link>{' '}
+                                <ArrowRight size={14} className="inline ml-1" />
+                            </div>
+                        </section>
+
+                        <section className="glass-card rounded-3xl p-0 overflow-hidden">
+                            <SuccessorSettings userId={userId} />
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </DashboardShell>
+    );
+}

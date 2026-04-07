@@ -10,6 +10,8 @@ import { generateManifest, generateReadme } from '@/lib/arche/metadataGenerator'
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
+const EXPORTS_BUCKET = 'exports';
+
 export async function POST(request: NextRequest) {
     try {
         const { memorialId } = await request.json();
@@ -48,22 +50,38 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
-        // 4. RATE LIMIT: 10-minute cooldown between exports
+        // 4. RATE LIMIT: 10-minute cooldown between successful exports
         if (memorial.last_exported_at) {
             const diffMinutes = (Date.now() - new Date(memorial.last_exported_at).getTime()) / 60000;
-            if (diffMinutes < 10) {
+            let canEnforceCooldown = true;
+
+            const { data: buckets, error: bucketsError } = await supabaseAdmin.storage.listBuckets();
+            if (bucketsError) {
+                console.warn('[Arche] Could not inspect storage buckets before cooldown check:', bucketsError.message);
+            } else {
+                const hasExportsBucket = buckets?.some((bucket) => bucket.name === EXPORTS_BUCKET);
+                if (!hasExportsBucket) {
+                    canEnforceCooldown = false;
+                } else {
+                    const { data: exportFiles, error: listError } = await supabaseAdmin.storage
+                        .from(EXPORTS_BUCKET)
+                        .list(memorialId, { limit: 1 });
+
+                    if (listError) {
+                        console.warn('[Arche] Could not inspect prior exports before cooldown check:', listError.message);
+                    } else if (!exportFiles || exportFiles.length === 0) {
+                        canEnforceCooldown = false;
+                    }
+                }
+            }
+
+            if (canEnforceCooldown && diffMinutes < 10) {
                 const waitTime = Math.ceil(10 - diffMinutes);
                 return NextResponse.json({
                     error: `Please wait ${waitTime} minute(s) before generating another ZIP archive.`
                 }, { status: 429 });
             }
         }
-
-        // 5. Record the export time (starts the cooldown)
-        await supabaseAdmin
-            .from('memorials')
-            .update({ last_exported_at: new Date().toISOString() })
-            .eq('id', memorialId);
 
         const fullData = {
             step1: memorial.step1,
@@ -112,8 +130,24 @@ export async function POST(request: NextRequest) {
         const filename = `archive_${fullData.step1.fullName.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.zip`;
         const filePath = `${memorialId}/${filename}`;
 
+        const { data: currentBuckets, error: currentBucketsError } = await supabaseAdmin.storage.listBuckets();
+        if (currentBucketsError) {
+            throw new Error(`Failed to inspect storage buckets: ${currentBucketsError.message}`);
+        }
+
+        const hasExportsBucket = currentBuckets?.some((bucket) => bucket.name === EXPORTS_BUCKET);
+        if (!hasExportsBucket) {
+            const { error: createBucketError } = await supabaseAdmin.storage.createBucket(EXPORTS_BUCKET, {
+                public: false,
+            });
+
+            if (createBucketError) {
+                throw new Error(`Failed to create export bucket "${EXPORTS_BUCKET}": ${createBucketError.message}`);
+            }
+        }
+
         const { error: uploadError } = await supabaseAdmin.storage
-            .from('exports')
+            .from(EXPORTS_BUCKET)
             .upload(filePath, zipBuffer, {
                 contentType: 'application/zip',
                 upsert: true
@@ -126,12 +160,17 @@ export async function POST(request: NextRequest) {
 
         // Generate Signed URL
         const { data: urlData, error: urlError } = await supabaseAdmin.storage
-            .from('exports')
+            .from(EXPORTS_BUCKET)
             .createSignedUrl(filePath, 3600);
 
         if (urlError || !urlData) {
             throw new Error('Failed to generate download URL');
         }
+
+        await supabaseAdmin
+            .from('memorials')
+            .update({ last_exported_at: new Date().toISOString() })
+            .eq('id', memorialId);
 
         console.log('[Arche] Export complete:', urlData.signedUrl);
 

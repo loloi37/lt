@@ -1,19 +1,19 @@
 'use client';
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, useRef, use, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
-    Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, RefreshCcw,
-    AlertTriangle, CheckCircle, Share2,
+    Plus, Eye, Edit, Trash2, User, Loader2, RefreshCcw,
+    AlertTriangle, CheckCircle,
     Clock, Shield,
     Archive, Download, Copy, Mail, QrCode, Camera, FileText,
-    ChevronRight, ExternalLink, Users
+    ChevronRight, Users
 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
 import PreservationStatus from '@/components/PreservationStatus';
-import SuccessionSetup from '@/components/SuccessionSetup';
 import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 
 function computeStats(memorial: Memorial) {
     const step7 = memorial.step7 as any;
@@ -58,7 +58,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     const [loading, setLoading] = useState(true);
     const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
     const [showWelcome, setShowWelcome] = useState(false);
-    const [copied, setCopied] = useState(false);
     const searchParams = useSearchParams();
 
     const [planVerified, setPlanVerified] = useState(false);
@@ -197,14 +196,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         return Math.max(Math.ceil((expiry.getTime() - Date.now()) / 86400000), 0);
     };
 
-    const copyShareLink = (id: string) => {
-        const url = `${window.location.origin}/person/${id}`;
-        navigator.clipboard.writeText(url).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
-
     const hasPersonalAccess = planVerified && !auth.loading && auth.authenticated && auth.plan === 'personal';
     if (!hasPersonalAccess) {
         return (
@@ -218,6 +209,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
     }
 
     return (
+        <DashboardShell userId={userId}>
         <div className="bg-surface-low text-warm-dark font-serif min-h-screen">
             {/* Toast notifications */}
             {showCheckinSuccess && (
@@ -235,28 +227,23 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 </div>
             )}
 
-            {/* Top bar */}
-            <div className="max-w-5xl mx-auto px-6 pt-10 pb-6">
-                <Link
-                    href="/choice-pricing"
-                    className="inline-flex items-center gap-2 text-warm-muted text-xs tracking-widest uppercase hover:text-warm-dark transition-colors font-serif italic"
-                >
-                    <ArrowLeft size={14} />
-                    Back
-                </Link>
-            </div>
+            <div className="mx-auto max-w-6xl px-6 py-8 pb-24">
+                <div className="mb-8">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Personal Dashboard</p>
+                    <h1 className="mt-3 font-serif text-4xl text-warm-dark">Your Personal Archive</h1>
+                    <p className="mt-3 max-w-3xl text-sm text-warm-muted">
+                        A clearer home for editing your memorial, checking preservation, managing people around it, and keeping everything ready for the future.
+                    </p>
+                </div>
 
-            <div className="max-w-5xl mx-auto px-6 pb-24">
                 {loading ? (
-                    <div className="text-center py-32">
+                    <div className="glass-card rounded-[2rem] px-8 py-16 text-center">
                         <Loader2 size={28} className="text-warm-muted/40 animate-spin mx-auto" />
                     </div>
                 ) : activeArchive && activeArchive.full_name ? (
                     <ActiveArchiveView
                         archive={activeArchive}
                         onDelete={softDelete}
-                        onCopyLink={copyShareLink}
-                        copied={copied}
                         userId={userId}
                         paymentConfirmedAt={activeArchive.payment_confirmed_at ?? null}
                     />
@@ -269,25 +256,33 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                         <h2 className="font-serif text-5xl text-warm-dark mb-4">
                             {activeArchive ? 'Create your memorial' : 'Begin your archive'}
                         </h2>
-                        <p className="font-serif italic text-lg text-warm-muted mb-10">
+                        <p className="font-serif italic text-lg text-warm-muted mb-10 max-w-2xl mx-auto">
                             {activeArchive
-                                ? 'Your plan is active. Create your first memorial to get started.'
-                                : 'A place to preserve what matters most'}
+                                ? 'Your plan is active. Open the editor and start building the memorial.'
+                                : 'You can keep one personal archive here, then manage preservation and succession from the navigation when you are ready.'}
                         </p>
-                        <button
-                            onClick={() => {
-                                if (activeArchive) {
-                                    // Reuse the existing empty paid memorial
-                                    window.location.href = `/create?id=${activeArchive.id}&mode=personal`;
-                                } else {
-                                    handleCreate();
-                                }
-                            }}
-                            className="inline-flex items-center gap-2 px-8 py-3.5 glass-btn-primary rounded-xl text-sm font-serif tracking-wide"
-                        >
-                            <Plus size={16} />
-                            Create memorial
-                        </button>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            <button
+                                onClick={() => {
+                                    if (activeArchive) {
+                                        window.location.href = `/create?id=${activeArchive.id}&mode=personal`;
+                                    } else {
+                                        handleCreate();
+                                    }
+                                }}
+                                className="inline-flex items-center gap-2 px-8 py-3.5 glass-btn-primary rounded-xl text-sm font-serif tracking-wide"
+                            >
+                                <Plus size={16} />
+                                {activeArchive ? 'Open editor' : 'Create memorial'}
+                            </button>
+                            <Link
+                                href={`/dashboard/preservation/${userId}`}
+                                className="inline-flex items-center gap-2 rounded-xl border border-warm-border/30 px-6 py-3 text-sm text-warm-dark transition-colors hover:bg-white"
+                            >
+                                <Shield size={15} />
+                                Review preservation
+                            </Link>
+                        </div>
                     </div>
                 )}
 
@@ -335,6 +330,7 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
                 )}
             </div>
         </div>
+        </DashboardShell>
     );
 }
 
@@ -345,21 +341,18 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
 function ActiveArchiveView({
     archive,
     onDelete,
-    onCopyLink,
-    copied,
     userId,
     paymentConfirmedAt,
 }: {
     archive: Memorial;
     onDelete: (id: string) => void;
-    onCopyLink: (id: string) => void;
-    copied: boolean;
     userId: string;
     paymentConfirmedAt: string | null;
 }) {
     const stats = computeStats(archive);
     const [linkCopied, setLinkCopied] = useState(false);
     const [isWitnessModalOpen, setIsWitnessModalOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     const birthYear = archive.birth_date ? new Date(archive.birth_date).getFullYear() : null;
     const deathYear = archive.death_date ? new Date(archive.death_date).getFullYear() : null;
@@ -391,6 +384,34 @@ function ActiveArchiveView({
     const handlePrintQR = () => {
         const url = `${window.location.origin}/person/${archive.id}`;
         window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`, '_blank');
+    };
+
+    const handleExportArchive = async () => {
+        if (!confirm('Generate the portable archive export? This can take a minute.')) return;
+
+        try {
+            setIsExporting(true);
+
+            const res = await fetch('/api/arche/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ memorialId: archive.id }),
+            });
+
+            const result = await res.json();
+
+            if (result.success && result.downloadUrl) {
+                window.location.href = result.downloadUrl;
+                return;
+            }
+
+            alert('Export failed: ' + (result.error || 'Unknown error'));
+        } catch (error) {
+            console.error('Error generating export:', error);
+            alert('Error generating portable archive.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     const totalContent = stats.photos + stats.videos + stats.memories + stats.chapters;
@@ -474,13 +495,6 @@ function ActiveArchiveView({
                                 <Edit size={14} />
                                 Edit
                             </Link>
-                            <button
-                                onClick={() => onCopyLink(archive.id)}
-                                className="flex items-center gap-2 px-6 py-2.5 border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-colors"
-                            >
-                                <Share2 size={14} />
-                                {copied ? 'Copied!' : 'Share'}
-                            </button>
                             {!isPreserved && (
                                 <button
                                     onClick={() => onDelete(archive.id)}
@@ -495,23 +509,25 @@ function ActiveArchiveView({
                 </div>
             </div>
 
-            {/* --- Updated Actions Row --- */}
-            <div className="flex flex-wrap gap-3">
-                <QuickAction href={`/create?id=${archive.id}&mode=personal&step=8`} icon={Camera} label="Photos" />
-                <QuickAction href={`/create?id=${archive.id}&mode=personal&step=6`} icon={FileText} label="Biography" />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard label="Photos" value={stats.photos} helper="Gallery and interactive media" />
+                <MetricCard label="Videos" value={stats.videos} helper="Recorded memories and clips" />
+                <MetricCard label="Stories" value={stats.memories} helper="Shared memories and impact stories" />
+                <MetricCard label="Chapters" value={stats.chapters} helper="Structured life-story sections" />
+            </div>
 
-                {/* Updated Button to trigger Modal */}
-                <button
-                    onClick={() => setIsWitnessModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
-                >
-                    <Users size={14} />
-                    Manage Witnesses
-                </button>
-
-                <Link href={`/create?id=${archive.id}&mode=personal`} className="flex items-center gap-2 px-5 py-2.5 border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all">
-                    <Edit size={14} /> Edit All
-                </Link>
+            <div className="glass-card p-6">
+                <h3 className="font-serif italic text-lg text-warm-dark mb-2">Continue building</h3>
+                <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
+                    Open the exact part of the memorial you want to work on without digging through duplicate controls.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                    <QuickAction href={`/create?id=${archive.id}&mode=personal&step=8`} icon={Camera} label="Photos & Media" />
+                    <QuickAction href={`/create?id=${archive.id}&mode=personal&step=6`} icon={FileText} label="Biography" />
+                    <Link href={`/create?id=${archive.id}&mode=personal`} className="flex items-center gap-2 px-5 py-2.5 border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all">
+                        <Edit size={14} /> Open Full Editor
+                    </Link>
+                </div>
             </div>
 
             {/* --- ADD THE MODAL HERE --- */}
@@ -544,11 +560,74 @@ function ActiveArchiveView({
                 </div>
             </section>
 
-            {/* ── Two-column section ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-8">
+                <div className="glass-card p-8 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <h3 className="font-serif italic text-lg text-warm-dark mb-2">
+                                Archive care
+                            </h3>
+                            <p className="text-sm text-warm-muted font-sans leading-relaxed max-w-2xl">
+                                Everything related to the long-term state of this memorial lives here: preservation, continuity, visibility, and export.
+                            </p>
+                        </div>
+                    </div>
 
-                {/* Preservation & Succession */}
-                <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                            <h4 className="font-serif italic text-base text-warm-dark mb-4">Current state</h4>
+                            <div className="space-y-4">
+                                <StatusRow label="State" value={isPreserved ? 'Preserved on Arweave' : 'Active'} />
+                                {sealedDate && <StatusRow label="Activated" value={sealedDate} />}
+                                <StatusRow label="Last edit" value={timeAgo(archive.updated_at)} />
+                                <StatusRow label="Content" value={`${totalContent} item${totalContent !== 1 ? 's' : ''}`} />
+                                <StatusRow label="Visibility" value="Shared by direct link" />
+                            </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                            <h4 className="font-serif italic text-base text-warm-dark mb-4">Next steps</h4>
+                            <div className="space-y-3">
+                                <Link
+                                    href={`/dashboard/preservation/${userId}`}
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-sm text-warm-dark transition-colors hover:bg-surface-mid/50"
+                                >
+                                    <div>
+                                        <p className="font-serif">Preservation details</p>
+                                        <p className="text-xs text-warm-outline">Review storage, coverage, and media rules</p>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline" />
+                                </Link>
+                                <Link
+                                    href={`/dashboard/succession/${userId}`}
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-sm text-warm-dark transition-colors hover:bg-surface-mid/50"
+                                >
+                                    <div>
+                                        <p className="font-serif">Succession planning</p>
+                                        <p className="text-xs text-warm-outline">Choose who can manage your legacy later</p>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline" />
+                                </Link>
+                                <button
+                                    onClick={handleExportArchive}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-left text-sm text-warm-dark transition-colors hover:bg-surface-mid/50 disabled:opacity-60 disabled:cursor-wait"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-0.5 w-8 h-8 rounded-lg bg-surface-mid flex items-center justify-center">
+                                            {isExporting ? <Loader2 size={14} className="text-warm-muted animate-spin" /> : <Download size={14} className="text-warm-muted" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-serif">{isExporting ? 'Generating portable archive...' : 'Portable archive export'}</p>
+                                            <p className="text-xs text-warm-outline">Download a full offline ZIP copy of this memorial</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline flex-shrink-0" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <PreservationStatus
                         memorialId={archive.id}
                         arweaveTxId={arweaveTxId}
@@ -557,80 +636,53 @@ function ActiveArchiveView({
                         deathDate={archive.death_date || null}
                         planType="personal"
                     />
-                    <SuccessionSetup memorialId={archive.id} />
                 </div>
 
-                {/* Share + Status */}
-                <div className="space-y-8">
-                    {/* Share */}
-                    <div className="glass-card p-8">
-                        <h3 className="font-serif italic text-lg text-warm-brown mb-6">
+                <div className="glass-card p-8 space-y-6">
+                    <div>
+                        <h3 className="font-serif italic text-lg text-warm-brown mb-2">
                             Share with loved ones
                         </h3>
-                        <div className="space-y-1">
-                            <ShareButton
-                                onClick={handleCopyLink}
-                                icon={Copy}
-                                label={linkCopied ? 'Copied!' : 'Copy link'}
-                                sublabel="Share the direct URL"
-                            />
-                            <ShareButton
-                                onClick={handleEmailFamily}
-                                icon={Mail}
-                                label="Email family"
-                                sublabel="Send via email"
-                            />
-                            <ShareButton
-                                onClick={handlePrintQR}
-                                icon={QrCode}
-                                label="QR Code"
-                                sublabel="Print for physical display"
-                            />
-                        </div>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed">
+                            Use one place for public sharing, family outreach, and member access instead of splitting those actions across multiple cards.
+                        </p>
                     </div>
 
-                    {/* Archive status */}
-                    <div className="glass-card p-8">
-                        <h3 className="text-xs uppercase tracking-widest text-warm-outline mb-5 font-serif italic">
-                            Archive Status
-                        </h3>
-                        <div className="space-y-4">
-                            <StatusRow
-                                label="State"
-                                value={isPreserved ? 'Preserved on Arweave' : 'Active'}
-                            />
-                            {sealedDate && (
-                                <StatusRow label="Activated" value={sealedDate} />
-                            )}
-                            <StatusRow label="Last edit" value={timeAgo(archive.updated_at)} />
-                            <StatusRow
-                                label="Content"
-                                value={`${totalContent} item${totalContent !== 1 ? 's' : ''}`}
-                            />
-                            <StatusRow
-                                label="Successor"
-                                value="Not configured"
-                                action={
-                                    <Link
-                                        href="/succession/request"
-                                        className="text-[11px] text-warm-brown hover:text-olive transition-colors font-serif italic underline underline-offset-2"
-                                    >
-                                        Set up
-                                    </Link>
-                                }
-                            />
-                            <div className="pt-3 border-t border-warm-border/20">
-                                <Link
-                                    href={`/api/arche/generate?id=${archive.id}`}
-                                    target="_blank"
-                                    className="flex items-center gap-2 text-xs text-warm-muted hover:text-warm-dark transition-colors font-serif italic py-1"
-                                >
-                                    <Download size={13} />
-                                    Download portable archive
-                                    <ExternalLink size={10} className="ml-auto opacity-40" />
-                                </Link>
-                            </div>
-                        </div>
+                    <div className="space-y-1">
+                        <ShareButton
+                            onClick={handleCopyLink}
+                            icon={Copy}
+                            label={linkCopied ? 'Copied!' : 'Copy link'}
+                            sublabel="Share the direct URL"
+                        />
+                        <ShareButton
+                            onClick={handleEmailFamily}
+                            icon={Mail}
+                            label="Email family"
+                            sublabel="Send via email"
+                        />
+                        <ShareButton
+                            onClick={handlePrintQR}
+                            icon={QrCode}
+                            label="QR Code"
+                            sublabel="Print for physical display"
+                        />
+                    </div>
+
+                    <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                        <h4 className="font-serif italic text-base text-warm-dark mb-2">
+                            People around this archive
+                        </h4>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
+                            Invite people, review roles, and manage archive access from one member manager.
+                        </p>
+                        <button
+                            onClick={() => setIsWitnessModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
+                        >
+                            <Users size={14} />
+                            Open member manager
+                        </button>
                     </div>
                 </div>
             </div>
@@ -641,6 +693,16 @@ function ActiveArchiveView({
 /* ─────────────────────────────────────────────────────────────── */
 /*  Small components                                               */
 /* ─────────────────────────────────────────────────────────────── */
+
+function MetricCard({ label, value, helper }: { label: string; value: number; helper: string }) {
+    return (
+        <div className="rounded-3xl border border-warm-border/30 bg-white px-5 py-5 shadow-sm">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-warm-outline">{label}</p>
+            <p className="mt-3 font-serif text-4xl text-warm-dark">{value}</p>
+            <p className="mt-2 text-xs text-warm-muted">{helper}</p>
+        </div>
+    );
+}
 
 function QuickAction({ href, icon: Icon, label, accent }: { href: string; icon: any; label: string; accent?: boolean }) {
     return (
@@ -693,7 +755,7 @@ function StatusRow({
 }: {
     label: string;
     value: string;
-    action?: React.ReactNode;
+    action?: ReactNode;
 }) {
     return (
         <div className="flex items-center justify-between gap-4">

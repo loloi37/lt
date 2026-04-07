@@ -27,6 +27,7 @@ import {
     X, MapPin, Quote, Settings2, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
+import DashboardShell from '@/components/dashboard/DashboardShell';
 
 // ============================================================================
 // 1. CUSTOM NODE COMPONENT (4 Handles, visible only on hover)
@@ -340,7 +341,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
     };
 
     return (
-        <div className="w-full h-[calc(100vh-85px)] relative bg-surface-low">
+        <div className="relative min-h-[70vh] w-full flex-1 bg-surface-low">
             {loading && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-low/50 backdrop-blur-sm">
                     <Loader2 className="animate-spin text-olive" size={32} />
@@ -517,7 +518,7 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
         }
     }, [auth.loading, auth.authenticated, auth.plan, router]);
 
-    if (auth.loading || auth.plan !== 'family') {
+    if (auth.loading || (auth.plan !== 'family' && auth.plan !== 'concierge')) {
         return (
             <div className="min-h-screen bg-surface-low flex items-center justify-center">
                 <Loader2 size={28} className="text-warm-muted/40 animate-spin" />
@@ -526,7 +527,8 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-surface-low">
+        <DashboardShell userId={unwrappedParams.userId}>
+        <div className="min-h-screen lg:h-screen flex flex-col bg-surface-low">
             {/* Header */}
             <div className="bg-white border-b border-warm-border/30 shadow-sm flex-none z-50 relative">
                 <div className="max-w-[1920px] mx-auto px-6 py-4 flex items-center justify-between">
@@ -551,5 +553,6 @@ export default function FamilyTreePage({ params }: { params: Promise<{ userId: s
                 <FamilyTreeGraph userId={unwrappedParams.userId} />
             </ReactFlowProvider>
         </div>
+        </DashboardShell>
     );
 }
