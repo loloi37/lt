@@ -1,0 +1,29 @@
+# SQL Commands to execute in Supabase
+# Run these in order in the Supabase SQL editor.
+
+# 1) Create the blockchain_preservations table for the Personal → Blockchain feature.
+
+create table if not exists public.blockchain_preservations (
+  id uuid primary key default gen_random_uuid(),
+  memorial_id uuid not null references public.memorials(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  tx_hash text,
+  manifest_cid text,
+  total_bytes bigint not null,
+  status text not null default 'pending',
+  created_at timestamptz not null default now()
+);
+
+alter table public.blockchain_preservations enable row level security;
+
+create policy "owner read blockchain_preservations"
+  on public.blockchain_preservations
+  for select using (auth.uid() = user_id);
+
+create policy "owner insert blockchain_preservations"
+  on public.blockchain_preservations
+  for insert with check (auth.uid() = user_id);
+
+create policy "owner update blockchain_preservations"
+  on public.blockchain_preservations
+  for update using (auth.uid() = user_id);
