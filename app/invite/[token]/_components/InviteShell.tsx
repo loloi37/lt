@@ -36,6 +36,7 @@ export default function InviteShell({
         return (
             <InviteAuthStep
                 invitation={initialData.invitation}
+                token={token}
                 onSuccess={() => setStep('acceptance')}
                 onBack={() => setStep('preview')}
             />

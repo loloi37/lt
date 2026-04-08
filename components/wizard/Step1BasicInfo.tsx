@@ -38,6 +38,9 @@ export default function Step1BasicInfo({ data, onUpdate, onNext, readOnly, memor
     };
 
     const removePhoto = () => {
+        if (!window.confirm('Remove the profile photo? This change will be saved to the memorial.')) {
+            return;
+        }
         onUpdate({
             ...data,
             profilePhoto: null,

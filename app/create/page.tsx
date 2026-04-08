@@ -570,6 +570,20 @@ function CreateMemorialPageContent() {
     setSaveStatus(prev => prev === 'unsaved' ? 'saved' : prev);
   }, [isLoading, memorialData]);
 
+  // Prevent data loss: warn if the user tries to close the tab while a save
+  // is still pending or errored. The 'saved' state is silent so we don't nag.
+  useEffect(() => {
+    if (saveStatus !== 'unsaved' && saveStatus !== 'saving' && saveStatus !== 'error') {
+      return;
+    }
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [saveStatus]);
+
   const saveToSupabase = async () => {
     if (!memorialData.step1.fullName) return;
 
@@ -1278,7 +1292,16 @@ function CreateMemorialPageContent() {
                   </div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="text-xs text-warm-brown">Could not save</div>
+                  <div className="flex items-center gap-1.5 text-xs text-warm-brown">
+                    <span>Could not save</span>
+                    <button
+                      type="button"
+                      onClick={() => saveToSupabase()}
+                      className="underline hover:text-warm-brown/80 transition-colors"
+                    >
+                      Try again
+                    </button>
+                  </div>
                 )}
               </div>
 

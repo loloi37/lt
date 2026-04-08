@@ -54,7 +54,8 @@ export async function POST(
 
         return NextResponse.json({
             success: true,
-            contributionId: contribution.id
+            contributionId: contribution.id,
+            memorialId: contribution.memorial_id
         });
 
     } catch (err: any) {

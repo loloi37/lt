@@ -30,6 +30,8 @@ export default function AnonymousContributePage({
         useState<string | null>(null);
     const [contributionId, setContributionId] =
         useState<string | null>(null);
+    const [memorialId, setMemorialId] =
+        useState<string | null>(null);
 
     const handleSendCode = async (
         e: React.FormEvent
@@ -86,6 +88,27 @@ export default function AnonymousContributePage({
             if (!res.ok) throw new Error(data.error);
 
             setContributionId(data.contributionId);
+            setMemorialId(data.memorialId || null);
+
+            // Stash the verified contributor identity so the contribute
+            // page (and InviteAcceptance, if the user later signs up) can
+            // attach their existing verified contribution without asking
+            // them to re-enter anything or reopen the invite link.
+            try {
+                sessionStorage.setItem(
+                    'anon_contributor',
+                    JSON.stringify({ email, name })
+                );
+                if (data.contributionId) {
+                    sessionStorage.setItem(
+                        'anon_contribution_id',
+                        data.contributionId
+                    );
+                }
+            } catch {
+                // sessionStorage may be blocked; we still show success.
+            }
+
             setStep('success');
         } catch (err: any) {
             setError(err.message);
@@ -330,12 +353,18 @@ export default function AnonymousContributePage({
                     record.
                 </p>
 
-                <a
-                    href={`/invite/${token}/contribute?anonymous=true&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`}
-                    className="inline-block w-full py-4 glass-btn-dark rounded-xl font-medium transition-all"
-                >
-                    Share your memory →
-                </a>
+                {memorialId ? (
+                    <a
+                        href={`/archive/${memorialId}/contribute?anonymous=true`}
+                        className="inline-block w-full py-4 glass-btn-dark rounded-xl font-medium transition-all"
+                    >
+                        Share your memory →
+                    </a>
+                ) : (
+                    <p className="text-sm text-warm-dark/40">
+                        Something went wrong linking you to the archive. Please reopen your invitation email and try again.
+                    </p>
+                )}
 
             </div>
         </div >

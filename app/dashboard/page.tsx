@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/components/providers/AuthProvider';
+import { useAuth, getDashboardPath } from '@/components/providers/AuthProvider';
 
 function DashboardRedirectContent() {
   const router = useRouter();
@@ -17,21 +17,15 @@ function DashboardRedirectContent() {
       return;
     }
 
+    // Single source of truth: resolve the correct dashboard from the
+    // server-validated plan, not from ad-hoc archive inspection. This
+    // keeps plan-based navigation consistent with the plan guards in
+    // each dashboard page and prevents back-and-forth redirects.
     const checkin = searchParams.get('checkin');
-
-    // Use server-validated state to determine the correct dashboard
-    // This is the single source of truth — no stale browser cache
-    const paidArchive = auth.archives.find(a => a.paid);
-    let mode = 'personal';
-    if (paidArchive) {
-      mode = paidArchive.mode;
-    } else if (auth.archives.length > 0) {
-      mode = auth.archives[0].mode || 'draft';
-    }
-
-    const url = `/dashboard/${mode}/${auth.user!.id}${checkin ? '?checkin=true' : ''}`;
+    const basePath = getDashboardPath(auth);
+    const url = checkin ? `${basePath}?checkin=true` : basePath;
     router.replace(url);
-  }, [auth.loading, auth.authenticated, auth.archives, auth.user, searchParams, router]);
+  }, [auth, searchParams, router]);
 
   return (
     <div className="min-h-screen bg-surface-low flex items-center justify-center">

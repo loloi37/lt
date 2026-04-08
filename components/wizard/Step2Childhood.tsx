@@ -75,6 +75,9 @@ export default function Step2Childhood({ data, onUpdate, onNext, onBack, readOnl
     };
 
     const removePhoto = (index: number) => {
+        if (!window.confirm('Remove this childhood photo? This change will be saved to the memorial.')) {
+            return;
+        }
         handleChange('childhoodPhotos', data.childhoodPhotos.filter((_, i) => i !== index));
     };
 

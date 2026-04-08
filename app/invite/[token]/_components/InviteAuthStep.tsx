@@ -13,12 +13,14 @@ type AuthMode = 'signup' | 'login';
 
 interface Props {
     invitation: InvitationData;
+    token: string;
     onSuccess: () => void;
     onBack: () => void;
 }
 
 export default function InviteAuthStep({
     invitation,
+    token,
     onSuccess,
     onBack
 }: Props) {
@@ -410,7 +412,7 @@ export default function InviteAuthStep({
                     </p>
 
                     <a
-                        href={`/invite/${invitation.id}/anonymous`}
+                        href={`/invite/${token}/anonymous`}
                         className="text-sm text-warm-dark/40 hover:text-warm-dark transition-colors underline underline-offset-4"
                     >
                         Continue without an account
