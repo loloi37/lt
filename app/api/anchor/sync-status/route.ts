@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,26 +9,44 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(req: NextRequest) {
-    const userId = req.nextUrl.searchParams.get('userId');
     const memorialId = req.nextUrl.searchParams.get('memorialId');
 
-    if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-    }
-
     try {
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (!memorialId) {
+            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+        }
+
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!permission.context || !hasPermission(permission.context, 'manage_devices')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         let query = supabaseAdmin
             .from('anchor_devices')
             .select('*')
-            .eq('user_id', userId);
-
-        if (memorialId) {
-            query = query.eq('memorial_id', memorialId);
-        }
+            .eq('user_id', user.id)
+            .eq('memorial_id', memorialId);
 
         const { data, error } = await query.order('last_sync_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
         return NextResponse.json({
             devices: (data || []).map(d => ({
@@ -40,10 +60,11 @@ export async function GET(req: NextRequest) {
                 status: d.status,
             })),
         });
-    } catch {
-        // Return mock data if table doesn't exist
-        return NextResponse.json({
-            devices: [],
-        });
+    } catch (error: any) {
+        console.error('[anchor-sync-status]', error);
+        return NextResponse.json(
+            { error: error.message || 'Internal server error' },
+            { status: 500 }
+        );
     }
 }

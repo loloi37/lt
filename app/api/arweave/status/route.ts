@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,16 +17,44 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (memorialId) {
+            const permission = await resolveArchivePermissionContext(
+                supabaseAdmin,
+                memorialId,
+                user.id
+            );
+
+            if (!permission.memorialExists || !permission.context) {
+                return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+            }
+
+            if (
+                !hasPermission(permission.context, 'view_activity') &&
+                !hasPermission(permission.context, 'export_archive')
+            ) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
+        }
+
         let query = supabaseAdmin.from('arweave_transactions').select('*');
         if (txId) query = query.eq('tx_id', txId);
         else if (memorialId) query = query.eq('memorial_id', memorialId);
 
         const { data, error } = await query.order('created_at', { ascending: false }).limit(1).single();
 
-        if (error || !data) {
-            // Return mock data if table doesn't exist yet
+        if (error && error.code !== 'PGRST116') {
+            throw error;
+        }
+
+        if (!data) {
             return NextResponse.json({
-                txId: txId || 'mock-tx-pending',
+                txId: txId || null,
                 status: 'not_found',
                 gatewayUrls: [],
                 fileCount: 0,
@@ -41,14 +71,11 @@ export async function GET(req: NextRequest) {
             totalBytes: data.total_bytes,
             confirmedAt: data.confirmed_at,
         });
-    } catch {
-        return NextResponse.json({
-            txId: txId || 'mock-tx',
-            status: 'confirmed',
-            gatewayUrls: [`https://arweave.net/${txId}`],
-            fileCount: 34,
-            totalBytes: 234_567_890,
-            confirmedAt: new Date().toISOString(),
-        });
+    } catch (error: any) {
+        console.error('[arweave-status]', error);
+        return NextResponse.json(
+            { error: error.message || 'Internal server error' },
+            { status: 500 }
+        );
     }
 }

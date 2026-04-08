@@ -1,7 +1,14 @@
 // app/api/arche/preview-html/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { generateStandaloneHTML } from '@/lib/arche/htmlGenerator';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET(request: NextRequest) {
     try {
@@ -12,8 +19,30 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Missing id parameter' }, { status: 400 });
         }
 
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (
+            !hasPermission(permission.context, 'edit_archive') &&
+            !hasPermission(permission.context, 'view_archive')
+        ) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // Fetch Full Data
-        const { data: memorial, error } = await supabase
+        const { data: memorial, error } = await supabaseAdmin
             .from('memorials') // or 'concierge_projects' depending on where you test, but usually memorials
             .select('*')
             .eq('id', memorialId)
@@ -24,22 +53,7 @@ export async function GET(request: NextRequest) {
         // For now, we assume we are testing with a real memorial ID.
 
         if (error || !memorial) {
-            // Fallback: Try finding it in concierge_projects if not found in memorials
-            const { data: concierge } = await supabase
-                .from('concierge_projects')
-                .select('*')
-                .eq('id', memorialId)
-                .single();
-            
-            if (!concierge) {
-                return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-            }
-            // Use concierge memorial_data if available
-            if (concierge.memorial_data) {
-                const html = generateStandaloneHTML(concierge.memorial_data as any);
-                return new NextResponse(html, { headers: { 'Content-Type': 'text/html' } });
-            }
-            return NextResponse.json({ error: 'No memorial data in project' }, { status: 404 });
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
         // Combine into full MemorialData object structure

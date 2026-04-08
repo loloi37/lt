@@ -3,7 +3,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi, BellDot, CheckCircle2, History, MessageSquareText } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi, BellDot, CheckCircle2, History, MessageSquareText, ChevronDown } from 'lucide-react';
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import AnchorPanel from '@/components/AnchorPanel';
@@ -40,6 +40,19 @@ interface FamilyActivityItem {
     createdAt: string;
     createdByName: string | null;
     changeSummary: string;
+}
+
+interface ActivityPersonGroup {
+    name: string;
+    items: FamilyActivityItem[];
+    latestCreatedAt: string;
+}
+
+interface ActivityDayGroup {
+    dayKey: string;
+    dayLabel: string;
+    items: FamilyActivityItem[];
+    people: ActivityPersonGroup[];
 }
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
@@ -403,6 +416,72 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     const pendingRequestCount = pendingCreationRequests.length + pendingAccessRequests.length;
 
+    const formatActivityDayLabel = (value: string) =>
+        new Intl.DateTimeFormat(undefined, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        }).format(new Date(value));
+
+    const getActivityDayKey = (value: string) => {
+        const date = new Date(value);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const groupedRecentActivity: ActivityDayGroup[] = Object.values(
+        recentActivity.reduce<Record<string, ActivityDayGroup>>((groups, item) => {
+            const dayKey = getActivityDayKey(item.createdAt);
+            const existingDay = groups[dayKey];
+
+            if (existingDay) {
+                existingDay.items.push(item);
+                return groups;
+            }
+
+            groups[dayKey] = {
+                dayKey,
+                dayLabel: formatActivityDayLabel(item.createdAt),
+                items: [item],
+                people: [],
+            };
+
+            return groups;
+        }, {})
+    )
+        .sort((left, right) => right.dayKey.localeCompare(left.dayKey))
+        .map((dayGroup) => ({
+            ...dayGroup,
+            people: Object.values(
+                dayGroup.items.reduce<Record<string, ActivityPersonGroup>>((people, item) => {
+                    const name = item.createdByName || 'Someone';
+                    const existingPerson = people[name];
+
+                    if (existingPerson) {
+                        existingPerson.items.push(item);
+                        if (new Date(item.createdAt).getTime() > new Date(existingPerson.latestCreatedAt).getTime()) {
+                            existingPerson.latestCreatedAt = item.createdAt;
+                        }
+                        return people;
+                    }
+
+                    people[name] = {
+                        name,
+                        items: [item],
+                        latestCreatedAt: item.createdAt,
+                    };
+
+                    return people;
+                }, {})
+            ).sort(
+                (left, right) =>
+                    new Date(right.latestCreatedAt).getTime() - new Date(left.latestCreatedAt).getTime()
+            ),
+        }));
+
     // BLOCK RENDERING until auth checks pass
     const hasAccess = auth.plan === 'family' || auth.plan === 'concierge';
     if (auth.loading || !auth.authenticated || !hasAccess) {
@@ -619,26 +698,77 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {recentActivity.map((item) => (
-                                    <div key={item.id} className="rounded-xl border border-warm-border/20 bg-surface-low/25 px-4 py-3">
-                                        <div className="flex items-start gap-3">
-                                            <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-olive/10 text-olive">
-                                                <MessageSquareText size={16} />
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-sm text-warm-dark font-sans">
-                                                    <span className="font-semibold">{item.createdByName || 'Someone'}</span> updated{' '}
-                                                    <span className="font-semibold">{item.memorialName}</span>
+                                {groupedRecentActivity.map((dayGroup) => (
+                                    <details
+                                        key={dayGroup.dayKey}
+                                        open
+                                        className="group rounded-xl border border-warm-border/20 bg-surface-low/20"
+                                    >
+                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-warm-dark font-sans">
+                                                    {dayGroup.dayLabel}
                                                 </p>
-                                                <p className="mt-1 text-sm text-warm-muted font-sans leading-relaxed">
-                                                    {item.changeSummary}
-                                                </p>
-                                                <p className="mt-2 text-xs text-warm-outline font-sans">
-                                                    {new Date(item.createdAt).toLocaleString()}
+                                                <p className="mt-1 text-xs text-warm-outline font-sans">
+                                                    {dayGroup.items.length} update{dayGroup.items.length !== 1 ? 's' : ''} by {dayGroup.people.length} contributor{dayGroup.people.length !== 1 ? 's' : ''}
                                                 </p>
                                             </div>
+                                            <ChevronDown
+                                                size={16}
+                                                className="text-warm-outline transition-transform group-open:rotate-180"
+                                            />
+                                        </summary>
+
+                                        <div className="space-y-3 border-t border-warm-border/15 px-3 py-3">
+                                            {dayGroup.people.map((personGroup) => (
+                                                <details
+                                                    key={`${dayGroup.dayKey}-${personGroup.name}`}
+                                                    className="group/person rounded-xl border border-warm-border/20 bg-white"
+                                                >
+                                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-warm-dark font-sans">
+                                                                {personGroup.name}
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-warm-outline font-sans">
+                                                                {personGroup.items.length} change{personGroup.items.length !== 1 ? 's' : ''}
+                                                            </p>
+                                                        </div>
+                                                        <ChevronDown
+                                                            size={16}
+                                                            className="text-warm-outline transition-transform group-open/person:rotate-180"
+                                                        />
+                                                    </summary>
+
+                                                    <div className="space-y-3 border-t border-warm-border/15 px-4 py-3">
+                                                        {personGroup.items.map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="rounded-xl border border-warm-border/20 bg-surface-low/25 px-4 py-3"
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-olive/10 text-olive">
+                                                                        <MessageSquareText size={16} />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-sm text-warm-dark font-sans">
+                                                                            Updated <span className="font-semibold">{item.memorialName}</span>
+                                                                        </p>
+                                                                        <p className="mt-1 text-sm text-warm-muted font-sans leading-relaxed">
+                                                                            {item.changeSummary}
+                                                                        </p>
+                                                                        <p className="mt-2 text-xs text-warm-outline font-sans">
+                                                                            {new Date(item.createdAt).toLocaleString()}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </details>
+                                            ))}
                                         </div>
-                                    </div>
+                                    </details>
                                 ))}
                             </div>
                         )}

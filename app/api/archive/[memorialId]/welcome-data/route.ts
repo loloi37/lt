@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { getArchiveCapabilities, getRoleLabel } from '@/lib/archivePermissions';
+import {
+    getArchiveCapabilities,
+    getRoleLabel,
+    hasPermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 import { WitnessRole } from '@/types/roles';
 
 const supabaseAdmin = createClient(
@@ -25,19 +30,29 @@ export async function GET(
             );
         }
 
-        // 2. Fetch role + memorial in parallel
-        const [roleResult, memorialResult] =
-            await Promise.all([
-                supabaseAdmin
-                    .from('user_memorial_roles')
-                    .select('role, joined_at')
-                    .eq('user_id', user.id)
-                    .eq('memorial_id', memorialId)
-                    .single(),
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-                supabaseAdmin
-                    .from('memorials')
-                    .select(`
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json(
+                { error: 'Access denied' },
+                { status: 403 }
+            );
+        }
+
+        if (!hasPermission(permission.context, 'view_archive')) {
+            return NextResponse.json(
+                { error: 'Access denied' },
+                { status: 403 }
+            );
+        }
+
+        const { data: memorial, error: memorialError } = await supabaseAdmin
+            .from('memorials')
+            .select(`
             id,
             full_name,
             birth_date,
@@ -49,31 +64,18 @@ export async function GET(
             step8,
             step9
           `)
-                    .eq('id', memorialId)
-                    .single()
-            ]);
+            .eq('id', memorialId)
+            .single();
 
-        // 3. Verify they actually have a role here
-        // (prevents URL-guessing access)
-        if (roleResult.error || !roleResult.data) {
-            return NextResponse.json(
-                { error: 'Access denied' },
-                { status: 403 }
-            );
-        }
-
-        if (memorialResult.error || !memorialResult.data) {
+        if (memorialError || !memorial) {
             return NextResponse.json(
                 { error: 'Archive not found' },
                 { status: 404 }
             );
         }
 
-        const memorial = memorialResult.data;
-        const userRole = roleResult.data.role as WitnessRole;
-        const plan = memorial.mode === 'family'
-            ? 'family'
-            : 'personal';
+        const userRole = permission.context.role as WitnessRole;
+        const plan = permission.context.plan;
         const capabilities = getArchiveCapabilities(userRole, plan);
 
         // 4. Compute content richness
@@ -140,7 +142,7 @@ export async function GET(
                 hasBiography
             },
             linkedCount,
-            joinedAt: roleResult.data.joined_at
+            joinedAt: permission.context.isOwner ? null : null
         });
 
     } catch (err: any) {

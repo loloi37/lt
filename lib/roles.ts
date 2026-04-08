@@ -22,21 +22,21 @@ export const ROLE_CONFIG: Record<WitnessRole, RoleConfig> = {
     },
     co_guardian: {
         label: 'Co-Guardian',
-        description: 'Trusted family steward. Can edit content and review witness contributions across the family archive.',
+        description: 'Trusted family steward for Family plans. Can edit content, invite members, and review witness contributions across the family archive.',
         colorClass: 'text-warm-brown',
         bgClass: 'bg-warm-brown/10 border-warm-brown/20',
         iconName: 'Edit',
         capabilities: [
             'View and edit memorial content',
             'Approve/Reject witness contributions',
-            'Request new memorial creation from the owner',
-            'Access steward review queue'
+            'Invite members and manage archive roles',
+            'Request new memorial creation from the owner'
         ],
         restrictions: [
             'Cannot delete the archive',
             'Cannot change billing or plans',
             'Cannot reassign the Owner',
-            'Cannot invite or remove members'
+            'Personal plans do not allow collaboration'
         ]
     },
     witness: {
@@ -83,5 +83,5 @@ export const getAssignableRoles = (planType: 'personal' | 'family'): WitnessRole
     if (planType === 'family') {
         return ['co_guardian', 'witness', 'reader'];
     }
-    return ['witness', 'reader'];
+    return [];
 };

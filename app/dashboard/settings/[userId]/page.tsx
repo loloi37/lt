@@ -6,6 +6,7 @@ import { CreditCard, Lock, Mail, Shield, UserCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import { useAuth } from '@/components/providers/AuthProvider';
+import SecurityCenter from '@/components/SecurityCenter';
 
 export default function DashboardSettingsPage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = use(params);
@@ -131,10 +132,10 @@ export default function DashboardSettingsPage({ params }: { params: Promise<{ us
                                 <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-3">
                                     <div className="flex items-center gap-2 text-sm text-warm-dark">
                                         <Lock size={14} className="text-olive" />
-                                        Session-based authentication via Supabase
+                                        Supabase sessions with app-owned 2FA
                                     </div>
                                     <p className="mt-2 text-sm text-warm-muted">
-                                        Dashboard access is tied to the authenticated account and validated against the route user id before rendering.
+                                        Password sign-in still uses Supabase sessions, while second-factor verification is now handled by ULUMAE with authenticator apps and recovery codes.
                                     </p>
                                 </div>
                                 <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-3">
@@ -158,14 +159,18 @@ export default function DashboardSettingsPage({ params }: { params: Promise<{ us
                                 <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-3">
                                     <div className="flex items-center gap-2 text-sm text-warm-dark">
                                         <Shield size={14} className="text-olive" />
-                                        Sessions, recovery, and recent activity
+                                        Sessions, recovery, and trusted devices
                                     </div>
                                     <p className="mt-2 text-sm text-warm-muted">
-                                        This is the right home for password change, email change, device sessions, account recovery, and recent archive activity. The family dashboard now also surfaces recent steward activity and pending requests more clearly.
+                                        This is the right home for password change, email change, trusted session control, authenticator setup, and recovery codes.
                                     </p>
                                 </div>
                             </div>
                         </section>
+                    </div>
+
+                    <div className="mt-6">
+                        <SecurityCenter userId={userId} />
                     </div>
                 </div>
             </div>

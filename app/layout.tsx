@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import MfaChallengeGate from '@/components/MfaChallengeGate';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body className="bg-surface-low text-warm-dark">
         <AuthProvider>
           {children}
+          <MfaChallengeGate />
           <Footer />
           <Toaster position="bottom-right" />
         </AuthProvider>

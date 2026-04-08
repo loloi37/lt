@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { decodeSessionIdFromAccessToken } from '@/lib/security/twoFactor';
+import { getRequestIpAddress, trackUserSessionDevice } from '@/lib/sessionDevices';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,11 +12,19 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { user } = await createAuthenticatedClient();
+        const { supabase, user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
         const userId = user.id;
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        await trackUserSessionDevice(supabaseAdmin, {
+            userId,
+            sessionId: decodeSessionIdFromAccessToken(sessionData.session?.access_token),
+            ipAddress: getRequestIpAddress(request),
+            userAgent: request.headers.get('user-agent'),
+        });
 
         const { error } = await supabaseAdmin
             .from('users')

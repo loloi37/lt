@@ -6,9 +6,11 @@ import { sendEmail } from '@/lib/email/sender';
 import { getWitnessInvitationEmail } from '@/lib/email/templates';
 import { WitnessRole } from '@/types/roles';
 import {
-    hasArchivePermission,
+    hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
+import { INVITATION_EXPIRATION_DAYS } from '@/lib/constants';
 
 // Initialize Admin Client for sensitive DB operations
 const supabaseAdmin = createClient(
@@ -63,8 +65,9 @@ export async function POST(
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        if (!hasArchivePermission(permission.context, 'invite_member')) {
-            return NextResponse.json({ error: 'Only the archive owner can invite members.' }, { status: 403 });
+        if (!hasPermission(permission.context, 'invite_member')) {
+            const planLabel = permission.context.plan === 'family' ? 'this role' : 'Personal archives do not support collaboration';
+            return NextResponse.json({ error: `${planLabel}.` }, { status: 403 });
         }
 
         if (normalizedEmail === user.email?.toLowerCase()) {
@@ -94,7 +97,9 @@ export async function POST(
         }
 
         // 5. UPSERT LOGIC (Update existing pending or Create new)
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const expiresAt = new Date(
+            Date.now() + INVITATION_EXPIRATION_DAYS * 24 * 60 * 60 * 1000
+        ).toISOString();
 
         const { data: existingInvite } = await supabaseAdmin
             .from('witness_invitations')
@@ -152,6 +157,19 @@ export async function POST(
                 inviteLink,
                 personalMessage
             )
+        });
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'invite_sent',
+            summary: `Invitation sent to ${normalizedEmail} as ${role}.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            subjectEmail: normalizedEmail,
+            details: {
+                role,
+                invitationId,
+            },
         });
 
         return NextResponse.json({ success: true, invitationId });

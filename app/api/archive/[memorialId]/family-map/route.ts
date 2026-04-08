@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from
     '@/utils/supabase/api';
 import {
-    hasArchivePermission,
+    hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
 
@@ -41,7 +41,7 @@ export async function GET(
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        if (permission.context.plan !== 'family' || !hasArchivePermission(permission.context, 'view_family_map')) {
+        if (permission.context.plan !== 'family' || !hasPermission(permission.context, 'view_family_map')) {
             return NextResponse.json({ linked: [] });
         }
 

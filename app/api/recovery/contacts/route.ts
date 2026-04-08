@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,55 +8,69 @@ const supabaseAdmin = createClient(
 );
 
 export async function GET(req: NextRequest) {
-    const userId = req.nextUrl.searchParams.get('userId');
-
-    if (!userId) {
-        return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
-    }
-
     try {
+        const { user } = await createAuthenticatedClient();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { data, error } = await supabaseAdmin
             .from('recovery_contacts')
             .select('*')
-            .eq('user_id', userId)
+            .eq('user_id', user.id)
             .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        }
 
         return NextResponse.json({ contacts: data || [] });
-    } catch {
-        return NextResponse.json({ contacts: [] });
+    } catch (error: any) {
+        console.error('[recovery-contacts-get]', error);
+        return NextResponse.json(
+            { error: error.message || 'Internal server error' },
+            { status: 500 }
+        );
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId, contacts } = await req.json();
+        const { contacts } = await req.json();
+        const { user } = await createAuthenticatedClient();
 
-        if (!userId || !contacts) {
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (!contacts) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Delete existing contacts and re-insert (simple replace)
-        try {
-            await supabaseAdmin
-                .from('recovery_contacts')
-                .delete()
-                .eq('user_id', userId);
+        const { error: deleteError } = await supabaseAdmin
+            .from('recovery_contacts')
+            .delete()
+            .eq('user_id', user.id);
 
-            if (contacts.length > 0) {
-                await supabaseAdmin
-                    .from('recovery_contacts')
-                    .insert(contacts.map((c: any) => ({
-                        user_id: userId,
-                        name: c.name,
-                        email: c.email,
-                        relationship: c.relationship,
-                        status: 'pending',
-                    })));
+        if (deleteError) {
+            throw deleteError;
+        }
+
+        if (contacts.length > 0) {
+            const { error: insertError } = await supabaseAdmin
+                .from('recovery_contacts')
+                .insert(contacts.map((c: any) => ({
+                    user_id: user.id,
+                    name: c.name,
+                    email: c.email,
+                    relationship: c.relationship,
+                    status: 'pending',
+                })));
+
+            if (insertError) {
+                throw insertError;
             }
-        } catch {
-            // Table may not exist yet
         }
 
         return NextResponse.json({ success: true });

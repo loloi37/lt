@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,25 +11,39 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
     try {
-        const { memorialId, userId } = await req.json();
+        const { memorialId } = await req.json();
+        const { user } = await createAuthenticatedClient();
 
-        if (!memorialId || !userId) {
-            return NextResponse.json({ error: 'Missing memorialId or userId' }, { status: 400 });
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Verify ownership
+        if (!memorialId) {
+            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
+        }
+
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'export_archive')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const { data: memorial, error: memError } = await supabaseAdmin
             .from('memorials')
-            .select('id, user_id, paid')
+            .select('id, paid')
             .eq('id', memorialId)
             .single();
 
         if (memError || !memorial) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
-
-        if (memorial.user_id !== userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         if (!memorial.paid) {
@@ -63,6 +80,17 @@ export async function POST(req: NextRequest) {
         } catch {
             // Column may not exist yet — ignore
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'memorial_exported',
+            summary: 'Preservation upload started for this memorial.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                txId,
+            },
+        });
 
         return NextResponse.json({
             txId,

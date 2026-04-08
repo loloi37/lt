@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { syncAllCoGuardiansToMemorial } from '@/lib/familyWorkspace';
+import { resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,13 +38,17 @@ export async function PATCH(
             return NextResponse.json({ error: 'Invalid decision' }, { status: 400 });
         }
 
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('id, user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (!memorial || memorial.user_id !== user.id) {
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (permission.context.role !== 'owner') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -107,6 +113,19 @@ export async function PATCH(
         if (updateError) {
             throw updateError;
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'creation_request_decided',
+            summary: `A memorial creation request was ${decision}.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            subjectUserId: requestRecord.requester_user_id,
+            details: {
+                decision,
+                createdMemorialId,
+            },
+        });
 
         return NextResponse.json({
             success: true,

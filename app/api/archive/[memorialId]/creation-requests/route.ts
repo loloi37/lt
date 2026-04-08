@@ -4,6 +4,8 @@ import { createAuthenticatedClient } from '@/utils/supabase/api';
 import {
     getPendingMemorialCreationRequest,
 } from '@/lib/familyWorkspace';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,6 +28,16 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+        }
+
         const { data: memorial, error: memorialError } = await supabaseAdmin
             .from('memorials')
             .select('id, user_id, mode')
@@ -40,18 +52,10 @@ export async function POST(
             return NextResponse.json({ error: 'Only family archives support this request flow.' }, { status: 400 });
         }
 
-        if (memorial.user_id === user.id) {
-            return NextResponse.json({ error: 'Owners can create memorials directly.' }, { status: 400 });
-        }
-
-        const { data: roleRow } = await supabaseAdmin
-            .from('user_memorial_roles')
-            .select('role')
-            .eq('memorial_id', memorialId)
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-        if (roleRow?.role !== 'co_guardian') {
+        if (
+            permission.context.role !== 'co_guardian' ||
+            !hasPermission(permission.context, 'request_memorial_creation')
+        ) {
             return NextResponse.json({ error: 'Only co-guardians can request a new family memorial.' }, { status: 403 });
         }
 
@@ -78,6 +82,17 @@ export async function POST(
             throw insertError;
         }
 
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'creation_request_created',
+            summary: 'A co-guardian requested a new family memorial.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                proposedName: proposedName?.trim() || null,
+            },
+        });
+
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error('[creation-request][POST]', error);
@@ -100,17 +115,17 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: memorial, error: memorialError } = await supabaseAdmin
-            .from('memorials')
-            .select('id, user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (memorialError || !memorial) {
+        if (!permission.memorialExists || !permission.context) {
             return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
         }
 
-        if (memorial.user_id !== user.id) {
+        if (permission.context.role !== 'owner') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

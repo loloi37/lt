@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 // Initialize Admin Client
 const supabaseAdmin = createClient(
@@ -76,8 +78,16 @@ export async function POST(
             });
 
         if (insertError) throw insertError;
-
-        // 6. TODO: Notify Owner (Optional - could be handled by a DB Trigger later)
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'access_request_created',
+            summary: 'A family access request was submitted.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                requestedRole: 'witness',
+            },
+        });
 
         return NextResponse.json({ success: true, message: 'Request submitted successfully' });
 
@@ -99,13 +109,17 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (memorial?.user_id !== user.id) {
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'approve_access_requests')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

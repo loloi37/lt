@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,34 +11,50 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: NextRequest) {
     try {
-        const { memorialId, userId } = await req.json();
+        const { memorialId } = await req.json();
+        const { user } = await createAuthenticatedClient();
 
-        if (!memorialId || !userId) {
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (!memorialId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        // Verify ownership
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('id, user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (!memorial || memorial.user_id !== userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        try {
-            await supabaseAdmin.from('content_reviews').upsert({
-                memorial_id: memorialId,
-                status: 'approved', // Auto-approve for now (placeholder)
-                submitted_at: new Date().toISOString(),
-                reviewed_at: new Date().toISOString(),
-                flagged_items: [],
-            }, { onConflict: 'memorial_id' });
-        } catch {
-            // Table may not exist yet
+        if (!hasPermission(permission.context, 'export_archive')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
+
+        const { error } = await supabaseAdmin.from('content_reviews').upsert({
+            memorial_id: memorialId,
+            status: 'approved',
+            submitted_at: new Date().toISOString(),
+            reviewed_at: new Date().toISOString(),
+            flagged_items: [],
+        }, { onConflict: 'memorial_id' });
+
+        if (error) {
+            throw error;
+        }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'content_review_submitted',
+            summary: 'Content review was submitted for preservation readiness.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+        });
 
         return NextResponse.json({
             status: 'approved',

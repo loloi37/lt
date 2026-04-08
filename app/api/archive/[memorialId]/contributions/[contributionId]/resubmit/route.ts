@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,6 +51,18 @@ export async function PATCH(
         if (error) {
             throw error;
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'contribution_resubmitted',
+            summary: 'A contribution was revised and resubmitted for review.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                contributionId,
+                revisionCount: (contribution.revision_count || 0) + 1,
+            },
+        });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,18 +26,28 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'delete_archive')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const { data: memorial, error: fetchError } = await supabaseAdmin
             .from('memorials')
-            .select('user_id, deleted, paid, mode')
+            .select('deleted, paid, mode')
             .eq('id', memorialId)
             .single();
 
         if (fetchError || !memorial) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
-
-        if (memorial.user_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
         if (!memorial.deleted) {
@@ -78,6 +90,14 @@ export async function DELETE(
             console.error('permanent-delete error:', error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'memorial_permanently_deleted',
+            summary: 'The memorial was permanently deleted.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+        });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

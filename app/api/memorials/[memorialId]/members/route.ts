@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
 import {
-    hasArchivePermission,
+    hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
 
@@ -32,7 +32,7 @@ export async function GET(
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        if (!permission.context || !hasArchivePermission(permission.context, 'view_members')) {
+        if (!permission.context || !hasPermission(permission.context, 'view_members')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/utils/supabase/middleware';
 import { createServerClient } from '@supabase/ssr';
+import {
+  createAdminClient,
+  decodeSessionIdFromAccessToken,
+  getTwoFactorEnforcementStatus,
+} from '@/lib/security/twoFactor';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -30,8 +35,11 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: sessionData } = await supabase.auth.getSession();
+
   const PROTECTED_PREFIXES = ['/dashboard', '/archive', '/create', '/succession', '/admin'];
   const isProtectedRoute = PROTECTED_PREFIXES.some((path) => pathname.startsWith(path));
+  const isTwoFactorRoute = pathname.startsWith('/two-factor');
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
@@ -46,6 +54,30 @@ export async function proxy(request: NextRequest) {
     url.pathname = '/dashboard';
     url.search = '';
     return NextResponse.redirect(url);
+  }
+
+  if (user && (isProtectedRoute || isTwoFactorRoute)) {
+    try {
+      const sessionId = decodeSessionIdFromAccessToken(sessionData.session?.access_token);
+      const status = await getTwoFactorEnforcementStatus(createAdminClient(), user.id, sessionId);
+
+      if (isTwoFactorRoute && (!status.enabled || !status.requiresChallenge)) {
+        const next = request.nextUrl.searchParams.get('next') || '/dashboard';
+        const target = new URL(next.startsWith('/') ? next : '/dashboard', request.url);
+        return NextResponse.redirect(target);
+      }
+
+      if (!isTwoFactorRoute && status.requiresChallenge) {
+        const url = request.nextUrl.clone();
+        const redirectTo = url.pathname + url.search;
+        url.pathname = '/two-factor';
+        url.search = '';
+        url.searchParams.set('next', redirectTo);
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      console.error('[proxy-two-factor]', error);
+    }
   }
 
   const noCachePaths = [

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,27 +40,20 @@ export async function PATCH(
             );
         }
 
-        const [{ data: memorial }, { data: reviewerRole }, { data: contribution }] = await Promise.all([
-            supabaseAdmin
-                .from('memorials')
-                .select('user_id')
-                .eq('id', memorialId)
-                .single(),
-            supabaseAdmin
-                .from('user_memorial_roles')
-                .select('role')
-                .eq('memorial_id', memorialId)
-                .eq('user_id', user.id)
-                .maybeSingle(),
+        const [{ data: contribution }, permission] = await Promise.all([
             supabaseAdmin
                 .from('memorial_contributions')
                 .select('id, memorial_id, status')
                 .eq('id', contributionId)
                 .maybeSingle(),
+            resolveArchivePermissionContext(supabaseAdmin, memorialId, user.id),
         ]);
 
-        const canReview = memorial?.user_id === user.id || reviewerRole?.role === 'co_guardian';
-        if (!canReview) {
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'review_contributions')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -85,6 +80,18 @@ export async function PATCH(
         if (error) {
             throw error;
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'contribution_reviewed',
+            summary: `A contribution was marked ${decision}.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                contributionId,
+                decision,
+            },
+        });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

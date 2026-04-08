@@ -8,9 +8,10 @@ import {
     insertVersionSnapshot,
 } from '@/lib/versioningServer';
 import {
-    hasArchivePermission,
+    hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
+import { DEFAULT_VERSION_LIMIT, MAX_VERSION_LIMIT, MEMORIAL_STEP_IDS } from '@/lib/constants';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,15 +40,17 @@ export async function GET(
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
         }
 
-        if (!permission.context || !hasArchivePermission(permission.context, 'view_activity')) {
+        if (!permission.context || !hasPermission(permission.context, 'view_activity')) {
             return NextResponse.json(
                 { error: 'Only members with stewardship access can view version history.' },
                 { status: 403 }
             );
         }
 
-        const rawLimit = Number(request.nextUrl.searchParams.get('limit') || '50');
-        const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50;
+        const rawLimit = Number(request.nextUrl.searchParams.get('limit') || DEFAULT_VERSION_LIMIT);
+        const limit = Number.isFinite(rawLimit)
+            ? Math.min(Math.max(rawLimit, 1), MAX_VERSION_LIMIT)
+            : DEFAULT_VERSION_LIMIT;
 
         const { data, error } = await supabaseAdmin
             .from('memorial_versions')
@@ -92,7 +95,7 @@ export async function POST(
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
         }
 
-        if (!permission.context || !hasArchivePermission(permission.context, 'edit_archive')) {
+        if (!permission.context || !hasPermission(permission.context, 'edit_archive')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -120,7 +123,7 @@ export async function POST(
                 supabaseAdmin,
                 memorialId,
                 snapshotData: memorialData,
-                stepsModified: Array.isArray(body?.stepsModified) ? body.stepsModified : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                stepsModified: Array.isArray(body?.stepsModified) ? body.stepsModified : [...MEMORIAL_STEP_IDS],
                 createdBy: user.id,
                 createdByName: actorName,
                 changeSummary,

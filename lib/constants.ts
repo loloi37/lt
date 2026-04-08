@@ -1,0 +1,14 @@
+export const INVITATION_EXPIRATION_DAYS = 30;
+export const SOFT_DELETE_RETENTION_DAYS = 30;
+export const EXPORT_COOLDOWN_MINUTES = 10;
+export const EXPORT_SIGNED_URL_TTL_SECONDS = 60 * 60;
+export const PAUSE_REMINDER_DELAY_DAYS = 7;
+export const DRAFT_MEDIA_LIMIT = 10;
+export const DRAFT_VIDEO_LIMIT = 3;
+export const PAID_VIDEO_LIMIT = 20;
+export const MAX_VIDEO_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+export const DEFAULT_ACTIVITY_LIMIT = 20;
+export const DEFAULT_VERSION_LIMIT = 50;
+export const MAX_VERSION_LIMIT = 100;
+export const MEMORIAL_STEP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+export const SESSION_ACTIVITY_STALE_HOURS = 24;

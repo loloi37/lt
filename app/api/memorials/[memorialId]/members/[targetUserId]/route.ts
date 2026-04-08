@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
 import { removeFamilyCoGuardianAccess } from '@/lib/familyWorkspace';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,12 +21,18 @@ export async function DELETE(
 
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // 1. Check if caller is Owner (Only owners can remove members)
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials').select('user_id').eq('id', memorialId).single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (memorial?.user_id !== user.id) {
-            return NextResponse.json({ error: 'Only the archive owner can remove members' }, { status: 403 });
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'manage_members')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // 2. Prevent removing self (The owner must exist)
@@ -60,6 +68,15 @@ export async function DELETE(
 
             if (error) throw error;
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'member_removed',
+            summary: 'Archive access was revoked for a member.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            subjectUserId: targetUserId,
+        });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

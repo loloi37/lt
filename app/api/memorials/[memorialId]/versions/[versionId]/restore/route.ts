@@ -7,6 +7,7 @@ import {
     buildEditorActorLabel,
     insertVersionSnapshot,
 } from '@/lib/versioningServer';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,21 +44,31 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'edit_archive') || permission.context.role !== 'owner') {
+            return NextResponse.json(
+                { error: 'Only the memorial owner can restore history.' },
+                { status: 403 }
+            );
+        }
+
         const { data: memorial, error: memorialError } = await supabaseAdmin
             .from('memorials')
-            .select('id, user_id, paid, updated_at, completed_steps, step1, step2, step3, step4, step5, step6, step7, step8, step9')
+            .select('id, paid, updated_at, completed_steps, step1, step2, step3, step4, step5, step6, step7, step8, step9')
             .eq('id', memorialId)
             .single();
 
         if (memorialError || !memorial) {
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
-        }
-
-        if (memorial.user_id !== user.id) {
-            return NextResponse.json(
-                { error: 'Only the memorial owner can restore history.' },
-                { status: 403 }
-            );
         }
 
         const { data: version, error: versionError } = await supabaseAdmin

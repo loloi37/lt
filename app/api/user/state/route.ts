@@ -1,11 +1,13 @@
 // app/api/user/state/route.ts
 // Single source of truth: returns the authenticated user's full state
 // This endpoint is the authoritative server-side state that the UI must reflect.
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
+import { decodeSessionIdFromAccessToken } from '@/lib/security/twoFactor';
+import { getRequestIpAddress, trackUserSessionDevice } from '@/lib/sessionDevices';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         // Create admin client inside handler to avoid module-level crash
         // when SUPABASE_SERVICE_ROLE_KEY is not set
@@ -25,7 +27,7 @@ export async function GET() {
 
         const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-        const { user, error } = await createAuthenticatedClient();
+        const { supabase, user, error } = await createAuthenticatedClient();
 
         if (error || !user) {
             return NextResponse.json({
@@ -35,6 +37,14 @@ export async function GET() {
                 archives: [],
             });
         }
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        await trackUserSessionDevice(supabaseAdmin, {
+            userId: user.id,
+            sessionId: decodeSessionIdFromAccessToken(sessionData.session?.access_token),
+            ipAddress: getRequestIpAddress(request),
+            userAgent: request.headers.get('user-agent'),
+        });
 
         // Fetch ALL user's memorials in one query
         const { data: memorials, error: memError } = await supabaseAdmin

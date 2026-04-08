@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -109,6 +110,18 @@ export async function POST(request: NextRequest) {
         }
 
         console.log(`[FinalizeUpgrade] Memorial ${memorialId} upgraded: ${memorial.mode} → ${targetPlan}. All data preserved.`);
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'plan_upgraded',
+            summary: `Plan upgraded from ${memorial.mode} to ${targetPlan}.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                previousMode: memorial.mode,
+                targetPlan,
+            },
+        });
 
         return NextResponse.json({
             success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,14 +20,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [memorialRes, roleRes] = await Promise.all([
+    const [permission, memorialRes] = await Promise.all([
+      resolveArchivePermissionContext(supabaseAdmin, memorialId, user.id),
       supabaseAdmin.from('memorials').select('*').eq('id', memorialId).single(),
-      supabaseAdmin
-        .from('user_memorial_roles')
-        .select('role')
-        .eq('memorial_id', memorialId)
-        .eq('user_id', user.id)
-        .maybeSingle(),
     ]);
 
     if (memorialRes.error || !memorialRes.data) {
@@ -34,9 +30,7 @@ export async function GET(
     }
 
     const memorial = memorialRes.data;
-    const isOwner = memorial.user_id === user.id;
-
-    if (!isOwner && !roleRes.data) {
+    if (!permission.context || !hasPermission(permission.context, 'view_archive')) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -47,7 +41,7 @@ export async function GET(
         .eq('memorial_id', memorialId)
         .eq('status', 'approved')
         .order('created_at', { ascending: true }),
-      memorial.mode === 'family'
+      memorial.mode === 'family' && permission.context.plan === 'family'
         ? supabaseAdmin
             .from('memorial_relations')
             .select('id, from_memorial_id, to_memorial_id, relationship_type, memorials!memorial_relations_to_memorial_id_fkey(id, full_name)')

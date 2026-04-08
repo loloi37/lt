@@ -7,9 +7,10 @@ import {
     updateFamilyCoGuardianRole,
 } from '@/lib/familyWorkspace';
 import {
-    hasArchivePermission,
+    hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,7 +43,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        if (!hasArchivePermission(permission.context, 'manage_members')) {
+        if (!hasPermission(permission.context, 'manage_members')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -93,6 +94,18 @@ export async function PATCH(
 
             if (error) throw error;
         }
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'member_role_updated',
+            summary: `A member role was changed to ${newRole}.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            subjectUserId: targetUserId,
+            details: {
+                newRole,
+            },
+        });
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

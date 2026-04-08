@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import crypto from 'crypto'; // For SHA-256 hashing
+import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
+import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,7 +17,6 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { 
             memorialId, 
-            userId, 
             identity, 
             agreements, 
             signature, 
@@ -25,6 +27,25 @@ export async function POST(request: NextRequest) {
 
         if (!memorialId || !signature.content || !identity.fullName) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        const { user } = await createAuthenticatedClient();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasPermission(permission.context, 'export_archive')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // 1. Fetch Deceased Info (Legacy Logic)
@@ -87,7 +108,7 @@ export async function POST(request: NextRequest) {
             .from('memorial_authorizations')
             .insert([{
                 memorial_id: memorialId,
-                user_id: userId,
+                user_id: user.id,
                 authorization_type: authorizationType || 'individual',
                 creator_full_name: identity.fullName,
                 creator_email: identity.email,
@@ -113,6 +134,19 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (insertError) throw insertError;
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'authorization_submitted',
+            summary: 'A memorial authorization was submitted.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            details: {
+                authorizationId: authRecord.id,
+                authorizationType: authorizationType || 'individual',
+                hasVideoEvidence: !!videoHash,
+            },
+        });
 
         return NextResponse.json({ 
             success: true, 
