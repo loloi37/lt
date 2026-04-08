@@ -20,6 +20,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
+import NotificationCenter from '@/components/NotificationCenter';
 
 interface DashboardShellProps {
     userId: string;
@@ -374,12 +375,21 @@ export default function DashboardShell({ userId, children }: DashboardShellProps
                                 <Menu size={16} />
                                 Menu
                             </button>
-                            <div className="text-right">
-                                <p className="font-serif text-base text-warm-dark">ULUMAE</p>
-                                <p className="text-[10px] uppercase tracking-[0.18em] text-warm-outline">
-                                    {planLabel(auth.plan)}
-                                </p>
+                            <div className="flex items-center gap-3">
+                                <NotificationCenter />
+                                <div className="text-right">
+                                    <p className="font-serif text-base text-warm-dark">ULUMAE</p>
+                                    <p className="text-[10px] uppercase tracking-[0.18em] text-warm-outline">
+                                        {planLabel(auth.plan)}
+                                    </p>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="sticky top-0 z-40 hidden border-b border-warm-border/30 bg-surface-low/95 backdrop-blur-sm lg:block">
+                        <div className="flex items-center justify-end px-8 py-3">
+                            <NotificationCenter />
                         </div>
                     </div>
 

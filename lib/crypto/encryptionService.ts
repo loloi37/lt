@@ -1,6 +1,30 @@
 // lib/crypto/encryptionService.ts
-// Placeholder encryption and social recovery service
-// Replace with real Web Crypto API + Shamir's Secret Sharing when ready
+//
+// Placeholder encryption and social recovery service. DO NOT use these
+// outputs as real ciphertext or real Shamir shares — they are not encrypted.
+// In production these throw so we never accidentally hand out fake key
+// material that the user thinks is real.
+//
+// To enable for local development set CRYPTO_ALLOW_MOCK=true.
+
+const ALLOW_MOCK =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.CRYPTO_ALLOW_MOCK === 'true';
+
+function assertMockAllowed(callerName: string) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      `[encryptionService] ${callerName} is a placeholder and must not run in production. ` +
+        'Wire up real Web Crypto / Shamir Secret Sharing before shipping.'
+    );
+  }
+  if (!ALLOW_MOCK) {
+    throw new Error(
+      `[encryptionService] ${callerName} is a placeholder. Set CRYPTO_ALLOW_MOCK=true ` +
+        'in your local environment to enable the simulated flow.'
+    );
+  }
+}
 
 export interface EncryptedBundle {
   encryptedData: string;  // Base64-encoded placeholder
@@ -52,6 +76,7 @@ export async function encryptMemorial(
   _data: unknown,
   _password: string
 ): Promise<EncryptedBundle> {
+  assertMockAllowed('encryptMemorial');
   // Placeholder: simulate encryption
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -70,6 +95,7 @@ export async function decryptMemorial(
   _bundle: EncryptedBundle,
   _password: string
 ): Promise<unknown> {
+  assertMockAllowed('decryptMemorial');
   // Placeholder: simulate decryption
   await new Promise(resolve => setTimeout(resolve, 300));
   return { decrypted: true };
@@ -80,6 +106,7 @@ export function generateRecoveryShards(
   threshold: number = 3,
   total: number = 5
 ): RecoveryShard[] {
+  assertMockAllowed('generateRecoveryShards');
   // Placeholder: generate mock Shamir's Secret Sharing shards
   return Array.from({ length: total }, (_, i) => ({
     index: i + 1,
@@ -89,6 +116,7 @@ export function generateRecoveryShards(
 }
 
 export function reconstructKey(shards: RecoveryShard[]): string | null {
+  assertMockAllowed('reconstructKey');
   // Placeholder: simulate key reconstruction
   if (shards.length < 3) return null;
   return btoa(`reconstructed-key-${Date.now()}`);

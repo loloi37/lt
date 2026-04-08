@@ -2,10 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { HardDrive, Monitor, Smartphone, Wifi, WifiOff, Download, Settings, UserPlus, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import { detectBrowserCapabilities, checkAnchorStatus, simulateAnchorProgress, type AnchorDevice, type AnchorProgress, type BrowserCapabilities } from '@/lib/anchor/anchorService';
+import { detectBrowserCapabilities, simulateAnchorProgress, type AnchorDevice, type AnchorProgress, type BrowserCapabilities } from '@/lib/anchor/anchorService';
 
 interface AnchorPanelProps {
     memorialId: string;
+}
+
+// Fetch the real, server-validated device list from the API. The local
+// anchorService.checkAnchorStatus is a placeholder and intentionally throws in
+// production — devices come from the database, never from the client.
+async function fetchAnchorDevices(memorialId: string): Promise<AnchorDevice[]> {
+    const res = await fetch(
+        `/api/anchor/sync-status?memorialId=${encodeURIComponent(memorialId)}`,
+        { cache: 'no-store' }
+    );
+    if (!res.ok) {
+        throw new Error(`Failed to load anchor devices (${res.status})`);
+    }
+    const data = await res.json();
+    return (data.devices || []) as AnchorDevice[];
 }
 
 function formatBytes(bytes: number): string {
@@ -42,15 +57,28 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
     const [capabilities, setCapabilities] = useState<BrowserCapabilities | null>(null);
     const [devices, setDevices] = useState<AnchorDevice[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [anchoring, setAnchoring] = useState(false);
     const [progress, setProgress] = useState<AnchorProgress | null>(null);
 
     useEffect(() => {
+        let cancelled = false;
         setCapabilities(detectBrowserCapabilities());
-        checkAnchorStatus(memorialId).then(d => {
-            setDevices(d);
-            setLoading(false);
-        });
+        fetchAnchorDevices(memorialId)
+            .then(d => {
+                if (cancelled) return;
+                setDevices(d);
+                setLoading(false);
+            })
+            .catch(err => {
+                if (cancelled) return;
+                console.error('[AnchorPanel] failed to load devices', err);
+                setError('Could not load anchored devices.');
+                setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
     }, [memorialId]);
 
     const handleAnchor = useCallback(() => {
@@ -59,7 +87,9 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
             setProgress(p);
             if (p.stage === 'complete') {
                 setAnchoring(false);
-                checkAnchorStatus(memorialId).then(setDevices);
+                fetchAnchorDevices(memorialId).then(setDevices).catch((err) => {
+                    console.error('[AnchorPanel] reload failed', err);
+                });
             }
         });
         return cancel;
@@ -71,6 +101,20 @@ export default function AnchorPanel({ memorialId }: AnchorPanelProps) {
                 <div className="animate-pulse space-y-3">
                     <div className="h-4 bg-warm-border rounded w-1/3" />
                     <div className="h-3 bg-warm-border rounded w-2/3" />
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-surface-mid rounded-xl border border-warm-border p-6">
+                <div className="flex items-start gap-3">
+                    <AlertCircle size={16} className="text-red-400 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-sans font-medium text-warm-dark">Anchor unavailable</p>
+                        <p className="text-xs text-warm-muted font-sans mt-1">{error}</p>
+                    </div>
                 </div>
             </div>
         );

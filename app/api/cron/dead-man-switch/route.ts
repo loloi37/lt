@@ -1,25 +1,36 @@
 // app/api/cron/dead-man-switch/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email/sender';
 import { getProofOfLifeEmail, getSuccessorAlertEmail } from '@/lib/email/templates';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
+import {
+    DMS_INACTIVITY_ALERT_DAYS,
+    DMS_INACTIVITY_WARNING_DAYS,
+    DMS_WARNING_RESEND_INTERVAL_DAYS,
+} from '@/lib/constants';
 
-// Initialize Admin Client (Service Role needed to scan all users)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 export async function GET(request: NextRequest) {
-    // Security: Check for a secret CRON key to prevent unauthorized triggering
+    // Security: cron secret is REQUIRED. Previously this check was commented
+    // out for "dev/demo" — that left an unauthenticated endpoint that could
+    // trigger emails to every user with DMS enabled. Now it always rejects
+    // missing/invalid secrets, even in development.
+    if (!process.env.CRON_SECRET) {
+        console.error('[cron/dead-man-switch] CRON_SECRET not configured');
+        return NextResponse.json(
+            { error: 'Cron not configured' },
+            { status: 500 }
+        );
+    }
+
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        // For dev/demo purposes we might skip this or use a simple check
-        // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     try {
         const now = new Date();
@@ -42,15 +53,12 @@ export async function GET(request: NextRequest) {
 
         for (const user of users) {
             const lastActive = new Date(user.last_active_at || user.created_at); // Fallback to created_at
-            const diffTime = Math.abs(now.getTime() - lastActive.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            // Thresholds
-            const WARNING_THRESHOLD = 365; // 1 year
-            const ALERT_THRESHOLD = 365 + 90; // 1 year + 90 days
+            const diffDays = Math.ceil(
+                Math.abs(now.getTime() - lastActive.getTime()) / MS_PER_DAY
+            );
 
             // Case A: Successor Alert (More than 1 year + 90 days inactive)
-            if (diffDays >= ALERT_THRESHOLD) {
+            if (diffDays >= DMS_INACTIVITY_ALERT_DAYS) {
                 // Fetch Successor
                 const { data: successor } = await supabaseAdmin
                     .from('user_successors')
@@ -76,12 +84,15 @@ export async function GET(request: NextRequest) {
                 }
             }
             // Case B: User Warning (More than 1 year inactive)
-            else if (diffDays >= WARNING_THRESHOLD) {
-                // Check if we already sent a warning recently (e.g., in last 30 days) to avoid spam
+            else if (diffDays >= DMS_INACTIVITY_WARNING_DAYS) {
+                // Avoid spamming the user — only re-send if it has been long
+                // enough since the last warning email.
                 const lastSent = user.verification_sent_at ? new Date(user.verification_sent_at) : null;
-                const daysSinceLastSend = lastSent ? Math.ceil((now.getTime() - lastSent.getTime()) / (1000 * 3600 * 24)) : 999;
+                const daysSinceLastSend = lastSent
+                    ? Math.ceil((now.getTime() - lastSent.getTime()) / MS_PER_DAY)
+                    : Number.POSITIVE_INFINITY;
 
-                if (daysSinceLastSend > 30) {
+                if (daysSinceLastSend > DMS_WARNING_RESEND_INTERVAL_DAYS) {
                     // Send Warning to User
                     await sendEmail({
                         to: user.email,

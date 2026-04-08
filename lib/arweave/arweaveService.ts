@@ -1,6 +1,32 @@
 // lib/arweave/arweaveService.ts
-// Placeholder Arweave integration service
-// Replace with real @irys/sdk or arweave-js when ready
+//
+// Placeholder Arweave integration service. The functions below simulate the
+// real @irys/sdk / arweave-js flows so we can iterate on the UI before the
+// integration is wired. They MUST NOT silently run in production — a fake
+// "preserved" confirmation would be a data-integrity disaster.
+//
+// To enable the placeholder for local development, set:
+//   ARWEAVE_ALLOW_MOCK=true
+// in your .env.local. In production this is ignored.
+
+const ALLOW_MOCK =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.ARWEAVE_ALLOW_MOCK === 'true';
+
+function assertMockAllowed(callerName: string) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      `[arweaveService] ${callerName} is a placeholder and must not run in production. ` +
+        'Wire up the real Arweave/Irys integration before sealing memorials.'
+    );
+  }
+  if (!ALLOW_MOCK) {
+    throw new Error(
+      `[arweaveService] ${callerName} is a placeholder. Set ARWEAVE_ALLOW_MOCK=true ` +
+        'in your local environment to enable the simulated flow.'
+    );
+  }
+}
 
 export interface ArweaveTransaction {
   txId: string;
@@ -40,6 +66,7 @@ export async function uploadToArweave(
   memorialId: string,
   _data: unknown
 ): Promise<ArweaveTransaction> {
+  assertMockAllowed('uploadToArweave');
   // Placeholder: simulate upload delay
   await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -56,6 +83,7 @@ export async function uploadToArweave(
 }
 
 export async function checkTransactionStatus(txId: string): Promise<ArweaveTransaction> {
+  assertMockAllowed('checkTransactionStatus');
   // Placeholder: always returns confirmed
   return {
     txId,

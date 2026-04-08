@@ -1,9 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, ExternalLink, Download, CheckCircle, Clock, Globe } from 'lucide-react';
-import { checkTransactionStatus, type ArweaveTransaction } from '@/lib/arweave/arweaveService';
+import { Shield, ExternalLink, Download, CheckCircle, Clock, Globe, AlertCircle } from 'lucide-react';
+import { type ArweaveTransaction } from '@/lib/arweave/arweaveService';
 import { downloadCertificate, type CertificateData } from '@/lib/certificate/certificateGenerator';
+
+// Pull preservation status from the server. The arweave client placeholder
+// is intentionally throw-only in production — preservation state must come
+// from the database (sealed by the worker that does the real upload).
+async function fetchPreservationStatus(
+    memorialId: string,
+    txId: string
+): Promise<ArweaveTransaction | null> {
+    const res = await fetch(
+        `/api/arweave/status?memorialId=${encodeURIComponent(memorialId)}&txId=${encodeURIComponent(txId)}`,
+        { cache: 'no-store' }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.status === 'not_found') return null;
+    return {
+        txId: data.txId,
+        status: data.status,
+        gatewayUrls: data.gatewayUrls || [],
+        fileCount: data.fileCount || 0,
+        totalBytes: data.totalBytes || 0,
+        confirmedAt: data.confirmedAt,
+        createdAt: data.createdAt || data.confirmedAt || new Date().toISOString(),
+    } as ArweaveTransaction;
+}
 
 interface PreservationStatusProps {
     memorialId: string;
@@ -35,17 +60,33 @@ export default function PreservationStatus({
 }: PreservationStatusProps) {
     const [txData, setTxData] = useState<ArweaveTransaction | null>(null);
     const [loading, setLoading] = useState(true);
+    const [statusError, setStatusError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (arweaveTxId) {
-            checkTransactionStatus(arweaveTxId).then(data => {
+        if (!arweaveTxId) {
+            setLoading(false);
+            return;
+        }
+        let cancelled = false;
+        fetchPreservationStatus(memorialId, arweaveTxId)
+            .then((data) => {
+                if (cancelled) return;
                 setTxData(data);
+                if (!data) {
+                    setStatusError('Could not verify preservation status from the network.');
+                }
+                setLoading(false);
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                console.error('[PreservationStatus] failed to load tx', err);
+                setStatusError('Could not verify preservation status.');
                 setLoading(false);
             });
-        } else {
-            setLoading(false);
-        }
-    }, [arweaveTxId]);
+        return () => {
+            cancelled = true;
+        };
+    }, [arweaveTxId, memorialId]);
 
     const handleDownloadCertificate = () => {
         if (!txData) return;
@@ -83,9 +124,16 @@ export default function PreservationStatus({
                     <Shield size={18} className="text-warm-muted" />
                     <h3 className="text-sm font-semibold text-warm-dark font-sans">Preservation Status</h3>
                 </div>
-                <p className="text-sm text-warm-muted font-sans">
-                    This memorial has not been preserved yet. Preservation permanently stores your memorial on the Arweave network.
-                </p>
+                {statusError ? (
+                    <div className="flex items-start gap-2 text-sm text-red-600">
+                        <AlertCircle size={14} className="mt-0.5" />
+                        <span>{statusError}</span>
+                    </div>
+                ) : (
+                    <p className="text-sm text-warm-muted font-sans">
+                        This memorial has not been preserved yet. Preservation permanently stores your memorial on the Arweave network.
+                    </p>
+                )}
             </div>
         );
     }

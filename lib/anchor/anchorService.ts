@@ -1,6 +1,29 @@
 // lib/anchor/anchorService.ts
-// Placeholder Anchor (local device sync) service
-// Replace with real File System Access API / OPFS when ready
+//
+// Placeholder Anchor (local device sync) service. detectBrowserCapabilities
+// and getDeviceInfo are real and safe to use anywhere — they only inspect
+// the runtime environment. Anything that pretends to start a sync, return
+// device sync state, or simulate progress is mocked and must not run in
+// production. Set ANCHOR_ALLOW_MOCK=true to enable the placeholder locally.
+
+const ALLOW_MOCK =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NEXT_PUBLIC_ANCHOR_ALLOW_MOCK === 'true';
+
+function assertMockAllowed(callerName: string) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      `[anchorService] ${callerName} is a placeholder and must not run in production. ` +
+        'Wire up real File System Access / OPFS sync before shipping.'
+    );
+  }
+  if (!ALLOW_MOCK) {
+    throw new Error(
+      `[anchorService] ${callerName} is a placeholder. Set NEXT_PUBLIC_ANCHOR_ALLOW_MOCK=true ` +
+        'in your local environment to enable the simulated flow.'
+    );
+  }
+}
 
 export interface BrowserCapabilities {
   magicFolder: boolean;    // showDirectoryPicker (Chrome/Edge)
@@ -59,6 +82,7 @@ export async function startAnchor(
   _memorialId: string,
   _targetDir?: FileSystemDirectoryHandle
 ): Promise<{ success: boolean; deviceId: string }> {
+  assertMockAllowed('startAnchor');
   // Placeholder: simulate anchor setup
   await new Promise(resolve => setTimeout(resolve, 2000));
   return {
@@ -68,6 +92,7 @@ export async function startAnchor(
 }
 
 export async function checkAnchorStatus(_memorialId: string): Promise<AnchorDevice[]> {
+  assertMockAllowed('checkAnchorStatus');
   // Placeholder: return mock devices
   return [
     {
@@ -106,6 +131,7 @@ export function getDeviceInfo(): { name: string; browser: string; os: string } {
 }
 
 export function checkStorageCapacity(): { available: boolean; estimatedGB: number } {
+  assertMockAllowed('checkStorageCapacity');
   // Placeholder
   return { available: true, estimatedGB: 50 };
 }

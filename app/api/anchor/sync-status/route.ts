@@ -1,42 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { requireMemorialAccess } from '@/lib/apiAuth';
 
 export async function GET(req: NextRequest) {
-    const memorialId = req.nextUrl.searchParams.get('memorialId');
+    const memorialId = req.nextUrl.searchParams.get('memorialId') || '';
 
     try {
-        const { user } = await createAuthenticatedClient();
-
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        if (!memorialId) {
-            return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
-        }
-
-        const permission = await resolveArchivePermissionContext(
-            supabaseAdmin,
+        const access = await requireMemorialAccess({
             memorialId,
-            user.id
-        );
+            action: 'manage_devices',
+        });
+        if (!access.ok) return access.response;
 
-        if (!permission.memorialExists) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
+        const { user, admin } = access;
 
-        if (!permission.context || !hasPermission(permission.context, 'manage_devices')) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-
-        let query = supabaseAdmin
+        let query = admin
             .from('anchor_devices')
             .select('*')
             .eq('user_id', user.id)
