@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email/sender';
 import { getWitnessInvitationEmail } from '@/lib/email/templates';
 import { WitnessRole } from '@/types/roles';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 // Initialize Admin Client for sensitive DB operations
 const supabaseAdmin = createClient(
@@ -38,7 +42,17 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
         }
 
-        // 3. PERMISSION CHECK: Only the owner can invite members
+        // 3. PERMISSION CHECK: derive role/capabilities from the backend
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
         const { data: memorial } = await supabaseAdmin
             .from('memorials')
             .select('user_id, mode, full_name')
@@ -49,9 +63,7 @@ export async function POST(
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        const isOwner = memorial.user_id === user.id;
-
-        if (!isOwner) {
+        if (!hasArchivePermission(permission.context, 'invite_member')) {
             return NextResponse.json({ error: 'Only the archive owner can invite members.' }, { status: 403 });
         }
 

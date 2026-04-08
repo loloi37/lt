@@ -3,7 +3,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, User, Loader2, ArrowLeft, Network, X, Search, Filter, RefreshCcw, AlertTriangle, Archive, Clock, Shield, Wifi, BellDot, CheckCircle2, History, MessageSquareText } from 'lucide-react';
 import { supabase, Memorial } from '@/lib/supabase';
 import FamilyLinker from '@/components/FamilyLinker';
 import AnchorPanel from '@/components/AnchorPanel';
@@ -12,6 +12,35 @@ import DashboardShell from '@/components/dashboard/DashboardShell';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
+
+interface PendingCreationRequest {
+    id: string;
+    sourceMemorialId: string;
+    sourceMemorialName: string;
+    requesterEmail: string;
+    proposedName: string | null;
+    requestMessage: string;
+    createdAt: string;
+}
+
+interface PendingAccessRequest {
+    id: string;
+    memorialId: string;
+    memorialName: string;
+    requesterEmail: string;
+    requestedRole: string;
+    requestMessage: string;
+    createdAt: string;
+}
+
+interface FamilyActivityItem {
+    id: string;
+    memorialId: string;
+    memorialName: string;
+    createdAt: string;
+    createdByName: string | null;
+    changeSummary: string;
+}
 
 export default function FamilyDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -24,6 +53,12 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
     const [managingId, setManagingId] = useState<string | null>(null);
     const [memberManagerMemorial, setMemberManagerMemorial] = useState<Memorial | null>(null);
     const [showWelcome, setShowWelcome] = useState(false);
+    const [pendingCreationRequests, setPendingCreationRequests] = useState<PendingCreationRequest[]>([]);
+    const [pendingAccessRequests, setPendingAccessRequests] = useState<PendingAccessRequest[]>([]);
+    const [recentActivity, setRecentActivity] = useState<FamilyActivityItem[]>([]);
+    const [summaryLoading, setSummaryLoading] = useState(true);
+    const [summaryError, setSummaryError] = useState<string | null>(null);
+    const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
@@ -63,6 +98,14 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         }
     }, [userId, searchParams]);
 
+    useEffect(() => {
+        const interval = window.setInterval(() => {
+            loadMemorials();
+        }, 30000);
+
+        return () => window.clearInterval(interval);
+    }, [userId]);
+
     // Refetch when user navigates back via browser back button or tab switch
     useEffect(() => {
         const handlePopState = () => loadMemorials();
@@ -89,10 +132,162 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
         if (error) console.error('Error:', error);
 
         if (data) {
-            setMemorials(data.filter(m => !m.deleted));
+            const activeMemorials = data.filter(m => !m.deleted);
+            setMemorials(activeMemorials);
             setDeletedMemorials(data.filter(m => m.deleted));
+            await loadFamilySummary(activeMemorials);
+        } else {
+            setPendingCreationRequests([]);
+            setPendingAccessRequests([]);
+            setRecentActivity([]);
         }
         setLoading(false);
+    };
+
+    const loadFamilySummary = async (activeMemorials: Memorial[]) => {
+        if (!activeMemorials.length) {
+            setPendingCreationRequests([]);
+            setPendingAccessRequests([]);
+            setRecentActivity([]);
+            setSummaryLoading(false);
+            setSummaryError(null);
+            return;
+        }
+
+        setSummaryLoading(true);
+        setSummaryError(null);
+
+        try {
+            const primaryMemorialId = activeMemorials[0].id;
+
+            const creationPromise = fetch(`/api/archive/${primaryMemorialId}/creation-requests`, {
+                cache: 'no-store',
+            }).then(async (response) => {
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.error || 'Could not load memorial requests.');
+                }
+                return payload.requests || [];
+            });
+
+            const accessPromises = activeMemorials.map((memorial) =>
+                fetch(`/api/memorials/${memorial.id}/access-request`, {
+                    cache: 'no-store',
+                }).then(async (response) => {
+                    const payload = await response.json();
+                    if (!response.ok) {
+                        throw new Error(payload.error || 'Could not load access requests.');
+                    }
+                    return (payload.requests || []).map((request: any) => ({
+                        ...request,
+                        memorialId: memorial.id,
+                        memorialName: memorial.full_name || 'Untitled',
+                    }));
+                })
+            );
+
+            const activityPromises = activeMemorials.map((memorial) =>
+                fetch(`/api/memorials/${memorial.id}/versions?limit=4`, {
+                    cache: 'no-store',
+                }).then(async (response) => {
+                    const payload = await response.json();
+                    if (!response.ok) {
+                        throw new Error(payload.error || 'Could not load activity.');
+                    }
+                    return (payload.versions || []).map((version: any) => ({
+                        id: version.id,
+                        memorialId: memorial.id,
+                        memorialName: memorial.full_name || 'Untitled',
+                        createdAt: version.created_at,
+                        createdByName: version.created_by_name || null,
+                        changeSummary: version.change_summary || 'Archive updated',
+                    }));
+                })
+            );
+
+            const [creationRequests, accessRequestsGroups, activityGroups] = await Promise.all([
+                creationPromise,
+                Promise.all(accessPromises),
+                Promise.all(activityPromises),
+            ]);
+
+            setPendingCreationRequests(
+                creationRequests.map((request: any) => ({
+                    id: request.id,
+                    sourceMemorialId: request.sourceMemorialId,
+                    sourceMemorialName: request.sourceMemorialName,
+                    requesterEmail: request.email,
+                    proposedName: request.proposedName,
+                    requestMessage: request.requestMessage || '',
+                    createdAt: request.createdAt,
+                }))
+            );
+
+            setPendingAccessRequests(accessRequestsGroups.flat());
+            setRecentActivity(
+                activityGroups
+                    .flat()
+                    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+                    .slice(0, 8)
+            );
+        } catch (error: any) {
+            console.error('[family-dashboard-summary]', error);
+            setSummaryError(error.message || 'Could not load the steward summary.');
+        } finally {
+            setSummaryLoading(false);
+        }
+    };
+
+    const handleCreationRequestDecision = async (
+        memorialId: string,
+        requestId: string,
+        decision: 'approved' | 'rejected'
+    ) => {
+        setProcessingRequestId(requestId);
+        try {
+            const response = await fetch(`/api/archive/${memorialId}/creation-requests/${requestId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision }),
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.error || 'Could not update the request.');
+            }
+
+            await loadMemorials();
+        } catch (error: any) {
+            alert(error.message || 'Could not update the request.');
+        } finally {
+            setProcessingRequestId(null);
+        }
+    };
+
+    const handleAccessRequestDecision = async (
+        memorialId: string,
+        requestId: string,
+        decision: 'approved' | 'denied'
+    ) => {
+        setProcessingRequestId(requestId);
+        try {
+            const response = await fetch(`/api/memorials/${memorialId}/access-request/${requestId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ decision }),
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.error || 'Could not update the access request.');
+            }
+
+            await loadMemorials();
+        } catch (error: any) {
+            alert(error.message || 'Could not update the access request.');
+        } finally {
+            setProcessingRequestId(null);
+        }
     };
 
     const handleCreate = () => {
@@ -206,7 +401,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     const firstPaidMemorial = memorials.find(m => m.paid);
 
-    const memberCount = memorials.length;
+    const pendingRequestCount = pendingCreationRequests.length + pendingAccessRequests.length;
 
     // BLOCK RENDERING until auth checks pass
     const hasAccess = auth.plan === 'family' || auth.plan === 'concierge';
@@ -250,9 +445,15 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                                 <span className="live-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-sans font-semibold bg-olive/10 text-olive border border-olive/20">
                                     Live
                                 </span>
+                                {pendingRequestCount > 0 && (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-warm-brown/20 bg-warm-brown/10 px-3 py-1 text-xs font-semibold text-warm-brown">
+                                        <BellDot size={12} />
+                                        {pendingRequestCount} pending request{pendingRequestCount !== 1 ? 's' : ''}
+                                    </span>
+                                )}
                             </div>
                             <p className="text-warm-muted font-sans text-sm tracking-wide ml-12">
-                                {memorials.length} memorial{memorials.length !== 1 ? 's' : ''} &bull; {memberCount} member{memberCount !== 1 ? 's' : ''} &bull; 0 devices anchored
+                                {memorials.length} memorial{memorials.length !== 1 ? 's' : ''} &bull; {pendingRequestCount} pending request{pendingRequestCount !== 1 ? 's' : ''} &bull; 0 devices anchored
                             </p>
                         </div>
 
@@ -277,6 +478,173 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12">
+                <div id="activity" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mb-10">
+                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
+                        <div className="flex items-start justify-between gap-4 mb-5">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Pending requests</p>
+                                <h2 className="mt-2 font-serif text-2xl text-warm-dark">Steward queue</h2>
+                                <p className="mt-2 text-sm text-warm-muted font-sans max-w-2xl">
+                                    Owners should never have to refresh blindly to notice requests. This queue keeps memorial requests and access requests visible in one place.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => loadMemorials()}
+                                className="inline-flex items-center gap-2 rounded-lg border border-warm-border/30 px-3 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors"
+                            >
+                                <RefreshCcw size={14} />
+                                Refresh
+                            </button>
+                        </div>
+
+                        {summaryError && (
+                            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                {summaryError}
+                            </div>
+                        )}
+
+                        {summaryLoading ? (
+                            <div className="py-10 text-center">
+                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
+                                <p className="text-sm text-warm-muted font-sans">Loading requests and activity...</p>
+                            </div>
+                        ) : pendingRequestCount === 0 ? (
+                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
+                                <CheckCircle2 size={24} className="mx-auto mb-3 text-olive" />
+                                <p className="font-serif text-xl text-warm-dark">No pending requests</p>
+                                <p className="mt-2 text-sm text-warm-muted font-sans">
+                                    When someone requests a new memorial or asks for access, it will appear here immediately.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {pendingCreationRequests.map((request) => (
+                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">New memorial request</p>
+                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
+                                                    {request.proposedName || 'Untitled memorial request'}
+                                                </h3>
+                                                <p className="mt-1 text-sm text-warm-muted font-sans">
+                                                    {request.requesterEmail} requested this from {request.sourceMemorialName}.
+                                                </p>
+                                                {request.requestMessage && (
+                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
+                                                        "{request.requestMessage}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 lg:justify-end">
+                                                <button
+                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'rejected')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
+                                                >
+                                                    Decline
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'approved')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {pendingAccessRequests.map((request) => (
+                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">Access request</p>
+                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
+                                                    {request.requesterEmail}
+                                                </h3>
+                                                <p className="mt-1 text-sm text-warm-muted font-sans">
+                                                    Requested {request.requestedRole} access to {request.memorialName}.
+                                                </p>
+                                                {request.requestMessage && (
+                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
+                                                        "{request.requestMessage}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 lg:justify-end">
+                                                <button
+                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'denied')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
+                                                >
+                                                    Deny
+                                                </button>
+                                                <button
+                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'approved')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
+                        <div className="mb-5">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Recent activity</p>
+                            <h2 className="mt-2 font-serif text-2xl text-warm-dark">Who changed what</h2>
+                            <p className="mt-2 text-sm text-warm-muted font-sans">
+                                Family archives need visible history. This feed shows recent saved changes across the family workspace.
+                            </p>
+                        </div>
+
+                        {summaryLoading ? (
+                            <div className="py-10 text-center">
+                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
+                                <p className="text-sm text-warm-muted font-sans">Loading activity...</p>
+                            </div>
+                        ) : recentActivity.length === 0 ? (
+                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
+                                <History size={24} className="mx-auto mb-3 text-warm-muted" />
+                                <p className="font-serif text-xl text-warm-dark">No activity yet</p>
+                                <p className="mt-2 text-sm text-warm-muted font-sans">
+                                    Once someone edits a family memorial, the change history will appear here.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {recentActivity.map((item) => (
+                                    <div key={item.id} className="rounded-xl border border-warm-border/20 bg-surface-low/25 px-4 py-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-olive/10 text-olive">
+                                                <MessageSquareText size={16} />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm text-warm-dark font-sans">
+                                                    <span className="font-semibold">{item.createdByName || 'Someone'}</span> updated{' '}
+                                                    <span className="font-semibold">{item.memorialName}</span>
+                                                </p>
+                                                <p className="mt-1 text-sm text-warm-muted font-sans leading-relaxed">
+                                                    {item.changeSummary}
+                                                </p>
+                                                <p className="mt-2 text-xs text-warm-outline font-sans">
+                                                    {new Date(item.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+
                 {/* SEARCH & FILTER TOOLBAR */}
                 {!loading && realMemorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -410,7 +778,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
                 {/* MEMBERS — Role Management per Memorial */}
                 {firstPaidMemorial && (
-                    <div className="mt-12 bg-white border border-warm-border/30 rounded-xl p-8">
+                    <div id="members" className="mt-12 bg-white border border-warm-border/30 rounded-xl p-8">
                         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             <div>
                                 <h3 className="font-serif text-2xl text-warm-dark mb-2">Member management</h3>

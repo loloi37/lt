@@ -6,6 +6,10 @@ import {
     buildEditorActorLabel,
     createVersionFromDiff,
 } from '@/lib/versioningServer';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,29 +63,24 @@ export async function POST(
             );
         }
 
-        const [memorialRes, roleRes] = await Promise.all([
+        const [permission, memorialRes] = await Promise.all([
+            resolveArchivePermissionContext(supabaseAdmin, memorialId, user.id),
             supabaseAdmin
                 .from('memorials')
                 .select('id, user_id, mode, status, slug, paid, updated_at, completed_steps, step1, step2, step3, step4, step5, step6, step7, step8, step9')
                 .eq('id', memorialId)
                 .single(),
-            supabaseAdmin
-                .from('user_memorial_roles')
-                .select('role')
-                .eq('memorial_id', memorialId)
-                .eq('user_id', user.id)
-                .maybeSingle(),
         ]);
 
-        if (memorialRes.error || !memorialRes.data) {
+        if (!permission.memorialExists || memorialRes.error || !memorialRes.data) {
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
         }
 
         const memorial = memorialRes.data;
-        const isOwner = memorial.user_id === user.id;
-        const isCoGuardian = roleRes.data?.role === 'co_guardian';
+        const isOwner = permission.context?.role === 'owner';
+        const isCoGuardian = permission.context?.role === 'co_guardian';
 
-        if (!isOwner && !isCoGuardian) {
+        if (!permission.context || !hasArchivePermission(permission.context, 'edit_archive')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

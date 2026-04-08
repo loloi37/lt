@@ -20,7 +20,7 @@ export default function InviteShell({
     token
 }: InviteShellProps) {
     const [step, setStep] = useState<string>(
-        initialData.isAuthenticated ? 'acceptance' : 'preview'
+        initialData.isAuthenticated ? 'acceptance' : 'auth'
     );
 
     if (step === 'preview') {

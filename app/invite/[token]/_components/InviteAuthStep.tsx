@@ -146,7 +146,7 @@ export default function InviteAuthStep({
                         </h1>
                         <p className="mb-4 text-sm leading-relaxed text-warm-dark/60">
                             We sent a confirmation link to <strong>{email.trim()}</strong>.
-                            After you confirm, you will come straight back to this invitation and can finish joining the archive.
+                            After you confirm, this invitation will reopen so you can finish joining without starting over.
                         </p>
                         <p className="text-xs leading-relaxed text-warm-dark/40">
                             If you do not see it, check your spam folder and keep this tab for when you return.
@@ -195,7 +195,7 @@ export default function InviteAuthStep({
                     </h1>
                     <p className="text-warm-dark/50 text-sm">
                         {mode === 'signup'
-                            ? 'Create your account with the invited email, then we will bring you back to finish joining.'
+                            ? 'Create your account with the invited email so you can join this archive in one clear flow.'
                             : `Log in to continue to ${invitation.memorial.fullName}'s archive.`
                         }
                     </p>
@@ -365,7 +365,7 @@ export default function InviteAuthStep({
                                 }
                             </>
                             : mode === 'signup'
-                                ? 'Create account and continue'
+                                ? 'Create account to join'
                                 : 'Log in and continue'
                         }
                     </button>

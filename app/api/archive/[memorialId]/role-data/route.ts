@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { getArchiveCapabilities, getRoleLabel } from '@/lib/archivePermissions';
+import {
+    getArchiveCapabilities,
+    getRoleLabel,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 import { WitnessRole } from '@/types/roles';
 
 const supabaseAdmin = createClient(
@@ -34,8 +38,9 @@ export async function GET(
             );
         }
 
-        const [memorialRes, roleRes, contributionsRes] =
+        const [permission, memorialRes, contributionsRes] =
             await Promise.all([
+                resolveArchivePermissionContext(supabaseAdmin, memorialId, user.id),
                 supabaseAdmin
                     .from('memorials')
                     .select(
@@ -43,12 +48,6 @@ export async function GET(
                         'profile_photo_url, mode, user_id'
                     )
                     .eq('id', memorialId)
-                    .single(),
-                supabaseAdmin
-                    .from('user_memorial_roles')
-                    .select('role')
-                    .eq('user_id', user.id)
-                    .eq('memorial_id', memorialId)
                     .single(),
                 supabaseAdmin
                     .from('memorial_contributions')
@@ -69,18 +68,15 @@ export async function GET(
             );
         }
 
-        const isOwner = memorial.user_id === user.id;
-        const roleRow = roleRes.data;
-
-        if (!isOwner && !roleRow) {
+        if (!permission.context) {
             return NextResponse.json(
                 { error: 'Access denied' },
                 { status: 403 }
             );
         }
 
-        const userRole = (isOwner ? 'owner' : roleRow!.role) as WitnessRole;
-        const plan = memorial.mode === 'family' ? 'family' : 'personal';
+        const userRole = permission.context.role as WitnessRole;
+        const plan = permission.context.plan;
         const capabilities = getArchiveCapabilities(userRole, plan);
 
         let pendingCount = 0;

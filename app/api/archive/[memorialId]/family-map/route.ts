@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from
     '@/utils/supabase/api';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,14 +27,21 @@ export async function GET(
             );
         }
 
-        // 1. Check memorial mode — only family memorials have relations
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('mode')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (!memorial || memorial.mode !== 'family') {
+        if (!permission.memorialExists) {
+            return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+        }
+
+        if (!permission.context) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        if (permission.context.plan !== 'family' || !hasArchivePermission(permission.context, 'view_family_map')) {
             return NextResponse.json({ linked: [] });
         }
 

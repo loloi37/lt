@@ -6,6 +6,10 @@ import {
     syncCoGuardianAcrossOwnerFamily,
     updateFamilyCoGuardianRole,
 } from '@/lib/familyWorkspace';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,12 +32,25 @@ export async function PATCH(
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
         }
 
-        // 1. Verify caller is Owner
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
+
+        if (!permission.memorialExists || !permission.context) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
+
+        if (!hasArchivePermission(permission.context, 'manage_members')) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         const { data: memorial } = await supabaseAdmin
             .from('memorials').select('user_id, mode').eq('id', memorialId).single();
 
-        if (memorial?.user_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (!memorial) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
         // 2. Prevent changing own role

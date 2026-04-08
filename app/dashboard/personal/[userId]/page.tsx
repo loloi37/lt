@@ -93,7 +93,6 @@ export default function PersonalDashboard({ params }: { params: Promise<{ userId
         fetch('/api/user/heartbeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId }),
         });
         if (searchParams.get('checkin') === 'true') {
             setShowCheckinSuccess(true);

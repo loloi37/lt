@@ -146,7 +146,7 @@ function CreateMemorialPageContent() {
   const memorialId = searchParams.get('id');
 
   const [memorialData, setMemorialData] = useState<MemorialData>(getInitialData());
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [saveStatus, setSaveStatus] = useState<'unsaved' | 'saved' | 'saving' | 'error'>('saved');
   const [currentMemorialId, setCurrentMemorialId] = useState<string | null>(memorialId);
   // Track the memorial's actual mode from the database, so auto-save never overwrites it
   const [dbMode, setDbMode] = useState<string | null>(null);
@@ -173,8 +173,7 @@ function CreateMemorialPageContent() {
         // Send heartbeat
         fetch('/api/user/heartbeat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id })
+          headers: { 'Content-Type': 'application/json' }
         }).catch(console.error);
       }
     });
@@ -557,6 +556,19 @@ function CreateMemorialPageContent() {
     }, 1000);
     return () => clearTimeout(saveTimer);
   }, [memorialData]);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const currentSignature = getMemorialSaveSignature(memorialData);
+
+    if (currentSignature !== lastSavedSignatureRef.current) {
+      setSaveStatus(prev => prev === 'saving' ? prev : 'unsaved');
+      return;
+    }
+
+    setSaveStatus(prev => prev === 'unsaved' ? 'saved' : prev);
+  }, [isLoading, memorialData]);
 
   const saveToSupabase = async () => {
     if (!memorialData.step1.fullName) return;
@@ -1248,19 +1260,25 @@ function CreateMemorialPageContent() {
 
               {/* Save Status — Step 1.1.3: Minimal, no anxiety */}
               <div className="flex items-center gap-2">
+                {saveStatus === 'unsaved' && (
+                  <div className="flex items-center gap-1.5 text-xs text-warm-outline">
+                    <span>Unsaved changes</span>
+                  </div>
+                )}
                 {saveStatus === 'saving' && (
                   <div className="flex items-center gap-1.5 text-xs text-warm-outline">
                     <div className="w-3 h-3 border-1.5 border-warm-outline/15 border-t-warm-outline/40 rounded-full animate-spin" />
+                    <span>Saving</span>
                   </div>
                 )}
                 {saveStatus === 'saved' && (
                   <div className="flex items-center gap-1.5 text-xs text-warm-outline animate-fadeIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                    <span>Preserved</span>
+                    <span>Saved</span>
                   </div>
                 )}
                 {saveStatus === 'error' && (
-                  <div className="text-xs text-warm-brown">Could not preserve</div>
+                  <div className="text-xs text-warm-brown">Could not save</div>
                 )}
               </div>
 

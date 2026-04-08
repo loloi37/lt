@@ -146,6 +146,24 @@ export default function DashboardSettingsPage({ params }: { params: Promise<{ us
                                         Family, Personal, and Draft workspaces redirect to the correct dashboard when the user does not match the required plan.
                                     </p>
                                 </div>
+                                <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-3">
+                                    <div className="flex items-center gap-2 text-sm text-warm-dark">
+                                        <Shield size={14} className="text-olive" />
+                                        Sensitive actions require owner-only confirmation
+                                    </div>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        Archive deletion, restoration, member role changes, and preservation actions now stay behind server-validated ownership checks instead of trusting client input.
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-warm-border/30 bg-white px-4 py-3">
+                                    <div className="flex items-center gap-2 text-sm text-warm-dark">
+                                        <Shield size={14} className="text-olive" />
+                                        Sessions, recovery, and recent activity
+                                    </div>
+                                    <p className="mt-2 text-sm text-warm-muted">
+                                        This is the right home for password change, email change, device sessions, account recovery, and recent archive activity. The family dashboard now also surfaces recent steward activity and pending requests more clearly.
+                                    </p>
+                                </div>
                             </div>
                         </section>
                     </div>

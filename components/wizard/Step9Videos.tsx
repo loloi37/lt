@@ -234,7 +234,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
 
   const removeVideo = async (id: string) => {
     if (readOnly) return; // Prevent removal if in readOnly mode
-    if (!confirm('Are you sure you want to remove this video?')) return;
+    if (!confirm('Remove this video from the memorial? This change will be saved immediately.')) return;
 
     // Find the video to get its path
     const video = data.videos.find(v => v.id === id);

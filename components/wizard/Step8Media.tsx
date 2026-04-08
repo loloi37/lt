@@ -37,6 +37,11 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showPaywall, setShowPaywall] = useState(false);
 
+  const confirmRemoval = (label: string) => {
+    if (readOnly) return false;
+    return window.confirm(`Remove this ${label}? This change will be saved to the memorial.`);
+  };
+
   const handleChange = (field: keyof MediaLegacy, value: any) => {
     onUpdate({ ...dataRef.current, [field]: value });
   };
@@ -80,6 +85,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   };
 
   const removeCoverPhoto = () => {
+    if (!confirmRemoval('cover photo')) return;
     handleChange('coverPhoto', null);
     handleChange('coverPhotoPreview', null);
     if (coverPhotoRef.current) coverPhotoRef.current.value = '';
@@ -165,6 +171,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
 
   // ... rest of logic remains similar ...
   const removeGalleryItem = (id: string) => {
+    if (!confirmRemoval('photo')) return;
     handleChange('gallery', data.gallery.filter(item => item.id !== id));
   };
 
@@ -249,6 +256,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   };
 
   const removeInteractiveItem = (id: string) => {
+    if (!confirmRemoval('interactive photo')) return;
     handleChange('interactiveGallery', (data.interactiveGallery || []).filter(item => item.id !== id));
   };
 
@@ -332,6 +340,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   };
 
   const removeVoiceRecording = (id: string) => {
+    if (!confirmRemoval('voice recording')) return;
     handleChange('voiceRecordings', data.voiceRecordings.filter(v => v.id !== id));
   };
 

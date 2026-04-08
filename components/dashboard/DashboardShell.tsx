@@ -8,8 +8,12 @@ import {
     ChevronLeft,
     ChevronRight,
     Crown,
+    Edit3,
+    LayoutDashboard,
     Lock,
     Menu,
+    MessageSquareText,
+    Network,
     Shield,
     UserCheck,
     Users,
@@ -23,7 +27,7 @@ interface DashboardShellProps {
 }
 
 interface NavItem {
-    key: 'archives' | 'family' | 'succession' | 'settings' | 'preservation';
+    key: 'overview' | 'edit' | 'preservation' | 'succession' | 'settings' | 'members' | 'contributions' | 'relations' | 'family';
     label: string;
     description: string;
     href: string;
@@ -58,18 +62,116 @@ function buildItems(pathname: string, userId: string, plan: string): NavItem[] {
     const familyUnlocked = plan === 'family' || plan === 'concierge';
     const preservationUnlocked = plan === 'personal' || plan === 'family' || plan === 'concierge';
 
+    if (plan === 'personal') {
+        return [
+            {
+                key: 'overview',
+                label: 'Dashboard',
+                description: 'Progress, status, and quick actions',
+                href: `/dashboard/personal/${userId}`,
+                icon: LayoutDashboard,
+                active: pathname.startsWith(`/dashboard/personal/${userId}`),
+            },
+            {
+                key: 'edit',
+                label: 'Edit',
+                description: 'Open the memorial editor',
+                href: `/create?mode=personal`,
+                icon: Edit3,
+                active: pathname.startsWith('/create'),
+            },
+            {
+                key: 'preservation',
+                label: 'Preserve',
+                description: 'Sealing, export, and archive care',
+                href: `/dashboard/preservation/${userId}`,
+                icon: Crown,
+                active: pathname.startsWith(`/dashboard/preservation/${userId}`),
+            },
+            {
+                key: 'succession',
+                label: 'Succession',
+                description: 'Choose who can act later',
+                href: `/dashboard/succession/${userId}`,
+                icon: UserCheck,
+                active: pathname.startsWith(`/dashboard/succession/${userId}`),
+            },
+            {
+                key: 'settings',
+                label: 'Settings',
+                description: 'Profile, billing, and security',
+                href: `/dashboard/settings/${userId}`,
+                icon: Shield,
+                active: pathname.startsWith(`/dashboard/settings/${userId}`),
+            },
+        ];
+    }
+
+    if (familyUnlocked) {
+        return [
+            {
+                key: 'overview',
+                label: 'Overview',
+                description: 'Family dashboard and steward queue',
+                href: `/dashboard/family/${userId}`,
+                icon: LayoutDashboard,
+                active: pathname === `/dashboard/family/${userId}`,
+            },
+            {
+                key: 'members',
+                label: 'Family Members',
+                description: 'Roles, invitations, and pending access',
+                href: `/dashboard/family/${userId}#members`,
+                icon: Users,
+                active: pathname === `/dashboard/family/${userId}`,
+            },
+            {
+                key: 'contributions',
+                label: 'Contributions',
+                description: 'Requests, reviews, and recent activity',
+                href: `/dashboard/family/${userId}#activity`,
+                icon: MessageSquareText,
+                active: pathname === `/dashboard/family/${userId}`,
+            },
+            {
+                key: 'relations',
+                label: 'Relations',
+                description: 'Family map and linked memorials',
+                href: `/dashboard/family/${userId}/tree`,
+                icon: Network,
+                active: pathname.startsWith(`/dashboard/family/${userId}/tree`),
+            },
+            {
+                key: 'succession',
+                label: 'Succession',
+                description: 'Transfer and stewardship planning',
+                href: `/dashboard/succession/${userId}`,
+                icon: UserCheck,
+                active: pathname.startsWith(`/dashboard/succession/${userId}`),
+            },
+            {
+                key: 'settings',
+                label: 'Settings',
+                description: 'Security, billing, and family policy',
+                href: `/dashboard/settings/${userId}`,
+                icon: Shield,
+                active: pathname.startsWith(`/dashboard/settings/${userId}`),
+            },
+        ];
+    }
+
     return [
         {
-            key: 'archives',
-            label: 'My Archives',
-            description: 'All of your memorials',
+            key: 'overview',
+            label: 'Dashboard',
+            description: 'Your current archive workspace',
             href: buildArchivesHref(userId, plan),
-            icon: Archive,
+            icon: LayoutDashboard,
             active: /^\/dashboard\/(draft|personal|family)\/[^/]+$/.test(pathname),
         },
         {
             key: 'family',
-            label: 'Family',
+            label: 'Family Plan',
             description: familyUnlocked ? 'Tree, roles, and shared workspace' : 'Upgrade to unlock family tools',
             href: familyUnlocked ? `/dashboard/family/${userId}/tree` : '/family-confirmation',
             icon: Users,
@@ -95,7 +197,7 @@ function buildItems(pathname: string, userId: string, plan: string): NavItem[] {
         },
         {
             key: 'preservation',
-            label: 'Preservation',
+            label: 'Preserve',
             description: preservationUnlocked ? 'What is preserved and storage limits' : 'Review preservation before upgrading',
             href: `/dashboard/preservation/${userId}`,
             icon: Crown,

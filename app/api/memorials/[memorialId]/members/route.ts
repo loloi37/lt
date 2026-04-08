@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { createClient } from '@supabase/supabase-js';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,24 +22,17 @@ export async function GET(
 
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // 1. Verify caller is Owner or Co-Guardian
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        const { data: callerRole } = await supabaseAdmin
-            .from('user_memorial_roles')
-            .select('role')
-            .eq('memorial_id', memorialId)
-            .eq('user_id', user.id)
-            .maybeSingle();
+        if (!permission.memorialExists) {
+            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
+        }
 
-        const isOwner = memorial?.user_id === user.id;
-        const isCoGuardian = callerRole?.role === 'co_guardian';
-
-        if (!isOwner && !isCoGuardian) {
+        if (!permission.context || !hasArchivePermission(permission.context, 'view_members')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

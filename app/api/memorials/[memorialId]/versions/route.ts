@@ -7,6 +7,10 @@ import {
     createVersionFromDiff,
     insertVersionSnapshot,
 } from '@/lib/versioningServer';
+import {
+    hasArchivePermission,
+    resolveArchivePermissionContext,
+} from '@/lib/archivePermissions';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,19 +29,19 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: memorial, error: memorialError } = await supabaseAdmin
-            .from('memorials')
-            .select('user_id')
-            .eq('id', memorialId)
-            .single();
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (memorialError || !memorial) {
+        if (!permission.memorialExists) {
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
         }
 
-        if (memorial.user_id !== user.id) {
+        if (!permission.context || !hasArchivePermission(permission.context, 'view_activity')) {
             return NextResponse.json(
-                { error: 'Only the memorial owner can view version history.' },
+                { error: 'Only members with stewardship access can view version history.' },
                 { status: 403 }
             );
         }
@@ -78,30 +82,22 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const [memorialRes, roleRes] = await Promise.all([
-            supabaseAdmin
-                .from('memorials')
-                .select('user_id')
-                .eq('id', memorialId)
-                .single(),
-            supabaseAdmin
-                .from('user_memorial_roles')
-                .select('role')
-                .eq('memorial_id', memorialId)
-                .eq('user_id', user.id)
-                .maybeSingle(),
-        ]);
+        const permission = await resolveArchivePermissionContext(
+            supabaseAdmin,
+            memorialId,
+            user.id
+        );
 
-        if (memorialRes.error || !memorialRes.data) {
+        if (!permission.memorialExists) {
             return NextResponse.json({ error: 'Memorial not found.' }, { status: 404 });
         }
 
-        const isOwner = memorialRes.data.user_id === user.id;
-        const isCoGuardian = roleRes.data?.role === 'co_guardian';
-
-        if (!isOwner && !isCoGuardian) {
+        if (!permission.context || !hasArchivePermission(permission.context, 'edit_archive')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
+
+        const isOwner = permission.context.role === 'owner';
+        const isCoGuardian = permission.context.role === 'co_guardian';
 
         const body = await request.json();
         const actorName = buildEditorActorLabel(
