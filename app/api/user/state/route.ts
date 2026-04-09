@@ -38,13 +38,19 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        const { data: sessionData } = await supabase.auth.getSession();
-        await trackUserSessionDevice(supabaseAdmin, {
-            userId: user.id,
-            sessionId: decodeSessionIdFromAccessToken(sessionData.session?.access_token),
-            ipAddress: getRequestIpAddress(request),
-            userAgent: request.headers.get('user-agent'),
-        });
+        // Session device tracking is non-critical — don't let it block
+        // plan resolution if the table hasn't been created yet.
+        try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            await trackUserSessionDevice(supabaseAdmin, {
+                userId: user.id,
+                sessionId: decodeSessionIdFromAccessToken(sessionData.session?.access_token),
+                ipAddress: getRequestIpAddress(request),
+                userAgent: request.headers.get('user-agent'),
+            });
+        } catch (trackErr: any) {
+            console.warn('[UserState] session device tracking skipped:', trackErr.message || trackErr);
+        }
 
         // Fetch ALL user's memorials in one query
         const { data: memorials, error: memError } = await supabaseAdmin

@@ -111,6 +111,7 @@ export async function GET() {
             .order('created_at', { ascending: false })
             .limit(DEFAULT_ACTIVITY_LIMIT)
         : Promise.resolve({ data: [], error: null }),
+      // Activity log table may not exist yet — treat as empty if missing
       accessibleIds.length > 0
         ? supabaseAdmin
             .from('memorial_activity_log')
@@ -118,6 +119,7 @@ export async function GET() {
             .in('memorial_id', accessibleIds)
             .order('created_at', { ascending: false })
             .limit(DEFAULT_ACTIVITY_LIMIT)
+            .then(res => res.error?.code === 'PGRST205' ? { data: [], error: null } : res)
         : Promise.resolve({ data: [], error: null }),
     ]);
 

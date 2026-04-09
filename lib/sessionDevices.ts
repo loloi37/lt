@@ -66,6 +66,8 @@ export async function trackUserSessionDevice(
   );
 
   if (error) {
-    throw error;
+    // Non-critical: log but don't crash the caller.
+    // The table may not exist yet if the migration hasn't been run.
+    console.warn('[session-devices] tracking failed:', error.message || error);
   }
 }
