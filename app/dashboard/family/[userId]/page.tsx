@@ -557,224 +557,6 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12">
-                <div id="activity" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mb-10">
-                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
-                        <div className="flex items-start justify-between gap-4 mb-5">
-                            <div>
-                                <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Pending requests</p>
-                                <h2 className="mt-2 font-serif text-2xl text-warm-dark">Steward queue</h2>
-                                <p className="mt-2 text-sm text-warm-muted font-sans max-w-2xl">
-                                    Owners should never have to refresh blindly to notice requests. This queue keeps memorial requests and access requests visible in one place.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => loadMemorials()}
-                                className="inline-flex items-center gap-2 rounded-lg border border-warm-border/30 px-3 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors"
-                            >
-                                <RefreshCcw size={14} />
-                                Refresh
-                            </button>
-                        </div>
-
-                        {summaryError && (
-                            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                {summaryError}
-                            </div>
-                        )}
-
-                        {summaryLoading ? (
-                            <div className="py-10 text-center">
-                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
-                                <p className="text-sm text-warm-muted font-sans">Loading requests and activity...</p>
-                            </div>
-                        ) : pendingRequestCount === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
-                                <CheckCircle2 size={24} className="mx-auto mb-3 text-olive" />
-                                <p className="font-serif text-xl text-warm-dark">No pending requests</p>
-                                <p className="mt-2 text-sm text-warm-muted font-sans">
-                                    When someone requests a new memorial or asks for access, it will appear here immediately.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {pendingCreationRequests.map((request) => (
-                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
-                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                            <div>
-                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">New memorial request</p>
-                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
-                                                    {request.proposedName || 'Untitled memorial request'}
-                                                </h3>
-                                                <p className="mt-1 text-sm text-warm-muted font-sans">
-                                                    {request.requesterEmail} requested this from {request.sourceMemorialName}.
-                                                </p>
-                                                {request.requestMessage && (
-                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
-                                                        "{request.requestMessage}"
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-2 lg:justify-end">
-                                                <button
-                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'rejected')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
-                                                >
-                                                    Decline
-                                                </button>
-                                                <button
-                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'approved')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
-                                                >
-                                                    Approve
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {pendingAccessRequests.map((request) => (
-                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
-                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                            <div>
-                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">Access request</p>
-                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
-                                                    {request.requesterEmail}
-                                                </h3>
-                                                <p className="mt-1 text-sm text-warm-muted font-sans">
-                                                    Requested {request.requestedRole} access to {request.memorialName}.
-                                                </p>
-                                                {request.requestMessage && (
-                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
-                                                        "{request.requestMessage}"
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-2 lg:justify-end">
-                                                <button
-                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'denied')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
-                                                >
-                                                    Deny
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'approved')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
-                                                >
-                                                    Approve
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-
-                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
-                        <div className="mb-5">
-                            <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Recent activity</p>
-                            <h2 className="mt-2 font-serif text-2xl text-warm-dark">Who changed what</h2>
-                            <p className="mt-2 text-sm text-warm-muted font-sans">
-                                Family archives need visible history. This feed shows recent saved changes across the family workspace.
-                            </p>
-                        </div>
-
-                        {summaryLoading ? (
-                            <div className="py-10 text-center">
-                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
-                                <p className="text-sm text-warm-muted font-sans">Loading activity...</p>
-                            </div>
-                        ) : recentActivity.length === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
-                                <History size={24} className="mx-auto mb-3 text-warm-muted" />
-                                <p className="font-serif text-xl text-warm-dark">No activity yet</p>
-                                <p className="mt-2 text-sm text-warm-muted font-sans">
-                                    Once someone edits a family memorial, the change history will appear here.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {groupedRecentActivity.map((dayGroup) => (
-                                    <details
-                                        key={dayGroup.dayKey}
-                                        open
-                                        className="group rounded-xl border border-warm-border/20 bg-surface-low/20"
-                                    >
-                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                                            <div>
-                                                <p className="text-sm font-semibold text-warm-dark font-sans">
-                                                    {dayGroup.dayLabel}
-                                                </p>
-                                                <p className="mt-1 text-xs text-warm-outline font-sans">
-                                                    {dayGroup.items.length} update{dayGroup.items.length !== 1 ? 's' : ''} by {dayGroup.people.length} contributor{dayGroup.people.length !== 1 ? 's' : ''}
-                                                </p>
-                                            </div>
-                                            <ChevronDown
-                                                size={16}
-                                                className="text-warm-outline transition-transform group-open:rotate-180"
-                                            />
-                                        </summary>
-
-                                        <div className="space-y-3 border-t border-warm-border/15 px-3 py-3">
-                                            {dayGroup.people.map((personGroup) => (
-                                                <details
-                                                    key={`${dayGroup.dayKey}-${personGroup.name}`}
-                                                    className="group/person rounded-xl border border-warm-border/20 bg-white"
-                                                >
-                                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-warm-dark font-sans">
-                                                                {personGroup.name}
-                                                            </p>
-                                                            <p className="mt-1 text-xs text-warm-outline font-sans">
-                                                                {personGroup.items.length} change{personGroup.items.length !== 1 ? 's' : ''}
-                                                            </p>
-                                                        </div>
-                                                        <ChevronDown
-                                                            size={16}
-                                                            className="text-warm-outline transition-transform group-open/person:rotate-180"
-                                                        />
-                                                    </summary>
-
-                                                    <div className="space-y-3 border-t border-warm-border/15 px-4 py-3">
-                                                        {personGroup.items.map((item) => (
-                                                            <div
-                                                                key={item.id}
-                                                                className="rounded-xl border border-warm-border/20 bg-surface-low/25 px-4 py-3"
-                                                            >
-                                                                <div className="flex items-start gap-3">
-                                                                    <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-olive/10 text-olive">
-                                                                        <MessageSquareText size={16} />
-                                                                    </div>
-                                                                    <div className="min-w-0 flex-1">
-                                                                        <p className="text-sm text-warm-dark font-sans">
-                                                                            Updated <span className="font-semibold">{item.memorialName}</span>
-                                                                        </p>
-                                                                        <p className="mt-1 text-sm text-warm-muted font-sans leading-relaxed">
-                                                                            {item.changeSummary}
-                                                                        </p>
-                                                                        <p className="mt-2 text-xs text-warm-outline font-sans">
-                                                                            {new Date(item.createdAt).toLocaleString()}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </details>
-                                            ))}
-                                        </div>
-                                    </details>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                </div>
-
                 {/* SEARCH & FILTER TOOLBAR */}
                 {!loading && realMemorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -927,7 +709,225 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     </div>
                 )}
 
-                {/* ANCHOR PANEL — Device Sync Display */}
+                <div id="activity" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mt-12">
+                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
+                        <div className="flex items-start justify-between gap-4 mb-5">
+                            <div>
+                                <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Pending requests</p>
+                                <h2 className="mt-2 font-serif text-2xl text-warm-dark">Steward queue</h2>
+                                <p className="mt-2 text-sm text-warm-muted font-sans max-w-2xl">
+                                    Owners should never have to refresh blindly to notice requests. This queue keeps memorial requests and access requests visible in one place.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => loadMemorials()}
+                                className="inline-flex items-center gap-2 rounded-lg border border-warm-border/30 px-3 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors"
+                            >
+                                <RefreshCcw size={14} />
+                                Refresh
+                            </button>
+                        </div>
+
+                        {summaryError && (
+                            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                {summaryError}
+                            </div>
+                        )}
+
+                        {summaryLoading ? (
+                            <div className="py-10 text-center">
+                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
+                                <p className="text-sm text-warm-muted font-sans">Loading requests and activity...</p>
+                            </div>
+                        ) : pendingRequestCount === 0 ? (
+                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
+                                <CheckCircle2 size={24} className="mx-auto mb-3 text-olive" />
+                                <p className="font-serif text-xl text-warm-dark">No pending requests</p>
+                                <p className="mt-2 text-sm text-warm-muted font-sans">
+                                    When someone requests a new memorial or asks for access, it will appear here immediately.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {pendingCreationRequests.map((request) => (
+                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">New memorial request</p>
+                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
+                                                    {request.proposedName || 'Untitled memorial request'}
+                                                </h3>
+                                                <p className="mt-1 text-sm text-warm-muted font-sans">
+                                                    {request.requesterEmail} requested this from {request.sourceMemorialName}.
+                                                </p>
+                                                {request.requestMessage && (
+                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
+                                                        &ldquo;{request.requestMessage}&rdquo;
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 lg:justify-end">
+                                                <button
+                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'rejected')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
+                                                >
+                                                    Decline
+                                                </button>
+                                                <button
+                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'approved')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {pendingAccessRequests.map((request) => (
+                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
+                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                            <div>
+                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">Access request</p>
+                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
+                                                    {request.requesterEmail}
+                                                </h3>
+                                                <p className="mt-1 text-sm text-warm-muted font-sans">
+                                                    Requested {request.requestedRole} access to {request.memorialName}.
+                                                </p>
+                                                {request.requestMessage && (
+                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
+                                                        &ldquo;{request.requestMessage}&rdquo;
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2 lg:justify-end">
+                                                <button
+                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'denied')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
+                                                >
+                                                    Deny
+                                                </button>
+                                                <button
+                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'approved')}
+                                                    disabled={processingRequestId === request.id}
+                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
+                                                >
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
+                        <div className="mb-5">
+                            <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Recent activity</p>
+                            <h2 className="mt-2 font-serif text-2xl text-warm-dark">Who changed what</h2>
+                            <p className="mt-2 text-sm text-warm-muted font-sans">
+                                Family archives need visible history. This feed shows recent saved changes across the family workspace.
+                            </p>
+                        </div>
+
+                        {summaryLoading ? (
+                            <div className="py-10 text-center">
+                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
+                                <p className="text-sm text-warm-muted font-sans">Loading activity...</p>
+                            </div>
+                        ) : recentActivity.length === 0 ? (
+                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
+                                <History size={24} className="mx-auto mb-3 text-warm-muted" />
+                                <p className="font-serif text-xl text-warm-dark">No activity yet</p>
+                                <p className="mt-2 text-sm text-warm-muted font-sans">
+                                    Once someone edits a family memorial, the change history will appear here.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {groupedRecentActivity.map((dayGroup) => (
+                                    <details
+                                        key={dayGroup.dayKey}
+                                        open
+                                        className="group rounded-xl border border-warm-border/20 bg-surface-low/20"
+                                    >
+                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                                            <div>
+                                                <p className="text-sm font-semibold text-warm-dark font-sans">
+                                                    {dayGroup.dayLabel}
+                                                </p>
+                                                <p className="mt-1 text-xs text-warm-outline font-sans">
+                                                    {dayGroup.items.length} update{dayGroup.items.length !== 1 ? 's' : ''} by {dayGroup.people.length} contributor{dayGroup.people.length !== 1 ? 's' : ''}
+                                                </p>
+                                            </div>
+                                            <ChevronDown
+                                                size={16}
+                                                className="text-warm-outline transition-transform group-open:rotate-180"
+                                            />
+                                        </summary>
+
+                                        <div className="space-y-3 border-t border-warm-border/15 px-3 py-3">
+                                            {dayGroup.people.map((personGroup) => (
+                                                <details
+                                                    key={`${dayGroup.dayKey}-${personGroup.name}`}
+                                                    className="group/person rounded-xl border border-warm-border/20 bg-white"
+                                                >
+                                                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-warm-dark font-sans">
+                                                                {personGroup.name}
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-warm-outline font-sans">
+                                                                {personGroup.items.length} change{personGroup.items.length !== 1 ? 's' : ''}
+                                                            </p>
+                                                        </div>
+                                                        <ChevronDown
+                                                            size={16}
+                                                            className="text-warm-outline transition-transform group-open/person:rotate-180"
+                                                        />
+                                                    </summary>
+
+                                                    <div className="space-y-3 border-t border-warm-border/15 px-4 py-3">
+                                                        {personGroup.items.map((item) => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="rounded-xl border border-warm-border/20 bg-surface-low/25 px-4 py-3"
+                                                            >
+                                                                <div className="flex items-start gap-3">
+                                                                    <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-lg bg-olive/10 text-olive">
+                                                                        <MessageSquareText size={16} />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="text-sm text-warm-dark font-sans">
+                                                                            Updated <span className="font-semibold">{item.memorialName}</span>
+                                                                        </p>
+                                                                        <p className="mt-1 text-sm text-warm-muted font-sans leading-relaxed">
+                                                                            {item.changeSummary}
+                                                                        </p>
+                                                                        <p className="mt-2 text-xs text-warm-outline font-sans">
+                                                                            {new Date(item.createdAt).toLocaleString()}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </details>
+                                            ))}
+                                        </div>
+                                    </details>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                </div>
+
+                {/* ANCHOR PANEL — Family Sync Status */}
                 {firstPaidMemorial && (
                     <div className="mt-12">
                         <AnchorPanel memorialId={firstPaidMemorial.id} />
