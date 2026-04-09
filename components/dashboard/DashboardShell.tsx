@@ -12,7 +12,6 @@ import {
     LayoutDashboard,
     Lock,
     Menu,
-    MessageSquareText,
     Network,
     Shield,
     UserCheck,
@@ -28,7 +27,7 @@ interface DashboardShellProps {
 }
 
 interface NavItem {
-    key: 'overview' | 'edit' | 'preservation' | 'succession' | 'settings' | 'members' | 'contributions' | 'relations' | 'family';
+    key: 'overview' | 'edit' | 'preservation' | 'succession' | 'settings' | 'relations' | 'family';
     label: string;
     description: string;
     href: string;
@@ -112,26 +111,10 @@ function buildItems(pathname: string, userId: string, plan: string): NavItem[] {
         return [
             {
                 key: 'overview',
-                label: 'Overview',
-                description: 'Family dashboard and steward queue',
+                label: 'Family Dashboard',
+                description: 'Members, contributions, and steward queue',
                 href: `/dashboard/family/${userId}`,
                 icon: LayoutDashboard,
-                active: pathname === `/dashboard/family/${userId}`,
-            },
-            {
-                key: 'members',
-                label: 'Family Members',
-                description: 'Roles, invitations, and pending access',
-                href: `/dashboard/family/${userId}#members`,
-                icon: Users,
-                active: pathname === `/dashboard/family/${userId}`,
-            },
-            {
-                key: 'contributions',
-                label: 'Contributions',
-                description: 'Requests, reviews, and recent activity',
-                href: `/dashboard/family/${userId}#activity`,
-                icon: MessageSquareText,
                 active: pathname === `/dashboard/family/${userId}`,
             },
             {
