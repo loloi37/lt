@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { SupabaseClient } from '@supabase/supabase-js';
 
 function isMissingCreationRequestTableError(error: any) {
     const message = String(error?.message || '');
@@ -35,7 +30,10 @@ export interface MemorialCreationRequestRecord {
     decided_by: string | null;
 }
 
-export async function getOwnerFamilyMemorials(ownerUserId: string) {
+export async function getOwnerFamilyMemorials(
+    supabaseAdmin: SupabaseClient,
+    ownerUserId: string
+) {
     const { data, error } = await supabaseAdmin
         .from('memorials')
         .select('id, full_name, birth_date, death_date, profile_photo_url, status, paid, updated_at')
@@ -51,10 +49,11 @@ export async function getOwnerFamilyMemorials(ownerUserId: string) {
 }
 
 export async function syncCoGuardianAcrossOwnerFamily(
+    supabaseAdmin: SupabaseClient,
     ownerUserId: string,
     coGuardianUserId: string
 ) {
-    const memorials = await getOwnerFamilyMemorials(ownerUserId);
+    const memorials = await getOwnerFamilyMemorials(supabaseAdmin, ownerUserId);
 
     if (memorials.length === 0) {
         return [];
@@ -80,10 +79,11 @@ export async function syncCoGuardianAcrossOwnerFamily(
 }
 
 export async function syncAllCoGuardiansToMemorial(
+    supabaseAdmin: SupabaseClient,
     ownerUserId: string,
     memorialId: string
 ) {
-    const familyMemorials = await getOwnerFamilyMemorials(ownerUserId);
+    const familyMemorials = await getOwnerFamilyMemorials(supabaseAdmin, ownerUserId);
     const familyMemorialIds = familyMemorials.map((memorial) => memorial.id);
 
     if (familyMemorialIds.length === 0) {
@@ -126,11 +126,12 @@ export async function syncAllCoGuardiansToMemorial(
 }
 
 export async function updateFamilyCoGuardianRole(
+    supabaseAdmin: SupabaseClient,
     ownerUserId: string,
     targetUserId: string,
     role: 'co_guardian' | 'witness' | 'reader'
 ) {
-    const memorials = await getOwnerFamilyMemorials(ownerUserId);
+    const memorials = await getOwnerFamilyMemorials(supabaseAdmin, ownerUserId);
     const memorialIds = memorials.map((memorial) => memorial.id);
 
     if (memorialIds.length === 0) {
@@ -149,10 +150,11 @@ export async function updateFamilyCoGuardianRole(
 }
 
 export async function removeFamilyCoGuardianAccess(
+    supabaseAdmin: SupabaseClient,
     ownerUserId: string,
     targetUserId: string
 ) {
-    const memorials = await getOwnerFamilyMemorials(ownerUserId);
+    const memorials = await getOwnerFamilyMemorials(supabaseAdmin, ownerUserId);
     const memorialIds = memorials.map((memorial) => memorial.id);
 
     if (memorialIds.length === 0) {
@@ -171,6 +173,7 @@ export async function removeFamilyCoGuardianAccess(
 }
 
 export async function getPendingMemorialCreationRequest(
+    supabaseAdmin: SupabaseClient,
     ownerUserId: string,
     requesterUserId: string
 ) {
@@ -192,7 +195,10 @@ export async function getPendingMemorialCreationRequest(
     return data as MemorialCreationRequestRecord | null;
 }
 
-export async function getMemorialCreationRequestCount(ownerUserId: string) {
+export async function getMemorialCreationRequestCount(
+    supabaseAdmin: SupabaseClient,
+    ownerUserId: string
+) {
     const { count, error } = await supabaseAdmin
         .from('memorial_creation_requests')
         .select('*', { count: 'exact', head: true })

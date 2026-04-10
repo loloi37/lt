@@ -12,6 +12,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell';
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
+import NotificationCenter from './_components/NotificationCenter';
 
 interface PendingCreationRequest {
     id: string;
@@ -559,6 +560,13 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12">
+                <NotificationCenter
+                    pendingCreationRequests={pendingCreationRequests}
+                    pendingAccessRequests={pendingAccessRequests}
+                    onCreationDecision={handleCreationRequestDecision}
+                    onAccessDecision={handleAccessRequestDecision}
+                    processingId={processingRequestId}
+                />
                 {/* SEARCH & FILTER TOOLBAR */}
                 {!loading && realMemorials.length > 0 && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -711,123 +719,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                     </div>
                 )}
 
-                <div id="activity" className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] mt-12">
-                    <section className="bg-white border border-warm-border/30 rounded-xl p-6">
-                        <div className="flex items-start justify-between gap-4 mb-5">
-                            <div>
-                                <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Pending requests</p>
-                                <h2 className="mt-2 font-serif text-2xl text-warm-dark">Steward queue</h2>
-                                <p className="mt-2 text-sm text-warm-muted font-sans max-w-2xl">
-                                    Owners should never have to refresh blindly to notice requests. This queue keeps memorial requests and access requests visible in one place.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => loadMemorials()}
-                                className="inline-flex items-center gap-2 rounded-lg border border-warm-border/30 px-3 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors"
-                            >
-                                <RefreshCcw size={14} />
-                                Refresh
-                            </button>
-                        </div>
-
-                        {summaryError && (
-                            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                                {summaryError}
-                            </div>
-                        )}
-
-                        {summaryLoading ? (
-                            <div className="py-10 text-center">
-                                <Loader2 size={24} className="mx-auto text-olive animate-spin mb-3" />
-                                <p className="text-sm text-warm-muted font-sans">Loading requests and activity...</p>
-                            </div>
-                        ) : pendingRequestCount === 0 ? (
-                            <div className="rounded-xl border-2 border-dashed border-warm-border/35 bg-surface-low/40 px-6 py-10 text-center">
-                                <CheckCircle2 size={24} className="mx-auto mb-3 text-olive" />
-                                <p className="font-serif text-xl text-warm-dark">No pending requests</p>
-                                <p className="mt-2 text-sm text-warm-muted font-sans">
-                                    When someone requests a new memorial or asks for access, it will appear here immediately.
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {pendingCreationRequests.map((request) => (
-                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
-                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                            <div>
-                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">New memorial request</p>
-                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
-                                                    {request.proposedName || 'Untitled memorial request'}
-                                                </h3>
-                                                <p className="mt-1 text-sm text-warm-muted font-sans">
-                                                    {request.requesterEmail} requested this from {request.sourceMemorialName}.
-                                                </p>
-                                                {request.requestMessage && (
-                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
-                                                        &ldquo;{request.requestMessage}&rdquo;
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-2 lg:justify-end">
-                                                <button
-                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'rejected')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
-                                                >
-                                                    Decline
-                                                </button>
-                                                <button
-                                                    onClick={() => handleCreationRequestDecision(request.sourceMemorialId, request.id, 'approved')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
-                                                >
-                                                    Approve
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {pendingAccessRequests.map((request) => (
-                                    <div key={request.id} className="rounded-xl border border-warm-border/25 bg-surface-low/30 p-4">
-                                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                                            <div>
-                                                <p className="text-xs uppercase tracking-[0.16em] text-warm-outline">Access request</p>
-                                                <h3 className="mt-2 font-serif text-lg text-warm-dark">
-                                                    {request.requesterEmail}
-                                                </h3>
-                                                <p className="mt-1 text-sm text-warm-muted font-sans">
-                                                    Requested {request.requestedRole} access to {request.memorialName}.
-                                                </p>
-                                                {request.requestMessage && (
-                                                    <p className="mt-3 text-sm text-warm-dark/70 font-sans italic">
-                                                        &ldquo;{request.requestMessage}&rdquo;
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="flex gap-2 lg:justify-end">
-                                                <button
-                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'denied')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg border border-warm-border/30 px-4 py-2 text-sm text-warm-dark hover:bg-surface-high transition-colors disabled:opacity-50"
-                                                >
-                                                    Deny
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAccessRequestDecision(request.memorialId, request.id, 'approved')}
-                                                    disabled={processingRequestId === request.id}
-                                                    className="rounded-lg bg-warm-dark px-4 py-2 text-sm text-surface-low transition-colors hover:bg-warm-dark/90 disabled:opacity-50"
-                                                >
-                                                    Approve
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
-
+                <div id="activity" className="mt-12">
                     <section className="bg-white border border-warm-border/30 rounded-xl p-6">
                         <div className="mb-5">
                             <p className="text-[11px] uppercase tracking-[0.18em] text-warm-outline">Recent activity</p>

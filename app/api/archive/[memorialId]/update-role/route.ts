@@ -58,6 +58,14 @@ export async function POST(
       );
     }
 
+    // NEW: Personal plan cannot accept ANY collaboration roles
+    if (context.plan === 'personal' && ['co_guardian', 'witness', 'reader'].includes(newRole as string)) {
+      return NextResponse.json(
+        { error: 'Personal archives cannot have members. Upgrade to Family plan.' },
+        { status: 403 }
+      );
+    }
+
     // 4. Apply the change.
     const { data: currentRoleRow } = await admin
       .from('user_memorial_roles')
@@ -73,9 +81,10 @@ export async function POST(
 
     if (isFamilyWideCoGuardianChange) {
       if (newRole === 'co_guardian') {
-        await syncCoGuardianAcrossOwnerFamily(context.ownerUserId, targetUserId);
+        await syncCoGuardianAcrossOwnerFamily(admin, context.ownerUserId, targetUserId);
       } else {
         await updateFamilyCoGuardianRole(
+          admin,
           context.ownerUserId,
           targetUserId,
           newRole as 'witness' | 'reader'

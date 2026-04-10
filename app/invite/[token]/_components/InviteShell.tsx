@@ -49,7 +49,11 @@ export default function InviteShell({
 
     useEffect(() => {
         checkAuth();
-    }, [checkAuth]);
+        // Persist token for recovery across login/signup
+        if (token) {
+            sessionStorage.setItem('pending_invite_token', token);
+        }
+    }, [checkAuth, token]);
 
     if (checkingAuth) {
         return (

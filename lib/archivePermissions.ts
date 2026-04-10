@@ -62,7 +62,8 @@ const PERSONAL_ROLE_PERMISSIONS: Record<WitnessRole, ArchiveAction[]> = {
     'manage_succession',
     'manage_devices',
   ],
-  co_guardian: [],
+  // Personal plan: No collaboration roles allowed
+  co_guardian: [], // NEVER assign this role on personal plans
   witness: [],
   reader: [],
 };

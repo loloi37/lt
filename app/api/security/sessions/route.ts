@@ -98,3 +98,44 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+export async function POST(request: NextRequest) {
+  try {
+    const { user, error } = await createAuthenticatedClient();
+
+    if (error || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { targetId, type } = await request.json();
+
+    if (!targetId || !['session', 'anchor'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    if (type === 'session') {
+      const { error: revokeError } = await supabaseAdmin
+        .from('user_session_devices')
+        .update({ revoked_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('session_id', targetId);
+
+      if (revokeError) throw revokeError;
+    } else if (type === 'anchor') {
+      const { error: revokeError } = await supabaseAdmin
+        .from('anchor_devices')
+        .update({ status: 'revoked' })
+        .eq('user_id', user.id)
+        .eq('id', targetId);
+
+      if (revokeError) throw revokeError;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('[security-sessions-revoke]', error);
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

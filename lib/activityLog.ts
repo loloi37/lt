@@ -19,7 +19,8 @@ export type MemorialActivityAction =
   | 'device_registered'
   | 'authorization_submitted'
   | 'content_review_submitted'
-  | 'plan_upgraded';
+  | 'plan_upgraded'
+  | 'memorial_edited';
 
 export interface MemorialActivityLogInput {
   memorialId: string;

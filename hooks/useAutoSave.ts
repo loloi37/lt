@@ -103,15 +103,23 @@ export function useAutoSave({
         setError(null);
 
         try {
-            const { error: saveError } = await supabase
-                .from('memorials')
-                .update({
-                    ...serializable,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', memorialId);
+            const saveRes = await fetch(`/api/memorials/${memorialId}/save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    memorialData: serializable,
+                }),
+            });
 
-            if (saveError) throw saveError;
+            if (!saveRes.ok) {
+                const result = await saveRes.json();
+                throw new Error(result.error || 'Save failed');
+            }
+
+            const savedData = await saveRes.json();
+            if (!savedData.success) {
+                throw new Error(savedData.error || 'Save failed');
+            }
 
             lastSavedDataRef.current = serialized;
             setLastSavedAt(new Date());
@@ -203,11 +211,10 @@ export function useAutoSave({
         const handleBeforeUnload = () => {
             const currentData = dataRef.current;
             const payload = JSON.stringify({
-                memorialId,
-                ...serializeForSave(currentData),
+                memorialData: serializeForSave(currentData),
             });
-
-            navigator.sendBeacon('/api/autosave', payload);
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(`/api/memorials/${memorialId}/save`, blob);
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);

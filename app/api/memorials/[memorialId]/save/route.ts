@@ -10,6 +10,7 @@ import {
     hasArchivePermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -143,6 +144,21 @@ export async function POST(
             });
 
             historyRecorded = !!version;
+
+            // Log activity for both Family and Personal plans
+            if (historyRecorded && version) {
+                await safeLogMemorialActivity(supabaseAdmin, {
+                    memorialId,
+                    action: 'memorial_edited',
+                    summary: version.change_summary || 'Memorial updated',
+                    actorUserId: user.id,
+                    actorEmail: user.email,
+                    details: {
+                        plan: memorial.mode,
+                        stepsModified: version.steps_modified,
+                    },
+                });
+            }
         } catch (error: any) {
             console.error('[memorial-save] Version creation failed:', error);
             versionError = error.message || 'Version snapshot failed.';

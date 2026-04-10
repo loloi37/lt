@@ -189,6 +189,7 @@ export default function InviteAcceptance({
 
             sessionStorage.removeItem('anon_contributor');
             sessionStorage.removeItem('anon_contribution_id');
+            sessionStorage.removeItem('pending_invite_token');
 
             onSuccess(data.memorialId, data.role);
         } catch {
