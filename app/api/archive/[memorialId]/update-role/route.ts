@@ -1,13 +1,3 @@
-// app/api/archive/[memorialId]/update-role/route.ts
-//
-// Legacy entry-point for changing a member's role on an archive.
-// Kept as a thin wrapper around the centralized permission system so any
-// existing callers continue to work, but the canonical implementation now
-// lives at: PATCH /api/memorials/[memorialId]/members/[targetUserId]/role
-//
-// Security: never trusts the requester's role from the body — it is resolved
-// from the database via requireMemorialAccess('manage_members').
-
 import { NextRequest, NextResponse } from 'next/server';
 import { WitnessRole } from '@/types/roles';
 import { requireMemorialAccess } from '@/lib/apiAuth';
@@ -44,8 +34,6 @@ export async function POST(
     }
 
     // 1. AUTH + AUTHORIZATION (centralized).
-    //    Resolves the caller from the cookie session and verifies their
-    //    database-backed role on this memorial allows manage_members.
     const access = await requireMemorialAccess({
       memorialId,
       action: 'manage_members',
@@ -55,13 +43,7 @@ export async function POST(
     const { user, admin, context } = access;
 
     // 2. Owner identity invariants.
-    if (targetUserId === user.id) {
-      return NextResponse.json(
-        { error: "Cannot change the owner's role" },
-        { status: 400 }
-      );
-    }
-    if (targetUserId === context.ownerUserId) {
+    if (targetUserId === user.id || targetUserId === context.ownerUserId) {
       return NextResponse.json(
         { error: "Cannot change the owner's role" },
         { status: 400 }
@@ -76,8 +58,7 @@ export async function POST(
       );
     }
 
-    // 4. Apply the change. For family co-guardian transitions we keep the
-    //    role consistent across every memorial in the owner's family.
+    // 4. Apply the change.
     const { data: currentRoleRow } = await admin
       .from('user_memorial_roles')
       .select('role')

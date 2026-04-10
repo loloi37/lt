@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { syncCoGuardianAcrossOwnerFamily } from '@/lib/familyWorkspace';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,7 +41,43 @@ export async function POST(
             return handleAnonymousJoin(token, contributionId);
         }
 
-        // 3. Authenticated user join path
+        // 3. Get invitation to verify email matches (defensive)
+        const { data: invData } = await supabaseAdmin
+            .from('witness_invitations')
+            .select('memorial_id, invitee_email')
+            .eq('id', token)
+            .single();
+
+        // Verify the user's email matches the invited email (defensive check)
+        if (invData?.invitee_email && user!.email) {
+            const invitedEmailLower = invData.invitee_email.toLowerCase();
+            const userEmailLower = user!.email.toLowerCase();
+            if (invitedEmailLower !== userEmailLower) {
+                return NextResponse.json(
+                    { error: 'This invitation was sent to a different email address.', code: 'EMAIL_MISMATCH' },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // Defensive: check if user is already a member before attempting join
+        if (invData?.memorial_id) {
+            const { data: existingMember } = await supabaseAdmin
+                .from('user_memorial_roles')
+                .select('role')
+                .eq('memorial_id', invData.memorial_id)
+                .eq('user_id', user!.id)
+                .maybeSingle();
+
+            if (existingMember) {
+                return NextResponse.json(
+                    { error: 'You are already a member of this archive.', code: 'ALREADY_MEMBER' },
+                    { status: 400 }
+                );
+            }
+        }
+
+        // 4. Call the atomic accept_invitation DB function
         const { data, error } = await supabaseAdmin
             .rpc('accept_invitation', {
                 p_invitation_id: token,
@@ -88,12 +125,28 @@ export async function POST(
             }
         }
 
-        // 4. Update last_visited_at on the new role
+// 4. Update last_visited_at on the new role
         await supabaseAdmin
             .from('user_memorial_roles')
             .update({ last_visited_at: new Date().toISOString() })
             .eq('user_id', user!.id)
             .eq('memorial_id', data.memorial_id);
+
+        // 5. Log the invite acceptance
+        const { data: inviterData } = await supabaseAdmin
+            .from('witness_invitations')
+            .select('inviter_name')
+            .eq('id', token)
+            .single();
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId: data.memorial_id,
+            action: 'invite_accepted',
+            summary: `${inviterData?.inviter_name || 'Someone'} invited this user.`,
+            actorUserId: user!.id,
+            actorEmail: user!.email ?? null,
+            details: { role: data.role },
+        });
 
         return NextResponse.json({
             success: true,

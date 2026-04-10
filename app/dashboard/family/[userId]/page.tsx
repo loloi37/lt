@@ -199,24 +199,26 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                 })
             );
 
+// ... (around line 202)
             const activityPromises = activeMemorials.map((memorial) =>
-                fetch(`/api/memorials/${memorial.id}/versions?limit=4`, {
+                fetch(`/api/memorials/${memorial.id}/activity?limit=10`, {
                     cache: 'no-store',
                 }).then(async (response) => {
                     const payload = await response.json();
                     if (!response.ok) {
                         throw new Error(payload.error || 'Could not load activity.');
                     }
-                    return (payload.versions || []).map((version: any) => ({
-                        id: version.id,
+                    return (payload.activity || []).map((item: any) => ({
+                        id: item.id,
                         memorialId: memorial.id,
                         memorialName: memorial.full_name || 'Untitled',
-                        createdAt: version.created_at,
-                        createdByName: version.created_by_name || null,
-                        changeSummary: version.change_summary || 'Archive updated',
+                        createdAt: item.createdAt,
+                        createdByName: item.actorEmail || 'Someone',
+                        changeSummary: item.summary || 'Archive updated',
                     }));
                 })
             );
+// ...
 
             const [creationRequests, accessRequestsGroups, activityGroups] = await Promise.all([
                 creationPromise,

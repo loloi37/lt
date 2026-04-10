@@ -1,21 +1,11 @@
 // app/api/memorials/[memorialId]/members/[targetUserId]/role/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
+import { requireMemorialAccess } from '@/lib/apiAuth';
 import {
     syncCoGuardianAcrossOwnerFamily,
     updateFamilyCoGuardianRole,
 } from '@/lib/familyWorkspace';
-import {
-    hasPermission,
-    resolveArchivePermissionContext,
-} from '@/lib/archivePermissions';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function PATCH(
     req: NextRequest,
@@ -24,69 +14,54 @@ export async function PATCH(
     try {
         const { memorialId, targetUserId } = await params;
         const { newRole } = await req.json();
-        const { user } = await createAuthenticatedClient();
-
-        if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
         const VALID_ROLES = ['co_guardian', 'witness', 'reader'];
         if (!VALID_ROLES.includes(newRole)) {
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
         }
 
-        const permission = await resolveArchivePermissionContext(
-            supabaseAdmin,
+        // 1. AUTH + AUTHORIZATION (centralized)
+        const access = await requireMemorialAccess({
             memorialId,
-            user.id
-        );
+            action: 'manage_members',
+        });
+        if (!access.ok) return access.response;
 
-        if (!permission.memorialExists || !permission.context) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
+        const { user, admin, context } = access;
 
-        if (!hasPermission(permission.context, 'manage_members')) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials').select('user_id, mode').eq('id', memorialId).single();
-
-        if (!memorial) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
-
-        // 2. Prevent changing own role
-        if (targetUserId === user.id) {
+        // 2. Prevent changing own role or owner role
+        if (targetUserId === user.id || targetUserId === context.ownerUserId) {
             return NextResponse.json({ error: 'Cannot change the owner role' }, { status: 400 });
         }
 
-        if (newRole === 'co_guardian' && memorial?.mode !== 'family') {
+        if (newRole === 'co_guardian' && context.plan !== 'family') {
             return NextResponse.json({ error: 'Co-Guardian is a Family plan role only' }, { status: 403 });
         }
 
-        const { data: currentRoleRow } = await supabaseAdmin
+        const { data: currentRoleRow } = await admin
             .from('user_memorial_roles')
             .select('role')
             .eq('memorial_id', memorialId)
             .eq('user_id', targetUserId)
             .maybeSingle();
 
-        const isFamilyMemorial = memorial?.mode === 'family';
+        const isFamilyMemorial = context.plan === 'family';
         const isFamilyWideCoGuardianChange =
             isFamilyMemorial
             && (newRole === 'co_guardian' || currentRoleRow?.role === 'co_guardian');
 
         if (isFamilyWideCoGuardianChange) {
             if (newRole === 'co_guardian') {
-                await syncCoGuardianAcrossOwnerFamily(memorial.user_id, targetUserId);
+                await syncCoGuardianAcrossOwnerFamily(context.ownerUserId, targetUserId);
             } else {
                 await updateFamilyCoGuardianRole(
-                    memorial.user_id,
+                    context.ownerUserId,
                     targetUserId,
                     newRole as 'witness' | 'reader'
                 );
             }
         } else {
-            const { error } = await supabaseAdmin
+            const { error } = await admin
                 .from('user_memorial_roles')
                 .update({ role: newRole })
                 .eq('memorial_id', memorialId)
@@ -95,7 +70,7 @@ export async function PATCH(
             if (error) throw error;
         }
 
-        await safeLogMemorialActivity(supabaseAdmin, {
+        await safeLogMemorialActivity(admin, {
             memorialId,
             action: 'member_role_updated',
             summary: `A member role was changed to ${newRole}.`,

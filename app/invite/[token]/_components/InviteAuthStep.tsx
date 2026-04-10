@@ -72,6 +72,7 @@ export default function InviteAuthStep({
                 // The emailRedirectTo sends the user to the auth callback, which
                 // will exchange the code and redirect back to the invite page.
                 // This ensures the invite token survives signup + email confirmation.
+                // After redirect, InviteShell re-checks auth and proceeds to acceptance.
                 const { data, error: signUpError } =
                     await supabase.auth.signUp({
                         email: email.trim(),

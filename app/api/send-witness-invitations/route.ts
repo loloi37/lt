@@ -38,6 +38,22 @@ export async function POST(request: NextRequest) {
                 continue;
             }
 
+            // Check if user is already a member (has existing role)
+            const { data: authUser } = await admin.auth.admin.getUserByEmail(email);
+            if (authUser?.user) {
+                const { data: existingRole } = await admin
+                    .from('user_memorial_roles')
+                    .select('role')
+                    .eq('memorial_id', memorialId)
+                    .eq('user_id', authUser.user.id)
+                    .maybeSingle();
+
+                if (existingRole) {
+                    results.push({ email, status: 'already_member' });
+                    continue;
+                }
+            }
+
             // Create invitation record
             const { data: invitation, error: dbError } = await admin
                 .from('witness_invitations')

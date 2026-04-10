@@ -1,15 +1,6 @@
-// app/api/memorials/[memorialId]/access-request/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
-import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
+import { requireMemorialAccess } from '@/lib/apiAuth';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-// Initialize Admin Client
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(
     req: NextRequest,
@@ -19,30 +10,17 @@ export async function POST(
         const { memorialId } = await params;
         const { requestMessage } = await req.json();
 
-        // 1. AUTHENTICATE CALLER
-        const { user } = await createAuthenticatedClient();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const auth = await requireMemorialAccess({ memorialId });
+        if (!auth.ok) return auth.response;
 
-        // 2. VALIDATE MEMORIAL & PLAN
-        // Only Family Plan memorials support the "Request Access" flow
-        const { data: memorial, error: memError } = await supabaseAdmin
-            .from('memorials')
-            .select('mode, full_name')
-            .eq('id', memorialId)
-            .single();
+        const { user, admin, context } = auth;
 
-        if (memError || !memorial) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
-
-        if (memorial.mode !== 'family') {
+        if (context.plan !== 'family') {
             return NextResponse.json({ error: 'Access requests are only available for Family Plan archives' }, { status: 400 });
         }
 
         // 3. CHECK IF ALREADY A MEMBER
-        const { data: existingRole } = await supabaseAdmin
+        const { data: existingRole } = await admin
             .from('user_memorial_roles')
             .select('id')
             .eq('memorial_id', memorialId)
@@ -54,7 +32,7 @@ export async function POST(
         }
 
         // 4. CHECK FOR EXISTING PENDING REQUEST
-        const { data: existingRequest } = await supabaseAdmin
+        const { data: existingRequest } = await admin
             .from('memorial_access_requests')
             .select('id')
             .eq('memorial_id', memorialId)
@@ -67,7 +45,7 @@ export async function POST(
         }
 
         // 5. CREATE THE REQUEST
-        const { error: insertError } = await supabaseAdmin
+        const { error: insertError } = await admin
             .from('memorial_access_requests')
             .insert({
                 memorial_id: memorialId,
@@ -78,7 +56,7 @@ export async function POST(
             });
 
         if (insertError) throw insertError;
-        await safeLogMemorialActivity(supabaseAdmin, {
+        await safeLogMemorialActivity(admin, {
             memorialId,
             action: 'access_request_created',
             summary: 'A family access request was submitted.',
@@ -103,27 +81,16 @@ export async function GET(
 ) {
     try {
         const { memorialId } = await params;
-        const { user } = await createAuthenticatedClient();
 
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const permission = await resolveArchivePermissionContext(
-            supabaseAdmin,
+        const access = await requireMemorialAccess({
             memorialId,
-            user.id
-        );
+            action: 'approve_access_requests',
+        });
+        if (!access.ok) return access.response;
 
-        if (!permission.memorialExists || !permission.context) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
+        const { admin } = access;
 
-        if (!hasPermission(permission.context, 'approve_access_requests')) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-
-        const { data: requests, error } = await supabaseAdmin
+        const { data: requests, error } = await admin
             .from('memorial_access_requests')
             .select('id, requester_user_id, requested_role, request_message, status, created_at')
             .eq('memorial_id', memorialId)
@@ -136,7 +103,7 @@ export async function GET(
 
         const enriched = await Promise.all(
             (requests || []).map(async (request) => {
-                const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(request.requester_user_id);
+                const { data: authUser } = await admin.auth.admin.getUserById(request.requester_user_id);
                 return {
                     id: request.id,
                     requesterUserId: request.requester_user_id,

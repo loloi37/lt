@@ -1,22 +1,11 @@
 // app/api/memorials/[memorialId]/invite/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
+import { requireMemorialAccess } from '@/lib/apiAuth';
 import { sendEmail } from '@/lib/email/sender';
 import { getWitnessInvitationEmail } from '@/lib/email/templates';
 import { WitnessRole } from '@/types/roles';
-import {
-    hasPermission,
-    resolveArchivePermissionContext,
-} from '@/lib/archivePermissions';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
 import { INVITATION_EXPIRATION_DAYS } from '@/lib/constants';
-
-// Initialize Admin Client for sensitive DB operations
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(
     req: NextRequest,
@@ -25,16 +14,10 @@ export async function POST(
     try {
         const { memorialId } = await params;
 
-        // 1. AUTHENTICATE CALLER (Server-side session check)
-        const { user } = await createAuthenticatedClient();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         const { email, role, personalMessage } = await req.json();
         const normalizedEmail = String(email || '').trim().toLowerCase();
 
-        // 2. VALIDATE INPUTS
+        // 1. VALIDATE INPUTS
         const VALID_ROLES: WitnessRole[] = ['witness', 'co_guardian', 'reader'];
         if (!VALID_ROLES.includes(role as WitnessRole)) {
             return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
@@ -44,18 +27,18 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
         }
 
-        // 3. PERMISSION CHECK: derive role/capabilities from the backend
-        const permission = await resolveArchivePermissionContext(
-            supabaseAdmin,
+        // 2. AUTH + AUTHORIZATION (centralized)
+        const access = await requireMemorialAccess({
             memorialId,
-            user.id
-        );
+            action: 'invite_member',
+        });
 
-        if (!permission.memorialExists || !permission.context) {
-            return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
+        if (!access.ok) return access.response;
 
-        const { data: memorial } = await supabaseAdmin
+        const { user, admin, context } = access;
+
+        // Fetch memorial for metadata needed for email and constraints
+        const { data: memorial } = await admin
             .from('memorials')
             .select('user_id, mode, full_name')
             .eq('id', memorialId)
@@ -65,28 +48,23 @@ export async function POST(
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        if (!hasPermission(permission.context, 'invite_member')) {
-            const planLabel = permission.context.plan === 'family' ? 'this role' : 'Personal archives do not support collaboration';
-            return NextResponse.json({ error: `${planLabel}.` }, { status: 403 });
-        }
-
         if (normalizedEmail === user.email?.toLowerCase()) {
             return NextResponse.json({ error: 'You already have access to this archive.' }, { status: 400 });
         }
 
-        // 4. ROLE CONSTRAINTS
-        if (role === 'co_guardian' && memorial.mode !== 'family') {
+        // 3. ROLE CONSTRAINTS
+        if (role === 'co_guardian' && context.plan !== 'family') {
             return NextResponse.json({ error: 'Co-Guardian is a Family plan role only.' }, { status: 403 });
         }
 
-        const { data: existingMember } = await supabaseAdmin
+        const { data: existingMembers } = await admin
             .from('user_memorial_roles')
             .select('user_id, role')
             .eq('memorial_id', memorialId);
 
-        if (existingMember?.length) {
-            for (const member of existingMember) {
-                const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+        if (existingMembers?.length) {
+            for (const member of existingMembers) {
+                const { data: authUser } = await admin.auth.admin.getUserById(member.user_id);
                 if (authUser.user?.email?.toLowerCase() === normalizedEmail) {
                     return NextResponse.json(
                         { error: `This person already has archive access as ${member.role}.` },
@@ -96,12 +74,12 @@ export async function POST(
             }
         }
 
-        // 5. UPSERT LOGIC (Update existing pending or Create new)
+        // 4. UPSERT LOGIC
         const expiresAt = new Date(
             Date.now() + INVITATION_EXPIRATION_DAYS * 24 * 60 * 60 * 1000
         ).toISOString();
 
-        const { data: existingInvite } = await supabaseAdmin
+        const { data: existingInvite } = await admin
             .from('witness_invitations')
             .select('id')
             .eq('memorial_id', memorialId)
@@ -112,7 +90,7 @@ export async function POST(
         let invitationId: string;
 
         if (existingInvite) {
-            const { data: updated, error: updateError } = await supabaseAdmin
+            const { data: updated, error: updateError } = await admin
                 .from('witness_invitations')
                 .update({
                     role,
@@ -127,7 +105,7 @@ export async function POST(
             if (updateError) throw updateError;
             invitationId = updated.id;
         } else {
-            const { data: created, error: insertError } = await supabaseAdmin
+            const { data: created, error: insertError } = await admin
                 .from('witness_invitations')
                 .insert({
                     memorial_id: memorialId,
@@ -135,7 +113,7 @@ export async function POST(
                     invitee_email: normalizedEmail,
                     role,
                     personal_message: personalMessage,
-                    plan: memorial.mode === 'family' ? 'family' : 'personal',
+                    plan: context.plan,
                     expires_at: expiresAt
                 })
                 .select()
@@ -145,7 +123,7 @@ export async function POST(
             invitationId = created.id;
         }
 
-        // 6. SEND EMAIL VIA BREVO (using your existing sender logic)
+        // 5. SEND EMAIL
         const inviteLink = `${process.env.NEXT_PUBLIC_BASE_URL}/invite/${invitationId}`;
 
         await sendEmail({
@@ -159,7 +137,7 @@ export async function POST(
             )
         });
 
-        await safeLogMemorialActivity(supabaseAdmin, {
+        await safeLogMemorialActivity(admin, {
             memorialId,
             action: 'invite_sent',
             summary: `Invitation sent to ${normalizedEmail} as ${role}.`,
