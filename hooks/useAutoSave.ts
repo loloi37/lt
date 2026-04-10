@@ -5,7 +5,6 @@
 // NEVER asks "Would you like to save?" — saves silently, always
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { MemorialData } from '@/types/memorial';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'offline' | 'reconnected';
@@ -112,13 +111,8 @@ export function useAutoSave({
             });
 
             if (!saveRes.ok) {
-                const result = await saveRes.json();
+                const result = await saveRes.json().catch(() => ({}));
                 throw new Error(result.error || 'Save failed');
-            }
-
-            const savedData = await saveRes.json();
-            if (!savedData.success) {
-                throw new Error(savedData.error || 'Save failed');
             }
 
             lastSavedDataRef.current = serialized;

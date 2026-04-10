@@ -4,6 +4,7 @@ import { VideoContent } from '@/types/memorial';
 import { supabase } from '@/lib/supabase';
 import { secureUpload } from '@/lib/uploadService';
 import TutorialPopup from '@/components/TutorialPopup';
+import { DRAFT_VIDEO_LIMIT, PAID_VIDEO_LIMIT, MAX_VIDEO_FILE_SIZE_BYTES } from '@/lib/constants';
 
 interface Step9Props {
   data: VideoContent;
@@ -63,7 +64,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
 
     // ⚠️ NOUVELLE VÉRIFICATION DE LIMITE
     const currentCount = data.videos.length;
-    const maxAllowed = isPaid ? 20 : 3; // 20 for paid, 3 for free
+    const maxAllowed = isPaid ? PAID_VIDEO_LIMIT : DRAFT_VIDEO_LIMIT;
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
@@ -88,9 +89,9 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
       const file = filesToUpload[i];
       setUploadProgress(`Gathering ${i + 1} of ${filesToUpload.length}...`);
 
-      // Check file size (50MB limit)
-      if (file.size > 50 * 1024 * 1024) {
-        setUploadError(`File "${file.name}" is too large (max 50MB). Please compress it first.`);
+      // Check file size
+      if (file.size > MAX_VIDEO_FILE_SIZE_BYTES) {
+        setUploadError(`File "${file.name}" is too large (max ${Math.round(MAX_VIDEO_FILE_SIZE_BYTES / 1024 / 1024)}MB). Please compress it first.`);
         continue;
       }
 
@@ -109,26 +110,16 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
         const videoUrl = uploadResult.url!;
         const videoHash = uploadResult.hash; // We get the SHA-256 hash here
 
-        // 2. Generate thumbnail (Client-side logic remains, but we upload the result)
+        // 2. Generate thumbnail and upload via secure API
         let thumbnailUrl = '';
         try {
           const thumbnailBlob = await generateThumbnail(file);
+          const thumbnailFile = new File([thumbnailBlob], `${videoUuid}.png`, { type: 'image/png' });
           const thumbnailPath = `${memorialId}/thumbnails/${videoUuid}.png`;
 
-          // Thumbnails are less critical, can still use direct upload or secure upload
-          // We'll use direct for speed on small files
-          const { error: thumbError } = await supabase.storage
-            .from('videos')
-            .upload(thumbnailPath, thumbnailBlob, {
-              contentType: 'image/png',
-              upsert: false
-            });
-
-          if (!thumbError) {
-            const { data: thumbPublic } = supabase.storage
-              .from('videos')
-              .getPublicUrl(thumbnailPath);
-            thumbnailUrl = thumbPublic.publicUrl;
+          const thumbResult = await secureUpload(thumbnailFile, 'videos', thumbnailPath);
+          if (thumbResult.success && thumbResult.url) {
+            thumbnailUrl = thumbResult.url;
           }
         } catch (thumbErr) {
           console.warn('Thumbnail generation failed, using default:', thumbErr);
@@ -266,7 +257,7 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
     });
   };
 
-  const maxVideos = isPaid ? 20 : 3;
+  const maxVideos = isPaid ? PAID_VIDEO_LIMIT : DRAFT_VIDEO_LIMIT;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">

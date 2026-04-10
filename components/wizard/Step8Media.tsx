@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Mic, Star, Plus, X, Trash2, MousePointer } from 'lucide-react';
 import { MediaLegacy } from '@/types/memorial';
 import { secureUpload } from '@/lib/uploadService';
+import { DRAFT_MEDIA_LIMIT } from '@/lib/constants';
 
 
 interface Step8Props {
@@ -53,6 +54,10 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   const handleCoverPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!memorialId) {
+      alert('Please complete the Basic Info step first so the archive can be created.');
+      return;
+    }
 
     // 1. Immediate local preview (Optimistic UI)
     const reader = new FileReader();
@@ -65,7 +70,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const fileExt = file.name.split('.').pop() || 'jpg';
     const fileName = `cover-${Date.now()}.${fileExt}`;
     // Use memorialId if available, otherwise use a temp folder (though typical flow has ID by now)
-    const pathBase = memorialId || 'temp';
+    const pathBase = memorialId!;
     const path = `${pathBase}/covers/${fileName}`;
 
     try {
@@ -96,14 +101,18 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   // Gallery
   const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    if (!memorialId) {
+      alert('Please complete the Basic Info step first so the archive can be created.');
+      return;
+    }
 
     // VÉRIFICATION DE LIMITE
     const currentCount = data.gallery.length;
-    const maxAllowed = isPaid ? Infinity : 10;
+    const maxAllowed = isPaid ? Infinity : DRAFT_MEDIA_LIMIT;
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 photos. ${!isPaid ? 'Activate your archive to gather unlimited photos.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : `Draft archives are limited to`} ${DRAFT_MEDIA_LIMIT} photos. ${!isPaid ? 'Activate your archive to gather unlimited photos.' : ''}`);
       return;
     }
 
@@ -145,7 +154,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const uploadPromises = previews.map(async ({ file, tempId }) => {
       const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${tempId}.${fileExt}`;
-      const pathBase = memorialId || 'temp';
+      const pathBase = memorialId!;
       const path = `${pathBase}/gallery/${fileName}`;
 
       try {
@@ -185,14 +194,18 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   // Interactive Gallery - Secure Upload & Hash
   const handleInteractiveGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    if (!memorialId) {
+      alert('Please complete the Basic Info step first so the archive can be created.');
+      return;
+    }
 
     // VÉRIFICATION DE LIMITE
     const currentCount = (data.interactiveGallery || []).length;
-    const maxAllowed = isPaid ? Infinity : 10;
+    const maxAllowed = isPaid ? Infinity : DRAFT_MEDIA_LIMIT;
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 interactive photos. ${!isPaid ? 'Activate your archive to gather unlimited interactive photos.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : `Draft archives are limited to`} ${DRAFT_MEDIA_LIMIT} interactive photos. ${!isPaid ? 'Activate your archive to gather unlimited interactive photos.' : ''}`);
       return;
     }
 
@@ -231,7 +244,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
     const uploadPromises = previews.map(async ({ file, tempId }) => {
       const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${tempId}.${fileExt}`;
-      const pathBase = memorialId || 'temp';
+      const pathBase = memorialId!;
       const path = `${pathBase}/interactive/${fileName}`;
 
       try {
@@ -284,14 +297,18 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
   // Voice Recordings - Secure Upload & Hash
   const handleVoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    if (!memorialId) {
+      alert('Please complete the Basic Info step first so the archive can be created.');
+      return;
+    }
 
     // VÉRIFICATION DE LIMITE
     const currentCount = data.voiceRecordings.length;
-    const maxAllowed = isPaid ? Infinity : 10;
+    const maxAllowed = isPaid ? Infinity : DRAFT_MEDIA_LIMIT;
     const remaining = maxAllowed - currentCount;
 
     if (remaining <= 0) {
-      alert(`${isPaid ? 'Maximum' : 'Draft archives are limited to'} 10 voice recordings. ${!isPaid ? 'Activate your archive to gather unlimited recordings.' : ''}`);
+      alert(`${isPaid ? 'Maximum' : `Draft archives are limited to`} ${DRAFT_MEDIA_LIMIT} voice recordings. ${!isPaid ? 'Activate your archive to gather unlimited recordings.' : ''}`);
       return;
     }
 
@@ -305,7 +322,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
       const tempId = `voice-${Date.now()}-${Math.random()}`;
       const fileExt = file.name.split('.').pop() || 'mp3';
       const fileName = `${tempId}.${fileExt}`;
-      const pathBase = memorialId || 'temp';
+      const pathBase = memorialId!;
       const path = `${pathBase}/voice/${fileName}`;
 
       // Optimistic add
@@ -431,7 +448,7 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
           <div className="">
             {data.gallery.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 md:grid-3 gap-4 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                   {data.gallery.map((item, index) => (
                     <div
                       key={item.id}
@@ -477,14 +494,14 @@ export default function Step8Media({ data, onUpdate, onNext, onBack, isPaid, com
                 {!readOnly && (
                   <button
                     onClick={() => galleryRef.current?.click()}
-                    disabled={data.gallery.length >= (isPaid ? Infinity : 10)}
-                    className={`w-full py-4 border-2 border-dashed rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${data.gallery.length >= (isPaid ? Infinity : 10)
+                    disabled={data.gallery.length >= (isPaid ? Infinity : DRAFT_MEDIA_LIMIT)}
+                    className={`w-full py-4 border-2 border-dashed rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${data.gallery.length >= (isPaid ? Infinity : DRAFT_MEDIA_LIMIT)
                       ? 'border-warm-border/20 text-warm-dark/30 cursor-not-allowed'
                       : 'border-warm-border/40 text-warm-dark/60 hover:border-olive hover:bg-olive/5 hover:text-olive'
                       }`}
                   >
                     <Plus size={18} />
-                    {data.gallery.length >= (isPaid ? Infinity : 10)
+                    {data.gallery.length >= (isPaid ? Infinity : DRAFT_MEDIA_LIMIT)
                       ? `Maximum ${isPaid ? '' : 'draft '}photos reached`
                       : 'Add More Photos'}
                   </button>

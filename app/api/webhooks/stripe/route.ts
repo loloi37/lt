@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
         if (planLabel.includes('family')) {
             updatePayload.mode = 'family';
             updatePayload.plan_type = 'family';
-            updatePayload.amount_paid = 2940;
+            updatePayload.amount_paid = PLAN_PRICES_USD.family;
             if (currentMemorial.mode === 'personal') {
                 updatePayload.upgraded_from = 'personal';
                 updatePayload.upgraded_at = new Date().toISOString();
@@ -78,11 +79,11 @@ export async function POST(request: NextRequest) {
         } else if (planLabel.includes('concierge')) {
             updatePayload.mode = 'concierge';
             updatePayload.plan_type = 'concierge';
-            updatePayload.amount_paid = 6300;
+            updatePayload.amount_paid = PLAN_PRICES_USD.concierge;
         } else {
             updatePayload.mode = 'personal';
             updatePayload.plan_type = 'personal';
-            updatePayload.amount_paid = 1470;
+            updatePayload.amount_paid = PLAN_PRICES_USD.personal;
         }
 
         // 3. Update the database securely

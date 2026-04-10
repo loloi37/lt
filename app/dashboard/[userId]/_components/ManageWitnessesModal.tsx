@@ -83,7 +83,6 @@ export default function ManageWitnessesModal({
                         </div>
                         <RoleManagementTable
                             memorialId={memorialId}
-                            isOwner={true}
                             planType={planType}
                         />
                     </section>

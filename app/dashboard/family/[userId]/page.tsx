@@ -13,6 +13,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
 import NotificationCenter from './_components/NotificationCenter';
+import { SOFT_DELETE_RETENTION_DAYS } from '@/lib/constants';
 
 interface PendingCreationRequest {
     id: string;
@@ -329,7 +330,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
             .eq('memorial_id', id)
             .neq('user_id', userId);
 
-        let confirmMessage = 'Are you sure you want to delete this memorial? It will be moved to the trash for 30 days.';
+        let confirmMessage = `Are you sure you want to delete this memorial? It will be moved to the trash for ${SOFT_DELETE_RETENTION_DAYS} days.`;
 
         if (count && count > 0) {
             confirmMessage = `WARNING: This archive contains contributions from ${count} other people.\n\nAre you sure you want to delete it? They will lose access to their contributions.`;
@@ -384,7 +385,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
 
     const getDaysRemaining = (deletedAt: string) => {
         const deleteDate = new Date(deletedAt);
-        const expiryDate = new Date(deleteDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+        const expiryDate = new Date(deleteDate.getTime() + (SOFT_DELETE_RETENTION_DAYS * 24 * 60 * 60 * 1000));
         const now = new Date();
         const diff = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
         return diff > 0 ? diff : 0;
@@ -855,7 +856,7 @@ export default function FamilyDashboard({ params }: { params: Promise<{ userId: 
                             Removed Archives
                         </h3>
                         <p className="text-sm text-warm-muted font-sans mb-6">
-                            Archives are kept for 30 days before permanent deletion.
+                            Archives are kept for {SOFT_DELETE_RETENTION_DAYS} days before permanent deletion.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (

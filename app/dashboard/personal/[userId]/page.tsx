@@ -11,12 +11,201 @@ import {
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase, Memorial } from '@/lib/supabase';
 import { useAuth } from '@/components/providers/AuthProvider';
-// ... (around line 14)
 import PreservationStatus from '@/components/PreservationStatus';
+import ManageWitnessesModal from '@/app/dashboard/[userId]/_components/ManageWitnessesModal';
 import DashboardShell from '@/components/dashboard/DashboardShell';
-// ...
-// ... (around line 339)
-;
+import { SOFT_DELETE_RETENTION_DAYS } from '@/lib/constants';
+
+function computeStats(memorial: Memorial) {
+    const step7 = memorial.step7 as any;
+    const step8 = memorial.step8 as any;
+    const step9 = memorial.step9 as any;
+    const step6 = memorial.step6 as any;
+    return {
+        photos: (step8?.gallery?.length || 0) + (step8?.interactiveGallery?.length || 0),
+        videos: step9?.videos?.length || 0,
+        memories: (step7?.sharedMemories?.length || 0) + (step7?.impactStories?.length || 0),
+        chapters: step6?.lifeChapters?.length || 0,
+    };
+}
+
+function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 30) return `${days}d ago`;
+    if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
+}
+
+async function apiSoftDelete(id: string, action: 'delete' | 'restore') {
+    const res = await fetch(`/api/memorials/${id}/soft-delete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+    });
+    if (!res.ok) throw new Error('Operation failed');
+}
+
+export default function PersonalDashboard({ params }: { params: Promise<{ userId: string }> }) {
+    const unwrappedParams = use(params);
+    const userId = unwrappedParams.userId;
+    const auth = useAuth();
+    const router = useRouter();
+
+    const [activeArchive, setActiveArchive] = useState<Memorial | null>(null);
+    const [deletedArchives, setDeletedArchives] = useState<Memorial[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showCheckinSuccess, setShowCheckinSuccess] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(false);
+    const searchParams = useSearchParams();
+
+    const [planVerified, setPlanVerified] = useState(false);
+    const verifyRef = useRef(false);
+
+    useEffect(() => {
+        if (verifyRef.current) return;
+        verifyRef.current = true;
+        auth.revalidate().then(() => setPlanVerified(true));
+    }, []);
+
+    useEffect(() => {
+        if (auth.loading || !planVerified) return;
+        if (!auth.authenticated) {
+            router.replace('/login?next=/dashboard');
+            return;
+        }
+        if (auth.user && auth.user.id !== userId) {
+            router.replace(`/dashboard/personal/${auth.user.id}`);
+            return;
+        }
+        if ((auth.plan === 'draft' || auth.plan === 'none') && auth.user) {
+            router.replace(`/dashboard/draft/${auth.user.id}`);
+            return;
+        }
+        if (auth.plan === 'family' && auth.user) {
+            router.replace(`/dashboard/family/${auth.user.id}`);
+            return;
+        }
+    }, [auth.loading, auth.authenticated, auth.user, auth.plan, userId, router, planVerified]);
+
+    useEffect(() => {
+        fetch('/api/user/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (searchParams.get('checkin') === 'true') {
+            setShowCheckinSuccess(true);
+            window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
+            setTimeout(() => setShowCheckinSuccess(false), 5000);
+        }
+        if (searchParams.get('welcome') === 'true') {
+            setShowWelcome(true);
+            window.history.replaceState({}, '', `/dashboard/personal/${userId}`);
+            setTimeout(() => setShowWelcome(false), 5000);
+        }
+        loadMemorials();
+    }, [userId, searchParams]);
+
+    useEffect(() => {
+        const handlePopState = () => loadMemorials();
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') loadMemorials();
+        };
+        window.addEventListener('popstate', handlePopState);
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [userId]);
+
+    const loadMemorials = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('memorials')
+            .select('*, payment_confirmed_at')
+            .eq('user_id', userId)
+            .eq('mode', 'personal')
+            .order('updated_at', { ascending: false });
+
+        if (error) console.error('Error:', error);
+        if (data) {
+            const active = data.filter(m => !m.deleted);
+            const deleted = data.filter(m => m.deleted);
+            setActiveArchive(active.find(m => m.paid) || active[0] || null);
+            setDeletedArchives(deleted);
+        }
+        setLoading(false);
+    };
+
+    const handleCreate = () => {
+        if (auth.plan === 'family') {
+            router.replace(`/dashboard/family/${userId}`);
+            return;
+        }
+        if (activeArchive) {
+            alert('You already have an active Personal Archive. Each account supports one personal archive.');
+            return;
+        }
+        window.location.href = '/create?mode=personal';
+    };
+
+    const softDelete = async (id: string) => {
+        if (activeArchive?.id === id && (activeArchive as any).preservation_state === 'preserved') {
+            alert('This archive has been permanently preserved on the blockchain and cannot be removed.');
+            return;
+        }
+        if (!confirm(`Move this archive to Removed Archives? It will be permanently deleted after ${SOFT_DELETE_RETENTION_DAYS} days.`)) return;
+        try {
+            await apiSoftDelete(id, 'delete');
+            loadMemorials();
+        } catch {
+            alert('Error removing archive. Please try again.');
+        }
+    };
+
+    const restore = async (id: string) => {
+        if (activeArchive) {
+            alert('You already have an active archive. Remove it first before restoring another.');
+            return;
+        }
+        try {
+            await apiSoftDelete(id, 'restore');
+            loadMemorials();
+        } catch {
+            alert('Error restoring archive. Please try again.');
+        }
+    };
+
+    const permanentDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this archive? This action cannot be undone.')) return;
+        if (!confirm('This is irreversible. The archive and all its content will be lost forever. Continue?')) return;
+        try {
+            const res = await fetch(`/api/memorials/${id}/permanent-delete`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Operation failed');
+            loadMemorials();
+        } catch {
+            alert('Error permanently deleting archive. Please try again.');
+        }
+    };
+
+    const getDaysRemaining = (deletedAt: string) => {
+        const expiry = new Date(new Date(deletedAt).getTime() + SOFT_DELETE_RETENTION_DAYS * 86400000);
+        return Math.max(Math.ceil((expiry.getTime() - Date.now()) / 86400000), 0);
+    };
+
+    const hasPersonalAccess = planVerified && !auth.loading && auth.authenticated && auth.plan === 'personal';
+    if (!hasPersonalAccess) {
+        return (
+            <div className="bg-surface-low min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 size={28} className="text-warm-muted/50 animate-spin mx-auto mb-4" />
+                    <p className="text-warm-muted text-xs tracking-widest uppercase font-serif italic">Verifying access</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -341,21 +530,162 @@ function ActiveArchiveView({
                 </div>
             </div>
 
-            <section className="glass-card p-8 space-y-6">
-                <div>
-                    <h3 className="font-serif italic text-lg text-warm-brown mb-2">
-                        Share your archive
-                    </h3>
-                    <p className="text-sm text-warm-muted font-sans leading-relaxed">
-                        Share the public link or QR code with family. They can view your memorial.
-                    </p>
-                </div>
-                <div className="space-y-1">
-                    <ShareButton onClick={handleCopyLink} icon={Copy} label={linkCopied ? 'Copied!' : 'Copy link'} sublabel="Share the direct URL" />
-                    <ShareButton onClick={handleEmailFamily} icon={Mail} label="Email family" sublabel="Send via email" />
-                    <ShareButton onClick={handlePrintQR} icon={QrCode} label="QR Code" sublabel="Print for physical display" />
+            {/* --- ADD THE MODAL HERE --- */}
+            <ManageWitnessesModal 
+                isOpen={isWitnessModalOpen}
+                onClose={() => setIsWitnessModalOpen(false)}
+                memorialId={archive.id}
+                memorialName={archive.full_name || 'Untitled'}
+                planType="personal"
+            />
+
+            {/* ── Witnesses ── */}
+            <section className="glass-card p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 className="font-serif italic text-lg text-warm-dark mb-2">
+                            People around this archive
+                        </h3>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed max-w-2xl">
+                            Use one member manager for invitations, role changes, pending invites, and access cleanup. This now matches the archive experience instead of sending you through an older dashboard-only flow.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsWitnessModalOpen(true)}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
+                    >
+                        <Users size={14} />
+                        Open member manager
+                    </button>
                 </div>
             </section>
+
+            <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-8">
+                <div className="glass-card p-8 space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <h3 className="font-serif italic text-lg text-warm-dark mb-2">
+                                Archive care
+                            </h3>
+                            <p className="text-sm text-warm-muted font-sans leading-relaxed max-w-2xl">
+                                Everything related to the long-term state of this memorial lives here: preservation, continuity, visibility, and export.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                            <h4 className="font-serif italic text-base text-warm-dark mb-4">Current state</h4>
+                            <div className="space-y-4">
+                                <StatusRow label="State" value={isPreserved ? 'Preserved on Arweave' : 'Active'} />
+                                {sealedDate && <StatusRow label="Activated" value={sealedDate} />}
+                                <StatusRow label="Last edit" value={timeAgo(archive.updated_at)} />
+                                <StatusRow label="Content" value={`${totalContent} item${totalContent !== 1 ? 's' : ''}`} />
+                                <StatusRow label="Visibility" value="Shared by direct link" />
+                            </div>
+                        </div>
+
+                        <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                            <h4 className="font-serif italic text-base text-warm-dark mb-4">Next steps</h4>
+                            <div className="space-y-3">
+                                <Link
+                                    href={`/dashboard/preservation/${userId}`}
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-sm text-warm-dark transition-colors hover:bg-surface-mid/50"
+                                >
+                                    <div>
+                                        <p className="font-serif">Preservation details</p>
+                                        <p className="text-xs text-warm-outline">Review storage, coverage, and media rules</p>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline" />
+                                </Link>
+                                <Link
+                                    href={`/dashboard/succession/${userId}`}
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-sm text-warm-dark transition-colors hover:bg-surface-mid/50"
+                                >
+                                    <div>
+                                        <p className="font-serif">Succession planning</p>
+                                        <p className="text-xs text-warm-outline">Choose who can manage your legacy later</p>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline" />
+                                </Link>
+                                <button
+                                    onClick={handleExportArchive}
+                                    disabled={isExporting}
+                                    className="w-full flex items-center justify-between gap-3 rounded-xl border border-warm-border/20 px-4 py-3 text-left text-sm text-warm-dark transition-colors hover:bg-surface-mid/50 disabled:opacity-60 disabled:cursor-wait"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-0.5 w-8 h-8 rounded-lg bg-surface-mid flex items-center justify-center">
+                                            {isExporting ? <Loader2 size={14} className="text-warm-muted animate-spin" /> : <Download size={14} className="text-warm-muted" />}
+                                        </div>
+                                        <div>
+                                            <p className="font-serif">{isExporting ? 'Generating portable archive...' : 'Portable archive export'}</p>
+                                            <p className="text-xs text-warm-outline">Download a full offline ZIP copy of this memorial</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={15} className="text-warm-outline flex-shrink-0" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <PreservationStatus
+                        memorialId={archive.id}
+                        arweaveTxId={arweaveTxId}
+                        fullName={archive.full_name || ''}
+                        birthDate={archive.birth_date || ''}
+                        deathDate={archive.death_date || null}
+                        planType="personal"
+                    />
+                </div>
+
+                <div className="glass-card p-8 space-y-6">
+                    <div>
+                        <h3 className="font-serif italic text-lg text-warm-brown mb-2">
+                            Share with loved ones
+                        </h3>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed">
+                            Use one place for public sharing, family outreach, and member access instead of splitting those actions across multiple cards.
+                        </p>
+                    </div>
+
+                    <div className="space-y-1">
+                        <ShareButton
+                            onClick={handleCopyLink}
+                            icon={Copy}
+                            label={linkCopied ? 'Copied!' : 'Copy link'}
+                            sublabel="Share the direct URL"
+                        />
+                        <ShareButton
+                            onClick={handleEmailFamily}
+                            icon={Mail}
+                            label="Email family"
+                            sublabel="Send via email"
+                        />
+                        <ShareButton
+                            onClick={handlePrintQR}
+                            icon={QrCode}
+                            label="QR Code"
+                            sublabel="Print for physical display"
+                        />
+                    </div>
+
+                    <div className="rounded-3xl border border-warm-border/25 bg-white p-6">
+                        <h4 className="font-serif italic text-base text-warm-dark mb-2">
+                            People around this archive
+                        </h4>
+                        <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
+                            Invite people, review roles, and manage archive access from one member manager.
+                        </p>
+                        <button
+                            onClick={() => setIsWitnessModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-warm-border/30 text-warm-dark rounded-lg text-sm font-serif italic hover:bg-surface-mid transition-all"
+                        >
+                            <Users size={14} />
+                            Open member manager
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

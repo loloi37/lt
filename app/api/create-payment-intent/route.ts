@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
@@ -16,7 +17,12 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const { memorialId, amount = 1470, plan = 'personal' } = await request.json();
+        const { memorialId, plan = 'personal' } = await request.json();
+        // SECURITY: Never trust client-supplied amount. Derive from server-side plan pricing.
+        const amount = PLAN_PRICES_USD[plan];
+        if (!amount) {
+            return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+        }
 
         if (!memorialId) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });

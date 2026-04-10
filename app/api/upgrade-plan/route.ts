@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
@@ -15,12 +16,7 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Pricing map
-const PLAN_PRICES: Record<string, number> = {
-    personal: 1470,
-    family: 2940,
-    concierge: 6300,
-};
+const PLAN_PRICES = PLAN_PRICES_USD;
 
 const UPGRADE_PATHS: Record<string, string> = {
     personal: 'family',

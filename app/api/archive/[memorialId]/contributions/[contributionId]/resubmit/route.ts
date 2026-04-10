@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { requireUser, getSupabaseAdmin } from '@/lib/apiAuth';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function PATCH(
     req: NextRequest,
@@ -14,11 +8,10 @@ export async function PATCH(
 ) {
     try {
         const { memorialId, contributionId } = await params;
-        const { user } = await createAuthenticatedClient();
-
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const auth = await requireUser();
+        if (!auth.ok) return auth.response;
+        const { user } = auth;
+        const supabaseAdmin = getSupabaseAdmin();
 
         const { data: contribution } = await supabaseAdmin
             .from('memorial_contributions')

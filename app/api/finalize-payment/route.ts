@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFullSnapshot } from '@/lib/versionService';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 export async function POST(request: NextRequest) {
     try {
@@ -50,10 +51,10 @@ export async function POST(request: NextRequest) {
         // Store plan-specific pricing info
         if (currentMemorial.mode === 'draft' || currentMemorial.mode === 'personal') {
             updatePayload.plan_type = 'personal';
-            updatePayload.amount_paid = 1470;
+            updatePayload.amount_paid = PLAN_PRICES_USD.personal;
         } else if (currentMemorial.mode === 'family') {
             updatePayload.plan_type = 'family';
-            updatePayload.amount_paid = 2940;
+            updatePayload.amount_paid = PLAN_PRICES_USD.family;
         }
 
         if (currentMemorial.mode === 'draft') {

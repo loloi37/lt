@@ -8,6 +8,7 @@ import { Memorial } from '@/lib/supabase';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import DashboardShell from '@/components/dashboard/DashboardShell';
+import { SOFT_DELETE_RETENTION_DAYS } from '@/lib/constants';
 
 export default function DraftDashboard({ params }: { params: Promise<{ userId: string }> }) {
     const unwrappedParams = use(params);
@@ -78,7 +79,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
     };
 
     const softDeleteMemorial = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this archive? It will be moved to the trash for 30 days.')) return;
+        if (!confirm(`Are you sure you want to delete this archive? It will be moved to the trash for ${SOFT_DELETE_RETENTION_DAYS} days.`)) return;
 
         const supabase = createClient();
         const { error } = await supabase
@@ -123,7 +124,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
 
     const getDaysRemaining = (deletedAt: string) => {
         const deleteDate = new Date(deletedAt);
-        const expiryDate = new Date(deleteDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const expiryDate = new Date(deleteDate.getTime() + SOFT_DELETE_RETENTION_DAYS * 24 * 60 * 60 * 1000);
         const now = new Date();
         const diff = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
         return diff > 0 ? diff : 0;
@@ -269,7 +270,7 @@ export default function DraftDashboard({ params }: { params: Promise<{ userId: s
                             Removed Archives
                         </h3>
                         <p className="text-sm text-warm-dark/40 mb-6">
-                            Archives are kept for 30 days before permanent deletion.
+                            Archives are kept for {SOFT_DELETE_RETENTION_DAYS} days before permanent deletion.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75">
                             {deletedMemorials.map((memorial) => (

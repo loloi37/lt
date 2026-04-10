@@ -21,14 +21,15 @@ interface MemberRecord {
 
 interface RoleManagementTableProps {
     memorialId: string;
-    isOwner: boolean;
+    isOwner?: boolean; // Deprecated — now derived from API. Kept for backwards compat.
     planType: 'personal' | 'family';
     inviteHref?: string; // Optional: if provided, show "Invite New" button
 }
 
-export default function RoleManagementTable({ memorialId, isOwner, planType, inviteHref }: RoleManagementTableProps) {
+export default function RoleManagementTable({ memorialId, planType, inviteHref }: RoleManagementTableProps) {
     const [members, setMembers] = useState<MemberRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isOwner, setIsOwner] = useState(false);
     const supabase = createClient();
 
     const fetchMembers = useCallback(async () => {
@@ -37,6 +38,7 @@ export default function RoleManagementTable({ memorialId, isOwner, planType, inv
             if (!res.ok) throw new Error('Failed to fetch members');
             const data = await res.json();
             setMembers(data.members || []);
+            setIsOwner(data.callerRole === 'owner');
         } catch (err: any) {
             console.error(err);
             toast.error("Could not load member list");

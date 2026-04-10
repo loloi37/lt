@@ -75,7 +75,8 @@ export async function GET(
         }));
 
         return NextResponse.json({
-            members: [...enrichedMembers, ...pendingMembers]
+            members: [...enrichedMembers, ...pendingMembers],
+            callerRole: permission.context.role,
         });
 
     } catch (error: any) {

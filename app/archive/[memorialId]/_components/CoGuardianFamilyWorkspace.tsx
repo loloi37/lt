@@ -105,7 +105,7 @@ export default function CoGuardianFamilyWorkspace({
             }
 
             setPendingRequest({
-                id: 'pending',
+                id: data.id || `pending-${Date.now()}`,
                 proposedName: proposedName.trim() || null,
                 requestMessage: requestMessage.trim() || null,
                 createdAt: new Date().toISOString(),
