@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { requireUser, getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
     try {
+        // AUTH: Require an authenticated user
+        const auth = await requireUser();
+        if (!auth.ok) return auth.response;
+
+        const { user } = auth;
+        const admin = getSupabaseAdmin();
+
         const { fullName, birthDate, deathDate, excludeId } = await request.json();
 
         if (!fullName) {
@@ -19,11 +21,11 @@ export async function POST(request: NextRequest) {
         const birthYear = birthDate ? new Date(birthDate).getFullYear() : null;
         const deathYear = deathDate ? new Date(deathDate).getFullYear() : null;
 
-        // 2. Query Supabase
-        // We search for similar names
-        let query = supabaseAdmin
+        // 2. Query Supabase — only search within memorials the user owns
+        let query = admin
             .from('memorials')
-            .select('id, full_name, birth_date, death_date, user_id')
+            .select('id, full_name, birth_date, death_date')
+            .eq('user_id', user.id)
             .ilike('full_name', nameSearch)
             .limit(5);
 

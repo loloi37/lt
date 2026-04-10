@@ -385,11 +385,12 @@ export default function InviteAcceptance({
                             </div>
                             <input
                                 type="checkbox"
-                                className="hidden"
+                                className="sr-only"
                                 checked={checkedModeration}
                                 onChange={e =>
                                     setCheckedModeration(e.target.checked)
                                 }
+                                aria-label={acknowledgmentCopy.firstTitle}
                             />
                             <div>
                                 <p className="text-sm font-medium
@@ -424,11 +425,12 @@ export default function InviteAcceptance({
                             </div>
                             <input
                                 type="checkbox"
-                                className="hidden"
+                                className="sr-only"
                                 checked={checkedDignity}
                                 onChange={e =>
                                     setCheckedDignity(e.target.checked)
                                 }
+                                aria-label={acknowledgmentCopy.secondTitle}
                             />
                             <div>
                                 <p className="text-sm font-medium

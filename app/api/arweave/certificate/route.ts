@@ -69,19 +69,16 @@ export async function GET(req: NextRequest) {
             gatewayUrls = tx.gateway_urls || [];
         }
 
+        const isPlaceholder = txId.startsWith('PLACEHOLDER_') || txId === 'pending';
+
         return NextResponse.json({
             fullName: memorial.full_name || 'Unknown',
             birthDate: memorial.birth_date || '',
             deathDate: memorial.death_date || null,
-            preservationDate: memorial.payment_confirmed_at || new Date().toISOString(),
+            preservationDate: memorial.payment_confirmed_at || null,
             transactionId: txId,
-            nodeCount: 847,
-            endowmentYears: 200,
-            gatewayUrls: gatewayUrls.length > 0 ? gatewayUrls : [
-                `https://arweave.net/${txId}`,
-                `https://ar-io.dev/${txId}`,
-                `https://g8way.io/${txId}`,
-            ],
+            isPlaceholder,
+            gatewayUrls,
             memorialId,
             planType: memorial.plan_type || 'personal',
         });

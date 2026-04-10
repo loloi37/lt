@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { requireMemorialAccess } from '@/lib/apiAuth';
 
 export interface MemberRecord {
   userId: string | null;
@@ -22,25 +16,18 @@ export async function GET(
 ) {
   try {
     const { memorialId } = await params;
-    const { user } = await createAuthenticatedClient();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // AUTH: Use centralized permission layer — require view_members permission
+    const access = await requireMemorialAccess({
+      memorialId,
+      action: 'view_members',
+    });
+    if (!access.ok) return access.response;
 
-    // Verify requester is the memorial owner
-    const { data: memorial } = await supabaseAdmin
-      .from('memorials')
-      .select('user_id, mode')
-      .eq('id', memorialId)
-      .single();
-
-    if (!memorial || memorial.user_id !== user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const { user, admin, context } = access;
 
     // Fetch accepted members from user_memorial_roles
-    const { data: roles, error: rolesError } = await supabaseAdmin
+    const { data: roles, error: rolesError } = await admin
       .from('user_memorial_roles')
       .select('user_id, role, joined_at')
       .eq('memorial_id', memorialId);
@@ -51,11 +38,11 @@ export async function GET(
     const members: MemberRecord[] = [];
 
     // Add the owner first
-    const { data: ownerData } = await supabaseAdmin.auth.admin.getUserById(user.id);
+    const { data: ownerData } = await admin.auth.admin.getUserById(context.ownerUserId);
 
     members.push({
-      userId: user.id,
-      email: ownerData?.user?.email || user.email || 'Owner',
+      userId: context.ownerUserId,
+      email: ownerData?.user?.email || 'Owner',
       displayName: null,
       role: 'owner',
       status: 'active',
@@ -65,9 +52,9 @@ export async function GET(
     // Add accepted members (excluding owner if they appear in roles)
     if (roles) {
       for (const role of roles) {
-        if (role.user_id === user.id) continue; // Skip owner duplicate
+        if (role.user_id === context.ownerUserId) continue;
 
-        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(role.user_id);
+        const { data: userData } = await admin.auth.admin.getUserById(role.user_id);
 
         members.push({
           userId: role.user_id,
@@ -81,7 +68,7 @@ export async function GET(
     }
 
     // Fetch pending invitations
-    const { data: pendingInvites, error: inviteError } = await supabaseAdmin
+    const { data: pendingInvites, error: inviteError } = await admin
       .from('witness_invitations')
       .select('invitee_email, role, created_at')
       .eq('memorial_id', memorialId)
@@ -104,7 +91,7 @@ export async function GET(
 
     return NextResponse.json({
       members,
-      planType: memorial.mode,
+      planType: context.plan,
     });
   } catch (err: any) {
     console.error('Members API error:', err);

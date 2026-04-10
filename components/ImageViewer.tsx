@@ -1,6 +1,6 @@
 // components/ImageViewer.tsx
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ImageViewerProps {
@@ -16,31 +16,67 @@ interface ImageViewerProps {
 
 export default function ImageViewer({ images, initialIndex, onClose }: ImageViewerProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const dialogRef = useRef<HTMLDivElement>(null);
 
-    const goToPrevious = () => {
+    const goToPrevious = useCallback(() => {
         setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-    };
+    }, [images.length]);
 
-    const goToNext = () => {
+    const goToNext = useCallback(() => {
         setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-    };
+    }, [images.length]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            e.preventDefault();
             if (e.key === 'ArrowLeft') goToPrevious();
             if (e.key === 'ArrowRight') goToNext();
             if (e.key === 'Escape') onClose();
+            // Focus trap: Tab cycles within the viewer
+            if (e.key === 'Tab') {
+                const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+                    'button, [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusable && focusable.length > 0) {
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
         };
 
+        // Prevent body scroll while viewer is open
+        document.body.style.overflow = 'hidden';
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+
+        // Auto-focus the close button on open
+        const closeBtn = dialogRef.current?.querySelector<HTMLElement>('[data-close]');
+        closeBtn?.focus();
+
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [goToPrevious, goToNext, onClose]);
 
     const currentImage = images[currentIndex];
 
     return (
-        <div className="fixed inset-0 bg-warm-dark/95 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Image viewer: ${currentImage.caption || `Photo ${currentIndex + 1} of ${images.length}`}`}
+            className="fixed inset-0 bg-warm-dark/95 backdrop-blur-sm z-50 flex items-center justify-center"
+        >
             <button
+                data-close
                 onClick={onClose}
                 className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-all z-10"
                 aria-label="Close viewer"
@@ -76,7 +112,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                     </div>
                 )}
 
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-warm-dark/80 rounded-full">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-warm-dark/80 rounded-full" aria-live="polite">
                     <p className="text-surface-low text-sm">
                         {currentIndex + 1} / {images.length}
                     </p>
@@ -100,6 +136,7 @@ export default function ImageViewer({ images, initialIndex, onClose }: ImageView
                             <button
                                 key={img.id}
                                 onClick={() => setCurrentIndex(idx)}
+                                aria-label={`View image ${idx + 1}${img.caption ? `: ${img.caption}` : ''}`}
                                 className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentIndex
                                     ? 'border-olive scale-110'
                                     : 'border-transparent opacity-60 hover:opacity-100'

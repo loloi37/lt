@@ -1,41 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { requireMemorialAccess } from '@/lib/apiAuth';
+import { syncCoGuardianAcrossOwnerFamily } from '@/lib/familyWorkspace';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ memorialId: string }> }) {
     try {
         const { memorialId } = await params;
-        const { witnessUserId } = await req.json(); // The ID of the person to promote
-        const { user } = await createAuthenticatedClient();
+        const { witnessUserId } = await req.json();
 
-        // 1. Check if the requester is the OWNER + mode check
-        const { data: memorial } = await supabaseAdmin
-            .from('memorials')
-            .select('user_id, mode')
-            .eq('id', memorialId)
-            .single();
-
-        if (memorial?.user_id !== user?.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (!witnessUserId || typeof witnessUserId !== 'string') {
+            return NextResponse.json({ error: 'Missing witnessUserId' }, { status: 400 });
         }
 
-        if (!memorial || memorial.mode !== 'family') {
+        // AUTH: Use centralized permission layer — require manage_members permission
+        const access = await requireMemorialAccess({
+            memorialId,
+            action: 'manage_members',
+        });
+        if (!access.ok) return access.response;
+
+        const { user, admin, context } = access;
+
+        // Only family plans support co-guardian promotion
+        if (context.plan !== 'family') {
             return NextResponse.json({ error: 'Co-guardian promotion is only available for Family plan archives' }, { status: 403 });
         }
 
-        // 2. Promote the user to co_guardian
-        const { error } = await supabaseAdmin
-            .from('user_memorial_roles')
-            .update({ role: 'co_guardian' })
-            .eq('user_memorial_roles.memorial_id', memorialId)
-            .eq('user_id', witnessUserId);
+        // Cannot promote yourself
+        if (witnessUserId === user.id) {
+            return NextResponse.json({ error: 'Cannot promote yourself' }, { status: 400 });
+        }
 
-        if (error) throw error;
+        // Verify the target user is actually a member of this memorial
+        const { data: targetRole, error: roleError } = await admin
+            .from('user_memorial_roles')
+            .select('role')
+            .eq('memorial_id', memorialId)
+            .eq('user_id', witnessUserId)
+            .maybeSingle();
+
+        if (roleError || !targetRole) {
+            return NextResponse.json({ error: 'User is not a member of this memorial' }, { status: 404 });
+        }
+
+        if (targetRole.role === 'co_guardian') {
+            return NextResponse.json({ error: 'User is already a co-guardian' }, { status: 400 });
+        }
+
+        // Promote to co_guardian across all family memorials
+        await syncCoGuardianAcrossOwnerFamily(context.ownerUserId, witnessUserId);
+
+        await safeLogMemorialActivity(admin, {
+            memorialId,
+            action: 'member_role_updated',
+            summary: `Member promoted to co-guardian.`,
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+            subjectUserId: witnessUserId,
+            details: { previousRole: targetRole.role, newRole: 'co_guardian' },
+        });
 
         return NextResponse.json({ success: true });
     } catch (err: any) {

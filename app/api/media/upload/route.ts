@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { requireUser, getSupabaseAdmin } from '@/lib/apiAuth';
 import crypto from 'crypto';
-
-// Initialize Supabase Admin Client (Server-side only)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: NextRequest) {
     try {
+        // AUTH: Derive identity from session
+        const auth = await requireUser();
+        if (!auth.ok) return auth.response;
+
+        const { user } = auth;
+        const admin = getSupabaseAdmin();
+
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const bucket = formData.get('bucket') as string;
@@ -22,19 +23,60 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate bucket is an allowed upload target
+        const ALLOWED_BUCKETS = ['memorial-media', 'profile-photos', 'gallery'];
+        if (!ALLOWED_BUCKETS.includes(bucket)) {
+            return NextResponse.json(
+                { error: 'Invalid upload bucket' },
+                { status: 400 }
+            );
+        }
+
+        // Validate path belongs to a memorial the user owns or can contribute to.
+        // Paths are expected to follow: {memorialId}/... pattern
+        const memorialIdFromPath = path.split('/')[0];
+        if (memorialIdFromPath) {
+            const { data: memorial } = await admin
+                .from('memorials')
+                .select('id, user_id, mode')
+                .eq('id', memorialIdFromPath)
+                .maybeSingle();
+
+            if (memorial) {
+                const isOwner = memorial.user_id === user.id;
+                if (!isOwner) {
+                    // Check if user has a role that permits content contribution
+                    const { data: roleRow } = await admin
+                        .from('user_memorial_roles')
+                        .select('role')
+                        .eq('memorial_id', memorial.id)
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+
+                    const allowedRoles = ['co_guardian', 'witness'];
+                    if (!roleRow || !allowedRoles.includes(roleRow.role)) {
+                        return NextResponse.json(
+                            { error: 'You do not have permission to upload to this memorial' },
+                            { status: 403 }
+                        );
+                    }
+                }
+            }
+        }
+
         // 1. Convert file to buffer for hashing
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 2. Calculate SHA-256 Hash (Server-Side Calculation)
+        // 2. Calculate SHA-256 Hash
         const hashSum = crypto.createHash('sha256');
         hashSum.update(buffer);
         const sha256Hash = hashSum.digest('hex');
 
         // 3. Upload to Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+        const { data: uploadData, error: uploadError } = await admin.storage
             .from(bucket)
-            .upload(path, buffer, { // ✅ FIX: Use the buffer you already created above!
+            .upload(path, buffer, {
                 contentType: file.type,
                 upsert: false,
             });
@@ -48,14 +90,14 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Get Public URL
-        const { data: publicUrlData } = supabaseAdmin.storage
+        const { data: publicUrlData } = admin.storage
             .from(bucket)
             .getPublicUrl(path);
 
         return NextResponse.json({
             success: true,
             url: publicUrlData.publicUrl,
-            hash: sha256Hash, // Return the calculated hash to the frontend
+            hash: sha256Hash,
             path: path
         });
 

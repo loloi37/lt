@@ -11,8 +11,17 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // If the redirect target is an invite page, go straight there so the
+      // token automatically resumes — the user never has to re-open the link.
+      const target = next.startsWith('/') ? next : `/${next}`;
+      return NextResponse.redirect(`${origin}${target}`);
     }
+  }
+
+  // If the "next" param points to an invite page, redirect there anyway so
+  // the invite shell can detect the user is now authenticated and resume.
+  if (next.startsWith('/invite/')) {
+    return NextResponse.redirect(`${origin}${next}`);
   }
 
   // If the code exchange fails, redirect to login with an error hint

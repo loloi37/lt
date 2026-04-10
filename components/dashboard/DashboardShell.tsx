@@ -387,11 +387,12 @@ export default function DashboardShell({ userId, children }: DashboardShellProps
                         className="absolute inset-0 bg-warm-dark/55 backdrop-blur-sm"
                         onClick={() => setMobileOpen(false)}
                     />
-                    <div className="absolute inset-y-0 left-0 w-[88vw] max-w-sm border-r border-warm-border/30 bg-white shadow-2xl">
+                    <div className="absolute inset-y-0 left-0 w-[88vw] max-w-sm border-r border-warm-border/30 bg-white shadow-2xl overflow-y-auto">
                         <div className="flex items-center justify-end border-b border-warm-border/30 px-4 py-3">
                             <button
                                 onClick={() => setMobileOpen(false)}
                                 className="rounded-xl border border-warm-border/30 p-2 text-warm-dark transition-colors hover:bg-surface-mid/50"
+                                aria-label="Close navigation"
                             >
                                 <X size={18} />
                             </button>

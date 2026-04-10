@@ -34,10 +34,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
         }
 
-        if (
-            !hasPermission(permission.context, 'edit_archive') &&
-            !hasPermission(permission.context, 'view_archive')
-        ) {
+        // Preview-HTML returns full memorial data including all steps.
+        // Restrict to users with edit permission — readers should use the
+        // regular view page instead.
+        if (!hasPermission(permission.context, 'edit_archive')) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

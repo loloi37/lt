@@ -5,16 +5,24 @@ import { useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { usePathname, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { getArchiveCapabilities } from '@/lib/archivePermissions';
+import { getArchiveCapabilities, ArchivePlan } from '@/lib/archivePermissions';
 import { WitnessRole } from '@/types/roles';
 
-export function useRoleSync(memorialId: string, userId: string, currentRole: string) {
+export function useRoleSync(
+    memorialId: string,
+    userId: string,
+    currentRole: string,
+    plan?: ArchivePlan
+) {
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
 
     useEffect(() => {
         if (!memorialId || !userId) return;
+
+        // Use the authoritative plan from server data, not inferred from pathname
+        const resolvedPlan = plan || 'personal';
 
         const channel = supabase
             .channel(`role-sync:${memorialId}:${userId}`)
@@ -32,12 +40,13 @@ export function useRoleSync(memorialId: string, userId: string, currentRole: str
 
                     const newRole = payload.new.role as WitnessRole;
                     if (newRole !== currentRole) {
-                        // Fire a custom event that the RoleBanner component listens to
+                        // Fire a custom event that the RoleBanner + useArchiveRole listen to
                         window.dispatchEvent(new CustomEvent('ulumae:role-changed', {
                             detail: { memorialId, oldRole: currentRole, newRole }
                         }));
 
-                        const nextCapabilities = getArchiveCapabilities(newRole, pathname.includes('/family') ? 'family' : 'personal');
+                        // Use the actual plan from server, not pathname-inferred
+                        const nextCapabilities = getArchiveCapabilities(newRole, resolvedPlan);
                         if (pathname.includes('/steward') && !nextCapabilities.canReview) {
                             toast.error('Your updated role no longer includes steward access.');
                             router.replace(`/archive/${memorialId}`);
@@ -66,7 +75,6 @@ export function useRoleSync(memorialId: string, userId: string, currentRole: str
                         }));
 
                         toast.error('Your access to this archive has been removed.');
-                        // Redirect immediately to the revoked page (which we'll create in Step 12)
                         router.replace(`/archive/${memorialId}/revoked`);
                     }
                 }
@@ -76,5 +84,5 @@ export function useRoleSync(memorialId: string, userId: string, currentRole: str
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [memorialId, userId, currentRole, pathname, router, supabase]);
+    }, [memorialId, userId, currentRole, plan, pathname, router, supabase]);
 }

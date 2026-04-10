@@ -1,11 +1,11 @@
 // app/api/arche/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { generateStandaloneHTML } from '@/lib/arche/htmlGenerator';
 import { ArcheArchiver } from '@/lib/arche/archiver';
 import { processMemorialMedia } from '@/lib/arche/mediaProcessor';
 import { generateManifest, generateReadme } from '@/lib/arche/metadataGenerator';
+import { requireMemorialAccess } from '@/lib/apiAuth';
+import { safeLogMemorialActivity } from '@/lib/activityLog';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -20,21 +20,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing memorialId' }, { status: 400 });
         }
 
-        // 1. AUTHENTICATE USER
-        const { user } = await createAuthenticatedClient();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // AUTH: Use centralized permission layer — require export_archive permission
+        const access = await requireMemorialAccess({
+            memorialId,
+            action: 'export_archive',
+        });
+        if (!access.ok) return access.response;
+
+        const { user, admin: supabaseAdmin } = access;
 
         console.log(`[Arche] Starting export for ${memorialId}...`);
 
-        // Initialize Admin Client
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
-
-        // 2. Fetch Full Data
+        // Fetch Full Data
         const { data: memorial, error } = await supabaseAdmin
             .from('memorials')
             .select('*')
@@ -43,11 +40,6 @@ export async function POST(request: NextRequest) {
 
         if (error || !memorial) {
             return NextResponse.json({ error: 'Memorial not found' }, { status: 404 });
-        }
-
-        // 3. VERIFY OWNERSHIP
-        if (memorial.user_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden: You do not own this archive' }, { status: 403 });
         }
 
         // 4. RATE LIMIT: 10-minute cooldown between successful exports
@@ -171,6 +163,14 @@ export async function POST(request: NextRequest) {
             .from('memorials')
             .update({ last_exported_at: new Date().toISOString() })
             .eq('id', memorialId);
+
+        await safeLogMemorialActivity(supabaseAdmin, {
+            memorialId,
+            action: 'memorial_exported',
+            summary: 'Archive ZIP exported.',
+            actorUserId: user.id,
+            actorEmail: user.email ?? null,
+        });
 
         console.log('[Arche] Export complete:', urlData.signedUrl);
 

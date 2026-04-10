@@ -583,6 +583,7 @@ export default function SecurityCenter({ userId }: SecurityCenterProps) {
                                                 inputMode="numeric"
                                                 autoComplete="one-time-code"
                                                 placeholder="123456"
+                                                aria-label="6-digit authenticator verification code"
                                                 className="w-full rounded-xl border border-warm-border/30 bg-white px-4 py-3 text-sm tracking-[0.2em] text-warm-dark focus:outline-none focus:ring-2 focus:ring-olive/15"
                                             />
                                             <button

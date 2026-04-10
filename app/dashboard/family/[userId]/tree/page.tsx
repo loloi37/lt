@@ -370,7 +370,7 @@ function FamilyTreeGraph({ userId }: { userId: string }) {
                 nodeTypes={nodeTypes}
                 connectionMode={ConnectionMode.Loose}
                 fitView
-                className="touch-none"
+                className="touch-auto"
             >
                 <Background color="#e8d8cc" gap={24} size={1} />
                 <Controls className="ft-controls" />

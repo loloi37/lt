@@ -50,25 +50,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Memorial must be paid before preservation' }, { status: 400 });
         }
 
-        // Generate mock transaction ID (placeholder for real Arweave upload)
+        // PLACEHOLDER: Real Arweave integration required before production.
+        // This generates a local-only transaction record to allow the UI flow
+        // to be tested end-to-end. The data is NOT actually uploaded to Arweave.
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-        const txId = Array.from({ length: 43 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const txId = `PLACEHOLDER_${Array.from({ length: 35 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')}`;
 
-        // Store transaction record
+        // Store transaction record with placeholder status
         const { error: txError } = await supabaseAdmin
             .from('arweave_transactions')
             .insert({
                 memorial_id: memorialId,
                 tx_id: txId,
-                status: 'confirmed',
-                gateway_urls: [
-                    `https://arweave.net/${txId}`,
-                    `https://ar-io.dev/${txId}`,
-                    `https://g8way.io/${txId}`,
-                ],
-                file_count: Math.floor(Math.random() * 50) + 10,
-                total_bytes: Math.floor(Math.random() * 500_000_000) + 10_000_000,
-                confirmed_at: new Date().toISOString(),
+                status: 'placeholder',
+                gateway_urls: [],
+                file_count: 0,
+                total_bytes: 0,
+                confirmed_at: null,
             });
 
         // Update memorial with arweave tx id (ignore if column doesn't exist yet)
@@ -94,12 +92,9 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             txId,
-            status: 'confirmed',
-            gatewayUrls: [
-                `https://arweave.net/${txId}`,
-                `https://ar-io.dev/${txId}`,
-                `https://g8way.io/${txId}`,
-            ],
+            status: 'placeholder',
+            gatewayUrls: [],
+            notice: 'This is a placeholder record. Real Arweave integration is pending.',
         });
     } catch (error: any) {
         console.error('Arweave upload error:', error);

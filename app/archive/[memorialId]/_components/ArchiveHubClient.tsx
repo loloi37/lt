@@ -68,7 +68,7 @@ const TYPE_ICONS = {
 
 export default function ArchiveHubClient({ roleData, memorialId, userId }: ArchiveHubClientProps) {
   const router = useRouter();
-  useRoleSync(memorialId, userId, roleData.userRole);
+  useRoleSync(memorialId, userId, roleData.userRole, roleData.plan === 'family' ? 'family' : 'personal');
 
   const { userRole, plan, memorial, myContributions, pendingCount, creationRequestCount = 0 } = roleData;
   const capabilities = getArchiveCapabilities(userRole, plan === 'family' ? 'family' : 'personal');
