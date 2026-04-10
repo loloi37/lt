@@ -1,21 +1,17 @@
 // app/api/memorials/[memorialId]/members/[targetUserId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
 import { removeFamilyCoGuardianAccess } from '@/lib/familyWorkspace';
 import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ memorialId: string, targetUserId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId, targetUserId } = await params;
         const { user } = await createAuthenticatedClient();
 

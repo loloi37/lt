@@ -1,17 +1,14 @@
 // app/api/admin/reports/abandoned/route.ts
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 // Initialize Admin Client
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function GET() {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         // --- Authentication Gate ---
         const { user } = await createAuthenticatedClient();
         if (!user) {

@@ -1,22 +1,18 @@
 // app/api/memorials/[memorialId]/members/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 import {
     hasPermission,
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId } = await params;
         const { user } = await createAuthenticatedClient();
 

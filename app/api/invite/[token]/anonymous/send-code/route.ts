@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email/sender';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { token } = await params;
         const { name, email } = await req.json();
 

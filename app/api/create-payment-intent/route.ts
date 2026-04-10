@@ -3,20 +3,16 @@
 // This replaces the Checkout Session redirect flow for the seal flow.
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
 import { PLAN_PRICES_USD } from '@/lib/constants';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
 });
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: NextRequest) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId, plan = 'personal' } = await request.json();
         // SECURITY: Never trust client-supplied amount. Derive from server-side plan pricing.
         const amount = PLAN_PRICES_USD[plan];

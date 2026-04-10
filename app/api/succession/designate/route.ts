@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email/sender';
 import { getSuccessorInvitationEmail } from '@/lib/email/templates';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

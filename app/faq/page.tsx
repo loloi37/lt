@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { PLAN_PRICES_USD } from '@/lib/constants';
+
+const UPGRADE_DIFFERENCE = `$${(PLAN_PRICES_USD.family - PLAN_PRICES_USD.personal).toLocaleString()}`;
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
@@ -38,7 +41,7 @@ const faqItems: { question: string; answer: string }[] = [
   {
     question: 'Can I upgrade from Personal to Family later?',
     answer:
-      'Yes. You only pay the difference ($1,470). Your existing memorial is automatically included in the family archive with no data loss.',
+      'Yes. You only pay the difference (${UPGRADE_DIFFERENCE}). Your existing memorial is automatically included in the family archive with no data loss.',
   },
   {
     question: 'What is Arweave?',

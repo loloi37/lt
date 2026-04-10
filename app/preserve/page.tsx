@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Shield, ArrowRight, ArrowLeft, Clock, Globe, Lock, Users, HardDrive, Pencil } from 'lucide-react';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 import ArweaveEducation from '@/components/ArweaveEducation';
 import { estimateStorageCost } from '@/lib/arweave/arweaveService';
 
@@ -98,7 +99,7 @@ function PreservationGateContent() {
                     <div className="bg-white border border-warm-border/30 rounded-xl p-6 hover:border-warm-border/50 hover:shadow-lg transition-all cursor-pointer group" onClick={handlePreservePersonal}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-serif text-white">Personal Archive</h3>
-                            <span className="text-2xl font-sans font-bold text-olive">$1,470</span>
+                            <span className="text-2xl font-sans font-bold text-olive">${PLAN_PRICES_USD.personal.toLocaleString()}</span>
                         </div>
                         <p className="text-xs text-warm-muted font-sans mb-1">One-time payment</p>
                         <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">
@@ -127,7 +128,7 @@ function PreservationGateContent() {
                     <div className="bg-white border border-warm-border/30 rounded-xl p-6 hover:border-warm-border/50 hover:shadow-lg transition-all cursor-pointer group border-olive/20" onClick={handlePreserveFamily}>
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-serif text-white">Family Legacy Network</h3>
-                            <span className="text-2xl font-sans font-bold text-olive">$2,940</span>
+                            <span className="text-2xl font-sans font-bold text-olive">${PLAN_PRICES_USD.family.toLocaleString()}</span>
                         </div>
                         <p className="text-xs text-warm-muted font-sans mb-1">One-time payment</p>
                         <p className="text-sm text-warm-muted font-sans leading-relaxed mb-5">

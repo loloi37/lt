@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 function PersonalConfirmationContent() {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -232,12 +233,12 @@ function PersonalConfirmationContent() {
                                 Upgrading from Draft to Personal
                             </div>
                             <h1 className="font-serif text-4xl text-warm-dark mb-4">Seal Your Archive</h1>
-                            <p className="text-lg text-warm-dark/50">Your draft is ready. $1,470 — A single payment for a permanent archive. No monthly fees. No renewals.</p>
+                            <p className="text-lg text-warm-dark/50">Your draft is ready. ${PLAN_PRICES_USD.personal.toLocaleString()} — A single payment for a permanent archive. No monthly fees. No renewals.</p>
                         </>
                     ) : (
                         <>
                             <h1 className="font-serif text-4xl text-warm-dark mb-4">Seal the Archive</h1>
-                            <p className="text-lg text-warm-dark/50">$1,470 — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.</p>
+                            <p className="text-lg text-warm-dark/50">${PLAN_PRICES_USD.personal.toLocaleString()} — A single payment for a permanent archive. No monthly fees. No renewals. No surprises.</p>
                         </>
                     )}
                 </div>

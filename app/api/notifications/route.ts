@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { DEFAULT_ACTIVITY_LIMIT } from '@/lib/constants';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 interface MemorialSummary {
   id: string;
@@ -16,6 +11,7 @@ interface MemorialSummary {
 
 export async function GET() {
   try {
+        const supabaseAdmin = getSupabaseAdmin();
     const { user } = await createAuthenticatedClient();
 
     if (!user) {

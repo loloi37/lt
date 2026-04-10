@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import {
     getPendingMemorialCreationRequest,
 } from '@/lib/familyWorkspace';
 import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId } = await params;
         const { proposedName, requestMessage } = await req.json() as {
             proposedName?: string;
@@ -108,6 +104,7 @@ export async function GET(
     { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId } = await params;
         const { user } = await createAuthenticatedClient();
 

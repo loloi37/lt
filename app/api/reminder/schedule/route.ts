@@ -1,16 +1,12 @@
 // app/api/reminder/schedule/route.ts
 // Step 1.1.4: Schedule a gentle reminder email for paused archives
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(request: Request) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { user: authUser } = await createAuthenticatedClient();
         if (!authUser) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

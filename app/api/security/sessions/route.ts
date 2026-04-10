@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { decodeSessionIdFromAccessToken } from '@/lib/security/twoFactor';
 import {
@@ -7,14 +6,11 @@ import {
   trackUserSessionDevice,
 } from '@/lib/sessionDevices';
 import { SESSION_ACTIVITY_STALE_HOURS } from '@/lib/constants';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
   try {
+        const supabaseAdmin = getSupabaseAdmin();
     const { supabase, user, error } = await createAuthenticatedClient();
 
     if (error || !user) {
@@ -100,6 +96,7 @@ export async function GET(request: NextRequest) {
 }
 export async function POST(request: NextRequest) {
   try {
+        const supabaseAdmin = getSupabaseAdmin();
     const { user, error } = await createAuthenticatedClient();
 
     if (error || !user) {

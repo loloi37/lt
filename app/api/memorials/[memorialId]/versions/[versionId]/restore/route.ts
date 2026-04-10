@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { MemorialData } from '@/types/memorial';
 import { applyVersionSnapshot, detectChangedSteps } from '@/lib/versioning';
@@ -8,11 +7,7 @@ import {
     insertVersionSnapshot,
 } from '@/lib/versioningServer';
 import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 function buildMemorialData(record: any): MemorialData {
     return {
@@ -37,6 +32,7 @@ export async function POST(
     { params }: { params: Promise<{ memorialId: string; versionId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId, versionId } = await params;
         const { user } = await createAuthenticatedClient();
 

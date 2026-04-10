@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFullSnapshot } from '@/lib/versionService';
 import { PLAN_PRICES_USD } from '@/lib/constants';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(request: NextRequest) {
     try {

@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { syncAllCoGuardiansToMemorial } from '@/lib/familyWorkspace';
 import { resolveArchivePermissionContext } from '@/lib/archivePermissions';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 type CreationDecision = 'approved' | 'rejected';
 
@@ -26,6 +21,7 @@ export async function PATCH(
     { params }: { params: Promise<{ memorialId: string; requestId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId, requestId } = await params;
         const { decision } = await req.json() as { decision?: CreationDecision };
         const { user } = await createAuthenticatedClient();

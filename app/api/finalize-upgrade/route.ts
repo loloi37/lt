@@ -3,9 +3,9 @@
 // CRITICAL: This must NEVER create a new memorial entity.
 // It only changes the mode field to preserve all existing data.
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -3,18 +3,13 @@
 // Calculates differential pricing so users only pay the difference.
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { PLAN_PRICES_USD } from '@/lib/constants';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2024-12-18.acacia' as any,
 });
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const PLAN_PRICES = PLAN_PRICES_USD;
 
@@ -25,6 +20,7 @@ const UPGRADE_PATHS: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -162,6 +158,7 @@ export async function POST(request: NextRequest) {
 // GET: Calculate upgrade info without creating a payment session
 export async function GET(request: NextRequest) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { user } = await createAuthenticatedClient();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

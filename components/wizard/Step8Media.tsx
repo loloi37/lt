@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Image as ImageIcon, Upload, Mic, Star, Plus, X, Trash2, MousePointer } from 'lucide-react';
 import { MediaLegacy } from '@/types/memorial';
 import { secureUpload } from '@/lib/uploadService';
-import { DRAFT_MEDIA_LIMIT } from '@/lib/constants';
+import { DRAFT_MEDIA_LIMIT, PLAN_PRICES_USD } from '@/lib/constants';
 
 
 interface Step8Props {
@@ -774,7 +774,7 @@ What did they stand for? How did they make the world better? What will their mem
                 onClick={onBackToHub}
                 className="w-full py-4 bg-warm-brown text-surface-low rounded-xl font-bold hover:shadow-xl transition-all shadow-lg"
               >
-                Become a Permanent Guardian ($1,470)
+                Become a Permanent Guardian (${PLAN_PRICES_USD.personal.toLocaleString()})
               </button>
               <button
                 onClick={() => setShowPaywall(false)}

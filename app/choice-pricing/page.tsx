@@ -5,6 +5,7 @@ import { FileEdit, User, Users, Sparkles, Check, ArrowLeft, ChevronDown } from '
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 const features = [
     { label: 'Number of archives', draft: '—', personal: '1', family: 'Unlimited', concierge: 'Unlimited' },
@@ -37,7 +38,7 @@ const faqs = [
     },
     {
         question: 'Can I upgrade from Personal to Family later?',
-        answer: 'Yes. You only pay the difference ($1,470). Your existing archive is automatically integrated.',
+        answer: `Yes. You only pay the difference ($${(PLAN_PRICES_USD.family - PLAN_PRICES_USD.personal).toLocaleString()}). Your existing archive is automatically integrated.`,
     },
     {
         question: 'Are there hidden fees?',
@@ -218,7 +219,7 @@ export default function ChoicePricingPage() {
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-warm-dark">$1,470</span>
+                        <span className="font-serif text-5xl text-warm-dark">${PLAN_PRICES_USD.personal.toLocaleString()}</span>
                         <span className="text-warm-outline ml-2">/ one time</span>
                     </div>
                     <ul className="space-y-4 mb-16 flex-grow text-sm text-warm-muted">
@@ -264,7 +265,7 @@ export default function ChoicePricingPage() {
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-warm-dark">$2,940</span>
+                        <span className="font-serif text-5xl text-warm-dark">${PLAN_PRICES_USD.family.toLocaleString()}</span>
                         <span className="text-warm-outline ml-2">/ one time</span>
                     </div>
                     <ul className="space-y-4 mb-16 flex-grow text-sm text-warm-muted">
@@ -308,7 +309,7 @@ export default function ChoicePricingPage() {
                         </p>
                     </div>
                     <div className="mb-12">
-                        <span className="font-serif text-5xl text-warm-dark">$6,300</span>
+                        <span className="font-serif text-5xl text-warm-dark">${PLAN_PRICES_USD.concierge.toLocaleString()}</span>
                         <span className="text-warm-outline ml-2">/ per memorial</span>
                     </div>
                     <div className="mb-16 flex-grow text-sm text-warm-muted">

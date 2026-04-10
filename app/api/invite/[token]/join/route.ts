@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { syncCoGuardianAcrossOwnerFamily } from '@/lib/familyWorkspace';
 import { safeLogMemorialActivity } from '@/lib/activityLog';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { token } = await params;
-
 
         // 1. Authenticate the user making the request
         const { user, error: authError } =

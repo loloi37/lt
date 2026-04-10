@@ -3,9 +3,9 @@
 // This endpoint is the authoritative server-side state that the UI must reflect.
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
-import { createClient } from '@supabase/supabase-js';
 import { decodeSessionIdFromAccessToken } from '@/lib/security/twoFactor';
 import { getRequestIpAddress, trackUserSessionDevice } from '@/lib/sessionDevices';
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
     try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
             }, { status: 500 });
         }
 
-        const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+        const supabaseAdmin = getSupabaseAdmin();
 
         const { supabase, user, error } = await createAuthenticatedClient();
 

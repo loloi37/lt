@@ -5,6 +5,7 @@ import { ArrowRight, Shield, Globe, Clock, Lock, ChevronDown } from 'lucide-reac
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { PLAN_PRICES_USD } from '@/lib/constants';
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
     const [open, setOpen] = useState(false);
@@ -235,7 +236,7 @@ export default function LandingPage() {
                     />
                     <FAQItem
                         question="Can I upgrade from Personal to Family later?"
-                        answer="Yes. You only pay the difference ($1,470). Your existing memorial is automatically included in the family archive with no data loss."
+                        answer={`Yes. You only pay the difference ($${(PLAN_PRICES_USD.family - PLAN_PRICES_USD.personal).toLocaleString()}). Your existing memorial is automatically included in the family archive with no data loss.`}
                     />
                     <FAQItem
                         question="What is Arweave?"

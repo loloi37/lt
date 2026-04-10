@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import {
     getArchiveCapabilities,
@@ -8,17 +7,14 @@ import {
     resolveArchivePermissionContext,
 } from '@/lib/archivePermissions';
 import { WitnessRole } from '@/types/roles';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ memorialId: string }> }
 ) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { memorialId } = await params;
 
         // 1. Authenticate

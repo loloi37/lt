@@ -1,17 +1,13 @@
 // app/api/arche/preview-html/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { generateStandaloneHTML } from '@/lib/arche/htmlGenerator';
 import { createAuthenticatedClient } from '@/utils/supabase/api';
 import { hasPermission, resolveArchivePermissionContext } from '@/lib/archivePermissions';
-
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { getSupabaseAdmin } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
     try {
+        const supabaseAdmin = getSupabaseAdmin();
         const { searchParams } = new URL(request.url);
         const memorialId = searchParams.get('id');
 

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Film, Upload, Trash2, Play, AlertCircle } from 'lucide-react';
 import { VideoContent } from '@/types/memorial';
-import { supabase } from '@/lib/supabase';
 import { secureUpload } from '@/lib/uploadService';
 import TutorialPopup from '@/components/TutorialPopup';
 import { DRAFT_VIDEO_LIMIT, PAID_VIDEO_LIMIT, MAX_VIDEO_FILE_SIZE_BYTES } from '@/lib/constants';
@@ -230,18 +229,21 @@ export default function Step9Videos({ data, onUpdate, onNext, onBack, memorialId
     // Find the video to get its path
     const video = data.videos.find(v => v.id === id);
     if (video && memorialId) {
-      // Optional: Delete from storage
       try {
-        // The videoPath was constructed as `${memorialId}/${videoUuid}.${fileExt}`
-        // So we need to derive the path from the video.url or video.id
-        // Assuming video.url contains the full path after the bucket name
         const videoPathInStorage = video.url.split('/videos/')[1]; // e.g., memorialId/uuid.mp4
         const thumbnailPathInStorage = `${memorialId}/thumbnails/${id}.png`;
 
-        await supabase.storage.from('videos').remove([
-          videoPathInStorage,
-          thumbnailPathInStorage
-        ]);
+        const paths = [videoPathInStorage, thumbnailPathInStorage].filter(Boolean);
+
+        await fetch('/api/media/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bucket: 'videos',
+            paths,
+            memorialId,
+          }),
+        });
       } catch (err) {
         console.warn('Could not delete video from storage:', err);
       }
